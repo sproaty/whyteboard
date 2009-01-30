@@ -14,7 +14,7 @@ import os, cPickle, random, time, subprocess
 import wx                  # This module uses the new wx namespace
 import wx.html
 from wx.lib import buttons # for generic button classes
-import  wx.lib.colourselect as  csel
+import  wx.lib.colourselect as csel
 
 from whiteboard import Whiteboard
 from tools import Pen, Image

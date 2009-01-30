@@ -5,7 +5,7 @@ This module contains classes which can be drawn onto a Whiteboard frame
 """
 
 import wx, random, time
-
+import wx.lib.mixins.rubberband as RubberBand
 
 class Tool(object):
     """Abstract class representing a tool: Drawing board/colour/thickness"""

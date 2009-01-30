@@ -1,0 +1,47 @@
+Whyteboard - To do list
+Fri 30 Jan 2009 02:27:56 GMT
+
+*** NEW ***
+
+-- Investigate into wxPython's FloatCanvas library: it provides methods to
+   draw many shapes which can be selected, scaled, moved and zoomed in on.
+  -- Research how to extend them to multiple-select.
+  -- Integrating onto a wxFrame (as in gui.py)
+
+-- When converting a PDF with ImageMagick, create thumbnails for a side panel
+   which allows you to jump quickly from page to page.
+  -- In turns, this needs to have an MDI interface looked into, tabs are
+     feasible but aren't as viable as having one full-screen (excluding
+     the control/thumbnail panel) panel, and scrolling between each panel
+  -- The same applies to ps/gs files
+
+
+*** IMPROVEMENTS AND THOUGHTS ***
+
+
+-- If the system is to be used temporarily as a prototype before changing to
+   the FloatCanvas, add in font rendering instead of random text.
+
+-- Make the slider in the history dialog move forward/backwards through the
+   pen replay
+  -- Make the stop button stop it as this can crash the program currently.
+  -- Improve the interface for it a bit, probably no need for forward/back
+     buttons.
+
+-- Make a loaded PDF/PS the background image, thus everything gets written over
+   that image.
+
+-- Load in PDF/PS: Capture ls file (not dir) count, create temp files, get new
+   count - then save in the filepath of the file that was loaded. When the app
+   terminates then, remove all temporay images; when a saved whyteboard file is
+   loaded, re-create the temporary image from the existing filename
+  -- Downside is that if the file is removed, renamed or moved then the link is
+     broken.
+  -- Alternative method - save the temporary image files to a directory created
+     somewhere..(where?) - obvious downside is disk usage over muliple file
+     loads. Could perhaps intelligently monitor/allow a set preference to max.
+     disk space usage/number of temporarily files/allow as many temporary files
+     as [x] many files need it...or something
+
+-- More pycallgraph to see function overheads in current implementation.
+  -- Could all improve with the interface of FloatCanvas, seems nice.
