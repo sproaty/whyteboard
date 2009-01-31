@@ -9,11 +9,12 @@ from tools import *
 
 #----------------------------------------------------------------------
 
-class Whiteboard(wx.Window):
+class Whiteboard(wx.ScrolledWindow):
 
     def __init__(self, parent, ID):
         """Initalise the window, class variables and bind mouse/paint events"""
-        wx.Window.__init__(self, parent, ID, style=wx.FULL_REPAINT_ON_RESIZE)
+        wx.ScrolledWindow.__init__(self, parent, ID)#, style=wx.FULL_REPAINT_ON_RESIZE)
+        self.SetScrollbars(20, 20, 55, 40)
 
         self.listeners = []
         self.thickness = 1

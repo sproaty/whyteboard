@@ -21,11 +21,7 @@ from tools import Pen, Image
 
 
 
-
-
 #----------------------------------------------------------------------
-
-#wx.RegisterId(5000)  # Give a high starting value for the IDs, just for kicks
 
 ID_HISTORY = wx.NewId()
 
@@ -45,14 +41,18 @@ class GUI(wx.Frame):
         self.CreateStatusBar()
         self.MakeMenu()
         self.filename = None
-        self.board    = Whiteboard(self, -1)
+
+        self.nb = wx.Notebook(self)
+        self.board    = Whiteboard(self.nb, -1)
         cPanel        = ControlPanel(self, -1, self.board)
         self.board.SelectTool(1)
+
+        self.nb.AddPage(self.board, "Untitled 1")
 
         # Create a sizer to layout the two windows side-by-side.
         box = wx.BoxSizer(wx.HORIZONTAL)
         box.Add(cPanel, 0, wx.EXPAND)
-        box.Add(self.board, 1, wx.EXPAND)
+        box.Add(self.nb, 1, wx.EXPAND)
 
         # Tell the frame that it should layout itself in response to
         # size events using this sizer.
@@ -62,13 +62,15 @@ class GUI(wx.Frame):
     def MakeMenu(self):
         """Creates the menu..."""
         file = wx.Menu()
-        file.Append(wx.ID_NEW, "&New\tCtrl-N", "Create a new Whiteboard file")
-        file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Open an existing Whiteboard file")
-        file.Append(wx.ID_SAVE, "&Save\tCtrl-S", "Save the Whiteboard data")
+        #file.Append(wx.ID_NEW, "&New\tCtrl-N", "Create a new Whiteboard file")
+        file.Append(wx.ID_NEW, "New &Tab\tCtrl-T", "Open a new tab")
+        file.Append(wx.ID_OPEN, "&Open", "Open an existing Whiteboard file")
+        file.Append(wx.ID_SAVE, "&Save", "Save the Whiteboard data")
+        file.Append(wx.ID_SAVEAS, "Save &As...", "Save the Whiteboard data in a new file")
 
-        file.Append(wx.ID_SAVEAS, "Save &As\tShift-Ctrl-S", "Save the Whiteboard data in a new file")
         file.AppendSeparator()
-        file.Append(wx.ID_EXIT, "E&xit\tCtrl-Q", "Terminate Whiteboard")
+        file.Append(wx.ID_CLOSE, "&Close Tab", "Close current tab")
+        file.Append(wx.ID_EXIT, "E&xit", "Terminate Whiteboard")
 
         edit = wx.Menu()
         edit.Append(wx.ID_UNDO, "&Undo\tCtrl-Z", "Undo the last operation")
@@ -76,7 +78,7 @@ class GUI(wx.Frame):
         edit.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay your drawing history")
 
         image = wx.Menu()
-        image.Append(wx.ID_CLEAR, "&Clear", "Clear the current drawing")
+        image.Append(wx.ID_CLEAR, "&Clear\tCtrl-C", "Clear the current drawing")
 
         help = wx.Menu()
         help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the Whiteboard application")
@@ -88,6 +90,9 @@ class GUI(wx.Frame):
         menuBar.Append(help, "&Help")
         self.SetMenuBar(menuBar)
 
+
+        self.Bind(wx.EVT_MENU, self.OnMenuNewTab, id=wx.ID_NEW)
+        self.Bind(wx.EVT_MENU, self.OnMenuCloseTab, id=wx.ID_CLOSE)
         self.Bind(wx.EVT_MENU, self.OnMenuOpen, id=wx.ID_OPEN)
         self.Bind(wx.EVT_MENU, self.OnMenuSave, id=wx.ID_SAVE)
         self.Bind(wx.EVT_MENU, self.OnMenuSaveAs, id=wx.ID_SAVEAS)
@@ -142,21 +147,53 @@ class GUI(wx.Frame):
                 wx.MessageBox("%s is not a valid whiteboard file." % self.filename,
                              "oops!", style=wx.OK|wx.ICON_EXCLAMATION)
 
+
     def Convert(self, filetype):
-        if filetype == "ps":
-            os.system("convert " +self.filename+ " temp.jpg")
-            image = wx.Bitmap("temp.jpg")
-        elif filetype == "pdf":
-            os.system("convert " +self.filename+ " temp.jpg")
-            image = wx.Bitmap("temp-0.jpg")
+        """Converts a PDF/PS file to an image, and loads it, otherwise loads an
+        image (png/jpg/gif)."""
+        dir = os.path.split(self.filename)[0]
+        before = os.walk(dir).next()[2] # file count of directory before convert
+
+        if filetype in ["ps", "pdf"]:
+            # convert file, find out new directory filecount, iterate over the
+            # difference, creating new UI tabs and loading in the png
+            os.system("convert " +self.filename+ " " + dir +"/temp-0.png")
+            after = os.walk(dir).next()[2]
+
+            count = len(after) - len(before)
+
+            if count == 1:
+                image = wx.Bitmap(dir +"/temp-0.png")
+                shape = Image(self.board, (0,0,0), 1)
+                shape.button_down(50, 50, image)
+
+            else:
+                for x in range(0, count):
+                    wb = Whiteboard(self.nb, -1) # new whiteboard
+                    self.nb.AddPage(wb, "Untitled "+ str(self.nb.GetPageCount() + 1) )
+
+                    bmp = wx.Bitmap(dir +"/temp-0-"+ str(x) +".png")
+                    image = Image(wb, (0,0,0), 1)
+                    image.button_down(50, 50, bmp)
+                self.nb.SetSelection( self.nb.AdvanceSelection() )
+
+        # just load standard image
         else:
             image = wx.Bitmap(self.filename)
-        shape = Image(self.board, (0,0,0), 1)
-        shape.button_down(50, 50, image)
+            shape = Image(self.board, (0,0,0), 1)
+            shape.button_down(50, 50, image)
 
 
-    wildcard = "All files (*.*)|*.*|Whiteboard file (*.wtbd)|*.wtbd|Image Files (.jpg, .png, .gif, .ps, .pdf)|*.jpg;*.png;*.gif;*.ps;*.pdf"
+    def OnMenuNewTab(self, event):
+        wb = Whiteboard(self.nb, -1)
+        self.nb.AddPage(wb, "Untitled "+ str(self.nb.GetPageCount() + 1) )
 
+
+    def OnMenuCloseTab(self, event):
+        if self.nb.GetPageCount() is not 0:
+            self.nb.RemovePage( self.nb.GetSelection() )
+
+    wildcard = "All files (*.*)|*.*|Whiteboard file (*.wtbd)|*.wtbd|Image Files (.jpg, .png, .gif, .ps, pdf)|*.jpg;*.jpeg;*.png;*.gif;*.ps;*.pdf"
 
     def OnMenuOpen(self, event):
         dlg = wx.FileDialog(self, "Open Whiteboard file...", os.getcwd(),
@@ -191,7 +228,6 @@ class GUI(wx.Frame):
             dlg.Destroy()
 
 ###################################################
-
 
     def OnMenuUndo(self, event):
         self.board.Undo()
@@ -236,6 +272,7 @@ class ControlPanel(wx.Panel):
     def __init__(self, parent, ID, board):
         wx.Panel.__init__(self, parent, ID, style=wx.RAISED_BORDER, size=(20,20))
 
+        self.parent = parent
         self.board = board
         items = ["Pen", "Rectangle", "Circle", "Ellipse", "Round Rect", "Eyedropper", "Text", "Fill", "Arc"]
         self.toolBtns  = {}
@@ -299,23 +336,24 @@ class ControlPanel(wx.Panel):
         drawing panel
         """
         new = int(event.GetId() )
+        #print self.parent.nb.GetCurrentPage()
 
-        if new != self.board.tool: #changing tools, toggle old one
-            self.toolBtns[self.board.tool].SetToggle(False)
+        if new != self.parent.nb.GetCurrentPage().tool: #changing tools, toggle old one
+            self.toolBtns[self.parent.nb.GetCurrentPage().tool].SetToggle(False)
         else:
-            self.toolBtns[self.board.tool].SetToggle(True)
+            self.toolBtns[self.parent.nb.GetCurrentPage().tool].SetToggle(True)
 
-        self.board.SelectTool(new)
+        self.parent.nb.GetCurrentPage().SelectTool(new)
 
 
     def OnSetForeground(self, event):
-        self.board.SetColour(event.GetColour() )
+        self.parent.nb.GetCurrentPage().SetColour(event.GetColour() )
 
     def OnSetBackground(self, event):
-        self.board.foreground = event.GetValue()
+        self.parent.nb.GetCurrentPage().foreground = event.GetValue()
 
     def OnSetThickness(self, event):
-        self.board.SetThickness(event.GetSelection() )
+        self.parent.nb.GetCurrentPage().SetThickness(event.GetSelection() )
 
 
 #----------------------------------------------------------------------
