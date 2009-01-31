@@ -1,13 +1,11 @@
 #!/usr/bin/python
 
 """
-This module implements the Superboard demo application.  It takes the
-boardWindow previously presented and reuses it in a much more
-intelligent Frame.  This one has a menu and a statusbar, is able to
-save and reload boards, clear the workspace, and has a simple control
-panel for setting color and line thickness in addition to the popup
-menu that boardWindow provides.  There is also a nice About dialog
-implmented using an wx.html.HtmlWindow.
+This module implements the Whteboard application.  It takes a Whiteboard class
+and wraps it in a GUI with a menu/toolbar/statusbar; can save and load drawings,
+clear the workspace, undo, redo, a simple history "replayer", allowing you to
+have a replay of what you have drawn played back to you.
+Also on the GUI is a panel for setting color and line thickness.
 """
 
 import os, cPickle, random, time, subprocess
@@ -41,6 +39,7 @@ class GUI(wx.Frame):
         self.CreateStatusBar()
         self.MakeMenu()
         self.filename = None
+        self.converted = False
 
         self.nb = wx.Notebook(self)
         self.board    = Whiteboard(self.nb, -1)
@@ -64,13 +63,13 @@ class GUI(wx.Frame):
         file = wx.Menu()
         #file.Append(wx.ID_NEW, "&New\tCtrl-N", "Create a new Whiteboard file")
         file.Append(wx.ID_NEW, "New &Tab\tCtrl-T", "Open a new tab")
-        file.Append(wx.ID_OPEN, "&Open", "Open an existing Whiteboard file")
-        file.Append(wx.ID_SAVE, "&Save", "Save the Whiteboard data")
-        file.Append(wx.ID_SAVEAS, "Save &As...", "Save the Whiteboard data in a new file")
+        file.Append(wx.ID_OPEN, "&Open", "Open an existing Whyteboard file")
+        file.Append(wx.ID_SAVE, "&Save", "Save the Whyteboard data")
+        file.Append(wx.ID_SAVEAS, "Save &As...", "Save the Whyteboard data in a new file")
 
         file.AppendSeparator()
         file.Append(wx.ID_CLOSE, "&Close Tab", "Close current tab")
-        file.Append(wx.ID_EXIT, "E&xit", "Terminate Whiteboard")
+        file.Append(wx.ID_EXIT, "E&xit", "Terminate Whyteboard")
 
         edit = wx.Menu()
         edit.Append(wx.ID_UNDO, "&Undo\tCtrl-Z", "Undo the last operation")
@@ -81,7 +80,7 @@ class GUI(wx.Frame):
         image.Append(wx.ID_CLEAR, "&Clear\tCtrl-C", "Clear the current drawing")
 
         help = wx.Menu()
-        help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the Whiteboard application")
+        help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the Whyteboard application")
 
         menuBar = wx.MenuBar()
         menuBar.Append(file, "&File")
@@ -100,8 +99,9 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnMenuRedo, id=wx.ID_REDO)
         self.Bind(wx.EVT_MENU, self.OnMenuHistory, id=ID_HISTORY)
         self.Bind(wx.EVT_MENU, self.OnMenuClear, id=wx.ID_CLEAR)
-        self.Bind(wx.EVT_MENU, self.OnMenuExit, id=wx.ID_EXIT)
         self.Bind(wx.EVT_MENU, self.OnMenuAbout, id=wx.ID_ABOUT)
+        self.Bind(wx.EVT_MENU, self.OnMenuExit, id=wx.ID_EXIT)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
 
 ###################################################
@@ -144,7 +144,7 @@ class GUI(wx.Frame):
                 self.board.reInitBuffer = True
 
             except cPickle.UnpicklingError:
-                wx.MessageBox("%s is not a valid whiteboard file." % self.filename,
+                wx.MessageBox("%s is not a valid whyteboard file." % self.filename,
                              "oops!", style=wx.OK|wx.ICON_EXCLAMATION)
 
 
@@ -160,22 +160,23 @@ class GUI(wx.Frame):
             os.system("convert " +self.filename+ " " + dir +"/temp-0.png")
             after = os.walk(dir).next()[2]
 
-            count = len(after) - len(before)
+            self.count = len(after) - len(before)
 
-            if count == 1:
+            if self.count == 1:
                 image = wx.Bitmap(dir +"/temp-0.png")
                 shape = Image(self.board, (0,0,0), 1)
                 shape.button_down(50, 50, image)
 
             else:
-                for x in range(0, count):
+                self.converted = True    # to delete tmp. files when closing
+                for x in range(0, self.count):
                     wb = Whiteboard(self.nb, -1) # new whiteboard
                     self.nb.AddPage(wb, "Untitled "+ str(self.nb.GetPageCount() + 1) )
 
                     bmp = wx.Bitmap(dir +"/temp-0-"+ str(x) +".png")
                     image = Image(wb, (0,0,0), 1)
                     image.button_down(50, 50, bmp)
-                self.nb.SetSelection( self.nb.AdvanceSelection() )
+                self.nb.SetSelection( self.nb.AdvanceSelection() ) # select new tab
 
         # just load standard image
         else:
@@ -193,10 +194,10 @@ class GUI(wx.Frame):
         if self.nb.GetPageCount() is not 0:
             self.nb.RemovePage( self.nb.GetSelection() )
 
-    wildcard = "All files (*.*)|*.*|Whiteboard file (*.wtbd)|*.wtbd|Image Files (.jpg, .png, .gif, .ps, pdf)|*.jpg;*.jpeg;*.png;*.gif;*.ps;*.pdf"
+    wildcard = "All files (*.*)|*.*|Whyteboard file (*.wtbd)|*.wtbd|Image Files (.jpg, .png, .gif, .ps, pdf)|*.jpg;*.jpeg;*.png;*.gif;*.ps;*.pdf"
 
     def OnMenuOpen(self, event):
-        dlg = wx.FileDialog(self, "Open Whiteboard file...", os.getcwd(),
+        dlg = wx.FileDialog(self, "Open Whyteboard file...", os.getcwd(),
                            style=wx.OPEN, wildcard = self.wildcard)
         if dlg.ShowModal() == wx.ID_OK:
             self.filename = dlg.GetPath()
@@ -215,9 +216,9 @@ class GUI(wx.Frame):
         if len(self.board.shapes) == 0:
             wx.MessageBox("No image data to save", "Save error", style=wx.OK)
         else:
-            dlg = wx.FileDialog(self, "Save Whiteboard as...", os.getcwd(),
+            dlg = wx.FileDialog(self, "Save Whyteboard as...", os.getcwd(),
                                style=wx.SAVE | wx.OVERWRITE_PROMPT,
-                               wildcard = "Whiteboard files (*.wtbd)|*.wtbd|All files (*.*)|*.*")
+                               wildcard = "Whyteboard files (*.wtbd)|*.wtbd|All files (*.*)|*.*")
             if dlg.ShowModal() == wx.ID_OK:
                 filename = dlg.GetPath()
                 if not os.path.splitext(filename)[1]:
@@ -252,6 +253,12 @@ class GUI(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
+
+    def OnClose(self, event):
+        if self.converted:
+            for x in range(0, self.count):
+                os.remove( os.path.split(self.filename)[0] +"/temp-0-"+ str(x) +".png")
+        self.Destroy()
 
 
 #----------------------------------------------------------------------
@@ -336,7 +343,6 @@ class ControlPanel(wx.Panel):
         drawing panel
         """
         new = int(event.GetId() )
-        #print self.parent.nb.GetCurrentPage()
 
         if new != self.parent.nb.GetCurrentPage().tool: #changing tools, toggle old one
             self.toolBtns[self.parent.nb.GetCurrentPage().tool].SetToggle(False)
@@ -493,7 +499,7 @@ class History(wx.Dialog):
 
 
 class About(wx.Dialog):
-    version = "0.1"
+    version = "0.15"
     """ An about box that uses an HTML window """
     text = '''
 <html>
