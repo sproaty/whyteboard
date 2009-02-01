@@ -14,7 +14,8 @@ class Whiteboard(wx.ScrolledWindow):
     def __init__(self, parent, ID):
         """Initalise the window, class variables and bind mouse/paint events"""
         wx.ScrolledWindow.__init__(self, parent, ID)#, style=wx.FULL_REPAINT_ON_RESIZE)
-        self.SetScrollbars(20, 20, 55, 40)
+        self.SetVirtualSize((1000, 1000))
+        self.SetScrollRate(20,20)
 
         self.listeners = []
         self.thickness = 1
@@ -46,8 +47,17 @@ class Whiteboard(wx.ScrolledWindow):
         dc = wx.BufferedDC(None, self.buffer)
         dc.SetBackground(wx.Brush(self.GetBackgroundColour()) )
         dc.Clear()
+        self.PrepareDC(dc)
         self.DrawShapes(dc)
         self.reInitBuffer = False
+
+
+    def ConvertEventCoords(self, event):
+        """Translate mouse x/y coords to virtual scroll ones"""
+        xView, yView = self.GetViewStart()
+        xDelta, yDelta = self.GetScrollPixelsPerUnit()
+        return (event.GetX() + (xView * xDelta),
+                event.GetY() + (yView * yDelta))
 
 
     def DrawShapes(self, dc):
@@ -64,22 +74,25 @@ class Whiteboard(wx.ScrolledWindow):
 
     def OnLeftDown(self, event):
         """called when the left mouse button is pressed"""
-        pos = event.GetPosition()
-        self.shape.button_down(pos.x, pos.y)
+        #pos = event.GetPosition()
+        x, y = self.ConvertEventCoords(event)
+        self.shape.button_down(x, y)
 
 
     def OnLeftUp(self, event):
         """called when the left mouse button is released"""
-        pos = event.GetPosition()
-        self.shape.button_up(pos.x, pos.y)
+        #pos = event.GetPosition()
+        x, y = self.ConvertEventCoords(event)
+        self.shape.button_up(x, y)
         self.SelectTool(self.tool) # reset
 
 
     def OnMotion(self, event):
         """Called when the mouse is in motion."""
         if event.Dragging() and event.LeftIsDown():
-            pos = event.GetPosition()
-            self.shape.motion(pos.x, pos.y)
+            #pos = event.GetPosition()
+            x, y = self.ConvertEventCoords(event)
+            self.shape.motion(x, y)
             self.reInitBuffer = True
 
 
@@ -157,12 +170,13 @@ class Whiteboard(wx.ScrolledWindow):
         if self.reInitBuffer:
             self.InitBuffer()
             #self.Refresh(False) - dunno what it's doing...
-            self.Refresh()
+            self.Refresh(False)
 
 
     def OnPaint(self, event):
         """Called when the window is exposed."""
         dc = wx.BufferedPaintDC(self, self.buffer)
+        self.reInitBuffer = True # redraw screen after scroll
 
 
     def AddListener(self, listener):

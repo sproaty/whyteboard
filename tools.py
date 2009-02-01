@@ -131,6 +131,9 @@ class Arc(Tool):
     def button_down(self, x, y):
         self.x = x
         self.y = y
+        self.x2 = x
+        self.y2 = y        self.c1 = 300
+        self.c2 = 300
         self.board.AddShape(self)
 
     def motion(self, x, y):
@@ -148,7 +151,7 @@ class Arc(Tool):
 
 class Image(Tool):
 
-    def __init__(self, board, colour, thickness):
+    def __init__(self, board, colour=(0,0,0), thickness=1):
         Tool.__init__(self, board, colour, thickness)
 
     def button_down(self, x, y, image):
