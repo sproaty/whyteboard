@@ -4,7 +4,7 @@
 This module contains the Whiteboard class, a window that can be drawn upon.
 """
 
-import wx                  # This module uses the new wx namespace
+import wx
 from tools import *
 
 #----------------------------------------------------------------------
@@ -13,7 +13,7 @@ class Whiteboard(wx.ScrolledWindow):
 
     def __init__(self, parent, ID):
         """Initalise the window, class variables and bind mouse/paint events"""
-        wx.ScrolledWindow.__init__(self, parent, ID)#, style=wx.FULL_REPAINT_ON_RESIZE)
+        wx.ScrolledWindow.__init__(self, parent, ID)
         self.SetVirtualSize((1000, 1000))
         self.SetScrollRate(20,20)
 
@@ -41,7 +41,6 @@ class Whiteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
 
-
     def InitBuffer(self):
         """Initialise the bitmap used for buffering the display."""
         dc = wx.BufferedDC(None, self.buffer)
@@ -67,63 +66,54 @@ class Whiteboard(wx.ScrolledWindow):
         for s in self.shapes:
             pen = wx.Pen(s.colour, s.thickness, wx.SOLID)
             dc.SetPen(pen)
-            dc.SetBrush(wx.TRANSPARENT_BRUSH) # draw in unfilled shape
-            s.draw(dc) # call shape's polymorphic drawing method
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)  # draw in unfilled shape
+            s.draw(dc)  # call shape's polymorphic drawing method
         dc.EndDrawing()
 
 
     def OnLeftDown(self, event):
         """called when the left mouse button is pressed"""
-        #pos = event.GetPosition()
         x, y = self.ConvertEventCoords(event)
         self.shape.button_down(x, y)
 
 
     def OnLeftUp(self, event):
         """called when the left mouse button is released"""
-        #pos = event.GetPosition()
         x, y = self.ConvertEventCoords(event)
         self.shape.button_up(x, y)
-        self.SelectTool(self.tool) # reset
+        self.SelectTool(self.tool)  # reset
 
 
     def OnMotion(self, event):
         """Called when the mouse is in motion."""
         if event.Dragging() and event.LeftIsDown():
-            #pos = event.GetPosition()
             x, y = self.ConvertEventCoords(event)
             self.shape.motion(x, y)
-            self.reInitBuffer = True
 
 
     def SelectTool(self, new):
         """Changes the users' tool (and cursor) they are drawing with"""
         self.tool  = new
-        items      = [Pen, Rectangle, Circle, Ellipse, RoundRect, Eyedropper, Text2, Fill, Arc]
+        items      = [Pen, Rectangle, Triangle, Circle, Ellipse, RoundRect,
+                      Text, Eyedropper, Fill, Arc]
         params     = [self, self.colour, self.thickness]
-        self.shape = items[new-1](*params) # who would have thought this would work
+        self.shape = items[new-1](*params)  # create new Tool object
         self.SetCursor(wx.StockCursor(self.shape.cursor) )
 
 
     def AddShape(self, shape):
         """Adds a shape to the "to-draw" list, and to the undo list"""
         self.shapes.append(shape)
-        #if len(self.shapes) > 1:
-        #    self.undo.append(shape)
 
 
     def Undo(self):
         """Undoes an action, and adds it to the redo list"""
         try:
-            #if len(self.shapes) == 0: # cleared screen
-            #    pass#self.shapes.append(self.undo.pop() )
-            #else:
             shape = self.shapes.pop()
-            self.undo.append( shape ) # pop newest item off the shapes list; add onto undo stack
-            #index = self.undo[ len(self.undo) - 1]
+            self.undo.append( shape )  # pop newest item from shapes; add on undo stack
             self.redo.append( shape )
             self.reInitBuffer = True
-        except IndexError: # probably do some button disabling here later
+        except IndexError:  # probably do some button disabling here later
             pass
 
 
@@ -131,7 +121,7 @@ class Whiteboard(wx.ScrolledWindow):
         """Redoes an action, and adds it to the undo list"""
         try:
             item = self.redo.pop()
-            self.undo.append(item) # add item to be removed onto redo stack
+            self.undo.append(item)  # add item to be removed onto redo stack
             self.shapes.append(item)
             self.reInitBuffer = True
         except IndexError:
@@ -143,8 +133,6 @@ class Whiteboard(wx.ScrolledWindow):
         self.undo.append(self.shapes)
         self.shapes = []
         self.reInitBuffer = True
-
-        #self.undo.append(shape)
 
     def SetColour(self, colour):
         """Set a new colour, update ColourIndicator"""
@@ -169,14 +157,13 @@ class Whiteboard(wx.ScrolledWindow):
         """If the window size changed, resize the bitmap to match the size."""
         if self.reInitBuffer:
             self.InitBuffer()
-            #self.Refresh(False) - dunno what it's doing...
-            self.Refresh(False)
+            self.Refresh(True)
 
 
     def OnPaint(self, event):
         """Called when the window is exposed."""
         dc = wx.BufferedPaintDC(self, self.buffer)
-        self.reInitBuffer = True # redraw screen after scroll
+        self.reInitBuffer = True  # redraw screen after scroll
 
 
     def AddListener(self, listener):
@@ -185,7 +172,7 @@ class Whiteboard(wx.ScrolledWindow):
 
     def Notify(self):
         """Registered Listeners are notified of colour and thickness change."""
-        self.SelectTool(self.tool) # update current shape's colour/thickness
+        self.SelectTool(self.tool)  # update current shape's colour/thickness
         for other in self.listeners:
             other.Update(self.colour, self.thickness)
 

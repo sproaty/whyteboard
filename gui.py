@@ -17,17 +17,16 @@ from copy import copy
 
 import wx
 import wx.html
-from wx.lib import buttons # for generic button classes
+from wx.lib import buttons  # for generic toggle button
 
 from whiteboard import Whiteboard
 from tools import Pen, Image
 
 
-
 #----------------------------------------------------------------------
 
-ID_HISTORY = wx.NewId()
 
+ID_HISTORY = wx.NewId()
 
 class GUI(wx.Frame):
     """
@@ -47,15 +46,13 @@ class GUI(wx.Frame):
         self.MakeMenu()
 
         self.nb = wx.Notebook(self)
-        self.board    = Whiteboard(self.nb, -1)
+        self.board = Whiteboard(self.nb, -1)
         self.nb.AddPage(self.board, "Untitled 1")
 
         self.converted = False   # whether PDF/PS conversion happened
         self.filename = None     # .wtbd file
-        #self.convFile = None     # converted PDF/FS file
-        self.cPanel        = ControlPanel(self, -1, self.board)
+        self.cPanel = ControlPanel(self, -1, self.board)
         self.board.SelectTool(1)
-
 
         # Create a sizer to layout the two windows side-by-side.
         box = wx.BoxSizer(wx.HORIZONTAL)
@@ -67,34 +64,29 @@ class GUI(wx.Frame):
     def MakeMenu(self):
         """Creates the menu..."""
         file = wx.Menu()
-        #file.Append(wx.ID_NEW, "&New\tCtrl-N", "Create a new Whiteboard file")
-        file.Append(wx.ID_NEW, "New &Tab\tCtrl-T", "Open a new tab")
-        file.Append(wx.ID_OPEN, "&Open", "Open an existing Whyteboard file")
-        file.Append(wx.ID_SAVE, "&Save", "Save the Whyteboard data")
-        file.Append(wx.ID_SAVEAS, "Save &As...", "Save the Whyteboard data in a new file")
-
-        file.AppendSeparator()
-        file.Append(wx.ID_CLOSE, "&Close Tab", "Close current tab")
-        file.Append(wx.ID_EXIT, "E&xit", "Terminate Whyteboard")
-
         edit = wx.Menu()
+        image = wx.Menu()
+        help = wx.Menu()
+        menuBar = wx.MenuBar()
+
+        file.Append(wx.ID_NEW, "New &Tab\tCtrl-T", "Open a new tab")
+        file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Open an existing Whyteboard file")
+        file.Append(wx.ID_SAVE, "&Save\tCtrl-S", "Save the Whyteboard data")
+        file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl-Shift-S", "Save the Whyteboard data in a new file")
+        file.AppendSeparator()
+        file.Append(wx.ID_CLOSE, "&Close Tab\tCtrl-W", "Close current tab")
+        file.Append(wx.ID_EXIT, "E&xit\tAlt-F4", "Terminate Whyteboard")
         edit.Append(wx.ID_UNDO, "&Undo\tCtrl-Z", "Undo the last operation")
         edit.Append(wx.ID_REDO, "&Redo\tCtrl-Y", "Redo the last operation")
         edit.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay your drawing history")
-
-        image = wx.Menu()
         image.Append(wx.ID_CLEAR, "&Clear\tCtrl-C", "Clear the current drawing")
-
-        help = wx.Menu()
         help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the Whyteboard application")
 
-        menuBar = wx.MenuBar()
         menuBar.Append(file, "&File")
         menuBar.Append(edit, "&Edit")
         menuBar.Append(image, "&Image")
         menuBar.Append(help, "&Help")
         self.SetMenuBar(menuBar)
-
 
         self.Bind(wx.EVT_MENU, self.OnMenuNewTab, id=wx.ID_NEW)
         self.Bind(wx.EVT_MENU, self.OnMenuCloseTab, id=wx.ID_CLOSE)
@@ -111,18 +103,17 @@ class GUI(wx.Frame):
 
 
     def MakeToolbar(self):
-        """Creates a toolbar with some nasty code"""
-        self.tb = self.CreateToolBar()
-        self.tb.AddLabelTool(wx.ID_NEW, '', wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_TOOLBAR), shortHelp="New tab" )
-        self.tb.AddLabelTool(wx.ID_OPEN, '', wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR), shortHelp="Open a file" )
-        self.tb.AddLabelTool(wx.ID_SAVE, '', wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE, wx.ART_TOOLBAR), shortHelp="Save Whyteboard drawing" )
-        self.tb.AddSeparator()
-        self.tb.AddLabelTool(wx.ID_UNDO, '', wx.ArtProvider.GetBitmap(wx.ART_UNDO, wx.ART_TOOLBAR), shortHelp="Undo Action" )
-        self.tb.AddLabelTool(wx.ID_REDO, '', wx.ArtProvider.GetBitmap(wx.ART_REDO, wx.ART_TOOLBAR), shortHelp="Redo Action" )
-        #self.tb.EnableTool(wx.ID_UNDO, False)
-        #self.tb.EnableTool(wx.ID_REDO, False)
-        self.tb.Realize()
+        """Creates a toolbar..."""
+        t = wx.ART_TOOLBAR  # less typing
 
+        self.tb = self.CreateToolBar()
+        self.tb.AddLabelTool(wx.ID_NEW, '', wx.ArtProvider.GetBitmap(wx.ART_NEW, t), shortHelp="New Tab" )
+        self.tb.AddLabelTool(wx.ID_OPEN, '', wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, t), shortHelp="Open a File" )
+        self.tb.AddLabelTool(wx.ID_SAVE, '', wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE, t), shortHelp="Save Whyteboard Drawing" )
+        self.tb.AddSeparator()
+        self.tb.AddLabelTool(wx.ID_UNDO, '', wx.ArtProvider.GetBitmap(wx.ART_UNDO, t), shortHelp="Undo Action" )
+        self.tb.AddLabelTool(wx.ID_REDO, '', wx.ArtProvider.GetBitmap(wx.ART_REDO, t), shortHelp="Redoes the Undone Action" )
+        self.tb.Realize()
 
 
 ###################################################
@@ -152,104 +143,90 @@ class GUI(wx.Frame):
                 f.close()
 
 
-    def ReadFile(self, filename):
-            type = os.path.splitext(filename)[1]
+    def LoadFile(self, filename):
+        """Loads in a file, passes it to convert if not a .wtbd file, otherwise
+        tries to unpickle the file."""
+        type = os.path.splitext(filename)[1]
 
-            if type[1:] in ["ps", "jpg", "jpeg", "png", "pdf"]:
-                self.Convert(type[1:])
-            elif filename.endswith("wtbd"):
+        if type[1:] in ["ps", "pdf"]:
+            self.Convert(type[1:])
+        elif type[1:] in ["jpg", "jpeg", "png", "gif", "tiff", "bmp"]:
+            # load standard image into current tab
+            image = wx.Bitmap(self.converted)
+            shape = Image(self.board)
+            shape.button_down(0, 0, image)
+            self.converted = False  # Undo the filename save
+        elif filename.endswith("wtbd"):
 
-                temp = {}
-                f = open(self.filename, 'r')
-                try:
-                    temp = cPickle.load(f)
-                except cPickle.UnpicklingError:
-                    wx.MessageBox("%s is not a valid whyteboard file." % self.filename,
-                         "Error", style=wx.OK|wx.ICON_EXCLAMATION)
-                f.close()
+            temp = {}
+            f = open(self.filename, 'r')
+            try:
+                temp = cPickle.load(f)
+            except cPickle.UnpicklingError:
+                wx.MessageBox("%s is not a valid Whyteboard file." % self.filename,
+                     "Error", style=wx.OK|wx.ICON_EXCLAMATION)
+            f.close()
 
-                # load in new tabs for every dictionary item
-                if self.nb.GetPageCount() > 0 and not self.nb.GetCurrentPage().shapes:
-                    self.nb.DeleteAllPages()
-                for x in temp:
-                    wb = Whiteboard(self.nb, -1)
-                    wb.SelectTool(1)
-                    wb.shapes = temp[x]
-                    wb.AddListener(self.cPanel.ci)
-                    wb.Notify()
-                    self.nb.AddPage(wb, "Untitled "+str(self.nb.GetPageCount() + 1))
+            # load in new tabs for every dictionary item
+            if self.nb.GetPageCount() > 0 and not self.nb.GetCurrentPage().shapes:
+                self.nb.DeleteAllPages()
+            for x in temp:
+                wb = Whiteboard(self.nb, -1)
+                wb.SelectTool(1)
+                wb.shapes = temp[x]
+                wb.AddListener(self.cPanel.ci)
+                wb.Notify()
+                self.nb.AddPage(wb, "Untitled "+str(self.nb.GetPageCount() + 1))
 
-                    for shape in wb.shapes:
-                        shape.board = wb
+                for shape in wb.shapes:
+                    shape.board = wb
 
-                self.SetTitle( os.path.split(self.filename)[1] + ' - ' +  self.title)
-
-            self.board.reInitBuffer = True
+            self.SetTitle( os.path.split(self.filename)[1] + ' - ' +  self.title)
+        else:
+            wx.MessageBox("Invalid file to load.", "Load error", style=wx.OK)
 
 
     def Convert(self, filetype):
         """Converts a PDF/PS file to an image, and loads it, otherwise loads an
         image (png/jpg/gif)."""
 
-        if filetype in ["ps", "pdf"]:
-            # convert file, find out new directory filecount, iterate over the
-            # difference, creating new UI tabs and loading in the png
-            dir, file = os.path.split(self.converted)
-            before = os.walk(dir).next()[2]  # dir file count before convert
-            os.system("convert " + self.converted + " " + dir +"/temp-0.png")
+        # convert file, find out new directory filecount, iterate over the
+        # difference, creating new UI tabs and loading in the png
+        dir, file = os.path.split(self.converted)
+        before = os.walk(dir).next()[2]  # dir file count before convert
+        os.system("convert " + self.converted + " " + dir +"/temp-0.png")
 
-            after = os.walk(dir).next()[2]
-            self.count = len(after) - len(before)
+        after = os.walk(dir).next()[2]
+        self.count = len(after) - len(before)
 
-            if self.count == 1:
-                image = wx.Bitmap(dir +"/temp-0.png")
-                shape = Image(self.board)
-                shape.button_down(0, 0, image)
-            else:
-                # load in new tabs for every dictionary item
-                if self.nb.GetPageCount() > 0 and not self.nb.GetCurrentPage().shapes:
-                    self.nb.DeleteAllPages()
-
-                for x in range(0, self.count):
-                    wb = Whiteboard(self.nb, -1)
-                    wb.SelectTool(1)
-                    wb.AddListener(self.cPanel.ci)
-                    wb.Notify()
-
-                    image = wx.Bitmap(dir +"/temp-0-"+ str(x) +".png")
-                    shape = Image(wb)
-                    shape.button_down(0, 0, image)
-
-                    name = file[0:5] + "." +filetype + " - " + str(self.nb.GetPageCount() + 1)
-                    self.nb.AddPage(wb, name)
-
-                #self.nb.AdvanceSelection()
-
-        else:  # load standard image into current tab
-            image = wx.Bitmap(self.filename)
+        if self.count == 1:
+            image = wx.Bitmap(dir +"/temp-0.png")
             shape = Image(self.board)
             shape.button_down(0, 0, image)
-            self.converted = False  # Undo the filename save
+        else:
+            # load in new tabs for every dictionary item
+            if self.nb.GetPageCount() > 0 and not self.nb.GetCurrentPage().shapes:
+                self.nb.DeleteAllPages()
+
+            for x in range(0, self.count):
+                wb = Whiteboard(self.nb, -1)
+                wb.SelectTool(1)
+                wb.AddListener(self.cPanel.ci)
+                wb.Notify()
+
+                image = wx.Bitmap(dir +"/temp-0-"+ str(x) +".png")
+                shape = Image(wb)
+                shape.button_down(0, 0, image)
+
+                name = file[0:5] + "." +filetype + " - " + str(self.nb.GetPageCount() + 1)
+                self.nb.AddPage(wb, name)
 
 
 ###################################################
 
 
-    def OnMenuNewTab(self, event):
-        """Opens a new tab and selects it"""
-        wb = Whiteboard(self.nb, -1)
-        self.nb.AddPage(wb, "Untitled "+ str(self.nb.GetPageCount() + 1) )
-        self.nb.AdvanceSelection()
-
-
-    def OnMenuCloseTab(self, event):
-        """Closes the current tab (if there are any to close"""
-        if self.nb.GetPageCount() is not 0:
-            self.nb.RemovePage( self.nb.GetSelection() )
-
-
-    wildcard = "All files (*.*)|*.*|Whyteboard file (*.wtbd)|*.wtbd|Image Files\
-    (.jpg, .png, .gif, .ps, pdf)|*.jpg;*.jpeg;*.png;*.gif;*.ps;*.pdf"
+    wildcard = "All files (*.*)|*.*|Whyteboard file (*.wtbd)|*.wtbd|Image Files|\
+    *.jpg;*.jpeg;*.png;*.gif;*.bmp;*.tiff;*.ps;*.pdf"
 
     def OnMenuOpen(self, event):
         dlg = wx.FileDialog(self, "Open file...", os.getcwd(),
@@ -259,9 +236,9 @@ class GUI(wx.Frame):
             fn = dlg.GetPath()
             if fn.endswith("wtbd"):
                 self.filename = fn
-            else:
+            elif os.path.splitext(fn)[1][1:] in ["ps", "pdf", "jpg", "jpeg", "png", "gif", "tiff", "bmp"]:
                 self.converted = fn
-            self.ReadFile(fn)
+            self.LoadFile(fn)
         dlg.Destroy()
 
 
@@ -291,12 +268,36 @@ class GUI(wx.Frame):
                     filename = filename + '.wtbd'
 
                 # only store whyteboard files as the current file, not an image
-                if filename.endswith("wtbd"):
+                if filename.endswith(".wtbd"):
                     self.filename = filename
                     self.SaveFile()
 
                 self.SetTitle( os.path.split(self.filename)[1] + ' - ' +  self.title)
             dlg.Destroy()
+
+
+    def OnMenuNewTab(self, event):
+        """Opens a new tab and selects it"""
+        wb = Whiteboard(self.nb, -1)
+        self.nb.AddPage(wb, "Untitled "+ str(self.nb.GetPageCount() + 1) )
+        self.nb.AdvanceSelection()
+
+
+    def OnMenuCloseTab(self, event):
+        """Closes the current tab (if there are any to close"""
+        if self.nb.GetPageCount() is not 0:
+            self.nb.RemovePage( self.nb.GetSelection() )
+
+
+    def OnClose(self, event):
+        """Clean up any tmp files from PDF/PS conversion"""
+        if self.converted is not False:
+            if self.count == 1:
+                os.remove( os.path.split(self.converted)[0] +"/temp-0.png")
+            else:
+                for x in range(0, self.count):
+                    os.remove( os.path.split(self.converted)[0] +"/temp-0-"+ str(x) +".png")
+        self.Destroy()
 
 
     def OnMenuUndo(self, event):
@@ -323,17 +324,6 @@ class GUI(wx.Frame):
         dlg.Destroy()
 
 
-    def OnClose(self, event):
-        """Clean up any tmp files from PDF/PS conversion"""
-        if self.converted is not False:
-            if self.count == 1:
-                os.remove( os.path.split(self.converted)[0] +"/temp-0.png")
-            else:
-                for x in range(0, self.count):
-                    os.remove( os.path.split(self.converted)[0] +"/temp-0-"+ str(x) +".png")
-        self.Destroy()
-
-
 #----------------------------------------------------------------------
 
 
@@ -345,37 +335,28 @@ class ControlPanel(wx.Panel):
     also a little window that shows an example boardLine in the selected
     values.  Nested sizers are used for layout.
     """
-
-    BMP_SIZE = 16
-    BMP_BORDER = 3
-
     def __init__(self, parent, ID, board):
         wx.Panel.__init__(self, parent, ID, style=wx.RAISED_BORDER, size=(20,20))
 
         self.parent = parent
         self.board = board
-        items = ["Pen", "Rectangle", "Circle", "Ellipse", "Round Rect", "Eyedropper", "Text", "Fill", "Arc"]
+        items = ["Pen", "Rectangle", "Triangle", "Circle", "Ellipse",
+                 "Round Rect", "Text", "Eyedropper", "Fill", "Arc"]
         self.toolBtns  = {}
         self.clrBtns   = {}
         self.thknsBtns = {}
         tools = wx.GridSizer(cols=1, hgap=1, vgap=2)
-        x = 1 # assign tool widgets IDs from 1-n(tools) to be used by the tool changer function
 
-        for i in items:
-            b = buttons.GenToggleButton(self, label=i, id=x)
+        for x, i in enumerate(items):
+            b = buttons.GenToggleButton(self, label=i, id=x+1)
             b.SetBezelWidth(1)
-            b.Bind(wx.EVT_BUTTON, self.ChangeTool, id=x)
+            b.Bind(wx.EVT_BUTTON, self.ChangeTool, id=x+1)
             tools.Add(b, 0)
-            self.toolBtns[x] = b
-            x += 1
+            self.toolBtns[x+1] = b
 
-        self.toolBtns[1].SetToggle(True)
+        self.toolBtns[1].SetToggle(True)  # toggle Pen initially
 
-        numCols = 4
         spacing = 4
-
-        btnSize = wx.Size(self.BMP_SIZE + 2*self.BMP_BORDER,
-                          self.BMP_SIZE + 2*self.BMP_BORDER)
 
         foreground = wx.ColourPickerCtrl(self, size= wx.DefaultSize)
         foreground.Bind(wx.EVT_COLOURPICKER_CHANGED, self.OnSetForeground)
@@ -396,7 +377,6 @@ class ControlPanel(wx.Panel):
         board.AddListener(self.ci)
         board.Notify()
 
-        # add all GUI elements
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(tools, 0, wx.ALL, spacing)
         box.Add(foreground, 0, wx.EXPAND|wx.ALL, spacing)
@@ -405,9 +385,6 @@ class ControlPanel(wx.Panel):
         box.Add(self.ci, 0, wx.EXPAND|wx.ALL, spacing)
         self.SetSizer(box)
         self.SetAutoLayout(True)
-
-        # Resize this window so it is just large enough for the
-        # minimum requirements of the sizer.
         box.Fit(self)
 
 
@@ -436,6 +413,7 @@ class ControlPanel(wx.Panel):
 
 
 #----------------------------------------------------------------------
+
 
 class ColourIndicator(wx.Window):
     """
@@ -477,6 +455,7 @@ class ColourIndicator(wx.Window):
 
 
 #----------------------------------------------------------------------
+
 
 class History(wx.Dialog):
 
@@ -538,7 +517,6 @@ class History(wx.Dialog):
         dc.SetBackground(wx.Brush(self.board.GetBackgroundColour()) )
         dc.Clear()
 
-        # find last drawn pen stroke
         for s in self.board.shapes:
             if isinstance(s, Pen):
                 pen = s
@@ -562,9 +540,8 @@ class History(wx.Dialog):
 
                 dc.EndDrawing()
                 self.board.reInitBuffer = True
-
-        #else:
-        #    wx.MessageBox("No pen found..", "No pen drawings were found to replay!")
+        else:
+            wx.MessageBox("No pen found..", "No pen drawings were found to replay!")
 
 
 
@@ -572,16 +549,11 @@ class History(wx.Dialog):
 
 
 class About(wx.Dialog):
-    version = "0.2"
-    """ An about box that uses an HTML window """
+    version = "0.21"
     text = '''
-<html>
-<body bgcolor="#ACAA60">
-<center><table bgcolor="#455481" width="100%" cellspacing="0"
-cellpadding="0" border="1">
-<tr>
-    <td align="center"><h1>Whyteboard '''+version+'''</h1></td>
-</tr>
+<html><body bgcolor="#6699CC">
+<center><table bgcolor="#F0F0F0" width="100%" cellspacing="0" cellpadding="0" border="1">
+<tr><td align="center"><h1>Whyteboard '''+version+'''</h1></td></tr>
 </table>
 </center>
 
@@ -591,19 +563,15 @@ annotation of PDF, PostScript and most image formats.</p>
 <p>It is based on the demonstration code for wxPython, SuperDoodle by
 Robin Dunn, &copy; 1997-2006.</p>
 <p>Modified by Steven Sproat, &copy; 2009.</p>
-</body>
-</html>
-'''
+</body></html>'''
 
     def __init__(self, parent):
-        wx.Dialog.__init__(self, parent, -1, 'About Superboard',
-                          size=(420, 380) )
+        wx.Dialog.__init__(self, parent, -1, 'About Superboard', size=(420, 380) )
 
         html = wx.html.HtmlWindow(self, -1)
         html.SetPage(self.text)
         button = wx.Button(self, wx.ID_OK, "Okay")
 
-        # constraints for the html window
         lc = wx.LayoutConstraints()
         lc.top.SameAs(self, wx.Top, 5)
         lc.left.SameAs(self, wx.Left, 5)
@@ -611,7 +579,6 @@ Robin Dunn, &copy; 1997-2006.</p>
         lc.right.SameAs(self, wx.Right, 5)
         html.SetConstraints(lc)
 
-        # constraints for the button
         lc = wx.LayoutConstraints()
         lc.bottom.SameAs(self, wx.Bottom, 5)
         lc.centreX.SameAs(self, wx.CentreX)
@@ -627,7 +594,6 @@ Robin Dunn, &copy; 1997-2006.</p>
 #----------------------------------------------------------------------
 
 
-
 class WhiteboardApp(wx.App):
     def OnInit(self):
         frame = GUI(None)
@@ -636,6 +602,7 @@ class WhiteboardApp(wx.App):
         return True
 
 #----------------------------------------------------------------------
+
 
 if __name__ == '__main__':
     app = WhiteboardApp(True)
