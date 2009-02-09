@@ -1,12 +1,8 @@
-Whyteboard - To do list
-Fri 30 Jan 2009 02:27:56 GMT
+Whyteboard 0.25 - To do list
+Mon 09 Feb 2009 01:28:57 GMT
 
-*** NEW ***
 
--- Investigate into wxPython's FloatCanvas library: it provides methods to
-   draw many shapes which can be selected, scaled, moved and zoomed in on.
-  -- Research how to extend them to multiple-select.
-  -- Integrating onto a wxFrame (as in gui.py)
+*** NEW FEATURES ***
 
 -- When converting a PDF with ImageMagick, create thumbnails for a side panel
    which allows you to jump quickly from page to page.
@@ -18,9 +14,6 @@ Fri 30 Jan 2009 02:27:56 GMT
 
 *** IMPROVEMENTS AND THOUGHTS ***
 
-
--- If the system is to be used temporarily as a prototype before changing to
-   the FloatCanvas, add in font rendering instead of random text.
 
 -- Make the slider in the history dialog move forward/backwards through the
    pen replay
@@ -42,6 +35,16 @@ Fri 30 Jan 2009 02:27:56 GMT
      loads. Could perhaps intelligently monitor/allow a set preference to max.
      disk space usage/number of temporarily files/allow as many temporary files
      as [x] many files need it...or something
+  -------- NEARLY
+
 
 -- More pycallgraph to see function overheads in current implementation.
-  -- Could all improve with the interface of FloatCanvas, seems nice.
+  -- [currently much much much improved]
+
+
+
+OVERALL:
+ - fix things broken at the expense of cleaner/easier to maintain code for
+    this version
+ - isolate drawing colour/thickness to one class as it's spread all over the
+    place at the moment

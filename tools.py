@@ -1,14 +1,14 @@
 #!/usr/bin/python
 
 """
-This module contains classes which can be drawn onto a Whiteboard frame
+This module contains classes which can be drawn onto a Whyteboard frame
 """
 
 import random
 import time
 
 import wx
-import wx.lib.mixins.rubberband as RubberBand
+#import wx.lib.mixins.rubberband as RubberBand
 
 
 ###################################################
@@ -18,10 +18,10 @@ class Tool(object):
     """Abstract class representing a tool: Drawing board/colour/thickness"""
 
     def __init__(self, board, colour, thickness, cursor = wx.CURSOR_PENCIL):
-        self.board     = board
-        self.colour    = colour
+        self.board = board
+        self.colour = colour
         self.thickness = thickness
-        self.cursor    = cursor
+        self.cursor = cursor
 
     def button_down(self, x, y):
         pass
@@ -43,19 +43,27 @@ class Pen(Tool):
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness)
-        self.points = []  # x1, y1, x2, y2 coords to render
-        self.time   = []  # list of times for each point, for redrawing
+        self.points = []  # ALL x1, y1, x2, y2 coords to render
+        self.time = []  # list of times for each point, for redrawing
 
     def button_down(self, x, y):
         self.x = x  # original mouse coords
         self.y = y
-        self.board.AddShape(self)  # add to list of shapes
+        self.board.add_shape(self)  # add to list of shapes
+        self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
+
 
     def motion(self, x, y):
         self.points.append( [self.x, self.y, x, y] )
         self.time.append(time.time() )
         self.x = x
         self.y = y  # swap for the next call to this function
+
+        dc = wx.BufferedDC(wx.ClientDC(self.board), self.board.buffer)
+        self.board.PrepareDC(dc)
+        dc.SetPen(self.pen)
+        self.draw(dc)
+
 
     def draw(self, dc):
         dc.DrawLineList(self.points)
@@ -74,11 +82,35 @@ class Rectangle(Tool):
         self.y = y
         self.width = 2
         self.height = 2
-        self.board.AddShape(self)
+        self.board.add_shape(self)
+        self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
 
     def motion(self, x, y):
         self.width = x - self.x
         self.height = y - self.y
+        self.draw_outline()
+
+
+    def button_up(self, x, y):
+        dc = wx.ClientDC(self.board)
+        odc = wx.DCOverlay(self.board.overlay, dc)
+        odc.Clear()
+        del odc
+        self.board.overlay.Reset()
+        self.board.Refresh()  # show on whyteboard
+
+
+    def draw_outline(self):
+        dc = wx.BufferedDC(wx.ClientDC(self.board), self.board.buffer)
+        odc = wx.DCOverlay(self.board.overlay, dc)
+
+        odc.Clear()
+        self.board.PrepareDC(dc)
+        dc.SetPen(self.pen)
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        self.draw(dc)
+        del odc
+
 
     def draw(self, dc):
         dc.DrawRectangle(self.x, self.y, self.width, self.height)
@@ -87,52 +119,25 @@ class Rectangle(Tool):
 ###################################################
 
 
-class Triangle(Tool):
-
-    def __init__(self, board, colour, thickness):
-        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
-
-    def button_down(self, x, y):
-        self.x = x
-        self.y = y
-        self.x2 = x
-        self.y2 = y
-        self.x3 = x
-        self.y3 = y
-        self.board.AddShape(self)
-
-    def motion(self, x, y):
-        self.x2 = x + 4
-        self.y2 = y - 4
-        self.x3 = x - 4
-        self.y3 = y + 4
-
-    def draw(self, dc):
-        dc.DrawLine(self.x, self.y, self.x2, self.y2)
-        dc.DrawLine(self.x2, self.y2, self.x3, self.y3)
-        dc.DrawLine(self.x3, self.y3, self.x, self.y)
-
-
-###################################################
-
-
-class Circle(Tool):
+class Circle(Rectangle):
     """Draws a circle with an inverted background RGB "+" in its center"""
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
         self.radius  = 2
-        self.inMotion = False  # used to draw a cross at circle's center
+        self.inMotion = False  # used to draw a cross at circle's center
+        self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
     def button_down(self, x, y):
         self.x = x
         self.y = y
-        self.board.AddShape(self)
+        self.board.add_shape(self)
         self.inMotion = True
         self.find_invert()
 
     def button_up(self, x, y):
         self.inMotion = False
-        self.board.reInitBuffer = True  # clears drawn cross
+        super(Circle, self).button_up(x, y)
+        self.board.redraw = True  # remove cross
 
 
     def motion(self, x, y):
@@ -140,6 +145,7 @@ class Circle(Tool):
 
         if self.radius <= 0:  # from moving down-left or down-right
             self.radius = -self.radius  # would be a negative number otherwise
+        self.draw_outline()
 
 
     def draw(self, dc):
@@ -158,7 +164,7 @@ class Circle(Tool):
 
 
     def find_invert(self):
-        """Finds the inverted RGB value of a square pixel area from mouseclick"""
+        """Finds the inverted RGB value of a square pixel area"""
         dc = wx.BufferedDC(None, self.board.buffer)
         r, g, b, count = 0, 0, 0, 0
 
@@ -217,29 +223,26 @@ class Eyedropper(Tool):
 class Text(Tool):
     """Currently draws a random string. Will be extended for user text input"""
 
+    def __init__(self, board, colour, thickness):
+        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CHAR)
+
     def button_down(self, x, y):
-        self.x, self.y = x, y
-        self.board.AddShape(self)
-
-        alphabet = 'abcdefghijklmnopqrstuvwxyz\n[]1234567890-=+_.,`'
-        min = 3
-        max = 6
-        total = 100
-        string=''
-
-        for count in xrange(1,total):
-          for x in random.sample(alphabet,random.randint(min,max)):
-              string+=x
-
-        self.string = string[:35]
-
+        self.x = x
+        self.y = y
+        self.board.add_shape(self)
+        self.txt = wx.TextCtrl(self.board, pos=(x, y), style=wx.NO_BORDER)
+        self.board.Bind(wx.EVT_TEXT, self.on_type, self.txt)
+        self.txt.SetFocus()
+        #self.txt.SetBackgroundColour((255,255,255,100))
+        self.txt.SetMaxLength(50)
 
     def motion(self, x, y):
         self.x = x
         self.y = y
 
-    def draw(self, dc):
-        dc.DrawText(self.string, self.x, self.y)
+    def on_type(self, event):
+        pass
+
 
 
 ###################################################
@@ -263,7 +266,7 @@ class Fill(Tool):
         b /= 255
         g /= 255
         self.invert = wx.Colour(r, g, b)
-        self.board.AddShape(self)
+        self.board.add_shape(self)
 
     def draw(self, dc):
         dc.FloodFill(self.x, self.y, self.invert)
@@ -283,7 +286,7 @@ class Arc(Tool):
         self.x2 = x
         self.y2 = y        self.c1 = 300
         self.c2 = 300
-        self.board.AddShape(self)
+        self.board.add_shape(self)
 
     def motion(self, x, y):
         self.x2 = x
@@ -298,16 +301,16 @@ class Arc(Tool):
 
 
 class Image(Tool):
-    """When being pickled, the image will be removed from the shape list"""
+    """When being pickled, the image reference will be removed."""
 
-    def __init__(self, board, colour=(0,0,0), thickness=1):
+    def __init__(self, board, colour=(0, 0, 0), thickness=1, image=None):
         Tool.__init__(self, board, colour, thickness)
+        self.image = image
 
-    def button_down(self, x, y, image):
+    def button_down(self, x, y):
         self.x = x
         self.y = y
-        self.image = image
-        self.board.AddShape(self)
+        self.board.add_shape(self)
 
     def draw(self, dc):
         dc.DrawBitmap(self.image, self.x, self.y)
@@ -317,11 +320,16 @@ class Image(Tool):
 
 
 class Note(Tool):
-    """blank template for a post-it style note
+    """Blank template for a post-it style note
     e.g. http://www.bit10.net/images/post-it.jpg"""
 
+    def __init__(self, board, colour=(0,0,0), thickness=1):
+        Tool.__init__(self, board, colour, thickness)
+
     def button_down(self, x, y):
-        pass
+        self.x = x
+        self.y = y
+        self.text = ""
 
     def motion(self, x, y):
         pass
@@ -334,6 +342,6 @@ class Note(Tool):
 
 
 if __name__ == '__main__':
-    from gui import *
-    app = WhiteboardApp(redirect=True)
+    from gui import WhyteboardApp
+    app = WhyteboardApp(redirect=True)
     app.MainLoop()
