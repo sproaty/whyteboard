@@ -256,7 +256,6 @@ class Fill(Tool):
         self.x = x
         self.y = y
         dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
-        print 'ey'
 
         colour = dc.GetPixel(x, y)  # get colour
         r = colour.Red()
