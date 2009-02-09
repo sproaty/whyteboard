@@ -8,7 +8,6 @@ import random
 import time
 
 import wx
-#import wx.lib.mixins.rubberband as RubberBand
 
 
 ###################################################
@@ -22,6 +21,7 @@ class Tool(object):
         self.colour = colour
         self.thickness = thickness
         self.cursor = cursor
+        self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
 
     def button_down(self, x, y):
         pass
@@ -49,8 +49,8 @@ class Pen(Tool):
     def button_down(self, x, y):
         self.x = x  # original mouse coords
         self.y = y
-        self.board.add_shape(self)  # add to list of shapes
-        self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
+        self.board.add_shape(self)
+
 
 
     def motion(self, x, y):
@@ -83,7 +83,6 @@ class Rectangle(Tool):
         self.width = 2
         self.height = 2
         self.board.add_shape(self)
-        self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
 
     def motion(self, x, y):
         self.width = x - self.x
@@ -126,7 +125,7 @@ class Circle(Rectangle):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
         self.radius  = 2
         self.inMotion = False  # used to draw a cross at circle's center
-        self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
+
     def button_down(self, x, y):
         self.x = x
         self.y = y
@@ -257,6 +256,7 @@ class Fill(Tool):
         self.x = x
         self.y = y
         dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
+        print 'ey'
 
         colour = dc.GetPixel(x, y)  # get colour
         r = colour.Red()

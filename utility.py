@@ -144,7 +144,6 @@ class Utility(object):
 
         before = os.walk(path).next()[2]  # file count before convert
         os.system("convert "+ file +" "+ path + tmp_file +".png")
-        progress.Destory()
         after = os.walk(path).next()[2]
         count = len(after) - len(before)
 
