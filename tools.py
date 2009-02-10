@@ -186,8 +186,6 @@ class Ellipse(Rectangle):
     def draw(self, dc):
         dc.DrawEllipse(self.x, self.y, self.width, self.height)
 
-
-
 #----------------------------------------------------------------------
 
 
@@ -195,7 +193,6 @@ class RoundRect(Rectangle):
     """Easily extends from Rectangle."""
     def draw(self, dc):
         dc.DrawRoundedRectangle(self.x, self.y, self.width, self.height, 45)
-
 
 #----------------------------------------------------------------------
 
@@ -237,7 +234,6 @@ class Text(Tool):
 
     def on_type(self, event):
         pass
-
 
 
 #----------------------------------------------------------------------

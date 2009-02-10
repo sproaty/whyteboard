@@ -1,20 +1,22 @@
 #!usr/bin/python
 
 """
-Shows a history replaying dialog, which can replay the last pen strokes
-drawn by the user.
+This module contains classes extended from wx.Dialog used by the GUI.
 """
 
 import wx
+import wx.html
 from tools import Pen
 
 
 #----------------------------------------------------------------------
 
 class History(wx.Dialog):
+    """
+    Creates a history replaying dialog and methods for its functionality
+    """
 
     def __init__(self, parent, board):
-        """Creates a history replaying dialogue"""
         wx.Dialog.__init__(self, parent, title="History Player",
                            size=(400, 200))
         self.board = board
@@ -100,6 +102,86 @@ class History(wx.Dialog):
 
 #----------------------------------------------------------------------
 
+class ConvertProgress(wx.Dialog):
+    """
+    Shows a Progres Gauge while file conversion is taking place.
+    """
+
+    def __init__(self, gui):
+        wx.Dialog.__init__(self, gui, title="Converting...",  size=(250, 100))
+        self.gui = gui
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.gauge = wx.Gauge(self, range=50, pos=(110, 50), size=(180, 30))
+        self.Bind(wx.EVT_IDLE, self.pump_gauge)
+        self.count = 0
+
+        sizer.Add(self.gauge, 0, wx.ALL, 5)
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+        self.SetFocus()
+
+
+    def pump_gauge(self, event):
+        """
+        Pumps the gauge to indicate conversion progress
+        """
+        self.count += 0.15
+
+        if self.count >= 999:
+            self.count = 0
+        self.gauge.SetValue(self.count)
+
+#----------------------------------------------------------------------
+
+class About(wx.Dialog):
+    """
+    Shows an HTML 'about' box for the program.
+    """
+
+    version = "0.27"
+    text = '''
+<html><body bgcolor="#6699CC">
+ <table bgcolor="#F0F0F0" width="100%" border="1">
+  <tr><td align="center"><h1>Whyteboard '''+version+'''</h1></td></tr>
+ </table>
+
+<p>Whyteboard is a simple image annotation program, facilitating the
+annotation of PDF and PostScript files, and most image formats.</p>
+
+<p>It is based on a demonstration application wxPython; SuperDoodle, by
+Robin Dunn, &copy; 1997-2006.</p>
+<p>Modified by Steven Sproat, &copy; 2009.<br />
+Many thanks to the helpful users in #python on FreeNode!</p>
+</body></html>'''
+
+    def __init__(self, parent):
+        wx.Dialog.__init__(self, parent, title='About Whyteboard',
+                           size=(420, 380))
+
+        html = wx.html.HtmlWindow(self, -1)
+        html.SetPage(self.text)
+        button = wx.Button(self, wx.ID_OK, "Okay")
+
+        lc = wx.LayoutConstraints()
+        lc.top.SameAs(self, wx.Top, 5)
+        lc.left.SameAs(self, wx.Left, 5)
+        lc.bottom.SameAs(button, wx.Top, 5)
+        lc.right.SameAs(self, wx.Right, 5)
+        html.SetConstraints(lc)
+
+        lc = wx.LayoutConstraints()
+        lc.bottom.SameAs(self, wx.Bottom, 5)
+        lc.centreX.SameAs(self, wx.CentreX)
+        lc.width.AsIs()
+        lc.height.AsIs()
+        button.SetConstraints(lc)
+
+        self.SetAutoLayout(True)
+        self.Layout()
+        self.CentreOnParent(wx.BOTH)
+
+#----------------------------------------------------------------------
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

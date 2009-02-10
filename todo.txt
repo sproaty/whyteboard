@@ -1,16 +1,14 @@
-Whyteboard 0.26 - To do list
-Tue 10 Feb 2009 06:31:40 GMT
+Whyteboard 0.27 - To do list
+Tue 10 Feb 2009 23:33:11 GMT
 
 
 *** NEW FEATURES ***
 
 -- When converting a PDF with ImageMagick, create thumbnails for a side panel
    which allows you to jump quickly from page to page.
-  -- The same applies to ps/gs files
-
+  -- The same applies to ps files
 
 *** IMPROVEMENTS AND THOUGHTS ***
-
 
 -- Make the slider in the history dialog move forward/backwards through the
    pen replay
@@ -20,20 +18,8 @@ Tue 10 Feb 2009 06:31:40 GMT
 
 -- Make a loaded PDF/PS the background image, thus everything gets written over
    that image
-    -- Needs to be done for single "page" images
-
--- Load in PDF/PS: Capture ls file (not dir) count, create temp files, get new
-   count - then save in the filepath of the file that was loaded. When the app
-   terminates then, remove all temporay images; when a saved whyteboard file is
-   loaded, re-create the temporary image from the existing filename
-  -- Downside is that if the file is removed, renamed or moved then the link is
-     broken.
-  -- Alternative method - save the temporary image files to a directory created
-     somewhere..(where?) - obvious downside is disk usage over muliple file
-     loads. Could perhaps intelligently monitor/allow a set preference to max.
-     disk space usage/number of temporarily files/allow as many temporary files
-     as [x] many files need it...or something
-  --- nearly done
+    -- Needs to be done for single "page" images, currently working on multi
+       page PDFs
 
 OVERALL:
  - fix things broken at the expense of cleaner/easier to maintain code for

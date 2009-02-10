@@ -11,13 +11,11 @@ indicator that shows an example of the drawing-to-be
 """
 
 import os
-
 import wx
 
 from whyteboard import Whyteboard
 from utility import Utility
-from about import About
-from history import History
+from dialogs import About, History, ConvertProgress
 
 
 #----------------------------------------------------------------------
@@ -85,7 +83,6 @@ class GUI(wx.Frame):
                                                         drawings in all tabs" )
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the \
                                                 Whyteboard application")
-
         menuBar.Append(_file, "&File")
         menuBar.Append(edit, "&Edit")
         menuBar.Append(image, "&Image")
@@ -99,6 +96,7 @@ class GUI(wx.Frame):
         """
         self.Bind(wx.EVT_CLOSE, self.on_exit)
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
+        self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "undo",
                   "redo", "history", "clear", "clear_all", "about", "exit"]
@@ -129,8 +127,6 @@ class GUI(wx.Frame):
             self.tb.AddSimpleTool(_id, art, tip)
         self.tb.Realize()
 
-#--------------------------------------------------------------
-
 
     def on_save(self, event=None):
         if not self.util.filename:  # if no wtbd file is active, prompt for one
@@ -141,7 +137,8 @@ class GUI(wx.Frame):
 
     def on_open(self, event=None):
         """
-        Opens a file, sets Utility's temp. file to the chosen one and
+        Opens a file, sets Utility's temp. file to the chosen file, sets the
+        filename to the file if it's a Whyteboard file, and attempts to load.
         """
         dlg = wx.FileDialog(self, "Open file...", os.getcwd(),
                             style=wx.OPEN, wildcard = self.util.wildcard)
@@ -197,6 +194,7 @@ class GUI(wx.Frame):
         self.tab_count += 1
         self.tabs.SetSelection(self.tab_count - 1 )  # fires on_change_tab
 
+
     def on_change_tab(self, event=None):
         """
         Sets the GUI's board attribute to be the selected Whyteboard.
@@ -212,6 +210,29 @@ class GUI(wx.Frame):
         if self.tab_count is not 0:
             self.tabs.RemovePage( self.tabs.GetSelection() )
             self.tab_count -= 1
+
+
+    def convert_dialog(self, cmd):
+        """
+        Called when the convert process begins, executes the process call and
+        shows the convert dialog
+        """
+        self.process = wx.Process(self)
+        pid = wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
+
+        self.dlg = ConvertProgress(self)
+        self.dlg.ShowModal()
+
+
+    def on_end_process(self, event=None):
+        """
+        Destroy the progress Gauge/process after the convert process returns
+        """
+        self.process.Destroy()
+        self.dlg.Destroy()
+        del self.dlg
+        del self.process
+
 
     def on_exit(self, event=None):
         """
@@ -231,7 +252,9 @@ class GUI(wx.Frame):
         self.board.clear()
 
     def on_clear_all(self, event=None):
-        self.board.clear()
+        for x in range(self.tab_count):
+            self.tabs.GetPage(x).clear()
+
 
     def on_about(self, event=None):
         dlg = About(self)
@@ -242,6 +265,7 @@ class GUI(wx.Frame):
         dlg = History(self, self.board)
         dlg.ShowModal()
         dlg.Destroy()
+
 
 
 #----------------------------------------------------------------------

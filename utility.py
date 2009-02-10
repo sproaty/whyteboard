@@ -17,11 +17,11 @@ import cPickle
 from copy import copy
 import random
 
-from wx import Bitmap, MessageBox
+from wx import MessageBox, Bitmap
 
 from whyteboard import Whyteboard
-from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect,
-                  Text, Eyedropper, Fill, Arc, Image)
+from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
+                   Fill, Arc, Image)
 
 
 #----------------------------------------------------------------------
@@ -37,9 +37,8 @@ class Utility(object):
         self.colour = "Black"
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
-
-        self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect,
-                      Text, Eyedropper, Fill, Arc]
+        self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text,
+                      Eyedropper, Fill, Arc]
 
         #  Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "gif", "tiff",
@@ -48,7 +47,7 @@ class Utility(object):
         label = ["All files (*.*)", "Whyteboard file (*.wtbd)", "Image Files",
                  "Page Description Languages"]
 
-        result1 = ';'.join('*.' + i for i in self.types[:-2])
+        result1 = ';'.join('*.' + i for i in self.types[2:-2])
         result2 = ';'.join('*.' + i for i in self.types[0:2])
         wc_types = ["*.*", "*.wtbd", result1, result2]
 
@@ -142,8 +141,8 @@ class Utility(object):
             _file = self.temp_file
 
         path, filename = os.path.split(_file)
-        path += "/wtbd-tmp/"
-        tmp_file = "temp-"+ str( random.randrange(0,999999))
+        path = os.path.join(path, "wtbd-tmp", "")  # blank element forces slash
+        tmp_file = "temp-"+ str(random.randrange(0,999999))
 
         if not os.path.isdir(path):
             os.mkdir(path)
@@ -151,8 +150,14 @@ class Utility(object):
         index = len(self.to_convert)
         self.to_convert[index] = { 0: str(_file) }
 
+        #cmd = "convert -density 294 "+ _file +" -resample 108 -unsharp 0x.5 \
+        #-trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
+
         before = os.walk(path).next()[2]  # file count before convert
-        os.system("convert "+ _file +" "+ path + tmp_file +".png")
+        cmd = "convert "+ _file +" "+ path + tmp_file +".png"
+
+        self.gui.convert_dialog(cmd)
+
         after = os.walk(path).next()[2]
         count = len(after) - len(before)
 
@@ -161,6 +166,10 @@ class Utility(object):
             self.load_image(temp_path, self.gui.board)
             self.to_convert[index][1] = temp_path
         else:
+            # remove single tab with no drawings
+            if self.gui.tab_count == 1 and not self.gui.board.shapes:
+                self.gui.tabs.RemovePage(0)
+
             for x in range(0, count):
                 wb = Whyteboard(self.gui.tabs)
 
@@ -174,19 +183,21 @@ class Utility(object):
                 self.gui.tab_count += 1
 
 
-    def load_image(self, bitmap, board):
+    def load_image(self, path, board):
         """
-        Loads an image into the given Whyteboard tab.
+        Loads an image into the given Whyteboard tab. bitmap is the path to an
+        image file to create a bitmap from.
         """
-        image = Bitmap(bitmap)
+        image = Bitmap(path)
         shape = Image(board, image=image)
-        shape.button_down(0, 0)  # adds to the whyteboard and renders itself
-        board.redraw = True
+        shape.button_down(0, 0)  # adds to the whyteboard
+        board.redraw = True  # render self
 
 
     def cleanup(self):
         """
         Cleans up any temporarily png files from conversions.
+        Element 0 in y is the filename, so we don't want to remove that :)
         """
         if self.to_convert:
             for x in self.to_convert.keys():
@@ -196,7 +207,6 @@ class Utility(object):
 
 
 #----------------------------------------------------------------------
-
 if __name__ == '__main__':
     from gui import WhyteboardApp
     app = WhyteboardApp()

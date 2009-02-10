@@ -1,6 +1,6 @@
-Whyteboard 0.26 - simple image/PDF/postscript file annotator
+Whyteboard 0.27 - simple image/PDF/postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Tue 10 Feb 2009 06:30:09 GMT
+Tue 10 Feb 2009 23:31:41 GMT
 
 *** TO INSTALL ***
 
@@ -19,7 +19,6 @@ what error occured - let me know - <sproaty -at- gmail -dot- com>
 *** KNOWN BUGS ***
 
 - Saving/loading your drawings isn't working.
-- No progress bar when convering a PDF or such - shouldn't take too long
 - History viewer not working
 - Undo/redo being slightly broken because you can add "blank" shapes that fills
    up the undo list
@@ -32,10 +31,10 @@ what error occured - let me know - <sproaty -at- gmail -dot- com>
 
 Ugh, I don't know, haven't really been keeping a log.
 
-10 Feb 2009 - more code "unification", cleaner code, deleting temporary files,
+10 Feb 2009 - Converting PDF pops up a "converting" dialog box
+10 Feb 2009 - More code "unification", cleaner code, deleting temporary files,
               loading multiple PDF/PS/SVG files
-09 Feb 2009 - mammoth code refactored, performance increased ten-fold, some bug
-              fixes
-03 Feb 2009 - minor code cleanup
+09 Feb 2009 - Code refactored, performance increased ten-fold, some bug fixes
+03 Feb 2009 - Minor code cleanup
 02 Feb 2009 - Added a toolbar, each whyteboard tab has its own undo/redo history
 31 Jan 2009 - Closing the program removes temporary PNG files from PDF convert
