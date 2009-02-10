@@ -1,14 +1,11 @@
-Whyteboard 0.25 - To do list
-Mon 09 Feb 2009 01:28:57 GMT
+Whyteboard 0.26 - To do list
+Tue 10 Feb 2009 06:31:40 GMT
 
 
 *** NEW FEATURES ***
 
 -- When converting a PDF with ImageMagick, create thumbnails for a side panel
    which allows you to jump quickly from page to page.
-  -- In turns, this needs to have an MDI interface looked into, tabs are
-     feasible but aren't as viable as having one full-screen (excluding
-     the control/thumbnail panel) panel, and scrolling between each panel
   -- The same applies to ps/gs files
 
 
@@ -22,7 +19,8 @@ Mon 09 Feb 2009 01:28:57 GMT
      buttons.
 
 -- Make a loaded PDF/PS the background image, thus everything gets written over
-   that image.
+   that image
+    -- Needs to be done for single "page" images
 
 -- Load in PDF/PS: Capture ls file (not dir) count, create temp files, get new
    count - then save in the filepath of the file that was loaded. When the app
@@ -35,13 +33,7 @@ Mon 09 Feb 2009 01:28:57 GMT
      loads. Could perhaps intelligently monitor/allow a set preference to max.
      disk space usage/number of temporarily files/allow as many temporary files
      as [x] many files need it...or something
-  -------- NEARLY
-
-
--- More pycallgraph to see function overheads in current implementation.
-  -- [currently much much much improved]
-
-
+  --- nearly done
 
 OVERALL:
  - fix things broken at the expense of cleaner/easier to maintain code for
