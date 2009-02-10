@@ -46,5 +46,3 @@ Mon 09 Feb 2009 01:28:57 GMT
 OVERALL:
  - fix things broken at the expense of cleaner/easier to maintain code for
     this version
- - isolate drawing colour/thickness to one class as it's spread all over the
-    place at the moment

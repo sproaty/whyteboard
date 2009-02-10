@@ -18,9 +18,8 @@ what error occured - let me know.
 
 *** KNOWN BUGS ***
 
-- Saving your drawings isn't working. (ironically, loading them does)
+- Saving/loading your drawings isn't working.
 - No progress bar when convering a PDF or such - shouldn't take too long
-- Closing the program doesn't remove temporary PNGs
 - History viewer not working
 - Undo/redo being slightly broken because you can add "blank" shapes that fills
    up the undo list

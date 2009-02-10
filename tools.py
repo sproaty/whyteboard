@@ -4,13 +4,12 @@
 This module contains classes which can be drawn onto a Whyteboard frame
 """
 
-import random
 import time
 
 import wx
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Tool(object):
@@ -36,7 +35,7 @@ class Tool(object):
         pass
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Pen(Tool):
@@ -51,7 +50,8 @@ class Pen(Tool):
         self.y = y
         self.board.add_shape(self)
 
-
+    def button_up(self, x, y):
+        pass
 
     def motion(self, x, y):
         self.points.append( [self.x, self.y, x, y] )
@@ -69,7 +69,7 @@ class Pen(Tool):
         dc.DrawLineList(self.points)
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Rectangle(Tool):
@@ -94,28 +94,24 @@ class Rectangle(Tool):
         dc = wx.ClientDC(self.board)
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
-        del odc
         self.board.overlay.Reset()
         self.board.Refresh()  # show on whyteboard
-
 
     def draw_outline(self):
         dc = wx.BufferedDC(wx.ClientDC(self.board), self.board.buffer)
         odc = wx.DCOverlay(self.board.overlay, dc)
-
         odc.Clear()
         self.board.PrepareDC(dc)
         dc.SetPen(self.pen)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         self.draw(dc)
-        del odc
 
 
     def draw(self, dc):
         dc.DrawRectangle(self.x, self.y, self.width, self.height)
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Circle(Rectangle):
@@ -123,7 +119,7 @@ class Circle(Rectangle):
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
-        self.radius  = 2
+        self.radius  = 4
         self.inMotion = False  # used to draw a cross at circle's center
 
     def button_down(self, x, y):
@@ -135,7 +131,7 @@ class Circle(Rectangle):
 
     def button_up(self, x, y):
         self.inMotion = False
-        super(Circle, self).button_up(x, y)
+        super(Circle, self).button_up(x, y)  # remove overlay
         self.board.redraw = True  # remove cross
 
 
@@ -182,7 +178,7 @@ class Circle(Rectangle):
         self.invert = wx.Colour(r, g, b)
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Ellipse(Rectangle):
@@ -192,7 +188,7 @@ class Ellipse(Rectangle):
 
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class RoundRect(Rectangle):
@@ -201,7 +197,7 @@ class RoundRect(Rectangle):
         dc.DrawRoundedRectangle(self.x, self.y, self.width, self.height, 45)
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Eyedropper(Tool):
@@ -216,7 +212,7 @@ class Eyedropper(Tool):
         self.board.SetColour(colour)
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Text(Tool):
@@ -244,7 +240,7 @@ class Text(Tool):
 
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Fill(Tool):
@@ -271,7 +267,7 @@ class Fill(Tool):
         dc.FloodFill(self.x, self.y, self.invert)
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Arc(Tool):
@@ -296,7 +292,7 @@ class Arc(Tool):
         dc.DrawArc(self.x, self.y, self.x2, self.y2, self.c1, self.x2)
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Image(Tool):
@@ -315,14 +311,14 @@ class Image(Tool):
         dc.DrawBitmap(self.image, self.x, self.y)
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 class Note(Tool):
     """Blank template for a post-it style note
     e.g. http://www.bit10.net/images/post-it.jpg"""
 
-    def __init__(self, board, colour=(0,0,0), thickness=1):
+    def __init__(self, board, colour=(0, 0, 0), thickness=1):
         Tool.__init__(self, board, colour, thickness)
 
     def button_down(self, x, y):
@@ -337,7 +333,7 @@ class Note(Tool):
         pass
 
 
-###################################################
+#----------------------------------------------------------------------
 
 
 if __name__ == '__main__':

@@ -8,8 +8,7 @@ its own undo/redo.
 """
 
 import wx
-from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect,
-                  Text, Eyedropper, Fill, Arc)
+
 
 #----------------------------------------------------------------------
 
@@ -22,13 +21,14 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
 
-        self.colour = "Black"
-        self.thickness = 1
         self.select_tool(1)  # tool ID used to generate Tool object
         self.shapes = []  # list of shapes for re-drawing/saving
         self._undo = []  # list of actions to undo
         self._redo = []  # list of actions to redo
-        self.overlay = wx.Overlay()
+        self.overlay = wx.Overlay()  # drawing "rubber bands"
+
+        self.buffer = None
+        self.redraw = False
 
         self.init_buffer()
 
@@ -38,8 +38,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_IDLE, self.on_idle)
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        #self.Bind(wx.EVT_ERASE_BACKGROUND, self.on_erase)
-        self.Bind(wx.EVT_SCROLLWIN, self.on_scroll)
+        #self.Bind(wx.EVT_SCROLL, self.on_scroll)
 
 
     def init_buffer(self):
@@ -81,7 +80,7 @@ class Whyteboard(wx.ScrolledWindow):
         """called when the left mouse button is released"""
         x, y = self.convert_coords(event)
         self.shape.button_up(x, y)
-        self.select_tool(self.tool)  # reset
+        self.select_tool(self.GetParent().GetParent().util.tool)  # reset
 
 
     def left_motion(self, event):
@@ -95,12 +94,14 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Changes the users' tool (and cursor) they are drawing with. new is an
         int, corresponding to new - 1 = Tool ID in list below.
+        Note: Whyteboard's parent = tabs; tabs' parent = GUI
         """
-        self.tool = new
-        items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text,
-                 Eyedropper, Fill, Arc]
+        self.GetParent().GetParent().util.tool = new
+        items = self.GetParent().GetParent().util.items
+        colour = self.GetParent().GetParent().util.colour
+        thickness = self.GetParent().GetParent().util.thickness
 
-        params = [self, self.colour, self.thickness]
+        params = [self, colour, thickness]
         self.shape = items[new - 1](*params)  # create new Tool object
         self.SetCursor(wx.StockCursor(self.shape.cursor) )
 
@@ -152,10 +153,8 @@ class Whyteboard(wx.ScrolledWindow):
     def on_paint(self, event):
         """Called when the window is exposed."""
         dc = wx.BufferedPaintDC(self, self.buffer)
+        self.PrepareDC(dc)
         #self.redraw = True  # redraw screen after scroll
-
-    def on_erase(self, event):
-        pass
 
     def on_scroll(self, event):
         self.redraw = True
