@@ -2,14 +2,8 @@
 
 """
 This module contains a utility helper class to reduce the amount of code
-inside gui.py - whiyteboard-file saving/loading, pdf/ps loading/conversion
-and loading a standard image.
-
-It also defines some class variables which are set/accessed through the GUI -
-supported filetypes, names of the drawing tools, a save file's associated
-converted files (e.g. a PDF)
-
-Trying to achieve a data-driven system, focusing on "don't repeat yourself"
+inside gui.py - whiyteboard-file saving/loading, pdf/ps loading/conversion and
+loading a standard image.
 """
 
 import os
@@ -27,8 +21,19 @@ from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
 #----------------------------------------------------------------------
 
 class Utility(object):
+    """
+    The class defines some class variables which are set/accessed through the GUI -
+    supported filetypes, names of the drawing tools, a save file's associated
+    converted files (e.g. a PDF)
+
+    Trying to achieve a data-driven system, focusing on "don't repeat yourself"
+    """
 
     def __init__(self, gui):
+        """
+        Initialise "shared" variables, and set up a wxPython wildcard from the
+        supported filetypes.
+        """
         self.gui = gui
         self.to_convert = {}  # list of files
         self.filename = None  # ACTIVE .wtbd file
@@ -51,7 +56,7 @@ class Utility(object):
         result2 = ';'.join('*.' + i for i in self.types[0:2])
         wc_types = ["*.*", "*.wtbd", result1, result2]
 
-        # format: label|*.type1,*.type2|label|*.type3,*.type4|label|*...
+        # format: label|*.type1;*.type2|label|*.type3;*.type4|label|*...
         wc_list = map(lambda x, y, : x + "|" + y, label, wc_types)
 
         self.wildcard = '|'.join(wc_list)
@@ -142,7 +147,7 @@ class Utility(object):
 
         path, filename = os.path.split(_file)
         path = os.path.join(path, "wtbd-tmp", "")  # blank element forces slash
-        tmp_file = "temp-"+ str(random.randrange(0,999999))
+        tmp_file = "temp-"+ str(random.randrange(0, 999999))
 
         if not os.path.isdir(path):
             os.mkdir(path)

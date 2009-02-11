@@ -1,5 +1,13 @@
-Whyteboard 0.27 - To do list
-Tue 10 Feb 2009 23:33:11 GMT
+Whyteboard 0.28 - To do list
+https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
+Wed 11 Feb 2009 03:58:03 GMT
+
+
+*** FIXES ***
+
+-- Loading/saving .wtdb files - should mark roughly the 0.3 release
+-- Scrollbars
+-- Ensure "blank" shapes aren't being added
 
 
 *** NEW FEATURES ***
@@ -12,15 +20,8 @@ Tue 10 Feb 2009 23:33:11 GMT
 
 -- Make the slider in the history dialog move forward/backwards through the
    pen replay
-  -- Make the stop button stop it as this can crash the program currently.
-  -- Improve the interface for it a bit, probably no need for forward/back
-     buttons.
 
 -- Make a loaded PDF/PS the background image, thus everything gets written over
    that image
     -- Needs to be done for single "page" images, currently working on multi
        page PDFs
-
-OVERALL:
- - fix things broken at the expense of cleaner/easier to maintain code for
-    this version

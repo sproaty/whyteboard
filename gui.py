@@ -32,6 +32,9 @@ class GUI(wx.Frame):
     title = "Whyteboard"
 
     def __init__(self, parent):
+        """
+        Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
+        """
         wx.Frame.__init__(self, parent, size=(800, 600), title="Untitled - " +
            self.title, style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE)
 
@@ -75,12 +78,12 @@ class GUI(wx.Frame):
         _file.Append(wx.ID_EXIT, "E&xit\tAlt-F4", "Terminate Whyteboard")
         edit.Append(wx.ID_UNDO, "&Undo\tCtrl-Z", "Undo the last operation")
         edit.Append(wx.ID_REDO, "&Redo\tCtrl-Y", "Redo the last operation")
-        edit.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay \
-                                                      your drawing history")
         image.Append(wx.ID_CLEAR, "&Clear\tCtrl-C", "Clear the current tab's \
                                                       drawing")
         image.Append(ID_CLEAR_ALL, "Clear &All\tCtrl-Shift-C", "Clear all \
                                                         drawings in all tabs" )
+        image.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay \
+                                                      your drawing history")
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the \
                                                 Whyteboard application")
         menuBar.Append(_file, "&File")
@@ -129,6 +132,9 @@ class GUI(wx.Frame):
 
 
     def on_save(self, event=None):
+        """
+        Saves file if filename is set, otherwise calls 'save as'.
+        """
         if not self.util.filename:  # if no wtbd file is active, prompt for one
             self.on_save_as()
         else:
@@ -218,7 +224,7 @@ class GUI(wx.Frame):
         shows the convert dialog
         """
         self.process = wx.Process(self)
-        pid = wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
+        wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
 
         self.dlg = ConvertProgress(self)
         self.dlg.ShowModal()
@@ -262,7 +268,7 @@ class GUI(wx.Frame):
         dlg.Destroy()
 
     def on_history(self, event=None):
-        dlg = History(self, self.board)
+        dlg = History(self)
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -279,12 +285,14 @@ class ControlPanel(wx.Panel):
     of what the tool will look like is also shown.
     """
     def __init__(self, gui):
+        """
+        Stores a reference to the drawing preview and the toggled drawing tool.
+        """
         wx.Panel.__init__(self, gui)
 
         self.gui = gui
         self.toggled = 1  # Pen initallly
-        self.ci = ColourIndicator(self.gui)
-
+        self.preview = Preview(self.gui)
 
         self.tools  = {}
         sizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
@@ -315,7 +323,7 @@ class ControlPanel(wx.Panel):
         box.Add(sizer, 0, wx.ALL, spacing)
         box.Add(self.colour, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(self.thickness, 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add(self.ci, 0, wx.EXPAND | wx.ALL, spacing)
+        box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
         self.SetSizer(box)
         self.SetAutoLayout(True)
         box.Fit(self)
@@ -341,25 +349,33 @@ class ControlPanel(wx.Panel):
 
 
     def change_colour(self, event=None):
+        """
+        Changes colour and updates the preview window.
+        """
         self.gui.util.colour = event.GetColour()
         self.gui.board.select_tool(self.gui.util.tool)
-        self.ci.Refresh()
+        self.preview.Refresh()
 
     def change_thickness(self, event=None):
+        """
+        Changes thickness and updates the preview window.
+        """
         self.gui.util.thickness = event.GetSelection()
         self.gui.board.select_tool(self.gui.util.tool)
-        self.ci.Refresh()
+        self.preview.Refresh()
 
 #----------------------------------------------------------------------
 
 
-class ColourIndicator(wx.Window):
+class Preview(wx.Window):
     """
-    An instance of this class is used on the ControlPanel to show
-    a sample of what the current tool will look like.
+    Shows a sample of what the current tool's drawing will look like.
     """
     def __init__(self, gui):
-        wx.Window.__init__(self, gui, style=wx.RAISED_BORDER)
+        """
+        Stores gui reference to access utility colour/thickness attributes.
+        """
+        wx.Window.__init__(self, gui, style=wx.SUNKEN_BORDER)
         self.gui = gui
         self.SetBackgroundColour(wx.WHITE)
         self.SetSize((45, 45))

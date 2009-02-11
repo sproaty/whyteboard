@@ -6,6 +6,7 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import wx
 import wx.html
+
 from tools import Pen
 
 
@@ -16,89 +17,128 @@ class History(wx.Dialog):
     Creates a history replaying dialog and methods for its functionality
     """
 
-    def __init__(self, parent, board):
-        wx.Dialog.__init__(self, parent, title="History Player",
-                           size=(400, 200))
-        self.board = board
+    def __init__(self, gui):
+        wx.Dialog.__init__(self, gui, title="History Player", size=(400, 200))
+        self.gui = gui
+        self.looping = False
+        self.paused = False
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        max = len(parent.board.shapes)+50
-        self.slider = wx.Slider(self, minValue=1, maxValue=max, size=(200, 50),
+        _max = len(gui.board.shapes)+50
+        self.slider = wx.Slider(self, minValue=1, maxValue=_max, size=(200, 50),
                     style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS )
+
         self.slider.SetTickFreq(5, 1)
-        self.slider.Bind(wx.EVT_SCROLL, self.scroll)
-        sizer.Add(self.slider, 0, wx.ALL, 5)
 
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnPrev = wx.Button(self, label="<<", size=(40, 30) )
-        btnStop = wx.Button(self, label="Stop", size=(45, 30) )
-        btnPause = wx.Button(self, label="Pause", size=(50, 30) )
-        btnPlay = wx.Button(self, label="Play", size=(45, 30) )
-        btnNext = wx.Button(self, label=">>", size=(40, 30) )
+        btn_stop = wx.Button(self, label="Stop", size=(45, 30) )
+        btn_pause = wx.Button(self, label="Pause", size=(50, 30) )
+        btn_play = wx.Button(self, label="Play", size=(45, 30) )
 
-        btnPlay.Bind(wx.EVT_BUTTON, self.play)
+        historySizer.Add(btn_play, 0,  wx.ALL, 2)
+        historySizer.Add(btn_pause, 0,  wx.ALL, 2)
+        historySizer.Add(btn_stop, 0,  wx.ALL, 2)
 
-        historySizer.Add(btnPrev, 0,  wx.ALL, 2)
-        historySizer.Add(btnStop, 0,  wx.ALL, 2)
-        historySizer.Add(btnPause, 0,  wx.ALL, 2)
-        historySizer.Add(btnPlay, 0,  wx.ALL, 2)
-        historySizer.Add(btnNext, 0,  wx.ALL, 2)
-
-        btnSizer = wx.StdDialogButtonSizer()
-        btn = wx.Button(self, wx.ID_OK)
-        btn.SetDefault()
-        btnSizer.AddButton(btn)
-        btnSizer.SetAffirmativeButton(btn)
-
-        btn = wx.Button(self, wx.ID_CANCEL)
-        btnSizer.AddButton(btn)
-        btnSizer.SetCancelButton(btn)
-        btnSizer.Realize()
-
-        sizer.Add(historySizer, 0, wx.ALL, 5)
-        sizer.Add(btnSizer, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 8)
+        sizer.Add(self.slider, 0, wx.ALL, 5)
+        sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
 
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
 
+        btn_play.Bind(wx.EVT_BUTTON, self.on_play)
+        btn_pause.Bind(wx.EVT_BUTTON, self.pause)
+        btn_stop.Bind(wx.EVT_BUTTON, self.stop)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+        self.slider.Bind(wx.EVT_SCROLL, self.scroll)
 
-    def scroll(self, event):
-        pass
+
+    def on_play(self, event):
+        """
+        Starts the replay if it's not already started, unpauses if paused
+        """
+        if self.looping:
+            self.paused = False
+            return
+
+        if self.paused:
+            self.paused = False
+
+        shapes = []
+        for shape in self.gui.board.shapes:
+            if isinstance(shape, Pen):
+                shapes.append(shape)
+
+        if shapes:
+            self.looping = True
+            self.start(shapes)
+        else:
+            wx.MessageBox("No pen found", "No drawings found to replay!")
 
 
-    def play(self, event):
-        """Replays the users' last-drawn pen(s)"""
+    def start(self, shapes):
+        """
+        Replays the users' last-drawn pen strokes.
+        The loop can be paused/unpaused by the user.
+        """
         pen = None
-        dc = wx.ClientDC(self.board) #wx.BufferedDC(, self.board.buffer)
-        dc.SetBackground(wx.Brush(self.board.GetBackgroundColour()) )
+        dc = wx.ClientDC(self.gui.board)
         dc.Clear()
+        self.gui.board.PrepareDC(dc)
 
-        for s in self.board.shapes:
-            if isinstance(s, Pen):
-                pen = s
+        for pen in shapes:
+            draw_pen = wx.Pen(pen.colour, pen.thickness, wx.SOLID)
+            dc.SetPen(draw_pen)
 
-            if pen is not None:
-                self.board.reInitBuffer = False # hold off on this for a sec
+            for x, p in enumerate(pen.points):
+                if self.looping and not self.paused:
 
-                draw_pen = wx.Pen(pen.colour, pen.thickness, wx.SOLID)
-                dc.SetPen(draw_pen)
-                dc.BeginDrawing()
-
-                for x, p in enumerate(pen.points):
                     try:
-                        # 800 seems to make it sleep long enough
-                        wx.MilliSleep( (pen.time[x + 1] - pen.time[x]) * 950 )
+                        wx.MilliSleep((pen.time[x + 1] - pen.time[x]) * 950)
                         wx.Yield()
-                        dc.DrawLine(p[0], p[1], p[2], p[3])
-
                     except IndexError:
                         pass
 
-                dc.EndDrawing()
-                self.board.reInitBuffer = True
-        else:
-            wx.MessageBox("No pen found", "No drawings found to replay!")
+                    dc.DrawLine(p[0], p[1], p[2], p[3])
+
+                else:  # loop is paused, wait for unpause/close/stop
+                    while self.paused:
+                        wx.MicroSleep(950)
+                        wx.Yield()
+
+        self.looping = False
+        self.paused = False
+        self.gui.board.redraw = True  # restore other drawn items
+
+
+    def pause(self, event):
+        """
+        Pauses/unpauses the replay.
+        """
+        if self.looping:
+            self.paused = not self.paused
+
+
+    def stop(self, event=None):
+        """
+        Stops the replay.
+        """
+        self.looping = False
+        self.paused = False
+        self.gui.board.redraw = True
+
+
+    def on_close(self, event):
+        """
+        Called when the dialog is closed; stops the replay and ends the modal
+        view, allowing the GUI to Destroy() the dialog.
+        """
+        self.stop()
+        self.EndModal(1)
+
+
+    def scroll(self, event):
+        pass
 
 #----------------------------------------------------------------------
 
@@ -108,29 +148,36 @@ class ConvertProgress(wx.Dialog):
     """
 
     def __init__(self, gui):
+        """
+        Defines a gauge and a timer which updates the gauge.
+        """
         wx.Dialog.__init__(self, gui, title="Converting...",  size=(250, 100))
         self.gui = gui
-        sizer = wx.BoxSizer(wx.VERTICAL)
-
-        self.gauge = wx.Gauge(self, range=50, pos=(110, 50), size=(180, 30))
-        self.Bind(wx.EVT_IDLE, self.pump_gauge)
         self.count = 0
 
+        self.timer = wx.Timer(self)
+        self.gauge = wx.Gauge(self, range=100, size=(180, 30))
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.gauge, 0, wx.ALL, 5)
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
 
+        self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
+        self.timer.Start(20)
 
-    def pump_gauge(self, event):
-        """
-        Pumps the gauge to indicate conversion progress
-        """
-        self.count += 0.15
 
-        if self.count >= 999:
-            self.count = 0
+    def on_timer(self, event):
+        """
+        Increases the gauge's progress.
+        """
+        self.count += 1
         self.gauge.SetValue(self.count)
+        if self.count == 100:
+            self.count = 0
+            self.timer.Start(20)
+
 
 #----------------------------------------------------------------------
 
@@ -139,7 +186,7 @@ class About(wx.Dialog):
     Shows an HTML 'about' box for the program.
     """
 
-    version = "0.27"
+    version = "0.28"
     text = '''
 <html><body bgcolor="#6699CC">
  <table bgcolor="#F0F0F0" width="100%" border="1">
@@ -156,6 +203,9 @@ Many thanks to the helpful users in #python on FreeNode!</p>
 </body></html>'''
 
     def __init__(self, parent):
+        """
+        Displays the HTML box with various constraints.
+        """
         wx.Dialog.__init__(self, parent, title='About Whyteboard',
                            size=(420, 380))
 

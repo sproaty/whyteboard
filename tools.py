@@ -5,7 +5,6 @@ This module contains classes which can be drawn onto a Whyteboard frame
 """
 
 import time
-
 import wx
 
 

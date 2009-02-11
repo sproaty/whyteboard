@@ -9,17 +9,19 @@ its own undo/redo.
 
 import wx
 
-from tools import Image
 
 #----------------------------------------------------------------------
 
 class Whyteboard(wx.ScrolledWindow):
+    """
+    The drawing frame of the application.
+    """
 
     def __init__(self, tab):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        wx.ScrolledWindow.__init__(self, tab)#, style=wx.FULL_REPAINT_ON_RESIZE)
+        wx.ScrolledWindow.__init__(self, tab)
         self.SetVirtualSize((1000, 1000))
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
@@ -85,7 +87,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
-        self.CaptureMouse()
+
 
     def left_up(self, event):
         """
@@ -94,7 +96,7 @@ class Whyteboard(wx.ScrolledWindow):
         x, y = self.convert_coords(event)
         self.shape.button_up(x, y)
         self.select_tool(self.GetParent().GetParent().util.tool)  # reset
-        self.ReleaseMouse()
+
 
     def left_motion(self, event):
         """
@@ -183,7 +185,7 @@ class Whyteboard(wx.ScrolledWindow):
         Called when the window is exposed.
         """
         dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-        #self.PrepareDC(dc)
+        self.PrepareDC(dc)
 
 
 
