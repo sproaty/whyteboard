@@ -4,12 +4,37 @@
 This module contains a utility helper class to reduce the amount of code
 inside gui.py - whiyteboard-file saving/loading, pdf/ps loading/conversion and
 loading a standard image.
+
+
+The saved file structure is:                                 - program settings
+  dictionary { 0: [colour, thickness, tool],                 - colour = (r,g,b)
+               1: shapes { 0: [shape1, shape2, .. shapeN],   - tab / shapes
+                           1: [shape1, shape2, .. shapeN],   - tab / shapes
+                           ..
+                           N: [shape1, shape2, .. shapeN]
+                         }
+               2: files  { 0: { 0: filename,                 - converted files
+                                1: temp-file-1.png,          - linked tmp file
+                                2: temp-file-2.png,
+                                ...
+                              },
+                           1: { 0: filename,
+                                1: temp-file-1.png,
+                                2: temp-file-2.png,
+                                ...
+                              },
+                            ...
+                         }
+             }
+
+Image Tools have the assosicated image removed from their class upon saving,
+but are restored with it upon loading the file.
 """
 
 import os
 import cPickle
-from copy import copy
 import random
+from copy import copy
 
 from wx import MessageBox, Bitmap
 
@@ -43,7 +68,7 @@ class Utility(object):
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
         self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text,
-                      Eyedropper, Fill, Arc]
+                      Eyedropper]
 
         #  Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "gif", "tiff",
@@ -68,37 +93,57 @@ class Utility(object):
         objects must be removed - they will be converted back upon loading
         a saved file.
         """
-        MessageBox("broke.")
-#        if self.filename:
-#            temp = {}
+        if self.filename:
+            temp = {}
 
-#            for x in range(0, self.gui.tab_count ):
-#                temp[x] = copy(self.gui.tabs.GetPage(x).shapes)
+            for x in range(0, self.gui.tab_count ):
+                temp[x] = copy(self.gui.tabs.GetPage(x).shapes)
 
-#            if temp:
-#                #  Unlink tools' board and images' image - restored on load.
-#                for x in temp:
-#                    for shape in temp[x]:
-#                        if isinstance(shape, Image):
-#                            shape.image = None
-#                        shape.board = None
+            if temp:
+                for x in temp:
+                    for shape in temp[x]:
+                        if isinstance(shape, Image):
+                            shape.image = None
+                        if isinstance(shape, Text):
+                            shape.text = shape.txt_ctrl.GetValue()
+                            shape.txt_ctrl = None
 
-#                f = open(self.filename, 'w')
-#                try:
-#                    cPickle.dump(temp, f)
-#                except cPickle.PickleError:
-#                    wx.MessageBox("Error saving file data")
-#                f.close()
-#            else:
-#                wx.MessageBox("Error saving file data")
+                        shape.board = None
+                        shape.pen = None
+
+                _file = { 0: [self.colour, self.thickness, self.tool],
+                          1: temp,
+                          2: self.to_convert }
+
+                f = open(self.filename, 'w')
+                try:
+                    cPickle.dump(_file, f)
 
 
-    def load_file(self):
+                    for x in range(0, self.gui.tab_count ):
+                        for shape in self.gui.tabs.GetPage(x).shapes:
+                            if isinstance(shape, Text):
+                                shape.board = self.gui.tabs.GetPage(x)
+                                shape.make_control()
+
+                except cPickle.PickleError:
+                    MessageBox("Error saving file data")
+                f.close()
+            else:
+                MessageBox("Error saving file data")
+
+
+    def load_file(self, filename=None):
         """
         Loads in a file, passes it to convert if it is a convertable file,
-        then either loads an image or unpickles a whyteboard filr
+        then either loads an image or unpickles a whyteboard file
+
+        Loading in a whyteboard file recursively calls this method.
         """
-        _type = os.path.splitext(self.temp_file)[1]
+        if filename is None:
+            filename = self.temp_file
+
+        _type = os.path.splitext(filename)[1]
         _type = _type.replace(".", "")
 
         if _type in self.types[:3]:
@@ -106,30 +151,47 @@ class Utility(object):
         elif _type in self.types[3:]:
             self.load_image(self.temp_file, self.gui.board)
         elif _type.endswith("wtbd"):
-#            temp = {}
-#            f = open(self.filename, 'r')
-#            try:
-#                temp = cPickle.load(f)
-#            except cPickle.UnpicklingError:
-#               MessageBox("%s is not a valid Whyteboard file." % self.filename)
-#            f.close()
+            temp = {}
+            f = open(self.filename, 'r')
+            try:
+                temp = cPickle.load(f)
+            except cPickle.UnpicklingError:
+                MessageBox("%s is not a valid Whyteboard file." % self.filename)
+            f.close()
 
-#            # load in new tabs for every dictionary item
-#            if self.gui.tabs_count > 0 and not self.gui.board.shapes:
-#                self.gui.tabs.DeleteAllPages()
-#            for x in temp:
-#                wb = Whyteboard(self.tabs)
-#                wb.select_tool(1)
-#                wb.shapes = temp[x]
-#                wb.AddListener(self.cPanel.ci)
-#                wb.notify()
-#                self.tabs.AddPage(wb, "Untitled "+str(self.tabs.tab_count + 1))
+            # change program settings
+            self.colour = temp[0][0]
+            self.thickness = temp[0][1]
+            self.tool = temp[0][2]
+            self.to_convert = temp[2]
+            self.gui.control.change_tool()
+            self.gui.control.colour.SetColour(self.colour)
+            self.gui.control.thickness.SetSelection(self.thickness - 1)
+            self.gui.control.preview.Refresh()
 
-#                for shape in wb.shapes:
-#                    shape.board = wb
+            # load in new tabs for every dictionary item
+            if self.gui.tab_count == 1 and not self.gui.board.shapes:
+                self.gui.tabs.RemovePage(0)
+                self.gui.tab_count = 0
 
-#            self.SetTitle(os.path.split(self.filename)[1] +' - '+ self.title)
-            MessageBox("currently broke.")
+            for shape in temp[1]:
+                wb = Whyteboard(self.gui.tabs)
+                wb.shapes = temp[1][shape]
+
+                name = "Untitled "+ str(self.gui.tab_count + 1)
+                self.gui.tabs.AddPage(wb, name)
+                self.gui.tab_count += 1
+
+                for s in temp[1][shape]:
+                    s.board = wb
+
+                    if isinstance(s, Image):
+                        image = Bitmap(s.path)
+                        s.image = image
+                    if isinstance(s, Text):
+                        s.make_control()
+
+            self.gui.redraw = True  # redraw.
         else:
             MessageBox("Invalid file to load.")
 
@@ -142,6 +204,11 @@ class Utility(object):
         images, creating new Whyteboard tabs for each page, and storing the
         results in a dictionary, to_convert.
         """
+        # cmd = "convert -density 294 "+ _file +" -resample 108 -unsharp 0x.5 \
+        # -trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
+        # ------------------------------------------------
+        # better PDF quality, takes longer to convert
+
         if _file is None:
             _file = self.temp_file
 
@@ -154,15 +221,10 @@ class Utility(object):
 
         index = len(self.to_convert)
         self.to_convert[index] = { 0: str(_file) }
-
-        #cmd = "convert -density 294 "+ _file +" -resample 108 -unsharp 0x.5 \
-        #-trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
-
         before = os.walk(path).next()[2]  # file count before convert
+
         cmd = "convert "+ _file +" "+ path + tmp_file +".png"
-
-        self.gui.convert_dialog(cmd)
-
+        self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]
         count = len(after) - len(before)
 
@@ -174,6 +236,7 @@ class Utility(object):
             # remove single tab with no drawings
             if self.gui.tab_count == 1 and not self.gui.board.shapes:
                 self.gui.tabs.RemovePage(0)
+                self.gui.tab_count = 0
 
             for x in range(0, count):
                 wb = Whyteboard(self.gui.tabs)
@@ -194,7 +257,7 @@ class Utility(object):
         image file to create a bitmap from.
         """
         image = Bitmap(path)
-        shape = Image(board, image=image)
+        shape = Image(board, image, path)
         shape.button_down(0, 0)  # adds to the whyteboard
         board.redraw = True  # render self
 

@@ -114,7 +114,9 @@ class Rectangle(Tool):
 
 
 class Circle(Rectangle):
-    """Draws a circle with an inverted background RGB "+" in its center"""
+    """
+    Draws a circle with an inverted background RGB "+" in its center.
+    """
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
@@ -181,7 +183,9 @@ class Circle(Rectangle):
 
 
 class Ellipse(Rectangle):
-    """Easily extends from Rectangle."""
+    """
+    Easily extends from Rectangle.
+    """
     def draw(self, dc):
         dc.DrawEllipse(self.x, self.y, self.width, self.height)
 
@@ -189,7 +193,9 @@ class Ellipse(Rectangle):
 
 
 class RoundRect(Rectangle):
-    """Easily extends from Rectangle."""
+    """
+    Easily extends from Rectangle.
+    """
     def draw(self, dc):
         dc.DrawRoundedRectangle(self.x, self.y, self.width, self.height, 45)
 
@@ -197,7 +203,9 @@ class RoundRect(Rectangle):
 
 
 class Eyedropper(Tool):
-    """Selects the colour at the specified x,y coords"""
+    """
+    Selects the colour at the specified x,y coords
+    """
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
@@ -205,7 +213,8 @@ class Eyedropper(Tool):
     def button_down(self, x, y):
         dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
         colour = dc.GetPixel(x, y)  # get colour
-        self.board.SetColour(colour)
+        self.board.GetParent().GetParent().util.colour = colour
+        self.board.GetParent().GetParent().control.preview.Refresh()
 
 
 #----------------------------------------------------------------------
@@ -221,11 +230,18 @@ class Text(Tool):
         self.x = x
         self.y = y
         self.board.add_shape(self)
-        self.txt = wx.TextCtrl(self.board, pos=(x, y), style=wx.NO_BORDER)
-        self.board.Bind(wx.EVT_TEXT, self.on_type, self.txt)
-        self.txt.SetFocus()
+        self.text = ""
+        self.make_control()
+        self.txt_ctrl.SetFocus()
+
+    def make_control(self):
+        self.txt_ctrl = wx.TextCtrl(self.board, pos=(self.x, self.y),
+                                    style=wx.NO_BORDER)
+        self.txt_ctrl.SetValue(self.text)
+
+        self.txt_ctrl.SetMaxLength(50)
         #self.txt.SetBackgroundColour((255,255,255,100))
-        self.txt.SetMaxLength(50)
+        self.board.Bind(wx.EVT_TEXT, self.on_type, self.txt_ctrl)
 
     def motion(self, x, y):
         self.x = x
@@ -293,9 +309,10 @@ class Arc(Tool):
 class Image(Tool):
     """When being pickled, the image reference will be removed."""
 
-    def __init__(self, board, colour=(0, 0, 0), thickness=1, image=None):
-        Tool.__init__(self, board, colour, thickness)
+    def __init__(self, board, image, path):
+        Tool.__init__(self, board, "Black", 1)
         self.image = image
+        self.path = path  # used to restore image on load
 
     def button_down(self, x, y):
         self.x = x

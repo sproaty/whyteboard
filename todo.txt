@@ -1,12 +1,11 @@
-Whyteboard 0.28 - To do list
+Whyteboard 0.29 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 11 Feb 2009 03:58:03 GMT
+Wed 11 Feb 2009 09:49:56 GMT
 
 
 *** FIXES ***
 
--- Loading/saving .wtdb files - should mark roughly the 0.3 release
--- Scrollbars
+-- Scrollbars - ONLY ISSUE ARGHH (currently really stuck + frustrated)
 -- Ensure "blank" shapes aren't being added
 
 
@@ -23,5 +22,7 @@ Wed 11 Feb 2009 03:58:03 GMT
 
 -- Make a loaded PDF/PS the background image, thus everything gets written over
    that image
-    -- Needs to be done for single "page" images, currently working on multi
+    -- Needs to be done for single "page" images, is currently working on multi
        page PDFs
+
+-- Option for keeping or removing temporary files and converting on file load

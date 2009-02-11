@@ -26,7 +26,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
 
-        self.select_tool(1)  # tool ID used to generate Tool object
+        self.select_tool()  # tool ID used to generate Tool object
         self.shapes = []  # list of shapes for re-drawing/saving
         self._undo = []  # list of actions to undo
         self._redo = []  # list of actions to redo
@@ -55,19 +55,10 @@ class Whyteboard(wx.ScrolledWindow):
         dc = wx.BufferedDC(None, self.buffer)
         dc.Clear()
         dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
+
         self.PrepareDC(dc)
         self.draw_shapes(dc)
         self.redraw = False
-
-
-    def convert_coords(self, event):
-        """
-        Translate mouse x/y coords to virtual scroll ones.
-        """
-        xView, yView = self.GetViewStart()
-        xDelta, yDelta = self.GetScrollPixelsPerUnit()
-        return (event.GetX() + (xView * xDelta),
-                event.GetY() + (yView * yDelta))
 
 
     def draw_shapes(self, dc):
@@ -81,9 +72,17 @@ class Whyteboard(wx.ScrolledWindow):
             s.draw(dc)  # call shape's polymorphic drawing method
 
 
+    def convert_coords(self, event):
+        """
+        Translate mouse x/y coords to virtual scroll ones.
+        """
+        newpos = self.CalcUnscrolledPosition(event.GetX(), event.GetY())
+        return newpos
+
+
     def left_down(self, event):
         """
-        Called when the left mouse button is pressed..
+        Called when the left mouse button is pressed.
         """
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
@@ -95,7 +94,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         x, y = self.convert_coords(event)
         self.shape.button_up(x, y)
-        self.select_tool(self.GetParent().GetParent().util.tool)  # reset
+        self.select_tool()  # reset
 
 
     def left_motion(self, event):
@@ -107,13 +106,18 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.motion(x, y)
 
 
-    def select_tool(self, new):
+    def select_tool(self, new=None):
         """
         Changes the users' tool (and cursor) they are drawing with. new is an
         int, corresponding to new - 1 = Tool ID in list below.
+        Can be called with no new ID to reset itself with the current tool
         Note: Whyteboard's parent = tabs; tabs' parent = GUI
         """
-        self.GetParent().GetParent().util.tool = new
+        if new is None:
+            new = self.GetParent().GetParent().util.tool
+        else:
+            self.GetParent().GetParent().util.tool = new
+
         items = self.GetParent().GetParent().util.items
         colour = self.GetParent().GetParent().util.colour
         thickness = self.GetParent().GetParent().util.thickness

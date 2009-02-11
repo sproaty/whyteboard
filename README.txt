@@ -1,6 +1,7 @@
-Whyteboard 0.28 - simple image/PDF/postscript file annotator
+Whyteboard 0.29 - simple image/PDF/postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 11 Feb 2009 03:57:20 GMT
+Wed 11 Feb 2009 09:46:41 GMT
+
 
 *** TO RUN ***
 
@@ -21,7 +22,6 @@ see what error occured and let me know, <sproaty -at- gmail -dot- com>
 
 *** KNOWN BUGS ***
 
-- Saving/loading your drawings isn't working.
 - Scrolling horizontally/vertically isn't working correctly - major issue
 - Undo/redo being slightly broken because you can add "blank" shapes that fills
    up the undo list
@@ -32,6 +32,11 @@ see what error occured and let me know, <sproaty -at- gmail -dot- com>
 
 *** VERSION HISTORY ***
 
+
+11 Feb 2009 - Saving/loading working. Currently keeping temporary files from
+               PDF/PS conversions to make loading a saved file faster (would
+               need to convert any 'linked' PDF/PS files for every .wtdb load)
+               Saving text works, program also saves its settings
 11 Feb 2009 - Fixed history replaying, added pause/ stop the replay. Fixed a bug
                with the converting progress where the bar increased in response
                to mouse movement - now it's increased by a timer.

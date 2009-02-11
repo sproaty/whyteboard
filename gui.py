@@ -109,7 +109,7 @@ class GUI(wx.Frame):
                ID_CLEAR_ALL, wx.ID_ABOUT, wx.ID_EXIT]
 
         for name, _id in zip(functs, IDs):
-            method = getattr(self, 'on_%s' % name, None)  # self.on_*
+            method = getattr(self, "on_"+ name)  # self.on_*
             self.Bind(wx.EVT_MENU, method, id=_id )
 
 
@@ -154,6 +154,7 @@ class GUI(wx.Frame):
 
             if name.endswith("wtbd"):
                 self.util.filename = name
+                self.SetTitle(os.path.split(name)[1] +' - '+ self.title)
 
             self.util.temp_file = name
             self.util.load_file()
@@ -206,7 +207,7 @@ class GUI(wx.Frame):
         Sets the GUI's board attribute to be the selected Whyteboard.
         """
         self.board = self.tabs.GetCurrentPage()
-        self.control.change_tool(_id=self.control.toggled)
+        self.control.change_tool()
 
 
     def on_close_tab(self, event=None):
@@ -243,8 +244,11 @@ class GUI(wx.Frame):
     def on_exit(self, event=None):
         """
         Clean up any tmp files from PDF/PS conversion.
+
+        **NOTE**
+        Temporarily keeping temp. files to make loading files faster
         """
-        self.util.cleanup()
+        #self.util.cleanup()
         self.Destroy()
 
 
@@ -271,7 +275,6 @@ class GUI(wx.Frame):
         dlg = History(self)
         dlg.ShowModal()
         dlg.Destroy()
-
 
 
 #----------------------------------------------------------------------
@@ -338,6 +341,8 @@ class ControlPanel(wx.Panel):
             new = int(event.GetId() )  # get widget ID (set in method above)
         elif _id:
             new = _id
+        else:
+            new = self.gui.util.tool
 
         if new != self.toggled:  # toggle old button
             self.tools[self.toggled].SetValue(False)
@@ -353,7 +358,7 @@ class ControlPanel(wx.Panel):
         Changes colour and updates the preview window.
         """
         self.gui.util.colour = event.GetColour()
-        self.gui.board.select_tool(self.gui.util.tool)
+        self.gui.board.select_tool()
         self.preview.Refresh()
 
     def change_thickness(self, event=None):
@@ -361,8 +366,9 @@ class ControlPanel(wx.Panel):
         Changes thickness and updates the preview window.
         """
         self.gui.util.thickness = event.GetSelection()
-        self.gui.board.select_tool(self.gui.util.tool)
+        self.gui.board.select_tool()
         self.preview.Refresh()
+
 
 #----------------------------------------------------------------------
 

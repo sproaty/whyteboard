@@ -103,7 +103,7 @@ class History(wx.Dialog):
 
                 else:  # loop is paused, wait for unpause/close/stop
                     while self.paused:
-                        wx.MicroSleep(950)
+                        wx.MicroSleep(100)
                         wx.Yield()
 
         self.looping = False
@@ -186,7 +186,7 @@ class About(wx.Dialog):
     Shows an HTML 'about' box for the program.
     """
 
-    version = "0.28"
+    version = "0.29"
     text = '''
 <html><body bgcolor="#6699CC">
  <table bgcolor="#F0F0F0" width="100%" border="1">
