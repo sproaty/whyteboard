@@ -39,7 +39,6 @@ class Whyteboard(wx.ScrolledWindow):
         dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
         dc.Clear()
 
-        #self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
         self.Bind(wx.EVT_MOTION, self.left_motion)
@@ -50,15 +49,15 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Figure out what part of the window to refresh.
         """
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        x1,y1, x2,y2 = dc.GetBoundingBox()
-        x1,y1 = self.CalcScrolledPosition(x1, y1)
-        x2,y2 = self.CalcScrolledPosition(x2, y2)
+        #dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        x1, y1, x2, y2 = dc.GetBoundingBox()
+        x1, y1 = self.CalcScrolledPosition(x1, y1)
+        x2, y2 = self.CalcScrolledPosition(x2, y2)
         # make a rectangle
         rect = wx.Rect()
-        rect.SetTopLeft((x1,y1))
-        rect.SetBottomRight((x2,y2))
-        rect.Inflate(2,2)
+        rect.SetTopLeft((x1, y1))
+        rect.SetBottomRight((x2, y2))
+        rect.Inflate(2, 2)
         # refresh it
         self.RefreshRect(rect)
 
@@ -176,19 +175,13 @@ class Whyteboard(wx.ScrolledWindow):
         Removes all shapes from the "to-draw" list.
         """
         self.shapes = []
-        self.redraw = True
 
 
     def on_paint(self, event):
         """
         Called when the window is exposed.
         """
-        dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-
-    def on_size(self, event):
-        dc = wx.BufferedDC(None, self.buffer)
-        self.redraw_dirty(dc)
-
+        wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
 
 #----------------------------------------------------------------------
 

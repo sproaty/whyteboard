@@ -68,7 +68,7 @@ class Utility(object):
         self.colour = "Black"
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
-        self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Fill,
+        self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text,
                       Eyedropper]
 
         #  Make wxPython wildcard filter. Add a new item - new type supported!
@@ -129,7 +129,7 @@ class Utility(object):
                                 s.board = self.gui.tabs.GetPage(x)
                                 s.make_control()
 
-                        s.make_pen()
+                            s.make_pen()
 
                 except cPickle.PickleError:
                     MessageBox("Error saving file data")
@@ -233,7 +233,7 @@ class Utility(object):
         alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890-'
         _list = []
 
-        for x in random.sample(alphabet, random.randint(3,12)):
+        for x in random.sample(alphabet, random.randint(3, 12)):
             _list.append(x)
 
         string = "".join(_list)

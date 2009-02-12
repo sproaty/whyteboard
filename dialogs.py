@@ -9,7 +9,7 @@ import wx.html
 
 from copy import copy
 
-from tools import Pen, Image
+from tools import Pen
 
 
 #----------------------------------------------------------------------

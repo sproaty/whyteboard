@@ -112,7 +112,7 @@ class Rectangle(Tool):
         odc.Clear()
 
 
-    def draw(self, dc, replay=True, type="Rectangle", args=[]):
+    def draw(self, dc, replay=True, _type="Rectangle", args=[]):
         """
         Draws a shape, can be called by its sub-classes. Draws a shape
         polymorphically by using Python's introspection.
@@ -126,7 +126,7 @@ class Rectangle(Tool):
         if not replay:
             self.draw_outline(dc)
 
-        method = getattr(dc, "Draw" + type)(*args)
+        method = getattr(dc, "Draw" + _type)(*args)
         method
 
 #----------------------------------------------------------------------
@@ -170,8 +170,8 @@ class RoundRect(Rectangle):
     Easily extends from Rectangle.
     """
     def draw(self, dc, replay=True):
-        super(RoundRect, self).draw(dc, replay, "RoundRect", [self.x, self.y,
-              self.width, self.height, 45])
+        super(RoundRect, self).draw(dc, replay, "RoundedRectangle", [self.x,
+              self.y, self.width, self.height, 45])
 
 #----------------------------------------------------------------------
 
