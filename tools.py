@@ -19,7 +19,7 @@ class Tool(object):
         self.colour = colour
         self.thickness = thickness
         self.cursor = cursor
-        self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
+        self.make_pen()
 
     def button_down(self, x, y):
         pass
@@ -30,14 +30,23 @@ class Tool(object):
     def motion(self, x, y):
         pass
 
-    def draw(self, dc):
+    def draw(self, dc, replay=True):
         pass
+
+    def make_pen(self):
+        self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
+        self.brush = wx.TRANSPARENT_BRUSH
+
 
 
 #----------------------------------------------------------------------
 
 
 class Pen(Tool):
+    """
+    A free-hand pen.
+    TODO: possible pen styles: dashed, slanted etc.
+    """
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness)
@@ -47,10 +56,10 @@ class Pen(Tool):
     def button_down(self, x, y):
         self.x = x  # original mouse coords
         self.y = y
-        self.board.add_shape(self)
 
     def button_up(self, x, y):
-        pass
+        if self.points:
+            self.board.add_shape(self)
 
     def motion(self, x, y):
         self.points.append( [self.x, self.y, x, y] )
@@ -58,13 +67,8 @@ class Pen(Tool):
         self.x = x
         self.y = y  # swap for the next call to this function
 
-        dc = wx.BufferedDC(wx.ClientDC(self.board), self.board.buffer)
-        self.board.PrepareDC(dc)
+    def draw(self, dc, replay=True):
         dc.SetPen(self.pen)
-        self.draw(dc)
-
-
-    def draw(self, dc):
         dc.DrawLineList(self.points)
 
 
@@ -72,6 +76,10 @@ class Pen(Tool):
 
 
 class Rectangle(Tool):
+    """
+    The rectangle and its descended classes (ellipse/rounded rect) use an
+    overlay as a rubber banding method of drawing itself over other shapes.
+    """
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
@@ -81,103 +89,68 @@ class Rectangle(Tool):
         self.y = y
         self.width = 2
         self.height = 2
-        self.board.add_shape(self)
 
     def motion(self, x, y):
         self.width = x - self.x
         self.height = y - self.y
-        self.draw_outline()
-
 
     def button_up(self, x, y):
+        """
+        Clears the created overlay for rubber banding.
+        """
         dc = wx.ClientDC(self.board)
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
         self.board.overlay.Reset()
         self.board.Refresh()  # show on whyteboard
 
-    def draw_outline(self):
-        dc = wx.BufferedDC(wx.ClientDC(self.board), self.board.buffer)
+        if x != self.x and y != self.y:
+            self.board.add_shape(self)
+
+    def draw_outline(self, dc):
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
-        self.board.PrepareDC(dc)
+
+
+    def draw(self, dc, replay=True, type="Rectangle", args=[]):
+        """
+        Draws a shape, can be called by its sub-classes. Draws a shape
+        polymorphically by using Python's introspection.
+        When called for a replay it renders itself, not draw a temp. outline.
+        """
+        if not args:
+            args = [self.x, self.y, self.width, self.height]
         dc.SetPen(self.pen)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        self.draw(dc)
 
+        if not replay:
+            self.draw_outline(dc)
 
-    def draw(self, dc):
-        dc.DrawRectangle(self.x, self.y, self.width, self.height)
-
+        method = getattr(dc, "Draw" + type)(*args)
+        method
 
 #----------------------------------------------------------------------
 
 
 class Circle(Rectangle):
     """
-    Draws a circle with an inverted background RGB "+" in its center.
+    Draws a circle. Extended from a Rectangle to save on repeated code.
     """
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
-        self.radius  = 4
-        self.inMotion = False  # used to draw a cross at circle's center
+        self.radius  = 1
 
     def button_down(self, x, y):
         self.x = x
         self.y = y
-        self.board.add_shape(self)
-        self.inMotion = True
-        self.find_invert()
-
-    def button_up(self, x, y):
-        self.inMotion = False
-        super(Circle, self).button_up(x, y)  # remove overlay
-        self.board.redraw = True  # remove cross
-
 
     def motion(self, x, y):
         self.radius = self.x - x
 
-        if self.radius <= 0:  # from moving down-left or down-right
-            self.radius = -self.radius  # would be a negative number otherwise
-        self.draw_outline()
-
-
-    def draw(self, dc):
-        dc.DrawCircle(self.x, self.y, self.radius)
-        if self.inMotion:
-            self.draw_cross(dc)
-
-
-    def draw_cross(self, dc):
-        """Draws a cross at the center of the circle whilst drawing
-        the circle's outline"""
-        pen = wx.Pen(self.invert, 1, wx.SOLID)
-        dc.SetPen(pen)
-        dc.DrawLine(self.x - 4, self.y, self.x + 5, self.y)
-        dc.DrawLine(self.x, self.y + 4, self.x, self.y - 4)
-
-
-    def find_invert(self):
-        """Finds the inverted RGB value of a square pixel area"""
-        dc = wx.BufferedDC(None, self.board.buffer)
-        r, g, b, count = 0, 0, 0, 0
-
-        for x in range( self.x - 4, self.x + 4):
-            for y in range(self.y - 4, self.y + 4):
-                colour = dc.GetPixel(x, y)
-                r += colour.Red()
-                g += colour.Green()
-                b += colour.Blue()
-                count += 1
-            count += 1
-
-        r = 255 - (r / count)
-        g = 255 - (g /  count)
-        b = 255 - (b / count)
-        self.invert = wx.Colour(r, g, b)
-
+    def draw(self, dc, replay=True):
+        super(Circle, self).draw(dc, replay, "Circle", [self.x, self.y,
+              self.radius])
 
 #----------------------------------------------------------------------
 
@@ -186,8 +159,8 @@ class Ellipse(Rectangle):
     """
     Easily extends from Rectangle.
     """
-    def draw(self, dc):
-        dc.DrawEllipse(self.x, self.y, self.width, self.height)
+    def draw(self, dc, replay=True):
+        super(Ellipse, self).draw(dc, replay, "Ellipse")
 
 #----------------------------------------------------------------------
 
@@ -196,8 +169,9 @@ class RoundRect(Rectangle):
     """
     Easily extends from Rectangle.
     """
-    def draw(self, dc):
-        dc.DrawRoundedRectangle(self.x, self.y, self.width, self.height, 45)
+    def draw(self, dc, replay=True):
+        super(RoundRect, self).draw(dc, replay, "RoundRect", [self.x, self.y,
+              self.width, self.height, 45])
 
 #----------------------------------------------------------------------
 
@@ -221,7 +195,11 @@ class Eyedropper(Tool):
 
 
 class Text(Tool):
-    """Currently draws a random string. Will be extended for user text input"""
+    """
+    Allows the input of text. When a save is pickled, the wx.TextCtrl is removed
+    and its value is saved to a class attribute, where the TextCtrl is restored
+    upon loading the file.
+    """
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CHAR)
@@ -229,10 +207,10 @@ class Text(Tool):
     def button_down(self, x, y):
         self.x = x
         self.y = y
-        self.board.add_shape(self)
         self.text = ""
         self.make_control()
         self.txt_ctrl.SetFocus()
+        self.board.add_shape(self)
 
     def make_control(self):
         self.txt_ctrl = wx.TextCtrl(self.board, pos=(self.x, self.y),
@@ -241,7 +219,7 @@ class Text(Tool):
 
         self.txt_ctrl.SetMaxLength(50)
         #self.txt.SetBackgroundColour((255,255,255,100))
-        self.board.Bind(wx.EVT_TEXT, self.on_type, self.txt_ctrl)
+        #self.board.Bind(wx.EVT_TEXT, self.on_type, self.txt_ctrl)
 
     def motion(self, x, y):
         self.x = x
@@ -272,10 +250,10 @@ class Fill(Tool):
         b /= 255
         g /= 255
         self.invert = wx.Colour(r, g, b)
-        self.board.add_shape(self)
-
-    def draw(self, dc):
         dc.FloodFill(self.x, self.y, self.invert)
+
+    #def draw(self, dc, replay=True):
+
 
 
 #----------------------------------------------------------------------
@@ -299,7 +277,7 @@ class Arc(Tool):
         self.y2 = y        self.c1 = 300
         self.c2 = 300
 
-    def draw(self, dc):
+    def draw(self, dc, replay=True):
         dc.DrawArc(self.x, self.y, self.x2, self.y2, self.c1, self.x2)
 
 
@@ -307,7 +285,9 @@ class Arc(Tool):
 
 
 class Image(Tool):
-    """When being pickled, the image reference will be removed."""
+    """
+    When being pickled, the image reference will be removed.
+    """
 
     def __init__(self, board, image, path):
         Tool.__init__(self, board, "Black", 1)
@@ -318,10 +298,39 @@ class Image(Tool):
         self.x = x
         self.y = y
         self.board.add_shape(self)
+        self.update_scrollbars()
 
-    def draw(self, dc):
+        dc = wx.BufferedDC(None, self.board.buffer)
+        self.draw(dc)
+        self.board.redraw_dirty(dc)
+
+    def draw(self, dc, replay=True):
         dc.DrawBitmap(self.image, self.x, self.y)
 
+
+    def update_scrollbars(self):
+        """
+        Updates the Whyteboard's scrollbars if the loaded image is bigger than
+        the scrollbar's current size.
+        """
+        if self.image.GetWidth() > self.board.virtual_size[0]:
+            x = self.image.GetWidth()
+        else:
+            x = self.board.virtual_size[0]
+
+        if self.image.GetHeight() > self.board.virtual_size[1]:
+            y = self.image.GetHeight()
+        else:
+            y =  self.board.virtual_size[1]
+
+        #  update the scrollbars and the board's buffer size
+        if (x, y) is not self.board.virtual_size:
+            self.board.virtual_size = (x, y)
+            self.board.SetVirtualSize((x, y))
+            self.board.buffer = wx.EmptyBitmap(*(x, y))
+            dc = wx.BufferedDC(None, self.board.buffer)
+            dc.SetBackground(wx.Brush(self.board.GetBackgroundColour()))
+            dc.Clear()
 
 #----------------------------------------------------------------------
 
@@ -341,7 +350,7 @@ class Note(Tool):
     def motion(self, x, y):
         pass
 
-    def draw(self, dc):
+    def draw(self, dc, replay=True):
         pass
 
 

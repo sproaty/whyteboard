@@ -37,7 +37,7 @@ import cPickle
 import random
 from copy import copy
 
-from wx import MessageBox, Bitmap, StandardPaths
+from wx import MessageBox, Bitmap, StandardPaths, BufferedDC
 
 from whyteboard import Whyteboard
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
@@ -68,7 +68,7 @@ class Utility(object):
         self.colour = "Black"
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
-        self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text,
+        self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Fill,
                       Eyedropper]
 
         #  Make wxPython wildcard filter. Add a new item - new type supported!
@@ -97,12 +97,13 @@ class Utility(object):
         if self.filename:
             temp = {}
 
-            for x in range(0, self.gui.tab_count ):
+            for x in range(0, self.gui.tab_count):
                 temp[x] = copy(self.gui.tabs.GetPage(x).shapes)
 
             if temp:
                 for x in temp:
                     for shape in temp[x]:
+                        # need to unlink unpickleable items; be restored on load
                         if isinstance(shape, Image):
                             shape.image = None
                         if isinstance(shape, Text):
@@ -111,6 +112,7 @@ class Utility(object):
 
                         shape.board = None
                         shape.pen = None
+                        shape.brush = None
 
                 _file = { 0: [self.colour, self.thickness, self.tool],
                           1: temp,
@@ -120,12 +122,14 @@ class Utility(object):
                 try:
                     cPickle.dump(_file, f)
 
+                    # restore saved text shapes
+                    for x in range(0, self.gui.tab_count):
+                        for s in self.gui.tabs.GetPage(x).shapes:
+                            if isinstance(s, Text):
+                                s.board = self.gui.tabs.GetPage(x)
+                                s.make_control()
 
-                    for x in range(0, self.gui.tab_count ):
-                        for shape in self.gui.tabs.GetPage(x).shapes:
-                            if isinstance(shape, Text):
-                                shape.board = self.gui.tabs.GetPage(x)
-                                shape.make_control()
+                        s.make_pen()
 
                 except cPickle.PickleError:
                     MessageBox("Error saving file data")
@@ -145,12 +149,14 @@ class Utility(object):
             filename = self.temp_file
 
         _type = os.path.splitext(filename)[1]
-        _type = _type.replace(".", "")
+        _type = _type.replace(".", "").lower()
 
         if _type in self.types[:3]:
             self.convert()
+
         elif _type in self.types[3:]:
             self.load_image(self.temp_file, self.gui.board)
+
         elif _type.endswith("wtbd"):
             temp = {}
             f = open(self.filename, 'r')
@@ -178,21 +184,27 @@ class Utility(object):
             for shape in temp[1]:
                 wb = Whyteboard(self.gui.tabs)
                 wb.shapes = temp[1][shape]
-
                 name = "Untitled "+ str(self.gui.tab_count + 1)
                 self.gui.tabs.AddPage(wb, name)
                 self.gui.tab_count += 1
 
+                dc = BufferedDC(None, wb.buffer)
+
                 for s in temp[1][shape]:
+                    # restore unpickleable settings
                     s.board = wb
 
                     if isinstance(s, Image):
                         image = Bitmap(s.path)
                         s.image = image
+                        s.update_scrollbars()
+                        dc = BufferedDC(None, wb.buffer)  # get updated buffer
                     if isinstance(s, Text):
                         s.make_control()
 
-            self.gui.redraw = True  # redraw.
+                    s.make_pen()  # restore colour/thickness
+                    s.draw(dc)  # draw each shape
+
         else:
             MessageBox("Invalid file to load.")
 
@@ -208,11 +220,6 @@ class Utility(object):
         An attempt at randomising the temp. file name is made using alphanumeric
         characters to help minimise conflict.
         """
-        # cmd = "convert -density 294 "+ _file +" -resample 108 -unsharp 0x.5 \
-        # -trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
-        # ------------------------------------------------
-        # better PDF quality, takes longer to convert
-
         if _file is None:
             _file = self.temp_file
 
@@ -220,9 +227,10 @@ class Utility(object):
 
         std_paths = StandardPaths.Get()
         path = StandardPaths.GetUserLocalDataDir(std_paths)  # $HOME/.appName
-        path = os.path.join(path, "wtbd-tmp", "")  # blank element forces slash
+        path = os.path.join(path, "wtbd-tmp", "")  # "" forces slash at end
 
-        alphabet = 'abcdefghijklmnopqrstuvwxyz[]()1234567890-_'
+        # Create a random filename using letters and numbers
+        alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890-'
         _list = []
 
         for x in random.sample(alphabet, random.randint(3,12)):
@@ -238,6 +246,10 @@ class Utility(object):
         self.to_convert[index] = { 0: str(_file) }
         before = os.walk(path).next()[2]  # file count before convert
 
+        #cmd = "convert -density 294 "+ _file +" -resample 108 -unsharp 0x.5 \
+        #-trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
+        # ------------------------------------------------
+        # better PDF quality, takes longer to convert
         cmd = "convert "+ _file +" "+ path + tmp_file +".png"
         self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]
@@ -273,8 +285,7 @@ class Utility(object):
         """
         image = Bitmap(path)
         shape = Image(board, image, path)
-        shape.button_down(0, 0)  # adds to the whyteboard
-        board.redraw = True  # render self
+        shape.button_down(0, 0)  # renders, updates scrollbars
 
 
     def cleanup(self):

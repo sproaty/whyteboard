@@ -1,13 +1,11 @@
-Whyteboard 0.29 - To do list
+Whyteboard 0.30 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 11 Feb 2009 09:49:56 GMT
+Thu 12 Feb 2009 09:47:46 GMT
 
 
 *** FIXES ***
 
--- Scrollbars - ONLY ISSUE ARGHH (currently really stuck + frustrated)
--- Ensure "blank" shapes aren't being added
-
+all to do with the text - see README.
 
 *** NEW FEATURES ***
 

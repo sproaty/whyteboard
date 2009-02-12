@@ -313,13 +313,16 @@ class ControlPanel(wx.Panel):
         spacing = 4
 
         self.colour = wx.ColourPickerCtrl(self)
+        self.colour.SetToolTip(wx.ToolTip("Sets the drawing colour"))
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
+
 
         choices = ''.join(str(i) + " " for i in range(1, 26) ).split()
 
         self.thickness = wx.ComboBox(self, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
+        self.thickness.SetToolTip(wx.ToolTip("Sets the drawing thickness"))
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
 
         box = wx.BoxSizer(wx.VERTICAL)
@@ -386,6 +389,7 @@ class Preview(wx.Window):
         self.SetBackgroundColour(wx.WHITE)
         self.SetSize((45, 45))
         self.Bind(wx.EVT_PAINT, self.paint)
+        self.SetToolTip(wx.ToolTip("A preview of your drawing"))
 
 
     def paint(self, event=None):

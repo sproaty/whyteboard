@@ -7,7 +7,9 @@ This module contains classes extended from wx.Dialog used by the GUI.
 import wx
 import wx.html
 
-from tools import Pen
+from copy import copy
+
+from tools import Pen, Image
 
 
 #----------------------------------------------------------------------
@@ -22,6 +24,7 @@ class History(wx.Dialog):
         self.gui = gui
         self.looping = False
         self.paused = False
+        #self.buffer = self.gui.board.buffer
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         _max = len(gui.board.shapes)+50
@@ -50,7 +53,7 @@ class History(wx.Dialog):
         btn_pause.Bind(wx.EVT_BUTTON, self.pause)
         btn_stop.Bind(wx.EVT_BUTTON, self.stop)
         self.Bind(wx.EVT_CLOSE, self.on_close)
-        self.slider.Bind(wx.EVT_SCROLL, self.scroll)
+        #self.slider.Bind(wx.EVT_SCROLL, self.scroll)
 
 
     def on_play(self, event):
@@ -64,8 +67,9 @@ class History(wx.Dialog):
         if self.paused:
             self.paused = False
 
+        tmp_shapes = copy(self.gui.board.shapes)
         shapes = []
-        for shape in self.gui.board.shapes:
+        for shape in tmp_shapes:
             if isinstance(shape, Pen):
                 shapes.append(shape)
 
@@ -82,13 +86,21 @@ class History(wx.Dialog):
         The loop can be paused/unpaused by the user.
         """
         pen = None
+
         dc = wx.ClientDC(self.gui.board)
         dc.Clear()
+        #dc.SetBrush(wx.TRANSPARENT_BRUSH)
         self.gui.board.PrepareDC(dc)
 
+        #  paint any shapes but the pen first
+        tmp_shapes = copy(self.gui.board.shapes)
+
+        for s in tmp_shapes:
+            if not isinstance(s, Pen):
+                s.draw(dc)
+
         for pen in shapes:
-            draw_pen = wx.Pen(pen.colour, pen.thickness, wx.SOLID)
-            dc.SetPen(draw_pen)
+            dc.SetPen(pen.pen)
 
             for x, p in enumerate(pen.points):
                 if self.looping and not self.paused:
@@ -106,9 +118,7 @@ class History(wx.Dialog):
                         wx.MicroSleep(100)
                         wx.Yield()
 
-        self.looping = False
-        self.paused = False
-        self.gui.board.redraw = True  # restore other drawn items
+        self.stop()  # restore other drawn items
 
 
     def pause(self, event):
@@ -123,19 +133,19 @@ class History(wx.Dialog):
         """
         Stops the replay.
         """
-        self.looping = False
-        self.paused = False
-        self.gui.board.redraw = True
+        if self.looping or self.paused:
+            self.looping = False
+            self.paused = False
+            self.gui.board.Refresh()  # restore
 
 
-    def on_close(self, event):
+    def on_close(self, event=None):
         """
         Called when the dialog is closed; stops the replay and ends the modal
         view, allowing the GUI to Destroy() the dialog.
         """
         self.stop()
         self.EndModal(1)
-
 
     def scroll(self, event):
         pass
@@ -186,7 +196,7 @@ class About(wx.Dialog):
     Shows an HTML 'about' box for the program.
     """
 
-    version = "0.29"
+    version = "0.30"
     text = '''
 <html><body bgcolor="#6699CC">
  <table bgcolor="#F0F0F0" width="100%" border="1">
@@ -196,7 +206,7 @@ class About(wx.Dialog):
 <p>Whyteboard is a simple image annotation program, facilitating the
 annotation of PDF and PostScript files, and most image formats.</p>
 
-<p>It is based on a demonstration application wxPython; SuperDoodle, by
+<p>It is based on a demonstration application for wxPython; SuperDoodle, by
 Robin Dunn, &copy; 1997-2006.</p>
 <p>Modified by Steven Sproat, &copy; 2009.<br />
 Many thanks to the helpful users in #python on FreeNode!</p>

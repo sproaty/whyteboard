@@ -8,7 +8,7 @@ its own undo/redo.
 """
 
 import wx
-
+from tools import Text
 
 #----------------------------------------------------------------------
 
@@ -22,7 +22,8 @@ class Whyteboard(wx.ScrolledWindow):
         Initalise the window, class variables and bind mouse/paint events
         """
         wx.ScrolledWindow.__init__(self, tab, -1, (0, 0))
-        self.SetVirtualSize((1000, 1000))
+        self.virtual_size = (1280, 1024)
+        self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
 
@@ -31,46 +32,47 @@ class Whyteboard(wx.ScrolledWindow):
         self._undo = []  # list of actions to undo
         self._redo = []  # list of actions to redo
         self.overlay = wx.Overlay()  # drawing "rubber bands"
+        self.drawing = False
 
-        self.buffer = None
-        self.redraw = False
+        self.buffer = wx.EmptyBitmap(*self.virtual_size)
+        dc = wx.BufferedDC(None, self.buffer)
+        dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
+        dc.Clear()
 
-        self.init_buffer()
-
+        #self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
         self.Bind(wx.EVT_MOTION, self.left_motion)
-        self.Bind(wx.EVT_SIZE, self.on_size)
-        self.Bind(wx.EVT_IDLE, self.on_idle)
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        #self.Bind(wx.EVT_SCROLL, self.on_scroll)
 
 
-    def init_buffer(self):
+    def redraw_dirty(self, dc):
         """
-        Initialise the bitmap used for buffering the display.
+        Figure out what part of the window to refresh.
         """
-        size = self.GetClientSize()
-        self.buffer = wx.EmptyBitmap(*size)
-        dc = wx.BufferedDC(None, self.buffer)
-        dc.Clear()
-        dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        x1,y1, x2,y2 = dc.GetBoundingBox()
+        x1,y1 = self.CalcScrolledPosition(x1, y1)
+        x2,y2 = self.CalcScrolledPosition(x2, y2)
+        # make a rectangle
+        rect = wx.Rect()
+        rect.SetTopLeft((x1,y1))
+        rect.SetBottomRight((x2,y2))
+        rect.Inflate(2,2)
+        # refresh it
+        self.RefreshRect(rect)
 
-        self.PrepareDC(dc)
-        self.draw_shapes(dc)
-        self.redraw = False
 
-
-    def draw_shapes(self, dc):
+    def redraw_all(self):
         """
         Redraws all shapes that have been drawn already.
         """
+        dc = wx.BufferedDC(None, self.buffer)
+        dc.Clear()
         for s in self.shapes:
-            pen = wx.Pen(s.colour, s.thickness, wx.SOLID)
-            dc.SetPen(pen)
-            dc.SetBrush(wx.TRANSPARENT_BRUSH)  # draw in unfilled shape
             s.draw(dc)  # call shape's polymorphic drawing method
 
+        self.redraw_dirty(dc)
 
     def convert_coords(self, event):
         """
@@ -82,28 +84,37 @@ class Whyteboard(wx.ScrolledWindow):
 
     def left_down(self, event):
         """
-        Called when the left mouse button is pressed.
+        Called when the left mouse button is pressed
+        Either begins drawing, starts the drawing motion or ends drawing.
         """
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
-
-
-    def left_up(self, event):
-        """
-        Called when the left mouse button is released.
-        """
-        x, y = self.convert_coords(event)
-        self.shape.button_up(x, y)
-        self.select_tool()  # reset
+        if not isinstance(self.shape, Text):
+            self.drawing = True
 
 
     def left_motion(self, event):
         """
         Called when the mouse is in motion.
         """
-        if event.Dragging() and event.LeftIsDown():
+        if self.drawing:
             x, y = self.convert_coords(event)
+
+            dc = wx.BufferedDC(None, self.buffer)
             self.shape.motion(x, y)
+            self.shape.draw(dc, False)
+            self.redraw_dirty(dc)
+
+
+    def left_up(self, event):
+        """
+        Called when the left mouse button is released.
+        """
+        if self.drawing:
+            x, y = self.convert_coords(event)
+            self.shape.button_up(x, y)
+            self.drawing = False
+            self.select_tool()  # reset
 
 
     def select_tool(self, new=None):
@@ -142,7 +153,7 @@ class Whyteboard(wx.ScrolledWindow):
             shape = self.shapes.pop()
             self._undo.append( shape )
             self._redo.append( shape )
-            self.redraw = True
+            self.redraw_all()
         except IndexError:
             pass
 
@@ -155,7 +166,7 @@ class Whyteboard(wx.ScrolledWindow):
             item = self._redo.pop()
             self._undo.append(item)  # add item to be removed onto redo stack
             self.shapes.append(item)
-            self.redraw = True
+            self.redraw_all()
         except IndexError:
             pass
 
@@ -168,35 +179,16 @@ class Whyteboard(wx.ScrolledWindow):
         self.redraw = True
 
 
-    def on_size(self, event):
-        """
-        Called when the window is resized - redraw buffer.
-        """
-        self.redraw = True
-
-
-    def on_idle(self, event):
-        """
-        If the window size changed, resize the bitmap to match the size.
-        """
-        if self.redraw:
-            self.init_buffer()
-            self.Refresh(False)
-
-
     def on_paint(self, event):
         """
         Called when the window is exposed.
         """
         dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-        self.PrepareDC(dc)
 
+    def on_size(self, event):
+        dc = wx.BufferedDC(None, self.buffer)
+        self.redraw_dirty(dc)
 
-    def on_scroll(self, event):
-        """
-        Scroll window co-ordinates.
-        """
-        self.redraw = True
 
 #----------------------------------------------------------------------
 
