@@ -12,7 +12,8 @@ indicator that shows an example of the drawing-to-be
 
 import os
 import wx
-
+from copy import copy
+from tools import Image
 from whyteboard import Whyteboard
 from utility import Utility
 from dialogs import About, History, ConvertProgress
@@ -21,7 +22,9 @@ from dialogs import About, History, ConvertProgress
 #----------------------------------------------------------------------
 
 ID_HISTORY = wx.NewId()
-ID_CLEAR_ALL = wx.NewId()
+ID_CLEAR_ALL = wx.NewId()      # remove all from current tab
+ID_CLEAR_TABS = wx.NewId()     # remove all drawings from all tabs, keep images
+ID_CLEAR_ALL_TABS = wx.NewId() # remove all from all tabs
 
 class GUI(wx.Frame):
     """
@@ -59,35 +62,38 @@ class GUI(wx.Frame):
 
     def make_menu(self):
         """
-        Creates the menu...
+        Creates the menu...pretty damn messy, may give this a cleanup like the
+        do_bindings/make_toolbar
         """
         _file = wx.Menu()
-        edit = wx.Menu()
+        history = wx.Menu()
         image = wx.Menu()
         _help = wx.Menu()
         menuBar = wx.MenuBar()
 
         _file.Append(wx.ID_NEW, "New &Tab\tCtrl-T", "Open a new tab")
-        _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Open an existing Whyteboard \
-                                                   file")
+        _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
         _file.Append(wx.ID_SAVE, "&Save\tCtrl-S", "Save the Whyteboard data")
-        _file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl-Shift-S", "Save the \
-                                                Whyteboard data in a new file")
+        _file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl-Shift-S", "Save the Whyteboard data in a new file")
         _file.AppendSeparator()
         _file.Append(wx.ID_CLOSE, "&Close Tab\tCtrl-W", "Close current tab")
         _file.Append(wx.ID_EXIT, "E&xit\tAlt-F4", "Terminate Whyteboard")
-        edit.Append(wx.ID_UNDO, "&Undo\tCtrl-Z", "Undo the last operation")
-        edit.Append(wx.ID_REDO, "&Redo\tCtrl-Y", "Redo the last operation")
-        image.Append(wx.ID_CLEAR, "&Clear\tCtrl-C", "Clear the current tab's \
-                                                      drawing")
-        image.Append(ID_CLEAR_ALL, "Clear &All\tCtrl-Shift-C", "Clear all \
-                                                        drawings in all tabs" )
-        image.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay \
-                                                      your drawing history")
-        _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the \
-                                                Whyteboard application")
+
+        history.Append(wx.ID_UNDO, "&Undo\tCtrl-Z", "Undo the last operation")
+        history.Append(wx.ID_REDO, "&Redo\tCtrl-Y", "Redo the last undone operation")
+        history.AppendSeparator()
+        history.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay your drawing history")
+
+        image.Append(wx.ID_CLEAR, "&Clear Tab's Drawings", "Clear drawings on the current tab (keep images)")
+        image.Append(ID_CLEAR_ALL, "Clear &Tab", "Clear the current tab")
+        image.AppendSeparator()
+        image.Append(ID_CLEAR_TABS, "Clear All Tabs' &Drawings", "Clear all tabs of drawings (keep images)")
+        image.Append(ID_CLEAR_ALL_TABS, "Clear &All Tabs", "Clear all open tabs")
+
+        _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the Whyteboard application")
+
         menuBar.Append(_file, "&File")
-        menuBar.Append(edit, "&Edit")
+        menuBar.Append(history, "&History")
         menuBar.Append(image, "&Image")
         menuBar.Append(_help, "&Help")
         self.SetMenuBar(menuBar)
@@ -102,11 +108,12 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "undo",
-                  "redo", "history", "clear", "clear_all", "about", "exit"]
+                  "redo", "history", "clear", "clear_all", "clear_tabs",
+                  "clear_all_tabs", "about", "exit"]
 
         IDs = [wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE, wx.ID_SAVEAS,
-               wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, wx.ID_CLEAR,
-               ID_CLEAR_ALL, wx.ID_ABOUT, wx.ID_EXIT]
+               wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, wx.ID_CLEAR, ID_CLEAR_ALL,
+               ID_CLEAR_TABS, ID_CLEAR_ALL_TABS, wx.ID_ABOUT, wx.ID_EXIT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -246,7 +253,7 @@ class GUI(wx.Frame):
         Clean up any tmp files from PDF/PS conversion.
 
         **NOTE**
-        Temporarily keeping temp. files to make loading files faster
+        Temporarily keeping temp. files to make loading .wtbd files faster
         """
         #self.util.cleanup()
         self.Destroy()
@@ -259,9 +266,46 @@ class GUI(wx.Frame):
         self.board.redo()
 
     def on_clear(self, event=None):
-        self.board.clear()
+        """
+        Clears all drawings on the current tab, except images.
+        """
+        new_shapes = copy(self.board.shapes)
+
+        for x in self.board.shapes:
+            if not isinstance(x, Image):
+                new_shapes.remove(x)
+
+        self.board.shapes = new_shapes
+        self.board.redraw_all()
+
 
     def on_clear_all(self, event=None):
+        """
+        Clears all items from the current tab
+        """
+        self.board.clear()
+
+
+    def on_clear_tabs(self, event=None):
+        """
+        Clears all drawings, except images on all tabs.
+        """
+        for tab in range(self.tab_count):
+            wb = self.tabs.GetPage(tab)
+            new_shapes = copy(wb.shapes)
+
+            for x in wb.shapes:
+                if not isinstance(x, Image):
+                    new_shapes.remove(x)
+
+            wb.shapes = new_shapes
+            wb.redraw_all()
+
+
+    def on_clear_all_tabs(self, event=None):
+        """
+        Clears all items from the current tab
+        """
         for x in range(self.tab_count):
             self.tabs.GetPage(x).clear()
 

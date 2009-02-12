@@ -196,7 +196,7 @@ class About(wx.Dialog):
     Shows an HTML 'about' box for the program.
     """
 
-    version = "0.30"
+    version = "0.31"
     text = '''
 <html><body bgcolor="#6699CC">
  <table bgcolor="#F0F0F0" width="100%" border="1">
@@ -204,7 +204,7 @@ class About(wx.Dialog):
  </table>
 
 <p>Whyteboard is a simple image annotation program, facilitating the
-annotation of PDF and PostScript files, and most image formats.</p>
+annotation of PDF and PostScript documents, and most image formats.</p>
 
 <p>It is based on a demonstration application for wxPython; SuperDoodle, by
 Robin Dunn, &copy; 1997-2006.</p>

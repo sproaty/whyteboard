@@ -68,7 +68,7 @@ class Utility(object):
         self.colour = "Black"
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
-        self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text,
+        self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Fill,
                       Eyedropper]
 
         #  Make wxPython wildcard filter. Add a new item - new type supported!
@@ -197,10 +197,11 @@ class Utility(object):
                     if isinstance(s, Image):
                         image = Bitmap(s.path)
                         s.image = image
-                        s.update_scrollbars()
+                        size = (image.GetWidth(), image.GetHeight())
+                        self.gui.board.update_scrollbars(size)
                         dc = BufferedDC(None, wb.buffer)  # get updated buffer
                     if isinstance(s, Text):
-                        s.make_control()
+                        s.make_control()  # restore text
 
                     s.make_pen()  # restore colour/thickness
                     s.draw(dc)  # draw each shape

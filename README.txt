@@ -1,9 +1,9 @@
-Whyteboard 0.30 - simple image/PDF/postscript file annotator
+Whyteboard 0.31 - simple image/PDF/postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Thu 12 Feb 2009 09:48:04 GMT
+Thu 12 Feb 2009 23:41:45 GMT
 
 
-*** TO RUN ***
+---- TO RUN ----
 
 First, you need Python, wxPython and ImageMagick.
 http://python.org/download/
@@ -20,17 +20,31 @@ If nothing happens, try launching one of the scripts from the console:
 see what error occured and let me know, <sproaty -at- gmail -dot- com>
 
 
-*** KNOWN BUGS ***
-
-- Saving with a text box may cause the save to not be created/updated. **BAD**
+---- KNOWN BUGS ----
 
 - Text input box will overwrite anything drawn "over" it
+- Placing a Text onto the Whyteboard tab can't be undone (but will be saved)
+- Some operations can't be undone
+- No "are you sure you want to quit" box thing
+- Can merge many save files into one, should only be able to load one save
+  at a time
 - Hard to actually see the text boxes' locations without adding in borders
 - Text input - 25 character limit, no multilines, font etc (yet)
 
 
-*** VERSION HISTORY ***
+all will be fixed in time :)
 
+
+---- VERSION HISTORY ----
+
+
+12 Feb 2009 - Fixed saving/loading text controls, scrollbars adjust to screen
+              resolution on resize. Fixed undo/redo visual and clear/clear all.
+              Change clear/clear all to 4 options:
+                * remove all drawings from current tab, keeping images
+                * from all from current tab
+                * remove all drawings from all tabs, keeping images
+                * clear all tabs
 
 12 Feb 2009 - Scrolling works properly. Loading an image will expand the scroll
               bars to the image size if the image is too big. Improvements to

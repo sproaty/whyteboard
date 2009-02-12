@@ -39,6 +39,7 @@ class Whyteboard(wx.ScrolledWindow):
         dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
         dc.Clear()
 
+        self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
         self.Bind(wx.EVT_MOTION, self.left_motion)
@@ -49,7 +50,6 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Figure out what part of the window to refresh.
         """
-        #dc.SetBrush(wx.TRANSPARENT_BRUSH)
         x1, y1, x2, y2 = dc.GetBoundingBox()
         x1, y1 = self.CalcScrolledPosition(x1, y1)
         x2, y2 = self.CalcScrolledPosition(x2, y2)
@@ -69,9 +69,9 @@ class Whyteboard(wx.ScrolledWindow):
         dc = wx.BufferedDC(None, self.buffer)
         dc.Clear()
         for s in self.shapes:
-            s.draw(dc)  # call shape's polymorphic drawing method
+            s.draw(dc)
+        self.Refresh()
 
-        self.redraw_dirty(dc)
 
     def convert_coords(self, event):
         """
@@ -90,6 +90,8 @@ class Whyteboard(wx.ScrolledWindow):
         self.shape.button_down(x, y)
         if not isinstance(self.shape, Text):
             self.drawing = True
+        else:
+            self.select_tool()  # ensure unique objects are created
 
 
     def left_motion(self, event):
@@ -113,7 +115,7 @@ class Whyteboard(wx.ScrolledWindow):
             x, y = self.convert_coords(event)
             self.shape.button_up(x, y)
             self.drawing = False
-            self.select_tool()  # reset
+            self.select_tool()
 
 
     def select_tool(self, new=None):
@@ -175,6 +177,7 @@ class Whyteboard(wx.ScrolledWindow):
         Removes all shapes from the "to-draw" list.
         """
         self.shapes = []
+        self.redraw_all()
 
 
     def on_paint(self, event):
@@ -182,6 +185,41 @@ class Whyteboard(wx.ScrolledWindow):
         Called when the window is exposed.
         """
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+
+
+    def on_size(self, event):
+        size = self.GetClientSize()
+        self.update_scrollbars(size)
+
+
+    def update_scrollbars(self, new_size):
+        """
+        Updates the Whyteboard's scrollbars if the loaded image is bigger than
+        the scrollbar's current size.
+        """
+        width, height = new_size
+        if width > self.virtual_size[0]:
+            x = width
+        else:
+            x = self.virtual_size[0]
+
+        if height > self.virtual_size[1]:
+            y = height
+        else:
+            y =  self.virtual_size[1]
+
+        update = False
+        #  update the scrollbars and the board's buffer size
+        if x > self.virtual_size[0]:
+            update = True
+        elif y > self.virtual_size[1]:
+            update = True
+
+        if update:
+            self.virtual_size = (x, y)
+            self.SetVirtualSize((x, y))
+            self.buffer = wx.EmptyBitmap(*(x, y))
+            self.redraw_all()
 
 #----------------------------------------------------------------------
 

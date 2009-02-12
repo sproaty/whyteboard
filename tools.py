@@ -102,7 +102,7 @@ class Rectangle(Tool):
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
         self.board.overlay.Reset()
-        self.board.Refresh()  # show on whyteboard
+        self.board.Refresh()  # show self on whyteboard
 
         if x != self.x and y != self.y:
             self.board.add_shape(self)
@@ -112,7 +112,7 @@ class Rectangle(Tool):
         odc.Clear()
 
 
-    def draw(self, dc, replay=True, _type="Rectangle", args=[]):
+    def draw(self, dc, render=True, _type="Rectangle", args=[]):
         """
         Draws a shape, can be called by its sub-classes. Draws a shape
         polymorphically by using Python's introspection.
@@ -123,7 +123,7 @@ class Rectangle(Tool):
         dc.SetPen(self.pen)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
 
-        if not replay:
+        if not render:
             self.draw_outline(dc)
 
         method = getattr(dc, "Draw" + _type)(*args)
@@ -203,22 +203,20 @@ class Text(Tool):
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CHAR)
+        self.text = ""
 
     def button_down(self, x, y):
         self.x = x
         self.y = y
-        self.text = ""
         self.make_control()
         self.txt_ctrl.SetFocus()
         self.board.add_shape(self)
 
     def make_control(self):
         self.txt_ctrl = wx.TextCtrl(self.board, pos=(self.x, self.y),
-                                    style=wx.NO_BORDER)
-        self.txt_ctrl.SetValue(self.text)
+                            size=(50, 20), style=wx.NO_BORDER)
 
-        self.txt_ctrl.SetMaxLength(50)
-        #self.txt.SetBackgroundColour((255,255,255,100))
+        self.txt_ctrl.SetValue(self.text)  # restore saved text
         #self.board.Bind(wx.EVT_TEXT, self.on_type, self.txt_ctrl)
 
     def motion(self, x, y):
@@ -226,7 +224,7 @@ class Text(Tool):
         self.y = y
 
     def on_type(self, event):
-        pass
+        pass#self.text = self.txt_ctrl.GetValue()
 
 
 #----------------------------------------------------------------------
@@ -250,7 +248,10 @@ class Fill(Tool):
         b /= 255
         g /= 255
         self.invert = wx.Colour(r, g, b)
-        dc.FloodFill(self.x, self.y, self.invert)
+        #dc.SetBrush(wx.Brush("Blue"))
+        dc.SetPen(self.pen)
+        dc.FloodFill(self.x, self.y, (255,255,255))
+        #self.draw(dc)
 
     #def draw(self, dc, replay=True):
 
@@ -298,7 +299,9 @@ class Image(Tool):
         self.x = x
         self.y = y
         self.board.add_shape(self)
-        self.update_scrollbars()
+        #self.board.shapes.insert(0, self)  # add as "first" image
+        size = (self.image.GetWidth(), self.image.GetHeight())
+        self.board.update_scrollbars(size)
 
         dc = wx.BufferedDC(None, self.board.buffer)
         self.draw(dc)
@@ -308,29 +311,6 @@ class Image(Tool):
         dc.DrawBitmap(self.image, self.x, self.y)
 
 
-    def update_scrollbars(self):
-        """
-        Updates the Whyteboard's scrollbars if the loaded image is bigger than
-        the scrollbar's current size.
-        """
-        if self.image.GetWidth() > self.board.virtual_size[0]:
-            x = self.image.GetWidth()
-        else:
-            x = self.board.virtual_size[0]
-
-        if self.image.GetHeight() > self.board.virtual_size[1]:
-            y = self.image.GetHeight()
-        else:
-            y =  self.board.virtual_size[1]
-
-        #  update the scrollbars and the board's buffer size
-        if (x, y) is not self.board.virtual_size:
-            self.board.virtual_size = (x, y)
-            self.board.SetVirtualSize((x, y))
-            self.board.buffer = wx.EmptyBitmap(*(x, y))
-            dc = wx.BufferedDC(None, self.board.buffer)
-            dc.SetBackground(wx.Brush(self.board.GetBackgroundColour()))
-            dc.Clear()
 
 #----------------------------------------------------------------------
 

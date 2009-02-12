@@ -1,19 +1,22 @@
-Whyteboard 0.30 - To do list
+Whyteboard 0.31 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Thu 12 Feb 2009 09:47:46 GMT
+Thu 12 Feb 2009 23:41:50 GMT
 
 
-*** FIXES ***
+---- FIXES ----
 
-all to do with the text - see README.
+undo/redo menubar/toolbar icons get disabled/renabled when there's nothing to
+undo or redo
 
-*** NEW FEATURES ***
+the rest are to do with the text input - see README.
+
+---- NEW FEATURES ----
 
 -- When converting a PDF with ImageMagick, create thumbnails for a side panel
    which allows you to jump quickly from page to page.
   -- The same applies to ps files
 
-*** IMPROVEMENTS AND THOUGHTS ***
+---- IMPROVEMENTS AND THOUGHTS ----
 
 -- Make the slider in the history dialog move forward/backwards through the
    pen replay
@@ -22,5 +25,7 @@ all to do with the text - see README.
    that image
     -- Needs to be done for single "page" images, is currently working on multi
        page PDFs
+    -- can be done, but forces -all- drawings over -every- image
+        -- loading in an image over any drawn text will overwrite it..
 
 -- Option for keeping or removing temporary files and converting on file load
