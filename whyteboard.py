@@ -21,7 +21,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        wx.ScrolledWindow.__init__(self, tab)
+        wx.ScrolledWindow.__init__(self, tab, -1, (0, 0))
         self.SetVirtualSize((1000, 1000))
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
@@ -192,13 +192,11 @@ class Whyteboard(wx.ScrolledWindow):
         self.PrepareDC(dc)
 
 
-
     def on_scroll(self, event):
         """
         Scroll window co-ordinates.
         """
         self.redraw = True
-
 
 #----------------------------------------------------------------------
 

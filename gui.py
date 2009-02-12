@@ -407,6 +407,7 @@ class WhyteboardApp(wx.App):
     def OnInit(self):
         frame = GUI(None)
         frame.Show(True)
+        self.SetAppName("whyteboard")  # used to identify app in $HOME/
         return True
 
 #----------------------------------------------------------------------

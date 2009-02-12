@@ -6,8 +6,9 @@ inside gui.py - whiyteboard-file saving/loading, pdf/ps loading/conversion and
 loading a standard image.
 
 
-The saved file structure is:                                 - program settings
-  dictionary { 0: [colour, thickness, tool],                 - colour = (r,g,b)
+The saved file structure is:
+
+  dictionary { 0: [colour, thickness, tool],                 - program settings
                1: shapes { 0: [shape1, shape2, .. shapeN],   - tab / shapes
                            1: [shape1, shape2, .. shapeN],   - tab / shapes
                            ..
@@ -36,7 +37,7 @@ import cPickle
 import random
 from copy import copy
 
-from wx import MessageBox, Bitmap
+from wx import MessageBox, Bitmap, StandardPaths
 
 from whyteboard import Whyteboard
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
@@ -203,6 +204,9 @@ class Utility(object):
         many 'pages' were converted - used then to iterate over the temporary
         images, creating new Whyteboard tabs for each page, and storing the
         results in a dictionary, to_convert.
+
+        An attempt at randomising the temp. file name is made using alphanumeric
+        characters to help minimise conflict.
         """
         # cmd = "convert -density 294 "+ _file +" -resample 108 -unsharp 0x.5 \
         # -trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
@@ -212,12 +216,23 @@ class Utility(object):
         if _file is None:
             _file = self.temp_file
 
-        path, filename = os.path.split(_file)
+        filename = os.path.split(_file)[1]
+
+        std_paths = StandardPaths.Get()
+        path = StandardPaths.GetUserLocalDataDir(std_paths)  # $HOME/.appName
         path = os.path.join(path, "wtbd-tmp", "")  # blank element forces slash
-        tmp_file = "temp-"+ str(random.randrange(0, 999999))
+
+        alphabet = 'abcdefghijklmnopqrstuvwxyz[]()1234567890-_'
+        _list = []
+
+        for x in random.sample(alphabet, random.randint(3,12)):
+            _list.append(x)
+
+        string = "".join(_list)
+        tmp_file = string +"-temp-"+ str(random.randrange(0, 999999))
 
         if not os.path.isdir(path):
-            os.mkdir(path)
+            os.makedirs(path)
 
         index = len(self.to_convert)
         self.to_convert[index] = { 0: str(_file) }
