@@ -8,7 +8,7 @@ loading a standard image.
 
 The saved file structure is:
 
-  dictionary { 0: [colour, thickness, tool],                 - program settings
+  dictionary { 0: [colour, thickness, tool, selected_tab],    - program settings
                1: shapes { 0: [shape1, shape2, .. shapeN],   - tab / shapes
                            1: [shape1, shape2, .. shapeN],   - tab / shapes
                            ..
@@ -35,13 +35,14 @@ but are restored with it upon loading the file.
 import os
 import cPickle
 import random
+import platform
 from copy import copy
 
 from wx import MessageBox, Bitmap, StandardPaths, BufferedDC
 
 from whyteboard import Whyteboard
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
-                   Fill, Arc, Image)
+                   Line, Fill, Arc, Image)
 
 
 #----------------------------------------------------------------------
@@ -61,20 +62,31 @@ class Utility(object):
         supported filetypes.
         """
         self.gui = gui
-        self.to_convert = {}  # list of files
-        self.filename = None  # ACTIVE .wtbd file
+        self.to_convert = {}   # list of files
+        self.filename = None   # ACTIVE .wtbd file
         self.temp_file = None  # selected file (.wtdb/png/pdf - doesn't matter)
-        self.saved = False
+        self.saved_shapes = {}  # used for undo/redo checking save state
+        self.saved = True
         self.colour = "Black"
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
+        self.make_wildcard()
         self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Fill,
-                      Eyedropper]
+                      Line, Eyedropper]
 
-        #  Make wxPython wildcard filter. Add a new item - new type supported!
+        # test to see if ImageMagick is installed
+        #if platform.system() == "Linux":
+        #    value = os.system("which convert")
+        #    if value == 256:
+        #        MessageBox("ImageMagick was not found on your system. ")
+
+
+    def make_wildcard(self):
+        """
+        Make wxPython wildcard filter. Add a new item - new type supported!
+        """
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "gif", "tiff",
                        "bmp", "pcx"]
-
         label = ["All files (*.*)", "Whyteboard file (*.wtbd)", "Image Files",
                  "Page Description Languages"]
 
@@ -84,23 +96,24 @@ class Utility(object):
 
         # format: label|*.type1;*.type2|label|*.type3;*.type4|label|*...
         wc_list = map(lambda x, y, : x + "|" + y, label, wc_types)
-
         self.wildcard = '|'.join(wc_list)
 
 
     def save_file(self):
         """
         Saves the file if there is any drawn data to save. Any loaded Image
-        objects must be removed - they will be converted back upon loading
+        objects must be removed - they will be converted to an Image loading
         a saved file.
         """
         if self.filename:
             temp = {}
 
+            # load in every shape from every tab
             for x in range(0, self.gui.tab_count):
                 temp[x] = copy(self.gui.tabs.GetPage(x).shapes)
 
             if temp:
+                self.saved_shapes = temp
                 for x in temp:
                     for shape in temp[x]:
                         # need to unlink unpickleable items; be restored on load
@@ -114,7 +127,9 @@ class Utility(object):
                         shape.pen = None
                         shape.brush = None
 
-                _file = { 0: [self.colour, self.thickness, self.tool],
+                # Now the unpickleable objects are gone, build the save file
+                tab = self.gui.tabs.GetSelection()
+                _file = { 0: [self.colour, self.thickness, self.tool, tab],
                           1: temp,
                           2: self.to_convert }
 
@@ -122,14 +137,15 @@ class Utility(object):
                 try:
                     cPickle.dump(_file, f)
 
-                    # restore saved text shapes
+                    # restore saved text shapes, the actual objects get set
+                    # to None, somehow, this rebuilds them from its saved text
                     for x in range(0, self.gui.tab_count):
                         for s in self.gui.tabs.GetPage(x).shapes:
                             if isinstance(s, Text):
                                 s.board = self.gui.tabs.GetPage(x)
                                 s.make_control()
 
-                            s.make_pen()
+                            s.make_pen()  # restore wx.Pen from colour/thickness
 
                 except cPickle.PickleError:
                     MessageBox("Error saving file data")
@@ -148,8 +164,8 @@ class Utility(object):
         if filename is None:
             filename = self.temp_file
 
-        _type = os.path.splitext(filename)[1]
-        _type = _type.replace(".", "").lower()
+        _type = os.path.splitext(filename)[1]  # convert to lowercase
+        _type = _type.replace(".", "").lower()  # otherwise type filename[1:]
 
         if _type in self.types[:3]:
             self.convert()
@@ -166,25 +182,26 @@ class Utility(object):
                 MessageBox("%s is not a valid Whyteboard file." % self.filename)
             f.close()
 
-            # change program settings
+            # change program settings and update the Preview window
+            self.saved = True
             self.colour = temp[0][0]
             self.thickness = temp[0][1]
             self.tool = temp[0][2]
             self.to_convert = temp[2]
+            self.saved_shapes = temp[1]
             self.gui.control.change_tool()
             self.gui.control.colour.SetColour(self.colour)
             self.gui.control.thickness.SetSelection(self.thickness - 1)
             self.gui.control.preview.Refresh()
 
-            # load in new tabs for every dictionary item
-            if self.gui.tab_count == 1 and not self.gui.board.shapes:
-                self.gui.tabs.RemovePage(0)
-                self.gui.tab_count = 0
+            for x in range(0, self.gui.tab_count):
+                self.gui.tabs.RemovePage(x)
+            self.gui.tab_count = 0
 
-            for shape in temp[1]:
+            for x, shape in enumerate(temp[1]):
                 wb = Whyteboard(self.gui.tabs)
                 wb.shapes = temp[1][shape]
-                name = "Untitled "+ str(self.gui.tab_count + 1)
+                name = "Untitled "+ str(x + 1)
                 self.gui.tabs.AddPage(wb, name)
                 self.gui.tab_count += 1
 
@@ -198,6 +215,7 @@ class Utility(object):
                         image = Bitmap(s.path)
                         s.image = image
                         size = (image.GetWidth(), image.GetHeight())
+
                         self.gui.board.update_scrollbars(size)
                         dc = BufferedDC(None, wb.buffer)  # get updated buffer
                     if isinstance(s, Text):
@@ -206,6 +224,12 @@ class Utility(object):
                     s.make_pen()  # restore colour/thickness
                     s.draw(dc)  # draw each shape
 
+            try:
+                self.gui.tabs.SetSelection(temp[0][3])
+            except IndexError:
+                MessageBox("Warning: This save file was created in an older " +
+                "version of Whyteboard. Saving the file will update it to the "+
+                "latest version.")
         else:
             MessageBox("Invalid file to load.")
 

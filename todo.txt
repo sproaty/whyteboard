@@ -1,14 +1,12 @@
-Whyteboard 0.31 - To do list
+Whyteboard 0.32 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Thu 12 Feb 2009 23:41:50 GMT
+Mon 16 Feb 2009 06:01:07 GMT
 
 
 ---- FIXES ----
 
-undo/redo menubar/toolbar icons get disabled/renabled when there's nothing to
-undo or redo
-
-the rest are to do with the text input - see README.
+- flood fill being removed when scrolling/maximising window
+- all others fixes involve text input - see README.
 
 ---- NEW FEATURES ----
 

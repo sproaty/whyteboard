@@ -53,7 +53,7 @@ class GUI(wx.Frame):
         self.control = ControlPanel(self)
 
         self.do_bindings()
-
+        self.update_menus()
         box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         box.Add(self.control, 0, wx.EXPAND)
         box.Add(self.tabs, 2, wx.EXPAND)
@@ -69,7 +69,7 @@ class GUI(wx.Frame):
         history = wx.Menu()
         image = wx.Menu()
         _help = wx.Menu()
-        menuBar = wx.MenuBar()
+        self.menuBar = wx.MenuBar()
 
         _file.Append(wx.ID_NEW, "New &Tab\tCtrl-T", "Open a new tab")
         _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
@@ -91,12 +91,11 @@ class GUI(wx.Frame):
         image.Append(ID_CLEAR_ALL_TABS, "Clear &All Tabs", "Clear all open tabs")
 
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the Whyteboard application")
-
-        menuBar.Append(_file, "&File")
-        menuBar.Append(history, "&History")
-        menuBar.Append(image, "&Image")
-        menuBar.Append(_help, "&Help")
-        self.SetMenuBar(menuBar)
+        self.menuBar.Append(_file, "&File")
+        self.menuBar.Append(history, "&History")
+        self.menuBar.Append(image, "&Image")
+        self.menuBar.Append(_help, "&Help")
+        self.SetMenuBar(self.menuBar)
 
 
     def do_bindings(self):
@@ -135,6 +134,7 @@ class GUI(wx.Frame):
         for _id, art_id, tip in zip(ids, arts, tips):
             art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
             self.tb.AddSimpleTool(_id, art, tip)
+
         self.tb.Realize()
 
 
@@ -146,6 +146,7 @@ class GUI(wx.Frame):
             self.on_save_as()
         else:
             self.util.save_file()
+            self.util.saved = True
 
 
     def on_open(self, event=None):
@@ -153,6 +154,19 @@ class GUI(wx.Frame):
         Opens a file, sets Utility's temp. file to the chosen file, sets the
         filename to the file if it's a Whyteboard file, and attempts to load.
         """
+        if not self.util.saved:
+            msg = ("You have not saved your file. Are you sure you want to " +
+                       "open a new file?")
+            dialog = wx.MessageDialog(self, msg, style=wx.YES_NO |
+                                                           wx.ICON_QUESTION)
+
+            if dialog.ShowModal() == wx.ID_YES:
+                self.do_open()
+        else:
+            self.do_open()
+
+
+    def do_open(self):
         dlg = wx.FileDialog(self, "Open file...", os.getcwd(),
                             style=wx.OPEN, wildcard = self.util.wildcard)
 
@@ -215,6 +229,7 @@ class GUI(wx.Frame):
         """
         self.board = self.tabs.GetCurrentPage()
         self.control.change_tool()
+        self.update_menus()  # update redo/undo
 
 
     def on_close_tab(self, event=None):
@@ -255,15 +270,51 @@ class GUI(wx.Frame):
         **NOTE**
         Temporarily keeping temp. files to make loading .wtbd files faster
         """
-        #self.util.cleanup()
-        self.Destroy()
+        if not self.util.saved:
+            msg = "You have not saved your file. Are you sure you want to quit?"
+            dialog = wx.MessageDialog(self, msg, style=wx.YES_NO |
+                                                       wx.ICON_QUESTION)
+
+            if dialog.ShowModal() == wx.ID_YES:
+                #self.util.cleanup()
+                self.Destroy()
+        else:
+            self.Destroy()
 
 
     def on_undo(self, event=None):
+        """
+        Calls undo on the active tab and updates the menus
+        """
         self.board.undo()
+        self.update_menus()
+
 
     def on_redo(self, event=None):
+        """
+        Calls redo on the active tab and updates the menus
+        """
         self.board.redo()
+        self.update_menus()
+
+
+    def update_menus(self):
+        if not self.board._redo:
+            redo = False
+        else:
+            redo = True
+
+        if self.board.shapes:
+            undo = True
+        else:
+            undo = False
+
+        self.tb.EnableTool(wx.ID_UNDO, undo)
+        self.menuBar.Enable(wx.ID_UNDO, undo)
+        self.tb.EnableTool(wx.ID_REDO, redo)
+        self.menuBar.Enable(wx.ID_REDO, redo)
+
+
 
     def on_clear(self, event=None):
         """

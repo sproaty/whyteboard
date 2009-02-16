@@ -176,6 +176,26 @@ class RoundRect(Rectangle):
 #----------------------------------------------------------------------
 
 
+class Line(Rectangle):
+    """
+    Draws a line. Extended from a Rectangle for outline code.
+    """
+
+    def __init__(self, board, colour, thickness):
+        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
+        self.x2 = 0
+        self.y2 = 0
+
+    def motion(self, x, y):
+        self.x2 = x
+        self.y2 = y
+
+    def draw(self, dc, replay=True):
+        super(Line, self).draw(dc, replay, "Line", [self.x,
+              self.y, self.x2, self.y2])
+
+#----------------------------------------------------------------------
+
 class Eyedropper(Tool):
     """
     Selects the colour at the specified x,y coords
@@ -231,30 +251,25 @@ class Text(Tool):
 
 
 class Fill(Tool):
-    """Not working, buggy etc."""
+    """
+    Sort of working, but it isn't being saved to the list of shapes to-draw,
+    and gets erased
+    """
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness)
 
     def button_down(self, x, y):
         self.x = x
         self.y = y
-        dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
+        dc = wx.ClientDC(self.board)  # create tmp DC
 
-        colour = dc.GetPixel(x, y)  # get colour
-        r = colour.Red()
-        g = colour.Green()
-        b = colour.Blue()
-        r /= 255
-        b /= 255
-        g /= 255
-        self.invert = wx.Colour(r, g, b)
-        #dc.SetBrush(wx.Brush("Blue"))
+        self.draw(dc)
+        self.board.add_shape(self)
+
+    def draw(self, dc, replay=True):
         dc.SetPen(self.pen)
-        dc.FloodFill(self.x, self.y, (255,255,255))
-        #self.draw(dc)
-
-    #def draw(self, dc, replay=True):
-
+        dc.SetBrush(wx.Brush(self.colour))
+        dc.FloodFill(self.x, self.y, (255, 255, 255), wx.FLOOD_SURFACE)
 
 
 #----------------------------------------------------------------------

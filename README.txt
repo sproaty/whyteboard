@@ -1,6 +1,6 @@
-Whyteboard 0.31 - simple image/PDF/postscript file annotator
+Whyteboard 0.32 - simple image/PDF/postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Thu 12 Feb 2009 23:41:45 GMT
+Mon 16 Feb 2009 06:01:03 GMT
 
 
 ---- TO RUN ----
@@ -25,7 +25,6 @@ see what error occured and let me know, <sproaty -at- gmail -dot- com>
 - Text input box will overwrite anything drawn "over" it
 - Placing a Text onto the Whyteboard tab can't be undone (but will be saved)
 - Some operations can't be undone
-- No "are you sure you want to quit" box thing
 - Can merge many save files into one, should only be able to load one save
   at a time
 - Hard to actually see the text boxes' locations without adding in borders
@@ -37,6 +36,11 @@ all will be fixed in time :)
 
 ---- VERSION HISTORY ----
 
+14 Feb 2009 - Added line drawing tool.
+              "Sure you want to quit?" dialog when user hasn't saved.
+              Only allowing one .wtbd file to be loaded at once
+              Last Selected tab is stored in the .wtdb file
+              Undo/redo tool/menu bar items are disabled/enabled as appropriate
 
 12 Feb 2009 - Fixed saving/loading text controls, scrollbars adjust to screen
               resolution on resize. Fixed undo/redo visual and clear/clear all.
@@ -59,7 +63,7 @@ all will be fixed in time :)
               with the converting progress where the bar increased in response
               to mouse movement - now it's increased by a timer.
 
-10 Feb 2009 - Converting PDF pops up a "converting" progress bar
+10 Feb 2009 - Converting PDF/PS pops up a "converting" progress bar
 10 Feb 2009 - More code "unification", cleaner code, deleting temporary files,
               loading multiple PDF/PS/SVG files
 09 Feb 2009 - Code refactored, performance increased ten-fold, some bug fixes

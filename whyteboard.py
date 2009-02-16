@@ -22,10 +22,11 @@ class Whyteboard(wx.ScrolledWindow):
         Initalise the window, class variables and bind mouse/paint events
         """
         wx.ScrolledWindow.__init__(self, tab, -1, (0, 0))
-        self.virtual_size = (1280, 1024)
+        self.virtual_size = (1000, 1000)
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
+        self.tab = tab
 
         self.select_tool()  # tool ID used to generate Tool object
         self.shapes = []  # list of shapes for re-drawing/saving
@@ -72,7 +73,6 @@ class Whyteboard(wx.ScrolledWindow):
             s.draw(dc)
         self.Refresh()
 
-
     def convert_coords(self, event):
         """
         Translate mouse x/y coords to virtual scroll ones.
@@ -113,9 +113,18 @@ class Whyteboard(wx.ScrolledWindow):
         """
         if self.drawing:
             x, y = self.convert_coords(event)
+            before = len(self.shapes)
             self.shape.button_up(x, y)
+            after = len(self.shapes)
             self.drawing = False
             self.select_tool()
+
+            if self.tab.GetParent().util.saved:
+                self.tab.GetParent().util.saved = False
+
+            # update GUI menus - if new X, Y not = initial x/y
+            if after - before is not 0:
+                self.tab.GetParent().update_menus()
 
 
     def select_tool(self, new=None):
@@ -123,16 +132,15 @@ class Whyteboard(wx.ScrolledWindow):
         Changes the users' tool (and cursor) they are drawing with. new is an
         int, corresponding to new - 1 = Tool ID in list below.
         Can be called with no new ID to reset itself with the current tool
-        Note: Whyteboard's parent = tabs; tabs' parent = GUI
         """
         if new is None:
-            new = self.GetParent().GetParent().util.tool
+            new = self.tab.GetParent().util.tool
         else:
-            self.GetParent().GetParent().util.tool = new
+            self.tab.GetParent().util.tool = new
 
-        items = self.GetParent().GetParent().util.items
-        colour = self.GetParent().GetParent().util.colour
-        thickness = self.GetParent().GetParent().util.thickness
+        items = self.tab.GetParent().util.items
+        colour = self.tab.GetParent().util.colour
+        thickness = self.tab.GetParent().util.thickness
 
         params = [self, colour, thickness]
         self.shape = items[new - 1](*params)  # create new Tool object
@@ -190,6 +198,7 @@ class Whyteboard(wx.ScrolledWindow):
     def on_size(self, event):
         size = self.GetClientSize()
         self.update_scrollbars(size)
+        self.redraw_all()
 
 
     def update_scrollbars(self, new_size):
