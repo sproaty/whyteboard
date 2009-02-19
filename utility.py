@@ -1,16 +1,31 @@
 #!/usr/bin/python
 
+# Copyright (c) 2009 by Steven Sproat
+#
+# GNU General Public Licence (GPL)
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
 This module contains a utility helper class to reduce the amount of code
 inside gui.py - whiyteboard-file saving/loading, pdf/ps loading/conversion and
 loading a standard image.
 
-
 The saved file structure is:
 
-  dictionary { 0: [colour, thickness, tool, selected_tab],    - program settings
-               1: shapes { 0: [shape1, shape2, .. shapeN],   - tab / shapes
-                           1: [shape1, shape2, .. shapeN],   - tab / shapes
+  dictionary { 0: [colour, thickness, tool, selected_tab],   - program settings
+               1: shapes { 0: [shape1, shape2, .. shapeN],   - tab 1 / shapes
+                           1: [shape1, shape2, .. shapeN],   - tab 2 / shapes
                            ..
                            N: [shape1, shape2, .. shapeN]
                          }
@@ -49,9 +64,9 @@ from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
 
 class Utility(object):
     """
-    The class defines some class variables which are set/accessed through the GUI -
-    supported filetypes, names of the drawing tools, a save file's associated
-    converted files (e.g. a PDF)
+    The class defines some class variables which are set/accessed through the
+    GUI - supported filetypes, names of the drawng tools, a save file's
+    associated converted files (e.g. a PDF)
 
     Trying to achieve a data-driven system, focusing on "don't repeat yourself"
     """
@@ -145,7 +160,7 @@ class Utility(object):
                                 s.board = self.gui.tabs.GetPage(x)
                                 s.make_control()
 
-                            s.make_pen()  # restore wx.Pen from colour/thickness
+                            #s.make_pen()  # restore wx.Pen from colour/thickness
 
                 except cPickle.PickleError:
                     MessageBox("Error saving file data")
@@ -178,8 +193,10 @@ class Utility(object):
             f = open(self.filename, 'r')
             try:
                 temp = cPickle.load(f)
-            except cPickle.UnpicklingError:
-                MessageBox("%s is not a valid Whyteboard file." % self.filename)
+            except (cPickle.UnpicklingError, ValueError):
+                MessageBox("%s has corrupt Whyteboard data. No action taken."
+                            % self.filename)
+                return
             f.close()
 
             # change program settings and update the Preview window
@@ -210,19 +227,19 @@ class Utility(object):
                 for s in temp[1][shape]:
                     # restore unpickleable settings
                     s.board = wb
+                    #s.make_pen()  # colour/thickness
 
                     if isinstance(s, Image):
                         image = Bitmap(s.path)
                         s.image = image
                         size = (image.GetWidth(), image.GetHeight())
-
+                        #print size
                         self.gui.board.update_scrollbars(size)
                         dc = BufferedDC(None, wb.buffer)  # get updated buffer
                     if isinstance(s, Text):
                         s.make_control()  # restore text
-
-                    s.make_pen()  # restore colour/thickness
-                    s.draw(dc)  # draw each shape
+                    else:
+                        s.draw(dc)  # draw each shape
 
             try:
                 self.gui.tabs.SetSelection(temp[0][3])
@@ -231,7 +248,7 @@ class Utility(object):
                 "version of Whyteboard. Saving the file will update it to the "+
                 "latest version.")
         else:
-            MessageBox("Invalid file to load.")
+            MessageBox("Whyteboard does not support the file-type .%s" % _type)
 
 
     def convert(self, _file=None):

@@ -1,5 +1,21 @@
 #!usr/bin/python
 
+# Copyright (c) 2009 by Steven Sproat
+#
+# GNU General Public Licence (GPL)
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
 This module contains classes extended from wx.Dialog used by the GUI.
 """
@@ -196,7 +212,7 @@ class About(wx.Dialog):
     Shows an HTML 'about' box for the program.
     """
 
-    version = "0.32"
+    version = "0.32.5"
     text = '''
 <html><body bgcolor="#6699CC">
  <table bgcolor="#F0F0F0" width="100%" border="1">

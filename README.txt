@@ -1,6 +1,6 @@
-Whyteboard 0.32 - simple image/PDF/postscript file annotator
+Whyteboard 0.32.5 - simple image/PDF/postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Mon 16 Feb 2009 06:01:03 GMT
+Thu 19 Feb 2009 21:59:41 GMT
 
 
 ---- TO RUN ----
@@ -25,8 +25,6 @@ see what error occured and let me know, <sproaty -at- gmail -dot- com>
 - Text input box will overwrite anything drawn "over" it
 - Placing a Text onto the Whyteboard tab can't be undone (but will be saved)
 - Some operations can't be undone
-- Can merge many save files into one, should only be able to load one save
-  at a time
 - Hard to actually see the text boxes' locations without adding in borders
 - Text input - 25 character limit, no multilines, font etc (yet)
 
@@ -35,6 +33,12 @@ all will be fixed in time :)
 
 
 ---- VERSION HISTORY ----
+
+19 Feb 2009 - Added GPL.txt + fixed a bug with multiple images loaded into one
+              tab. Fixed 'sure you want to open this file?' message dialog so
+              that it only appears if you're loading in a Whyteboard file, not
+              a PDF or PNG, for instance. Fixed a bug on Windows involving
+              rectangles/circles/ellipses, yet another persists.
 
 14 Feb 2009 - Added line drawing tool.
               "Sure you want to quit?" dialog when user hasn't saved.

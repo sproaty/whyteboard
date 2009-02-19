@@ -1,11 +1,12 @@
-Whyteboard 0.32 - To do list
+Whyteboard 0.32.5 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Mon 16 Feb 2009 06:01:07 GMT
+Thu 19 Feb 2009 21:59:48 GMT
 
 
----- FIXES ----
+---- TO FIX ----
 
 - flood fill being removed when scrolling/maximising window
+- image outline on windows
 - all others fixes involve text input - see README.
 
 ---- NEW FEATURES ----

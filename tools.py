@@ -1,5 +1,21 @@
 #!/usr/bin/python
 
+# Copyright (c) 2009 by Steven Sproat
+#
+# GNU General Public Licence (GPL)
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
 This module contains classes which can be drawn onto a Whyteboard frame
 """
@@ -68,7 +84,8 @@ class Pen(Tool):
         self.y = y  # swap for the next call to this function
 
     def draw(self, dc, replay=True):
-        dc.SetPen(self.pen)
+        if not self.pen:
+            self.make_pen()
         dc.DrawLineList(self.points)
 
 
@@ -101,6 +118,7 @@ class Rectangle(Tool):
         dc = wx.ClientDC(self.board)
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
+        del odc
         self.board.overlay.Reset()
         self.board.Refresh()  # show self on whyteboard
 
@@ -120,6 +138,9 @@ class Rectangle(Tool):
         """
         if not args:
             args = [self.x, self.y, self.width, self.height]
+        if not self.pen:
+            self.make_pen()
+
         dc.SetPen(self.pen)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
 
@@ -173,6 +194,7 @@ class RoundRect(Rectangle):
         super(RoundRect, self).draw(dc, replay, "RoundedRectangle", [self.x,
               self.y, self.width, self.height, 45])
 
+
 #----------------------------------------------------------------------
 
 
@@ -191,8 +213,8 @@ class Line(Rectangle):
         self.y2 = y
 
     def draw(self, dc, replay=True):
-        super(Line, self).draw(dc, replay, "Line", [self.x,
-              self.y, self.x2, self.y2])
+        super(Line, self).draw(dc, replay, "Line", [self.x, self.y, self.x2,
+                                                    self.y2])
 
 #----------------------------------------------------------------------
 
@@ -264,7 +286,7 @@ class Fill(Tool):
         dc = wx.ClientDC(self.board)  # create tmp DC
 
         self.draw(dc)
-        self.board.add_shape(self)
+        #self.board.add_shape(self)
 
     def draw(self, dc, replay=True):
         dc.SetPen(self.pen)
@@ -306,7 +328,7 @@ class Image(Tool):
     """
 
     def __init__(self, board, image, path):
-        Tool.__init__(self, board, "Black", 1)
+        Tool.__init__(self, board, (0, 0, 0), 1)
         self.image = image
         self.path = path  # used to restore image on load
 
@@ -323,6 +345,8 @@ class Image(Tool):
         self.board.redraw_dirty(dc)
 
     def draw(self, dc, replay=True):
+        if not self.image:
+            self.image = wx.Bitmap(self.path)
         dc.DrawBitmap(self.image, self.x, self.y)
 
 

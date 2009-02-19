@@ -1,5 +1,22 @@
 #!/usr/bin/python
 
+# Copyright (c) 2009 by Steven Sproat
+#
+# GNU General Public Licence (GPL)
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA  02111-1307  USA
+
+
 """
 This module contains the Whyteboard class, a window that can be drawn upon. Each
 Whyteboard panel gets added to a tab in the GUI, and each Whyteboard maintains
@@ -88,6 +105,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
+
         if not isinstance(self.shape, Text):
             self.drawing = True
         else:
@@ -100,7 +118,6 @@ class Whyteboard(wx.ScrolledWindow):
         """
         if self.drawing:
             x, y = self.convert_coords(event)
-
             dc = wx.BufferedDC(None, self.buffer)
             self.shape.motion(x, y)
             self.shape.draw(dc, False)
@@ -116,15 +133,16 @@ class Whyteboard(wx.ScrolledWindow):
             before = len(self.shapes)
             self.shape.button_up(x, y)
             after = len(self.shapes)
-            self.drawing = False
-            self.select_tool()
 
             if self.tab.GetParent().util.saved:
                 self.tab.GetParent().util.saved = False
 
-            # update GUI menus - if new X, Y not = initial x/y
+            # update GUI menus
             if after - before is not 0:
                 self.tab.GetParent().update_menus()
+                self.select_tool()
+            self.drawing = False
+
 
 
     def select_tool(self, new=None):

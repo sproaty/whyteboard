@@ -1,5 +1,21 @@
 #!/usr/bin/python
 
+# Copyright (c) 2009 by Steven Sproat
+#
+# GNU General Public Licence (GPL)
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
 This module implements the Whteboard application.  It takes a Whyteboard class
 and wraps it in a GUI with a menu/toolbar/statusbar; can save and load drawings,
@@ -28,7 +44,7 @@ ID_CLEAR_ALL_TABS = wx.NewId() # remove all from all tabs
 
 class GUI(wx.Frame):
     """
-    This class ontains a Whyteboard panel, a ControlPanel and manages
+    This class contains a Whyteboard panel, a ControlPanel and manages
     their layout with a wx.BoxSizer.  A menu, toolbar and associated event
     handlers call the appropriate functions of other classes.
     """
@@ -151,22 +167,9 @@ class GUI(wx.Frame):
 
     def on_open(self, event=None):
         """
-        Opens a file, sets Utility's temp. file to the chosen file, sets the
-        filename to the file if it's a Whyteboard file, and attempts to load.
+        Opens a file, sets Utility's temp. file to the chosen file, prompts for
+        an unsaved file and calls do_open().
         """
-        if not self.util.saved:
-            msg = ("You have not saved your file. Are you sure you want to " +
-                       "open a new file?")
-            dialog = wx.MessageDialog(self, msg, style=wx.YES_NO |
-                                                           wx.ICON_QUESTION)
-
-            if dialog.ShowModal() == wx.ID_YES:
-                self.do_open()
-        else:
-            self.do_open()
-
-
-    def do_open(self):
         dlg = wx.FileDialog(self, "Open file...", os.getcwd(),
                             style=wx.OPEN, wildcard = self.util.wildcard)
 
@@ -174,43 +177,55 @@ class GUI(wx.Frame):
             name = dlg.GetPath()
 
             if name.endswith("wtbd"):
-                self.util.filename = name
-                self.SetTitle(os.path.split(name)[1] +' - '+ self.title)
 
-            self.util.temp_file = name
-            self.util.load_file()
-        dlg.Destroy()
+                if self.util.saved:
+                    self.do_open(name)
+                else:
+                    msg = ("You have not saved your file. Are you sure you " +
+                           "want to open a new file?")
+                    dialog = wx.MessageDialog(self, msg, style=wx.YES_NO |
+                                                           wx.ICON_QUESTION)
+
+                    if dialog.ShowModal() == wx.ID_YES:
+                        self.do_open(name)
+            else:
+                self.do_open(name)
+        else:
+            dlg.Destroy()
+
+
+    def do_open(self, name):
+        """
+        Updates te appropriate variables in the utility file class and loads
+        the file.
+        """
+        if name.endswith("wtbd"):
+            self.util.filename = name
+            self.SetTitle(os.path.split(name)[1] +' - '+ self.title)
+
+        self.util.temp_file = name
+        self.util.load_file()
 
 
     def on_save_as(self, event=None):
         """
-        Checks if there's any drawing data to save, otherwise prompts for the
-        filename and location to save.
+        Prompts for the filename and location to save to.
         """
-        save = False
+        dlg = wx.FileDialog(self, "Save Whyteboard As...", os.getcwd(),
+                style=wx.SAVE | wx.OVERWRITE_PROMPT,
+                wildcard = "Whyteboard file (*.wtbd)|*.wtbd")
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+            if not os.path.splitext(filename)[1]:  # no file extension
+                filename = filename + '.wtbd'
 
-        for board in range (0, self.tab_count):
-            if self.tabs.GetPage(board).shapes:
-                save = True
+            # only store whyteboard files, not an image as the current file
+            if filename.endswith(".wtbd"):
+                self.util.filename = filename
+                self.on_save()
 
-        if save == False:
-            wx.MessageBox("No image data to save", "Save error")
-        else:
-            dlg = wx.FileDialog(self, "Save Whyteboard As...", os.getcwd(),
-                    style=wx.SAVE | wx.OVERWRITE_PROMPT,
-                    wildcard = "Whyteboard file (*.wtbd)|*.wtbd")
-            if dlg.ShowModal() == wx.ID_OK:
-                filename = dlg.GetPath()
-                if not os.path.splitext(filename)[1]:  # no file extension
-                    filename = filename + '.wtbd'
-
-                # only store whyteboard files, not an image as the current file
-                if filename.endswith(".wtbd"):
-                    self.util.filename = filename
-                    self.on_save()
-
-                self.SetTitle(os.path.split(filename)[1] + ' - ' +  self.title)
-            dlg.Destroy()
+            self.SetTitle(os.path.split(filename)[1] + ' - ' +  self.title)
+        dlg.Destroy()
 
 
     def on_new_tab(self, event=None):
