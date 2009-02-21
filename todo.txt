@@ -1,19 +1,24 @@
-Whyteboard 0.32.5 - To do list
+Whyteboard 0.32.6 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Thu 19 Feb 2009 21:59:48 GMT
+Sat 21 Feb 2009 00:54:39 GMT
 
 
 ---- TO FIX ----
 
-- flood fill being removed when scrolling/maximising window
-- image outline on windows
+- flood fill not being rendered when scrolling/maximising window, need to find
+  a less "costly" implementation
+
+- image outline when drawing rectangles on Windows not clearing propelry
 - all others fixes involve text input - see README.
 
 ---- NEW FEATURES ----
 
--- When converting a PDF with ImageMagick, create thumbnails for a side panel
+-- When converting a ifle with ImageMagick, create thumbnails for a side panel
    which allows you to jump quickly from page to page.
-  -- The same applies to ps files
+   - May make them a copy of the Whyteboard tab, not thumbs of the PNG files -
+     so when you draw it will update the thumbnails.
+   - This may be computationally demanding, to take a memory screenshot of each
+     tab, i.e. to scale a tab down and created a BMP'd button for 50 tabs
 
 ---- IMPROVEMENTS AND THOUGHTS ----
 

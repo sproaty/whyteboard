@@ -86,6 +86,8 @@ class Pen(Tool):
     def draw(self, dc, replay=True):
         if not self.pen:
             self.make_pen()
+        dc.SetPen(self.pen)
+
         dc.DrawLineList(self.points)
 
 
@@ -130,7 +132,7 @@ class Rectangle(Tool):
         odc.Clear()
 
 
-    def draw(self, dc, render=True, _type="Rectangle", args=[]):
+    def draw(self, dc, replay=True, _type="Rectangle", args=[]):
         """
         Draws a shape, can be called by its sub-classes. Draws a shape
         polymorphically by using Python's introspection.
@@ -144,7 +146,7 @@ class Rectangle(Tool):
         dc.SetPen(self.pen)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
 
-        if not render:
+        if not replay:
             self.draw_outline(dc)
 
         method = getattr(dc, "Draw" + _type)(*args)

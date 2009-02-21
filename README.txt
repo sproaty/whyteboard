@@ -1,7 +1,6 @@
-Whyteboard 0.32.5 - simple image/PDF/postscript file annotator
+Whyteboard 0.32.6 - simple image/PDF/postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Thu 19 Feb 2009 21:59:41 GMT
-
+Sat 21 Feb 2009 00:54:22 GMT
 
 ---- TO RUN ----
 
@@ -33,6 +32,9 @@ all will be fixed in time :)
 
 
 ---- VERSION HISTORY ----
+
+20 Feb 2009 - Small fix of a silly bug introduced below on accident where a pen
+              would not render in its selected colour/thickness.
 
 19 Feb 2009 - Added GPL.txt + fixed a bug with multiple images loaded into one
               tab. Fixed 'sure you want to open this file?' message dialog so

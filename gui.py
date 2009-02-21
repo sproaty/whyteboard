@@ -201,7 +201,6 @@ class GUI(wx.Frame):
         """
         if name.endswith("wtbd"):
             self.util.filename = name
-            self.SetTitle(os.path.split(name)[1] +' - '+ self.title)
 
         self.util.temp_file = name
         self.util.load_file()

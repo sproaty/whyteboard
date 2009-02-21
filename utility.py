@@ -179,8 +179,8 @@ class Utility(object):
         if filename is None:
             filename = self.temp_file
 
-        _type = os.path.splitext(filename)[1]  # convert to lowercase
-        _type = _type.replace(".", "").lower()  # otherwise type filename[1:]
+        _file, _type = os.path.splitext(filename)  # convert to lowercase to
+        _type = _type.replace(".", "").lower()  # save typing filename[1:] :)
 
         if _type in self.types[:3]:
             self.convert()
@@ -193,7 +193,7 @@ class Utility(object):
             f = open(self.filename, 'r')
             try:
                 temp = cPickle.load(f)
-            except (cPickle.UnpicklingError, ValueError):
+            except (cPickle.UnpicklingError, ValueError, ImportError):
                 MessageBox("%s has corrupt Whyteboard data. No action taken."
                             % self.filename)
                 return
@@ -210,6 +210,7 @@ class Utility(object):
             self.gui.control.colour.SetColour(self.colour)
             self.gui.control.thickness.SetSelection(self.thickness - 1)
             self.gui.control.preview.Refresh()
+            self.gui.SetTitle(os.path.split(_file)[1] +' - '+ self.gui.title)
 
             for x in range(0, self.gui.tab_count):
                 self.gui.tabs.RemovePage(x)
@@ -227,19 +228,17 @@ class Utility(object):
                 for s in temp[1][shape]:
                     # restore unpickleable settings
                     s.board = wb
-                    #s.make_pen()  # colour/thickness
 
                     if isinstance(s, Image):
                         image = Bitmap(s.path)
                         s.image = image
                         size = (image.GetWidth(), image.GetHeight())
-                        #print size
                         self.gui.board.update_scrollbars(size)
                         dc = BufferedDC(None, wb.buffer)  # get updated buffer
                     if isinstance(s, Text):
-                        s.make_control()  # restore text
+                        s.make_control()  # restore text widget
                     else:
-                        s.draw(dc)  # draw each shape
+                        s.draw(dc)
 
             try:
                 self.gui.tabs.SetSelection(temp[0][3])

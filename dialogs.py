@@ -212,7 +212,7 @@ class About(wx.Dialog):
     Shows an HTML 'about' box for the program.
     """
 
-    version = "0.32.5"
+    version = "0.32.6"
     text = '''
 <html><body bgcolor="#6699CC">
  <table bgcolor="#F0F0F0" width="100%" border="1">

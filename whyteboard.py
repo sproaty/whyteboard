@@ -56,6 +56,8 @@ class Whyteboard(wx.ScrolledWindow):
         dc = wx.BufferedDC(None, self.buffer)
         dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
         dc.Clear()
+        #dc.SetFont(wx.FFont(wx.FONTFAMILY_ROMAN, wx.FONTFLAG_DEFAULT))
+        dc.DrawText("test.", 50, 50)
 
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
