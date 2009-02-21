@@ -1,15 +1,12 @@
-Whyteboard 0.32.6 - To do list
+Whyteboard 0.33 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sat 21 Feb 2009 00:54:39 GMT
+Sat 21 Feb 2009 08:39:36 GMT
 
 
 ---- TO FIX ----
 
 - flood fill not being rendered when scrolling/maximising window, need to find
   a less "costly" implementation
-
-- image outline when drawing rectangles on Windows not clearing propelry
-- all others fixes involve text input - see README.
 
 ---- NEW FEATURES ----
 

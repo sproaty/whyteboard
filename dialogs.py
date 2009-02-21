@@ -24,9 +24,7 @@ import wx
 import wx.html
 
 from copy import copy
-
-from tools import Pen
-
+import tools
 
 #----------------------------------------------------------------------
 
@@ -40,7 +38,6 @@ class History(wx.Dialog):
         self.gui = gui
         self.looping = False
         self.paused = False
-        #self.buffer = self.gui.board.buffer
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         _max = len(gui.board.shapes)+50
@@ -86,48 +83,56 @@ class History(wx.Dialog):
         tmp_shapes = copy(self.gui.board.shapes)
         shapes = []
         for shape in tmp_shapes:
-            if isinstance(shape, Pen):
+            if not isinstance(shape, tools.Image):
                 shapes.append(shape)
 
         if shapes:
             self.looping = True
-            self.start(shapes)
+            self.draw(shapes)
         else:
-            wx.MessageBox("No pen found", "No drawings found to replay!")
+            wx.MessageBox("There was nothing to draw.", "Nothing to draw")
 
 
-    def start(self, shapes):
+    def draw(self, shapes):
         """
         Replays the users' last-drawn pen strokes.
         The loop can be paused/unpaused by the user.
         """
-        pen = None
-
         dc = wx.ClientDC(self.gui.board)
         dc.Clear()
-        #dc.SetBrush(wx.TRANSPARENT_BRUSH)
         self.gui.board.PrepareDC(dc)
 
-        #  paint any shapes but the pen first
-        tmp_shapes = copy(self.gui.board.shapes)
-
-        for s in tmp_shapes:
-            if not isinstance(s, Pen):
+        #  paint any images first
+        for s in self.gui.board.shapes:
+            if isinstance(s, tools.Image):
                 s.draw(dc)
 
         for pen in shapes:
-            dc.SetPen(pen.pen)
+            # draw pen outline
+            if isinstance(pen, tools.Pen):
+                pen.make_pen()
+                dc.SetPen(pen.pen)
 
-            for x, p in enumerate(pen.points):
+                for x, p in enumerate(pen.points):
+                    if self.looping and not self.paused:
+
+                        try:
+                            wx.MilliSleep((pen.time[x + 1] - pen.time[x]) * 950)
+                            wx.Yield()
+                        except IndexError:
+                            pass
+
+                        dc.DrawLine(p[0], p[1], p[2], p[3])
+
+                    else:  # loop is paused, wait for unpause/close/stop
+                        while self.paused:
+                            wx.MicroSleep(100)
+                            wx.Yield()
+            else:
                 if self.looping and not self.paused:
-
-                    try:
-                        wx.MilliSleep((pen.time[x + 1] - pen.time[x]) * 950)
-                        wx.Yield()
-                    except IndexError:
-                        pass
-
-                    dc.DrawLine(p[0], p[1], p[2], p[3])
+                    wx.MilliSleep(250)
+                    wx.Yield()
+                    pen.draw(dc, True)
 
                 else:  # loop is paused, wait for unpause/close/stop
                     while self.paused:
@@ -166,7 +171,9 @@ class History(wx.Dialog):
     def scroll(self, event):
         pass
 
+
 #----------------------------------------------------------------------
+
 
 class ConvertProgress(wx.Dialog):
     """
@@ -207,16 +214,103 @@ class ConvertProgress(wx.Dialog):
 
 #----------------------------------------------------------------------
 
+
+class TextInput(wx.Dialog):
+    """
+    Shows a text input screen.
+    """
+
+    def __init__(self, gui):
+        """
+        Standard constructor.
+        """
+        wx.Dialog.__init__(self, gui, title="Enter text")
+
+        self.ctrl = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER | wx.TE_RICH |
+                                            wx.RESIZE_BORDER | wx.TE_MULTILINE)
+        extent = self.ctrl.GetFullTextExtent("Hy")
+        lineHeight = extent[1] + extent[3]
+        self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
+        self.font = self.ctrl.GetFont()
+
+        fontBtn = wx.Button(self, label="Select Font...")
+
+        gap = wx.LEFT | wx.TOP | wx.RIGHT
+
+        self.okButton = wx.Button(self, wx.ID_OK, "&OK")
+        self.okButton.SetDefault()
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+
+        btnSizer = wx.StdDialogButtonSizer()
+        btnSizer.Add(self.okButton, 0, gap, 5)
+        btnSizer.Add(self.cancelButton, 0, gap, 5)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 5)
+        sizer.Add(fontBtn, 0, gap | wx.ALIGN_RIGHT, 5)
+        sizer.Add((10, 10)) # Spacer.
+        btnSizer.Realize()
+        sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
+
+        self.SetAutoLayout(True)
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+
+        self.ctrl.SetFocus()
+        self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
+
+
+    def on_font(self, evt):
+        """
+        Shows the font dialog, sets the input text's font and returns focus to
+        the text input box, at the user's selected point.
+        """
+        data = wx.FontData()
+        data.EnableEffects(True)
+        data.SetInitialFont(self.font)
+
+        dlg = wx.FontDialog(self, data)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            data = dlg.GetFontData()
+            self.font = data.GetChosenFont()
+
+            self.ctrl.SetFont(self.font)
+            # Update dialog for the new height of the text
+            self.GetSizer().Fit(self)
+
+        dlg.Destroy()
+
+        selection = self.ctrl.GetSelection()
+        self.ctrl.SetFocus()
+        self.ctrl.SetSelection(*selection)
+
+
+    def transfer_data(self, text_obj):
+        """
+        Transfers the dialog's data to an object.
+        """
+        text_obj.text = self.ctrl.GetValue()
+        text_obj.font = self.font
+
+#----------------------------------------------------------------------
+
+
 class About(wx.Dialog):
     """
     Shows an HTML 'about' box for the program.
     """
+    def __init__(self, parent):
+        """
+        Displays the HTML box with various constraints.
+        """
+        wx.Dialog.__init__(self, parent, title='About Whyteboard',
+                           size=(420, 380))
 
-    version = "0.32.6"
-    text = '''
+        text = '''
 <html><body bgcolor="#6699CC">
  <table bgcolor="#F0F0F0" width="100%" border="1">
-  <tr><td align="center"><h1>Whyteboard '''+version+'''</h1></td></tr>
+  <tr><td align="center"><h1>Whyteboard '''+ parent.version+ '''</h1></td></tr>
  </table>
 
 <p>Whyteboard is a simple image annotation program, facilitating the
@@ -228,15 +322,8 @@ Robin Dunn, &copy; 1997-2006.</p>
 Many thanks to the helpful users in #python on FreeNode!</p>
 </body></html>'''
 
-    def __init__(self, parent):
-        """
-        Displays the HTML box with various constraints.
-        """
-        wx.Dialog.__init__(self, parent, title='About Whyteboard',
-                           size=(420, 380))
-
         html = wx.html.HtmlWindow(self, -1)
-        html.SetPage(self.text)
+        html.SetPage(text)
         button = wx.Button(self, wx.ID_OK, "Okay")
 
         lc = wx.LayoutConstraints()

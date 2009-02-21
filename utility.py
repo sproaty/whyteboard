@@ -23,7 +23,7 @@ loading a standard image.
 
 The saved file structure is:
 
-  dictionary { 0: [colour, thickness, tool, selected_tab],   - program settings
+  dictionary { 0: [colour, thickness, tool, tab, version],   - program settings
                1: shapes { 0: [shape1, shape2, .. shapeN],   - tab 1 / shapes
                            1: [shape1, shape2, .. shapeN],   - tab 2 / shapes
                            ..
@@ -50,7 +50,7 @@ but are restored with it upon loading the file.
 import os
 import cPickle
 import random
-import platform
+#import platform
 from copy import copy
 
 from wx import MessageBox, Bitmap, StandardPaths, BufferedDC
@@ -86,8 +86,8 @@ class Utility(object):
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
-        self.items = [Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Fill,
-                      Line, Eyedropper]
+        self.items = [Pen, Line, Rectangle, Ellipse, Circle, RoundRect, Text,
+                      Eyedropper, Fill]
 
         # test to see if ImageMagick is installed
         #if platform.system() == "Linux":
@@ -135,8 +135,7 @@ class Utility(object):
                         if isinstance(shape, Image):
                             shape.image = None
                         if isinstance(shape, Text):
-                            shape.text = shape.txt_ctrl.GetValue()
-                            shape.txt_ctrl = None
+                            shape.font = None
 
                         shape.board = None
                         shape.pen = None
@@ -144,24 +143,14 @@ class Utility(object):
 
                 # Now the unpickleable objects are gone, build the save file
                 tab = self.gui.tabs.GetSelection()
-                _file = { 0: [self.colour, self.thickness, self.tool, tab],
+                _file = { 0: [self.colour, self.thickness, self.tool, tab,
+                              self.gui.version],
                           1: temp,
                           2: self.to_convert }
 
                 f = open(self.filename, 'w')
                 try:
                     cPickle.dump(_file, f)
-
-                    # restore saved text shapes, the actual objects get set
-                    # to None, somehow, this rebuilds them from its saved text
-                    for x in range(0, self.gui.tab_count):
-                        for s in self.gui.tabs.GetPage(x).shapes:
-                            if isinstance(s, Text):
-                                s.board = self.gui.tabs.GetPage(x)
-                                s.make_control()
-
-                            #s.make_pen()  # restore wx.Pen from colour/thickness
-
                 except cPickle.PickleError:
                     MessageBox("Error saving file data")
                 f.close()
@@ -210,7 +199,7 @@ class Utility(object):
             self.gui.control.colour.SetColour(self.colour)
             self.gui.control.thickness.SetSelection(self.thickness - 1)
             self.gui.control.preview.Refresh()
-            self.gui.SetTitle(os.path.split(_file)[1] +' - '+ self.gui.title)
+            self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
 
             for x in range(0, self.gui.tab_count):
                 self.gui.tabs.RemovePage(x)
@@ -219,14 +208,12 @@ class Utility(object):
             for x, shape in enumerate(temp[1]):
                 wb = Whyteboard(self.gui.tabs)
                 wb.shapes = temp[1][shape]
-                name = "Untitled "+ str(x + 1)
+                name = "#" + str(x + 1) + " - " + os.path.split(_file)[1]
                 self.gui.tabs.AddPage(wb, name)
                 self.gui.tab_count += 1
 
-                dc = BufferedDC(None, wb.buffer)
-
+                # restore unpickleable settings
                 for s in temp[1][shape]:
-                    # restore unpickleable settings
                     s.board = wb
 
                     if isinstance(s, Image):
@@ -234,18 +221,23 @@ class Utility(object):
                         s.image = image
                         size = (image.GetWidth(), image.GetHeight())
                         self.gui.board.update_scrollbars(size)
-                        dc = BufferedDC(None, wb.buffer)  # get updated buffer
                     if isinstance(s, Text):
-                        s.make_control()  # restore text widget
-                    else:
-                        s.draw(dc)
+                        s.restore_font()
+                        s.update_scroll()
+                wb.redraw_all()
+
+            # handle older file versions gracefully
+            try:
+                version = temp[0][4]
+            except IndexError:
+                version = "< 0.33"
 
             try:
                 self.gui.tabs.SetSelection(temp[0][3])
             except IndexError:
                 MessageBox("Warning: This save file was created in an older " +
-                "version of Whyteboard. Saving the file will update it to the "+
-                "latest version.")
+                "version of Whyteboard ("+version+"). Saving the file will " +
+                "update it to the latest version, " + self.gui.version)
         else:
             MessageBox("Whyteboard does not support the file-type .%s" % _type)
 

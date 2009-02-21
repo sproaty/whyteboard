@@ -22,7 +22,7 @@ This module contains classes which can be drawn onto a Whyteboard frame
 
 import time
 import wx
-
+from dialogs import TextInput
 
 #----------------------------------------------------------------------
 
@@ -132,19 +132,22 @@ class Rectangle(Tool):
         odc.Clear()
 
 
-    def draw(self, dc, replay=True, _type="Rectangle", args=[]):
+    def draw(self, dc, replay=False, _type="Rectangle", args=[]):
         """
         Draws a shape, can be called by its sub-classes. Draws a shape
-        polymorphically by using Python's introspection.
+        polymorphically, using Python's introspection.
         When called for a replay it renders itself, not draw a temp. outline.
         """
         if not args:
             args = [self.x, self.y, self.width, self.height]
         if not self.pen:
             self.make_pen()
+        if replay:
+            self.make_pen()
 
         dc.SetPen(self.pen)
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.SetBrush(self.brush)
+        dc.SetTextForeground(self.colour)  # forces text colur
 
         if not replay:
             self.draw_outline(dc)
@@ -171,7 +174,7 @@ class Circle(Rectangle):
     def motion(self, x, y):
         self.radius = self.x - x
 
-    def draw(self, dc, replay=True):
+    def draw(self, dc, replay=False):
         super(Circle, self).draw(dc, replay, "Circle", [self.x, self.y,
               self.radius])
 
@@ -182,7 +185,7 @@ class Ellipse(Rectangle):
     """
     Easily extends from Rectangle.
     """
-    def draw(self, dc, replay=True):
+    def draw(self, dc, replay=False):
         super(Ellipse, self).draw(dc, replay, "Ellipse")
 
 #----------------------------------------------------------------------
@@ -192,7 +195,7 @@ class RoundRect(Rectangle):
     """
     Easily extends from Rectangle.
     """
-    def draw(self, dc, replay=True):
+    def draw(self, dc, replay=False):
         super(RoundRect, self).draw(dc, replay, "RoundedRectangle", [self.x,
               self.y, self.width, self.height, 45])
 
@@ -214,7 +217,7 @@ class Line(Rectangle):
         self.x2 = x
         self.y2 = y
 
-    def draw(self, dc, replay=True):
+    def draw(self, dc, replay=False):
         super(Line, self).draw(dc, replay, "Line", [self.x, self.y, self.x2,
                                                     self.y2])
 
@@ -238,37 +241,60 @@ class Eyedropper(Tool):
 #----------------------------------------------------------------------
 
 
-class Text(Tool):
+class Text(Rectangle):
     """
-    Allows the input of text. When a save is pickled, the wx.TextCtrl is removed
-    and its value is saved to a class attribute, where the TextCtrl is restored
-    upon loading the file.
+    Allows the input of text. When a save is pickled, the wx.Font and a string
+    storing its values is stored. This string is then used to reconstruct the
+    font.
     """
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CHAR)
+        self.font = None
         self.text = ""
+        self.font_data = ""
 
     def button_down(self, x, y):
-        self.x = x
-        self.y = y
-        self.make_control()
-        self.txt_ctrl.SetFocus()
-        self.board.add_shape(self)
-
-    def make_control(self):
-        self.txt_ctrl = wx.TextCtrl(self.board, pos=(self.x, self.y),
-                            size=(50, 20), style=wx.NO_BORDER)
-
-        self.txt_ctrl.SetValue(self.text)  # restore saved text
-        #self.board.Bind(wx.EVT_TEXT, self.on_type, self.txt_ctrl)
+        pass
 
     def motion(self, x, y):
         self.x = x
         self.y = y
 
-    def on_type(self, event):
-        pass#self.text = self.txt_ctrl.GetValue()
+    def button_up(self, x, y):
+        self.x = x
+        self.y = y
+        dlg = TextInput(self.board.GetParent())
+
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            dlg.Destroy()
+            self.board.select_tool()
+            return
+        dlg.transfer_data(self)
+        self.font_data = self.font.GetNativeFontInfoDesc()
+        self.board.add_shape(self)
+        self.board.tab.GetParent().update_menus()
+        self.update_scroll()
+
+    def update_scroll(self):
+        dummy = wx.Frame(None)
+        dummy.SetFont(self.font)
+        width, height = dummy.GetTextExtent(self.text)
+        dummy.Destroy()
+
+        if not self.board.update_scrollbars((width + self.x, height + self.y)):
+            self.board.redraw_all()  # force render
+
+    def restore_font(self):
+        self.font = wx.Font(0, 0, 0, 0)
+        self.font.SetNativeFontInfoFromString(self.font_data)
+
+
+    def draw(self, dc, replay=False):
+        if not self.font:
+            self.restore_font()
+        dc.SetFont(self.font)
+        super(Text, self).draw(dc, replay, "Text", [self.text, self.x, self.y])
 
 
 #----------------------------------------------------------------------
@@ -286,11 +312,10 @@ class Fill(Tool):
         self.x = x
         self.y = y
         dc = wx.ClientDC(self.board)  # create tmp DC
-
         self.draw(dc)
         #self.board.add_shape(self)
 
-    def draw(self, dc, replay=True):
+    def draw(self, dc, replay=False):
         dc.SetPen(self.pen)
         dc.SetBrush(wx.Brush(self.colour))
         dc.FloodFill(self.x, self.y, (255, 255, 255), wx.FLOOD_SURFACE)
@@ -300,7 +325,9 @@ class Fill(Tool):
 
 
 class Arc(Tool):
-    """Buggy."""
+    """
+    Buggy.
+    """
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness)
 
@@ -317,7 +344,7 @@ class Arc(Tool):
         self.y2 = y        self.c1 = 300
         self.c2 = 300
 
-    def draw(self, dc, replay=True):
+    def draw(self, dc, replay=False):
         dc.DrawArc(self.x, self.y, self.x2, self.y2, self.c1, self.x2)
 
 
@@ -346,7 +373,7 @@ class Image(Tool):
         self.draw(dc)
         self.board.redraw_dirty(dc)
 
-    def draw(self, dc, replay=True):
+    def draw(self, dc, replay=False):
         if not self.image:
             self.image = wx.Bitmap(self.path)
         dc.DrawBitmap(self.image, self.x, self.y)
@@ -357,8 +384,10 @@ class Image(Tool):
 
 
 class Note(Tool):
-    """Blank template for a post-it style note
-    e.g. http://www.bit10.net/images/post-it.jpg"""
+    """
+    Blank template for a post-it style note
+    e.g. http://www.bit10.net/images/post-it.jpg
+    """
 
     def __init__(self, board, colour=(0, 0, 0), thickness=1):
         Tool.__init__(self, board, colour, thickness)

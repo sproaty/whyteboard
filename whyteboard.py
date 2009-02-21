@@ -38,7 +38,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        wx.ScrolledWindow.__init__(self, tab, -1, (0, 0))
+        wx.ScrolledWindow.__init__(self, tab, style=wx.CLIP_CHILDREN)
         self.virtual_size = (1000, 1000)
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(20, 20)
@@ -56,8 +56,6 @@ class Whyteboard(wx.ScrolledWindow):
         dc = wx.BufferedDC(None, self.buffer)
         dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
         dc.Clear()
-        #dc.SetFont(wx.FFont(wx.FONTFAMILY_ROMAN, wx.FONTFLAG_DEFAULT))
-        dc.DrawText("test.", 50, 50)
 
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
@@ -89,7 +87,7 @@ class Whyteboard(wx.ScrolledWindow):
         dc = wx.BufferedDC(None, self.buffer)
         dc.Clear()
         for s in self.shapes:
-            s.draw(dc)
+            s.draw(dc, True)
         self.Refresh()
 
     def convert_coords(self, event):
@@ -110,8 +108,8 @@ class Whyteboard(wx.ScrolledWindow):
 
         if not isinstance(self.shape, Text):
             self.drawing = True
-        else:
-            self.select_tool()  # ensure unique objects are created
+        #else:
+        #self.select_tool()  # ensure unique objects are created
 
 
     def left_motion(self, event):
@@ -122,7 +120,7 @@ class Whyteboard(wx.ScrolledWindow):
             x, y = self.convert_coords(event)
             dc = wx.BufferedDC(None, self.buffer)
             self.shape.motion(x, y)
-            self.shape.draw(dc, False)
+            self.shape.draw(dc)
             self.redraw_dirty(dc)
 
 
@@ -130,8 +128,9 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Called when the left mouse button is released.
         """
+        x, y = self.convert_coords(event)
+
         if self.drawing:
-            x, y = self.convert_coords(event)
             before = len(self.shapes)
             self.shape.button_up(x, y)
             after = len(self.shapes)
@@ -140,11 +139,15 @@ class Whyteboard(wx.ScrolledWindow):
                 self.tab.GetParent().util.saved = False
 
             # update GUI menus
-            if after - before is not 0:
+            if after - before is not 0 and not isinstance(self.shape, Text):
                 self.tab.GetParent().update_menus()
                 self.select_tool()
             self.drawing = False
 
+        elif isinstance(self.shape, Text):
+            self.shape.button_up(x, y)
+            self.select_tool()
+            self.tab.GetParent().util.saved = False
 
 
     def select_tool(self, new=None):
@@ -172,7 +175,6 @@ class Whyteboard(wx.ScrolledWindow):
         Adds a shape to the "to-draw" list.
         """
         self.shapes.append(shape)
-
 
     def undo(self):
         """
@@ -223,8 +225,8 @@ class Whyteboard(wx.ScrolledWindow):
 
     def update_scrollbars(self, new_size):
         """
-        Updates the Whyteboard's scrollbars if the loaded image is bigger than
-        the scrollbar's current size.
+        Updates the Whyteboard's scrollbars if the loaded image/text string
+        is bigger than the scrollbar's current size.
         """
         width, height = new_size
         if width > self.virtual_size[0]:
@@ -249,6 +251,8 @@ class Whyteboard(wx.ScrolledWindow):
             self.SetVirtualSize((x, y))
             self.buffer = wx.EmptyBitmap(*(x, y))
             self.redraw_all()
+        else:
+            return False
 
 #----------------------------------------------------------------------
 

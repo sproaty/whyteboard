@@ -49,6 +49,7 @@ class GUI(wx.Frame):
     handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
+    version = "0.33"
 
     def __init__(self, parent):
         """
@@ -74,6 +75,7 @@ class GUI(wx.Frame):
         box.Add(self.control, 0, wx.EXPAND)
         box.Add(self.tabs, 2, wx.EXPAND)
         self.SetSizer(box)
+        self.Maximize(True)
 
 
     def make_menu(self):
