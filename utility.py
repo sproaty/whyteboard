@@ -57,7 +57,7 @@ from wx import MessageBox, Bitmap, StandardPaths, BufferedDC
 
 from whyteboard import Whyteboard
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
-                   Line, Fill, Arc, Image)
+                   Line, Fill, Arc, Image, Zoom)
 
 
 #----------------------------------------------------------------------
@@ -151,11 +151,17 @@ class Utility(object):
                 f = open(self.filename, 'w')
                 try:
                     cPickle.dump(_file, f)
+                    t = os.path.split(self.filename)[1] + ' - ' + self.gui.title
+                    self.gui.SetTitle(t)
                 except cPickle.PickleError:
                     MessageBox("Error saving file data")
+                    self.saved = False
+                    self.filename = None
                 f.close()
             else:
-                MessageBox("Error saving file data")
+                MessageBox("Error saving file data - no data to save")
+                self.saved = False
+                self.filename = None
 
 
     def load_file(self, filename=None):
@@ -202,6 +208,7 @@ class Utility(object):
             self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
 
             for x in range(0, self.gui.tab_count):
+                self.gui.thumbs.remove(x)
                 self.gui.tabs.RemovePage(x)
             self.gui.tab_count = 0
 
@@ -211,20 +218,20 @@ class Utility(object):
                 name = "#" + str(x + 1) + " - " + os.path.split(_file)[1]
                 self.gui.tabs.AddPage(wb, name)
                 self.gui.tab_count += 1
+                self.gui.tabs.SetSelection(x)
+                self.gui.thumbs.new_thumb()
+                wb.redraw_all()
 
                 # restore unpickleable settings
                 for s in temp[1][shape]:
                     s.board = wb
 
-                    if isinstance(s, Image):
-                        image = Bitmap(s.path)
-                        s.image = image
-                        size = (image.GetWidth(), image.GetHeight())
-                        self.gui.board.update_scrollbars(size)
                     if isinstance(s, Text):
-                        s.restore_font()
                         s.update_scroll()
-                wb.redraw_all()
+                    if isinstance(s, Image) :
+                        size = (s.image.GetWidth(), s.image.GetHeight())
+                        wb.update_scrollbars(size)
+                wb.update_thumb()
 
             # handle older file versions gracefully
             try:
@@ -238,6 +245,8 @@ class Utility(object):
                 MessageBox("Warning: This save file was created in an older " +
                 "version of Whyteboard ("+version+"). Saving the file will " +
                 "update it to the latest version, " + self.gui.version)
+                self.gui.tabs.SetSelection(0)
+
         else:
             MessageBox("Whyteboard does not support the file-type .%s" % _type)
 
@@ -295,6 +304,7 @@ class Utility(object):
         else:
             # remove single tab with no drawings
             if self.gui.tab_count == 1 and not self.gui.board.shapes:
+                self.gui.thumbs.remove(0)
                 self.gui.tabs.RemovePage(0)
                 self.gui.tab_count = 0
 
@@ -309,6 +319,8 @@ class Utility(object):
                 name = filename +" - pg."+ str(x+1)
                 self.gui.tabs.AddPage(wb, name)
                 self.gui.tab_count += 1
+                self.gui.thumbs.new_thumb()
+        #self.gui.thumbs.update_all()
 
 
     def load_image(self, path, board):

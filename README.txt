@@ -1,6 +1,6 @@
-Whyteboard 0.33 - a simple image, PDF and postscript file annotator
+Whyteboard 0.34 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sat 21 Feb 2009 08:39:25 GMT
+Sun 22 Feb 2009 13:58:54 GMT
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -24,6 +24,9 @@ see what error occured and let me know, <sproaty -at- gmail -dot- com>
 
 ---- KNOWN BUGS ----
 
+Thumbnails aren't updating immediately when loading PDF/PS/.wtbd files.
+
+
 Windows: when drawing an "outlined" shape (Rectangle/Ellipse/Circle/Line/Rounded
 Rectangle), the outline will mess up and appear oddly if the outline is dragged
 over itself. Currently looking into this, strangely it doesn't happen on Linux.
@@ -45,6 +48,12 @@ turns out that GhostScript needs to be installed too (on Windows XP, SP3)
 
 ---- VERSION HISTORY ----
 
+21 Feb 2009 - * Export current tab's view as an image.
+              * Live thumbnails, get updated when the selected tab is drawn upon
+              * Thumbnail panel toggleable on/off
+              * Drawing Preview window now shows a preview of the actual shape
+                instead of always showing a line.
+
 21 Feb 2009 - Text input overhaul, before the text was rendered as a wxPython
               widget - now it's a drawing of a String, with a custom dialog
               for inputting the text and selecting a font. This new method fixes
@@ -52,7 +61,7 @@ turns out that GhostScript needs to be installed too (on Windows XP, SP3)
               being un-undoable and drawings not "overwriting" the text.
               * Long text updates the scrollbars, vertically or horizontally
               * Program maximises on startup.
-              * History improvements: draw all shapes back in order, not just pen
+              * History improvements: draw all shapes back in the correct order
               * Save files store the version number; loading an older save file
               into a newer Whteboard version which has added save data will say
               the older save file's version

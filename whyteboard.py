@@ -25,6 +25,7 @@ its own undo/redo.
 """
 
 import wx
+import os
 from tools import Text
 
 #----------------------------------------------------------------------
@@ -51,6 +52,7 @@ class Whyteboard(wx.ScrolledWindow):
         self._redo = []  # list of actions to redo
         self.overlay = wx.Overlay()  # drawing "rubber bands"
         self.drawing = False
+        self.zoom = (1.0, 1.0)
 
         self.buffer = wx.EmptyBitmap(*self.virtual_size)
         dc = wx.BufferedDC(None, self.buffer)
@@ -89,6 +91,7 @@ class Whyteboard(wx.ScrolledWindow):
         for s in self.shapes:
             s.draw(dc, True)
         self.Refresh()
+        self.update_thumb()
 
     def convert_coords(self, event):
         """
@@ -105,11 +108,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
-
-        if not isinstance(self.shape, Text):
-            self.drawing = True
-        #else:
-        #self.select_tool()  # ensure unique objects are created
+        self.drawing = True
 
 
     def left_motion(self, event):
@@ -122,7 +121,6 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.motion(x, y)
             self.shape.draw(dc)
             self.redraw_dirty(dc)
-
 
     def left_up(self, event):
         """
@@ -139,15 +137,12 @@ class Whyteboard(wx.ScrolledWindow):
                 self.tab.GetParent().util.saved = False
 
             # update GUI menus
-            if after - before is not 0 and not isinstance(self.shape, Text):
+            if after - before is not 0:
                 self.tab.GetParent().update_menus()
                 self.select_tool()
+                self.update_thumb()
             self.drawing = False
 
-        elif isinstance(self.shape, Text):
-            self.shape.button_up(x, y)
-            self.select_tool()
-            self.tab.GetParent().util.saved = False
 
 
     def select_tool(self, new=None):
@@ -168,6 +163,7 @@ class Whyteboard(wx.ScrolledWindow):
         params = [self, colour, thickness]
         self.shape = items[new - 1](*params)  # create new Tool object
         self.SetCursor(wx.StockCursor(self.shape.cursor) )
+        self.GetParent().GetParent().control.preview.Refresh()
 
 
     def add_shape(self, shape):
@@ -175,6 +171,7 @@ class Whyteboard(wx.ScrolledWindow):
         Adds a shape to the "to-draw" list.
         """
         self.shapes.append(shape)
+
 
     def undo(self):
         """
@@ -185,6 +182,8 @@ class Whyteboard(wx.ScrolledWindow):
             self._undo.append( shape )
             self._redo.append( shape )
             self.redraw_all()
+            #self.update_thumb()
+            #self.Refresh()
         except IndexError:
             pass
 
@@ -198,6 +197,7 @@ class Whyteboard(wx.ScrolledWindow):
             self._undo.append(item)  # add item to be removed onto redo stack
             self.shapes.append(item)
             self.redraw_all()
+            #self.update_thumb()
         except IndexError:
             pass
 
@@ -217,7 +217,24 @@ class Whyteboard(wx.ScrolledWindow):
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
 
 
+    def get_tab(self):
+        """
+        Returns the current tab number of this Whyteboard instance.
+        """
+        return self.GetParent().GetParent().tabs.GetSelection()
+
+
+    def update_thumb(self):
+        """
+        Updates this tab's thumb
+        """
+        self.GetParent().GetParent().thumbs.update(self.get_tab())
+
+
     def on_size(self, event):
+        """
+        Updates the scrollbars when the window is resized.
+        """
         size = self.GetClientSize()
         self.update_scrollbars(size)
         self.redraw_all()
@@ -253,6 +270,26 @@ class Whyteboard(wx.ScrolledWindow):
             self.redraw_all()
         else:
             return False
+
+
+    def export(self, filename):
+        _name = os.path.splitext(filename)[1].replace(".", "").lower()
+
+        types = {"png": wx.BITMAP_TYPE_PNG, "jpg": wx.BITMAP_TYPE_JPEG, "jpeg":
+                 wx.BITMAP_TYPE_JPEG, "bmp": wx.BITMAP_TYPE_BMP, "gif":
+                 wx.BITMAP_TYPE_GIF,  "tiff": wx.BITMAP_TYPE_TIF, "pcx":
+                 wx.BITMAP_TYPE_PCX }
+
+        const = types[_name]
+
+        context = wx.BufferedDC(None, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+        memory = wx.MemoryDC()
+        x, y = self.GetClientSizeTuple()
+        bitmap = wx.EmptyBitmap(x, y, -1)
+        memory.SelectObject(bitmap)
+        memory.Blit(0, 0, x, y, context, 0, 0)
+        memory.SelectObject(wx.NullBitmap)
+        bitmap.SaveFile(filename, const)
 
 #----------------------------------------------------------------------
 

@@ -28,6 +28,8 @@ indicator that shows an example of the drawing-to-be
 
 import os
 import wx
+from wx.lib import scrolledpanel as scrolled
+
 from copy import copy
 from tools import Image
 from whyteboard import Whyteboard
@@ -35,8 +37,11 @@ from utility import Utility
 from dialogs import About, History, ConvertProgress
 
 
+
 #----------------------------------------------------------------------
 
+ID_EXPORT = wx.NewId()
+ID_THUMBS = wx.NewId()
 ID_HISTORY = wx.NewId()
 ID_CLEAR_ALL = wx.NewId()      # remove all from current tab
 ID_CLEAR_TABS = wx.NewId()     # remove all drawings from all tabs, keep images
@@ -44,12 +49,12 @@ ID_CLEAR_ALL_TABS = wx.NewId() # remove all from all tabs
 
 class GUI(wx.Frame):
     """
-    This class contains a Whyteboard panel, a ControlPanel and manages
-    their layout with a wx.BoxSizer.  A menu, toolbar and associated event
-    handlers call the appropriate functions of other classes.
+    This class contains a Whyteboard frame, a ControlPanel and a Thumbnail Panel
+    and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
+    event handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
-    version = "0.33"
+    version = "0.34"
 
     def __init__(self, parent):
         """
@@ -63,18 +68,21 @@ class GUI(wx.Frame):
         self.make_toolbar()
         self.make_menu()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
-
+        self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
         self.board = Whyteboard(self.tabs)  # the active whiteboard tab
         self.tabs.AddPage(self.board, "Untitled 1")
-        self.control = ControlPanel(self)
+
+        size = self.GetSize()
+        self.thumbs = Thumbs(self, size[0])
 
         self.do_bindings()
         self.update_menus()
-        box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
-        box.Add(self.control, 0, wx.EXPAND)
-        box.Add(self.tabs, 2, wx.EXPAND)
-        self.SetSizer(box)
+        self.box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
+        self.box.Add(self.control, 0, wx.EXPAND)
+        self.box.Add(self.tabs, 2, wx.EXPAND)
+        self.box.Add(self.thumbs, 0, wx.EXPAND)
+        self.SetSizer(self.box)
         self.Maximize(True)
 
 
@@ -85,6 +93,7 @@ class GUI(wx.Frame):
         """
         _file = wx.Menu()
         history = wx.Menu()
+        view = wx.Menu()
         image = wx.Menu()
         _help = wx.Menu()
         self.menuBar = wx.MenuBar()
@@ -93,6 +102,7 @@ class GUI(wx.Frame):
         _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
         _file.Append(wx.ID_SAVE, "&Save\tCtrl-S", "Save the Whyteboard data")
         _file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl-Shift-S", "Save the Whyteboard data in a new file")
+        _file.Append(ID_EXPORT, "&Export\tCtrl-E", "Export the Whyteboard's contents to an image")
         _file.AppendSeparator()
         _file.Append(wx.ID_CLOSE, "&Close Tab\tCtrl-W", "Close current tab")
         _file.Append(wx.ID_EXIT, "E&xit\tAlt-F4", "Terminate Whyteboard")
@@ -101,6 +111,9 @@ class GUI(wx.Frame):
         history.Append(wx.ID_REDO, "&Redo\tCtrl-Y", "Redo the last undone operation")
         history.AppendSeparator()
         history.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay your drawing history")
+
+        view.Append(ID_THUMBS, " &Toggle Thumbnails\tF9", "Toggle the thumbnail panel on or off", kind=wx.ITEM_CHECK)
+        view.Check(ID_THUMBS, True)
 
         image.Append(wx.ID_CLEAR, "&Clear Tab's Drawings", "Clear drawings on the current tab (keep images)")
         image.Append(ID_CLEAR_ALL, "Clear &Tab", "Clear the current tab")
@@ -111,6 +124,7 @@ class GUI(wx.Frame):
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about the Whyteboard application")
         self.menuBar.Append(_file, "&File")
         self.menuBar.Append(history, "&History")
+        self.menuBar.Append(view, "&View")
         self.menuBar.Append(image, "&Image")
         self.menuBar.Append(_help, "&Help")
         self.SetMenuBar(self.menuBar)
@@ -124,13 +138,14 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
 
-        functs = ["new_tab", "close_tab", "open", "save", "save_as", "undo",
-                  "redo", "history", "clear", "clear_all", "clear_tabs",
-                  "clear_all_tabs", "about", "exit"]
+        functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
+                  "undo", "redo", "history", "thumbs", "clear", "clear_all",
+                  "clear_tabs", "clear_all_tabs", "about", "exit"]
 
         IDs = [wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE, wx.ID_SAVEAS,
-               wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, wx.ID_CLEAR, ID_CLEAR_ALL,
-               ID_CLEAR_TABS, ID_CLEAR_ALL_TABS, wx.ID_ABOUT, wx.ID_EXIT]
+               ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, ID_THUMBS,
+               wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_TABS, ID_CLEAR_ALL_TABS,
+               wx.ID_ABOUT, wx.ID_EXIT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -218,14 +233,35 @@ class GUI(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
             if not os.path.splitext(filename)[1]:  # no file extension
-                filename = filename + '.wtbd'
+                filename += '.wtbd'
 
             # only store whyteboard files, not an image as the current file
             if filename.endswith(".wtbd"):
                 self.util.filename = filename
                 self.on_save()
+        dlg.Destroy()
 
-            self.SetTitle(os.path.split(filename)[1] + ' - ' +  self.title)
+
+    def on_export(self, event):
+        """
+        Exports the current tab as an image.
+        """
+        wc =  "PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|TIFF (*.tiff)|BMP (*.bmp)|*.bmp"
+        dlg = wx.FileDialog(self, "Export data to...", os.getcwd(),
+                style=wx.SAVE | wx.OVERWRITE_PROMPT, wildcard=wc)
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+            _name = os.path.splitext(filename)[1].replace(".", "")
+
+            types = {0: "png", 1: "jpg", 2: "tiff", 3: "bmp"}
+
+            if not os.path.splitext(filename)[1]:
+                _name = types[dlg.GetFilterIndex()]
+                filename += "." + _name
+            if not _name in self.util.types[2:]:
+                wx.MessageBox("Invalid filetype to export as.", "Invalid type")
+            else:
+                self.board.export(filename)
         dlg.Destroy()
 
 
@@ -234,9 +270,11 @@ class GUI(wx.Frame):
         Opens a new tab and selects it
         """
         wb = Whyteboard(self.tabs)
-        self.tabs.AddPage(wb, "Untitled "+ str(self.tab_count + 1) )
         self.tab_count += 1
+        self.tabs.AddPage(wb, "Untitled "+ str(self.tab_count))
+
         self.tabs.SetSelection(self.tab_count - 1 )  # fires on_change_tab
+        self.thumbs.new_thumb()
 
 
     def on_change_tab(self, event=None):
@@ -252,9 +290,23 @@ class GUI(wx.Frame):
         """
         Closes the current tab (if there are any to close).
         """
-        if self.tab_count is not 0:
-            self.tabs.RemovePage( self.tabs.GetSelection() )
+        if self.tab_count:
+            self.thumbs.remove(self.tabs.GetSelection())
+            self.tabs.RemovePage(self.tabs.GetSelection())
             self.tab_count -= 1
+
+    def on_thumbs(self, event):
+        """
+        Toggles the thumnnail panel on and off.
+        """
+        if self.box.IsShown(self.thumbs):
+            self.box.Remove(self.thumbs)
+            self.thumbs.Hide()
+            self.box.Layout()
+        else:
+            self.box.Add(self.thumbs, 0, wx.EXPAND)
+            self.thumbs.Show()
+            self.box.Layout()
 
 
     def convert_dialog(self, cmd):
@@ -269,7 +321,7 @@ class GUI(wx.Frame):
         self.dlg.ShowModal()
 
 
-    def on_end_process(self, event=None):
+    def on_end_process(self, event):
         """
         Destroy the progress Gauge/process after the convert process returns
         """
@@ -428,7 +480,7 @@ class ControlPanel(wx.Panel):
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
 
 
-        choices = ''.join(str(i) + " " for i in range(1, 26) ).split()
+        choices = ''.join(str(i) + " " for i in range(1, 16) ).split()
 
         self.thickness = wx.ComboBox(self, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
@@ -509,12 +561,162 @@ class Preview(wx.Window):
         is changed
         """
         dc = wx.PaintDC(self)
-        pen = wx.Pen(self.gui.util.colour, self.gui.util.thickness)
-        dc.SetPen(pen)
+        #pen = wx.Pen(self.gui.util.colour, self.gui.util.thickness)
+        dc.SetPen(self.gui.board.shape.pen)
+        dc.SetBrush(self.gui.board.shape.brush)
         width, height = self.GetClientSize()
-        dc.DrawLine(10, height / 2, width - 10, height / 2)
+        self.gui.board.shape.preview(dc, width, height)
 
 
+
+#----------------------------------------------------------------------
+
+
+class Thumbs(scrolled.ScrolledPanel):
+    """
+    Thumbnails of all tabs' drawings.
+    """
+    def __init__(self, gui, height):
+        scrolled.ScrolledPanel.__init__(self, gui, size=(170, 150), style=wx.VSCROLL | wx.RAISED_BORDER)# | wx.ALWAYS_SHOW_SB)
+        self.virtual = self.GetBestVirtualSize()
+
+        self.gui = gui
+        self.thumbs  = []
+        self.text = []
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.new_thumb()  # inital thumb
+
+        box = wx.BoxSizer(wx.VERTICAL)
+        box.Add(self.sizer)
+        self.SetSizer(box)
+        self.SetAutoLayout(True)
+        box.Fit(self)
+
+        self.SetScrollRate(0, 110)
+
+        self.SetInitialSize(self.virtual)
+        self.sizer.SetSizeHints(self.GetParent())
+        self.SetupScrolling(False, True)
+
+
+
+    def new_thumb(self, _id=0):
+        """
+        Creates a new thumbnail button and manages its ID, along with a label.
+        """
+        if _id:
+            bmp = self.redraw(_id)
+        else:
+            if len(self.thumbs):
+                _id = len(self.thumbs)
+            img = wx.ImageFromBitmap(wx.EmptyBitmap(150, 150))
+            img.ConvertColourToAlpha(255, 255, 255)
+            bmp = wx.BitmapFromImage(img)
+
+        text = wx.StaticText(self, label="Tab " + str(_id + 1))
+        btn = ThumbButton(self, _id, bmp)
+        btn.SetBitmapHover(bmp)
+        btn.SetBitmapSelected(bmp)
+        self.text.insert(_id, text)
+        self.thumbs.insert(_id, btn)
+        btn.Bind(wx.EVT_BUTTON, self.on_press)
+
+        self.sizer.Add(btn, flag=wx.EXPAND)
+        self.sizer.Add(text, flag=wx.CENTER)
+        self.sizer.Layout()
+
+        size = self.thumbs[_id].GetSize()
+        self.update_scrollbar((self.virtual[0], size[1]))
+
+
+    def remove(self, _id):
+        """
+        Removes a thumbnail/label from the sizer and the managed widgets list.
+        """
+        size = self.thumbs[_id].GetSize()
+        self.sizer.Remove(self.thumbs[_id])
+        self.sizer.Remove(self.text[_id])
+        self.thumbs[_id].Hide()  # broken without this
+        self.text[_id].Hide()
+
+        self.sizer.Layout()
+        del self.thumbs[_id]
+        self.update_scrollbar((self.virtual[0], -size[1]))
+
+        # now ensure all thumbnail classes are pointing to the right tab
+        for x in range(0, len(self.thumbs)):
+            self.thumbs[x].thumb_id = x
+            self.text[x].SetLabel("Tab " + str(x + 1))
+
+    def on_press(self, event):
+        """
+        Changes the tab to the selected button.
+        """
+        btn = event.GetEventObject()
+        self.gui.tabs.SetSelection(btn.thumb_id)
+
+
+    def redraw(self, _id):
+        """
+        Create a thumbnail by grabbing the currently selected Whyteboard's
+        contents and creating a bitmap from it. This bitmap is then converted
+        to an image to rescale it, and converted back to a bitmap to be
+        displayed on the button as the thumbnail.
+        """
+        board = self.gui.tabs.GetPage(_id)
+        context = wx.BufferedDC(None, board.buffer)
+        memory = wx.MemoryDC()
+        x, y = board.GetClientSizeTuple()
+        bitmap = wx.EmptyBitmap(x, y)
+        memory.SelectObject(bitmap)
+        memory.Blit(0, 0, x, y, context, 0, 0)
+        memory.SelectObject(wx.NullBitmap)
+
+        img = wx.ImageFromBitmap(bitmap)
+        img.Rescale(150, 150)
+        bmp = wx.BitmapFromImage(img)
+        return bmp
+
+
+    def update(self, _id):
+        """
+        Updates a single thumbnail.
+        """
+        bmp = self.redraw(_id)
+        self.thumbs[_id].SetBitmapLabel(bmp)
+        self.thumbs[_id].SetBitmapHover(bmp)
+        self.thumbs[_id].SetBitmapSelected(bmp)
+
+
+    def update_all(self):
+        """
+        Updates all thumbnails (i.e. upon loading a Whyteboard file).
+        """
+        #thumbs = copy(self.thumbs)
+        for x in range(0, len(self.thumbs)):
+            self.update(x)
+
+
+    def update_scrollbar(self, new_size):
+        """
+        Updates the Thumbnail's scrollbars when a thumbnail is added/removed.
+        """
+        width, height = new_size
+        y =  self.virtual[1] + height
+        self.virtual = (width, y)
+        self.SetVirtualSize(self.virtual)
+
+
+#----------------------------------------------------------------------
+
+class ThumbButton(wx.BitmapButton):
+    """
+    This class has an extra attribute, storing its related tab ID so that when
+    the button is pressed, it can switch to the proper tab.
+    """
+    def __init__(self, parent, _id, bitmap):
+        wx.BitmapButton.__init__(self, parent, bitmap=bitmap, size=(150, 150))
+        self.thumb_id  = _id
 #----------------------------------------------------------------------
 
 

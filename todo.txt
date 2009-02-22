@@ -1,12 +1,17 @@
-Whyteboard 0.33 - To do list
+Whyteboard 0.34 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sat 21 Feb 2009 08:39:36 GMT
+Sun 22 Feb 2009 13:58:45 GMT
 
 
 ---- TO FIX ----
 
 - flood fill not being rendered when scrolling/maximising window, need to find
   a less "costly" implementation
+
+- only one thumbnail is being updated correctly when loading in a PDF/save file
+  really can't figure out why.
+
+- export as gif isn't working for yet another weird reason
 
 ---- NEW FEATURES ----
 

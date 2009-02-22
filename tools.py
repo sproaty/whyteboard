@@ -53,6 +53,8 @@ class Tool(object):
         self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
         self.brush = wx.TRANSPARENT_BRUSH
 
+    def preview(self, dc, width, height):
+        pass
 
 
 #----------------------------------------------------------------------
@@ -87,9 +89,15 @@ class Pen(Tool):
         if not self.pen:
             self.make_pen()
         dc.SetPen(self.pen)
-
         dc.DrawLineList(self.points)
 
+
+    def preview(self, dc, width, height):
+        """
+        Points below make a curly line to show an example Pen drawing
+        """
+        points = [[4, 31, 4, 28], [4, 28, 4, 27], [4, 27, 4, 26], [4, 26, 4, 24], [4, 24, 4, 23], [4, 23, 4, 21], [4, 21, 7, 19], [7, 19, 8, 17], [8, 17, 8, 16], [8, 16, 9, 14], [9, 14, 9, 13], [9, 13, 10, 12], [10, 12, 11, 10], [11, 10, 12, 9], [12, 9, 13, 9], [13, 9, 13, 12], [13, 12, 13, 13], [13, 13, 13, 16], [13, 16, 14, 18], [14, 18, 14, 21], [14, 21, 14, 23], [14, 23, 14, 24], [14, 24, 15, 24], [15, 24, 16, 24], [16, 24, 18, 21], [18, 21, 20, 19], [20, 19, 21, 17], [21, 17, 23, 14], [23, 14, 24, 12], [24, 12, 25, 11], [25, 11, 26, 10], [26, 10, 26, 13], [26, 13, 26, 14], [26, 14, 26, 16], [26, 16, 26, 18], [26, 18, 26, 19], [26, 19, 26, 21], [26, 21, 27, 21], [27, 21, 28, 21], [28, 21, 29, 21], [29, 21, 31, 17], [31, 17, 32, 15], [32, 15, 34, 13], [34, 13, 35, 12], [35, 12, 36, 11], [36, 11, 36, 10], [36, 10, 37, 10], [37, 10, 37, 13], [37, 13, 37, 16], [37, 16, 37, 19], [37, 19, 37, 23], [37, 23, 37, 27], [37, 27, 38, 29], [38, 29, 38, 31], [38, 31, 38, 32], [38, 32, 38, 33], [38, 33, 39, 33], [39, 33, 40, 33], [40, 33, 42, 33], [42, 33, 45, 29], [45, 29, 48, 25], [48, 25, 51, 21], [51, 21, 55, 18], [55, 18, 57, 15], [57, 15, 60, 13], [60, 13, 61, 12], [61, 12, 61, 11], [61, 11, 61, 14], [61, 14, 61, 15], [61, 15, 62, 15], [62, 15, 62, 16], [62, 16, 63, 17], [63, 17, 63, 19], [63, 19, 65, 22]]
+        dc.DrawLineList(points)
 
 #----------------------------------------------------------------------
 
@@ -113,30 +121,35 @@ class Rectangle(Tool):
         self.width = x - self.x
         self.height = y - self.y
 
+
     def button_up(self, x, y):
         """
-        Clears the created overlay for rubber banding.
+        Clears the created overlay for rubber banding, draws the rectangle onto
+        the screen and adds it to the shape list if the rectangle was actually
+        drawn out, not just a single mouse click-realease.
         """
         dc = wx.ClientDC(self.board)
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
         del odc
         self.board.overlay.Reset()
-        self.board.Refresh()  # show self on whyteboard
 
         if x != self.x and y != self.y:
             self.board.add_shape(self)
+            self.draw(dc, True)
+
 
     def draw_outline(self, dc):
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
+        del odc
 
 
     def draw(self, dc, replay=False, _type="Rectangle", args=[]):
         """
-        Draws a shape, can be called by its sub-classes. Draws a shape
-        polymorphically, using Python's introspection.
-        When called for a replay it renders itself, not draw a temp. outline.
+        Draws a shape polymorphically, using Python's introspection; can be
+        called by its sub-classes.
+        When called for a replay it renders itself; doesn't draw a temp outline.
         """
         if not args:
             args = [self.x, self.y, self.width, self.height]
@@ -154,6 +167,11 @@ class Rectangle(Tool):
 
         method = getattr(dc, "Draw" + _type)(*args)
         method
+
+
+    def preview(self, dc, width, height):
+        dc.DrawRectangle(5, 5, width - 15, height - 15)
+
 
 #----------------------------------------------------------------------
 
@@ -178,6 +196,9 @@ class Circle(Rectangle):
         super(Circle, self).draw(dc, replay, "Circle", [self.x, self.y,
               self.radius])
 
+    def preview(self, dc, width, height):
+        dc.DrawCircle(width/2, height/2, 15)
+
 #----------------------------------------------------------------------
 
 
@@ -187,6 +208,9 @@ class Ellipse(Rectangle):
     """
     def draw(self, dc, replay=False):
         super(Ellipse, self).draw(dc, replay, "Ellipse")
+
+    def preview(self, dc, width, height):
+        dc.DrawEllipse(5, 5, width - 12, height - 12)
 
 #----------------------------------------------------------------------
 
@@ -199,6 +223,8 @@ class RoundRect(Rectangle):
         super(RoundRect, self).draw(dc, replay, "RoundedRectangle", [self.x,
               self.y, self.width, self.height, 45])
 
+    def preview(self, dc, width, height):
+        dc.DrawRoundedRectangle(5, 5, width - 15, height - 15, 45)
 
 #----------------------------------------------------------------------
 
@@ -220,6 +246,8 @@ class Line(Rectangle):
     def draw(self, dc, replay=False):
         super(Line, self).draw(dc, replay, "Line", [self.x, self.y, self.x2,
                                                     self.y2])
+    def preview(self, dc, width, height):
+        dc.DrawLine(10, height / 2, width - 10, height / 2)
 
 #----------------------------------------------------------------------
 
@@ -236,7 +264,6 @@ class Eyedropper(Tool):
         colour = dc.GetPixel(x, y)  # get colour
         self.board.GetParent().GetParent().util.colour = colour
         self.board.GetParent().GetParent().control.preview.Refresh()
-
 
 #----------------------------------------------------------------------
 
@@ -270,31 +297,41 @@ class Text(Rectangle):
             dlg.Destroy()
             self.board.select_tool()
             return
-        dlg.transfer_data(self)
+
+        dlg.transfer_data(self)  # grab font and text data
         self.font_data = self.font.GetNativeFontInfoDesc()
         self.board.add_shape(self)
-        self.board.tab.GetParent().update_menus()
         self.update_scroll()
 
+
     def update_scroll(self):
+        """
+        Updates the scrollbars of a Whyteboard if the entered text plus its
+        position is vertically or horizontally larger than its current size.
+        """
         dummy = wx.Frame(None)
         dummy.SetFont(self.font)
         width, height = dummy.GetTextExtent(self.text)
         dummy.Destroy()
 
         if not self.board.update_scrollbars((width + self.x, height + self.y)):
-            self.board.redraw_all()  # force render
+            self.board.redraw_all()  # force render if they don't update
+
 
     def restore_font(self):
         self.font = wx.Font(0, 0, 0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
-
 
     def draw(self, dc, replay=False):
         if not self.font:
             self.restore_font()
         dc.SetFont(self.font)
         super(Text, self).draw(dc, replay, "Text", [self.text, self.x, self.y])
+
+    def preview(self, dc, width, height):
+        dc.SetTextForeground(self.colour)
+        dc.DrawText("abcdef", 10, height / 2 - 10)
+
 
 
 #----------------------------------------------------------------------
@@ -320,6 +357,9 @@ class Fill(Tool):
         dc.SetBrush(wx.Brush(self.colour))
         dc.FloodFill(self.x, self.y, (255, 255, 255), wx.FLOOD_SURFACE)
 
+    def preview(self, dc, width, height):
+        dc.SetBrush(wx.Brush(self.colour))
+        dc.DrawRectangle(0, 0, width, height)
 
 #----------------------------------------------------------------------
 
@@ -346,7 +386,6 @@ class Arc(Tool):
 
     def draw(self, dc, replay=False):
         dc.DrawArc(self.x, self.y, self.x2, self.y2, self.c1, self.x2)
-
 
 #----------------------------------------------------------------------
 
@@ -379,9 +418,22 @@ class Image(Tool):
         dc.DrawBitmap(self.image, self.x, self.y)
 
 
-
 #----------------------------------------------------------------------
 
+class Zoom(Tool):
+    """
+    Zooms in on the current Whyteboard tab
+    """
+    def __init__(self, board, image, path):
+        Tool.__init__(self, board, (0, 0, 0), 1)
+
+
+    def button_down(self, x, y):
+        x = self.board.zoom
+        new = (x[0] + 0.1, x[1] + 0.1)
+        self.board.zoom = new
+
+#----------------------------------------------------------------------
 
 class Note(Tool):
     """
@@ -402,7 +454,6 @@ class Note(Tool):
 
     def draw(self, dc, replay=True):
         pass
-
 
 #----------------------------------------------------------------------
 
