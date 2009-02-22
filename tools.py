@@ -63,7 +63,6 @@ class Tool(object):
 class Pen(Tool):
     """
     A free-hand pen.
-    TODO: possible pen styles: dashed, slanted etc.
     """
 
     def __init__(self, board, colour, thickness):
@@ -128,7 +127,7 @@ class Rectangle(Tool):
         the screen and adds it to the shape list if the rectangle was actually
         drawn out, not just a single mouse click-realease.
         """
-        dc = wx.ClientDC(self.board)
+        dc = wx.BufferedDC(None, self.board.buffer)
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
         del odc
@@ -137,7 +136,7 @@ class Rectangle(Tool):
         if x != self.x and y != self.y:
             self.board.add_shape(self)
             self.draw(dc, True)
-
+            self.board.redraw_dirty(dc)
 
     def draw_outline(self, dc):
         odc = wx.DCOverlay(self.board.overlay, dc)
@@ -160,8 +159,8 @@ class Rectangle(Tool):
 
         dc.SetPen(self.pen)
         dc.SetBrush(self.brush)
-        dc.SetTextForeground(self.colour)  # forces text colur
-
+        dc.SetTextForeground(self.colour)  # forces text colour
+        #dc.SetBackground(wx.Brush((0,0,0)))
         if not replay:
             self.draw_outline(dc)
 
@@ -280,9 +279,8 @@ class Text(Rectangle):
         self.font = None
         self.text = ""
         self.font_data = ""
+        self.extent = (0, 0)
 
-    def button_down(self, x, y):
-        pass
 
     def motion(self, x, y):
         self.x = x
@@ -309,13 +307,20 @@ class Text(Rectangle):
         Updates the scrollbars of a Whyteboard if the entered text plus its
         position is vertically or horizontally larger than its current size.
         """
-        dummy = wx.Frame(None)
-        dummy.SetFont(self.font)
-        width, height = dummy.GetTextExtent(self.text)
-        dummy.Destroy()
+        self.find_extent()
+        width, height = self.extent
 
         if not self.board.update_scrollbars((width + self.x, height + self.y)):
             self.board.redraw_all()  # force render if they don't update
+
+    def find_extent(self):
+        """
+        Finds the width/height extent of the inputted string
+        """
+        dummy = wx.Frame(None)
+        dummy.SetFont(self.font)
+        self.extent = dummy.GetTextExtent(self.text)
+        dummy.Destroy()
 
 
     def restore_font(self):
@@ -330,9 +335,47 @@ class Text(Rectangle):
 
     def preview(self, dc, width, height):
         dc.SetTextForeground(self.colour)
-        dc.DrawText("abcdef", 10, height / 2 - 10)
+        dc.DrawText("abcdef", 15, height / 2 - 10)
 
 
+#----------------------------------------------------------------------
+
+class Note(Text):
+    """
+    A special type of text input, in the style of a post-it/"sticky" note
+    It has a link to the tab it is displayed on, and is drawn with a light
+    yellow background (to show to it's a note).
+    """
+    def button_up(self, x, y,):
+        super(Note, self).button_up(x, y)
+
+
+    def find_extent(self):
+        """
+        Overrides to add extra spacing to the extent for the rectangle.
+        """
+        dummy = wx.Frame(None)
+        dummy.SetFont(self.font)
+        extent = dummy.GetTextExtent(self.text)
+        x, y = extent[0] + 20, extent[1] + 20
+        self.extent = (x, y)
+        dummy.Destroy()
+
+
+    def draw(self, dc, replay=False):
+        if not self.font:
+            self.restore_font()
+
+        dc.SetBrush(wx.Brush((255, 223, 120)))
+        dc.DrawRectangle(self.x - 10, self.y - 10, *self.extent)
+        dc.SetFont(self.font)
+        super(Note, self).draw(dc, replay,)
+
+
+    def preview(self, dc, width, height):
+        dc.SetBrush(wx.Brush((255, 223, 120)))
+        dc.DrawRectangle(3, 3, width - 10, height - 10)
+        dc.DrawText("abcdef", 15, height / 2 - 10)
 
 #----------------------------------------------------------------------
 
@@ -359,7 +402,7 @@ class Fill(Tool):
 
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush(self.colour))
-        dc.DrawRectangle(0, 0, width, height)
+        dc.DrawRectangle(10, 10, width - 20, height - 20)
 
 #----------------------------------------------------------------------
 
@@ -413,8 +456,6 @@ class Image(Tool):
         self.board.redraw_dirty(dc)
 
     def draw(self, dc, replay=False):
-        if not self.image:
-            self.image = wx.Bitmap(self.path)
         dc.DrawBitmap(self.image, self.x, self.y)
 
 
@@ -432,28 +473,6 @@ class Zoom(Tool):
         x = self.board.zoom
         new = (x[0] + 0.1, x[1] + 0.1)
         self.board.zoom = new
-
-#----------------------------------------------------------------------
-
-class Note(Tool):
-    """
-    Blank template for a post-it style note
-    e.g. http://www.bit10.net/images/post-it.jpg
-    """
-
-    def __init__(self, board, colour=(0, 0, 0), thickness=1):
-        Tool.__init__(self, board, colour, thickness)
-
-    def button_down(self, x, y):
-        self.x = x
-        self.y = y
-        self.text = ""
-
-    def motion(self, x, y):
-        pass
-
-    def draw(self, dc, replay=True):
-        pass
 
 #----------------------------------------------------------------------
 

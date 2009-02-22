@@ -42,6 +42,7 @@ from dialogs import About, History, ConvertProgress
 
 ID_EXPORT = wx.NewId()
 ID_THUMBS = wx.NewId()
+ID_REFRESH = wx.NewId()
 ID_HISTORY = wx.NewId()
 ID_CLEAR_ALL = wx.NewId()      # remove all from current tab
 ID_CLEAR_TABS = wx.NewId()     # remove all drawings from all tabs, keep images
@@ -54,13 +55,13 @@ class GUI(wx.Frame):
     event handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
-    version = "0.34"
+    version = "0.34-5"
 
     def __init__(self, parent):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
-        wx.Frame.__init__(self, parent, size=(800, 600), title="Untitled - " +
+        wx.Frame.__init__(self, parent, title="Untitled - " +
            self.title, style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE)
 
         self.util = Utility(self)
@@ -83,6 +84,7 @@ class GUI(wx.Frame):
         self.box.Add(self.tabs, 2, wx.EXPAND)
         self.box.Add(self.thumbs, 0, wx.EXPAND)
         self.SetSizer(self.box)
+        self.SetSizeWH(800, 600)
         self.Maximize(True)
 
 
@@ -112,6 +114,7 @@ class GUI(wx.Frame):
         history.AppendSeparator()
         history.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay your drawing history")
 
+        view.Append(ID_REFRESH, "&Refresh Thumbnails\tF5", "Refresh the thumbnails.")
         view.Append(ID_THUMBS, " &Toggle Thumbnails\tF9", "Toggle the thumbnail panel on or off", kind=wx.ITEM_CHECK)
         view.Check(ID_THUMBS, True)
 
@@ -139,13 +142,13 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
-                  "undo", "redo", "history", "thumbs", "clear", "clear_all",
-                  "clear_tabs", "clear_all_tabs", "about", "exit"]
+                  "undo", "redo", "history", "thumbs", "refresh", "clear",
+                  "clear_all", "clear_tabs", "clear_all_tabs", "about", "exit"]
 
         IDs = [wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE, wx.ID_SAVEAS,
                ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, ID_THUMBS,
-               wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_TABS, ID_CLEAR_ALL_TABS,
-               wx.ID_ABOUT, wx.ID_EXIT]
+               ID_REFRESH, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_TABS,
+               ID_CLEAR_ALL_TABS, wx.ID_ABOUT, wx.ID_EXIT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -221,7 +224,7 @@ class GUI(wx.Frame):
 
         self.util.temp_file = name
         self.util.load_file()
-
+        #self.on_refresh()
 
     def on_save_as(self, event=None):
         """
@@ -307,6 +310,9 @@ class GUI(wx.Frame):
             self.box.Add(self.thumbs, 0, wx.EXPAND)
             self.thumbs.Show()
             self.box.Layout()
+
+    def on_refresh(self, event=None):
+        self.thumbs.update_all()
 
 
     def convert_dialog(self, cmd):
@@ -621,8 +627,8 @@ class Thumbs(scrolled.ScrolledPanel):
         self.thumbs.insert(_id, btn)
         btn.Bind(wx.EVT_BUTTON, self.on_press)
 
-        self.sizer.Add(btn, flag=wx.EXPAND)
         self.sizer.Add(text, flag=wx.CENTER)
+        self.sizer.Add(btn, flag=wx.EXPAND)
         self.sizer.Layout()
 
         size = self.thumbs[_id].GetSize()

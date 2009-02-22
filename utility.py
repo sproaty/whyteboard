@@ -48,16 +48,17 @@ but are restored with it upon loading the file.
 """
 
 import os
+import pdb
 import cPickle
 import random
 #import platform
 from copy import copy
 
-from wx import MessageBox, Bitmap, StandardPaths, BufferedDC
+from wx import MessageBox, Bitmap, StandardPaths
 
 from whyteboard import Whyteboard
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
-                   Line, Fill, Arc, Image, Zoom)
+                   Line, Note, Fill, Arc, Image, Zoom)
 
 
 #----------------------------------------------------------------------
@@ -86,8 +87,8 @@ class Utility(object):
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
-        self.items = [Pen, Line, Rectangle, Ellipse, Circle, RoundRect, Text,
-                      Eyedropper, Fill]
+        self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text,
+                      RoundRect, Eyedropper, Fill, ]
 
         # test to see if ImageMagick is installed
         #if platform.system() == "Linux":
@@ -137,9 +138,7 @@ class Utility(object):
                         if isinstance(shape, Text):
                             shape.font = None
 
-                        shape.board = None
-                        shape.pen = None
-                        shape.brush = None
+                        shape.board, shape.pen, shape.brush = None, None, None
 
                 # Now the unpickleable objects are gone, build the save file
                 tab = self.gui.tabs.GetSelection()
@@ -157,7 +156,8 @@ class Utility(object):
                     MessageBox("Error saving file data")
                     self.saved = False
                     self.filename = None
-                f.close()
+                finally:
+                    f.close()
             else:
                 MessageBox("Error saving file data - no data to save")
                 self.saved = False
@@ -192,7 +192,8 @@ class Utility(object):
                 MessageBox("%s has corrupt Whyteboard data. No action taken."
                             % self.filename)
                 return
-            f.close()
+            finally:
+                f.close()
 
             # change program settings and update the Preview window
             self.saved = True
@@ -220,18 +221,18 @@ class Utility(object):
                 self.gui.tab_count += 1
                 self.gui.tabs.SetSelection(x)
                 self.gui.thumbs.new_thumb()
-                wb.redraw_all()
 
                 # restore unpickleable settings
                 for s in temp[1][shape]:
                     s.board = wb
 
                     if isinstance(s, Text):
+                        s.restore_font()
                         s.update_scroll()
                     if isinstance(s, Image) :
+                        s.image = Bitmap(s.path)
                         size = (s.image.GetWidth(), s.image.GetHeight())
                         wb.update_scrollbars(size)
-                wb.update_thumb()
 
             # handle older file versions gracefully
             try:
@@ -246,10 +247,8 @@ class Utility(object):
                 "version of Whyteboard ("+version+"). Saving the file will " +
                 "update it to the latest version, " + self.gui.version)
                 self.gui.tabs.SetSelection(0)
-
         else:
             MessageBox("Whyteboard does not support the file-type .%s" % _type)
-
 
     def convert(self, _file=None):
         """

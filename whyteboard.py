@@ -82,7 +82,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.RefreshRect(rect)
 
 
-    def redraw_all(self):
+    def redraw_all(self, update_thumb=False):
         """
         Redraws all shapes that have been drawn already.
         """
@@ -91,7 +91,8 @@ class Whyteboard(wx.ScrolledWindow):
         for s in self.shapes:
             s.draw(dc, True)
         self.Refresh()
-        self.update_thumb()
+        if update_thumb:
+            self.update_thumb()
 
     def convert_coords(self, event):
         """
@@ -106,9 +107,10 @@ class Whyteboard(wx.ScrolledWindow):
         Called when the left mouse button is pressed
         Either begins drawing, starts the drawing motion or ends drawing.
         """
+        if not isinstance(self.shape, Text):
+            self.drawing = True
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
-        self.drawing = True
 
 
     def left_motion(self, event):
@@ -128,7 +130,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         x, y = self.convert_coords(event)
 
-        if self.drawing:
+        if self.drawing or isinstance(self.shape, Text):
             before = len(self.shapes)
             self.shape.button_up(x, y)
             after = len(self.shapes)
@@ -177,29 +179,22 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Undoes an action, and adds it to the redo list.
         """
-        try:
-            shape = self.shapes.pop()
-            self._undo.append( shape )
-            self._redo.append( shape )
-            self.redraw_all()
-            #self.update_thumb()
-            #self.Refresh()
-        except IndexError:
-            pass
+        shape = self.shapes.pop()
+        self._undo.append( shape )
+        self._redo.append( shape )
+        self.redraw_all(True)
+
 
 
     def redo(self):
         """
         Redoes an action, and adds it to the undo list.
         """
-        try:
-            item = self._redo.pop()
-            self._undo.append(item)  # add item to be removed onto redo stack
-            self.shapes.append(item)
-            self.redraw_all()
-            #self.update_thumb()
-        except IndexError:
-            pass
+        item = self._redo.pop()
+        self._undo.append(item)  # add item to be removed onto redo stack
+        self.shapes.append(item)
+        self.redraw_all(True)
+
 
 
     def clear(self):

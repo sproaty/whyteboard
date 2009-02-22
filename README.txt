@@ -1,6 +1,6 @@
-Whyteboard 0.34 - a simple image, PDF and postscript file annotator
+Whyteboard 0.34-5 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sun 22 Feb 2009 13:58:54 GMT
+Sun 22 Feb 2009 21:40:12 GMT
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -47,6 +47,10 @@ turns out that GhostScript needs to be installed too (on Windows XP, SP3)
 
 
 ---- VERSION HISTORY ----
+
+22 Feb 2009 - Bugfix with drawing 'outlined' shapes. Began work on text 'notes'.
+              F5 will refresh all thumbnails since they're not refreshed upon
+              loading a save, PDF or PostScript file.
 
 21 Feb 2009 - * Export current tab's view as an image.
               * Live thumbnails, get updated when the selected tab is drawn upon

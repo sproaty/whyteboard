@@ -130,7 +130,7 @@ class History(wx.Dialog):
                             wx.Yield()
             else:
                 if self.looping and not self.paused:
-                    wx.MilliSleep(250)
+                    wx.MilliSleep(350)
                     wx.Yield()
                     pen.draw(dc, True)
 
@@ -227,7 +227,7 @@ class TextInput(wx.Dialog):
         wx.Dialog.__init__(self, gui, title="Enter text")
 
         self.ctrl = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER | wx.TE_RICH |
-                                            wx.RESIZE_BORDER | wx.TE_MULTILINE)
+                            wx.RESIZE_BORDER | wx.TE_MULTILINE, size=(250, 100))
         extent = self.ctrl.GetFullTextExtent("Hy")
         lineHeight = extent[1] + extent[3]
         self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
