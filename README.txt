@@ -24,9 +24,6 @@ see what error occured and let me know, <sproaty -at- gmail -dot- com>
 
 ---- KNOWN BUGS ----
 
-Thumbnails aren't updating immediately when loading PDF/PS/.wtbd files.
-
----
 Windows: when drawing an "outlined" shape (Rectangle/Ellipse/Circle/Line/Rounded
 Rectangle), the outline will mess up and appear oddly if the outline is dragged
 over itself. Currently looking into this, strangely it doesn't happen on Linux.
@@ -49,6 +46,8 @@ turns out that GhostScript needs to be installed too (on Windows XP, SP3)
 
 
 ---- VERSION HISTORY ----
+
+09 Mar 2009 - Bugfix: thumbnails not updating on file load
 
 08 Mar 2009 - Side panel is now tabbed to select between thumbnails and a "tree"
               view of all Notes (new feature) for each tab.

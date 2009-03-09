@@ -55,6 +55,7 @@ import random
 from copy import copy
 
 from whyteboard import Whyteboard
+from dialogs import ProgressDialog
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
                    Line, Note, Fill, Arc, Image, Zoom)
 
@@ -193,6 +194,9 @@ class Utility(object):
             finally:
                 f.close()
 
+            self.gui.dlg = ProgressDialog(self.gui, "Loading...")
+            self.gui.dlg.Show()
+
             #  Remove all tabs, thumbnails and tree note items
             self.gui.board = None
             self.gui.tabs.DeleteAllPages()
@@ -239,6 +243,8 @@ class Utility(object):
                     if isinstance(s, Note):
                         self.gui.notes.add_note(s)
 
+            wx.PostEvent(self.gui, self.gui.LoadEvent())
+
             # handle older file versions gracefully
             try:
                 version = temp[0][4]
@@ -269,8 +275,6 @@ class Utility(object):
         """
         if _file is None:
             _file = self.temp_file
-
-        filename = os.path.split(_file)[1]
 
         std_paths = wx.StandardPaths.Get()
         path = wx.StandardPaths.GetUserLocalDataDir(std_paths)  # $HOME/.appName
@@ -325,8 +329,11 @@ class Utility(object):
                 self.gui.tabs.AddPage(wb, name)
                 self.gui.tab_count += 1
                 self.gui.thumbs.new_thumb()
-        #self.gui.thumbs.update_all()
+                self.gui.notes.add_tab()
 
+        wx.MilliSleep(500)
+        wx.SafeYield()
+        self.gui.on_refresh()  # force thumbnails
 
     def load_image(self, path, board):
         """

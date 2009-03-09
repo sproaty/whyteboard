@@ -7,9 +7,6 @@ Sun 08 Mar 2009 21:25:22 GMT
 - flood fill not being rendered when scrolling/maximising window, need to find
   a less "costly" implementation
 
-- only one thumbnail is being updated correctly when loading in a PDF/save file
-  really can't figure out why (the methods are being called...)
-
 
 ---- NEW FEATURES ----
 

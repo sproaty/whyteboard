@@ -175,16 +175,16 @@ class History(wx.Dialog):
 #----------------------------------------------------------------------
 
 
-class ConvertProgress(wx.Dialog):
+class ProgressDialog(wx.Dialog):
     """
-    Shows a Progres Gauge while file conversion is taking place.
+    Shows a Progres Gauge while an operation is taking place.
     """
 
-    def __init__(self, gui):
+    def __init__(self, gui, title):
         """
         Defines a gauge and a timer which updates the gauge.
         """
-        wx.Dialog.__init__(self, gui, title="Converting...",  size=(250, 100))
+        wx.Dialog.__init__(self, gui, title=title,  size=(250, 100))
         self.count = 0
         self.timer = wx.Timer(self)
         self.gauge = wx.Gauge(self, range=100, size=(180, 30))

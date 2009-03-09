@@ -27,6 +27,7 @@ indicator that shows an example of the drawing-to-be
 """
 
 import wx
+import  wx.lib.newevent
 
 import os
 from copy import copy
@@ -34,7 +35,7 @@ from copy import copy
 from tools import Image
 from whyteboard import Whyteboard
 from utility import Utility
-from dialogs import About, History, ConvertProgress
+from dialogs import About, History, ProgressDialog
 from panels import ControlPanel, SidePanel
 
 
@@ -55,7 +56,8 @@ class GUI(wx.Frame):
     event handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
-    version = "0.35"
+    version = "0.35-1"
+    LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
         """
@@ -143,6 +145,8 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_exit)
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
+        self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
+
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
                   "undo", "redo", "history", "thumbs", "refresh", "clear",
@@ -341,7 +345,7 @@ class GUI(wx.Frame):
         self.process = wx.Process(self)
         wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
 
-        self.dlg = ConvertProgress(self)
+        self.dlg = ProgressDialog(self, "Converting...")
         self.dlg.ShowModal()
 
 
@@ -353,6 +357,18 @@ class GUI(wx.Frame):
         self.dlg.Destroy()
         del self.dlg
         del self.process
+
+
+    def on_done_load(self, event):
+        """
+        Refreshes the thumbnails and destroys the progress dialog after WB file
+        load.
+        """
+        wx.MilliSleep(500)
+        self.on_refresh()  # force thumbnails
+
+        self.dlg.Destroy()
+        del self.dlg
 
 
     def on_exit(self, event=None):
