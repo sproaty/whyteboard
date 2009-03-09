@@ -4,16 +4,16 @@
 #
 # GNU General Public Licence (GPL)
 #
-# This program is free software; you can redistribute it and/or modify it under
+# Whyteboard is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation; either version 3 of the License, or (at your option) any later
 # version.
-# This program is distributed in the hope that it will be useful, but WITHOUT
+# Whyteboard is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
 # details.
 # You should have received a copy of the GNU General Public License along with
-# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
@@ -185,9 +185,7 @@ class ConvertProgress(wx.Dialog):
         Defines a gauge and a timer which updates the gauge.
         """
         wx.Dialog.__init__(self, gui, title="Converting...",  size=(250, 100))
-        self.gui = gui
         self.count = 0
-
         self.timer = wx.Timer(self)
         self.gauge = wx.Gauge(self, range=100, size=(180, 30))
 
@@ -200,7 +198,6 @@ class ConvertProgress(wx.Dialog):
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         self.timer.Start(20)
 
-
     def on_timer(self, event):
         """
         Increases the gauge's progress.
@@ -209,7 +206,6 @@ class ConvertProgress(wx.Dialog):
         self.gauge.SetValue(self.count)
         if self.count == 100:
             self.count = 0
-            self.timer.Start(20)
 
 
 #----------------------------------------------------------------------
@@ -220,21 +216,29 @@ class TextInput(wx.Dialog):
     Shows a text input screen.
     """
 
-    def __init__(self, gui):
+    def __init__(self, gui, note=None):
         """
-        Standard constructor.
+        Standard constructor - sets text to supplied text variable.
         """
-        wx.Dialog.__init__(self, gui, title="Enter text")
+        wx.Dialog.__init__(self, gui, title="Enter text",
+                            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
-        self.ctrl = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER | wx.TE_RICH |
-                            wx.RESIZE_BORDER | wx.TE_MULTILINE, size=(250, 100))
+        self.ctrl = wx.TextCtrl(self, style=wx.TE_RICH | wx.TE_MULTILINE,
+                                                    size=(250, 100))
         extent = self.ctrl.GetFullTextExtent("Hy")
         lineHeight = extent[1] + extent[3]
         self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
         self.font = self.ctrl.GetFont()
 
-        fontBtn = wx.Button(self, label="Select Font...")
+        if note:
+            self.ctrl.SetValue(note.text)
+            self.ctrl.SetForegroundColour(note.colour)
+            self.font.SetNativeFontInfoFromString(note.font_data)
+            self.ctrl.SetFont(self.font)
+        else:
+            self.ctrl.SetForegroundColour(gui.util.colour)
 
+        fontBtn = wx.Button(self, label="Select Font")
         gap = wx.LEFT | wx.TOP | wx.RIGHT
 
         self.okButton = wx.Button(self, wx.ID_OK, "&OK")
@@ -256,7 +260,7 @@ class TextInput(wx.Dialog):
         self.SetSizer(sizer)
         sizer.Fit(self)
 
-        self.ctrl.SetFocus()
+        self.set_focus()
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
 
 
@@ -280,7 +284,9 @@ class TextInput(wx.Dialog):
             self.GetSizer().Fit(self)
 
         dlg.Destroy()
+        self.set_focus()
 
+    def set_focus(self):
         selection = self.ctrl.GetSelection()
         self.ctrl.SetFocus()
         self.ctrl.SetSelection(*selection)
@@ -292,6 +298,7 @@ class TextInput(wx.Dialog):
         """
         text_obj.text = self.ctrl.GetValue()
         text_obj.font = self.font
+
 
 #----------------------------------------------------------------------
 

@@ -4,16 +4,16 @@
 #
 # GNU General Public Licence (GPL)
 #
-# This program is free software; you can redistribute it and/or modify it under
+# Whyteboard is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation; either version 3 of the License, or (at your option) any later
 # version.
-# This program is distributed in the hope that it will be useful, but WITHOUT
+# Whyteboard is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
 # details.
 # You should have received a copy of the GNU General Public License along with
-# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
@@ -289,7 +289,7 @@ class Text(Rectangle):
     def button_up(self, x, y):
         self.x = x
         self.y = y
-        dlg = TextInput(self.board.GetParent())
+        dlg = TextInput(self.board.GetParent().GetParent())  # GUI
 
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
@@ -300,6 +300,7 @@ class Text(Rectangle):
         self.font_data = self.font.GetNativeFontInfoDesc()
         self.board.add_shape(self)
         self.update_scroll()
+        return True
 
 
     def update_scroll(self):
@@ -342,13 +343,16 @@ class Text(Rectangle):
 
 class Note(Text):
     """
-    A special type of text input, in the style of a post-it/"sticky" note
-    It has a link to the tab it is displayed on, and is drawn with a light
-    yellow background (to show to it's a note).
+    A special type of text input, in the style of a post-it/"sticky" notes.
+    It is linked to the tab it's displayed on, and is drawn with a light
+    yellow background (to show that it's a note). An overview of notes for each
+    tab can be viewed on the side panel.
     """
     def button_up(self, x, y,):
-        super(Note, self).button_up(x, y)
-
+        # don't add a blank note
+        if super(Note, self).button_up(x, y):
+            self.board.notes.append(self)
+            self.board.tab.GetParent().notes.add_note(self)
 
     def find_extent(self):
         """
@@ -367,6 +371,7 @@ class Note(Text):
             self.restore_font()
 
         dc.SetBrush(wx.Brush((255, 223, 120)))
+        dc.SetPen(wx.Pen((0, 0, 0), 1))
         dc.DrawRectangle(self.x - 10, self.y - 10, *self.extent)
         dc.SetFont(self.font)
         super(Note, self).draw(dc, replay,)
@@ -374,6 +379,8 @@ class Note(Text):
 
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush((255, 223, 120)))
+        dc.SetTextForeground(self.colour)
+        dc.SetPen(wx.Pen((0, 0, 0), 1))
         dc.DrawRectangle(3, 3, width - 10, height - 10)
         dc.DrawText("abcdef", 15, height / 2 - 10)
 
@@ -418,13 +425,15 @@ class Arc(Tool):
         self.x = x
         self.y = y
         self.x2 = x
-        self.y2 = y        self.c1 = 300
+        self.y2 = y
+        self.c1 = 300
         self.c2 = 300
         self.board.add_shape(self)
 
     def motion(self, x, y):
         self.x2 = x
-        self.y2 = y        self.c1 = 300
+        self.y2 = y
+        self.c1 = 300
         self.c2 = 300
 
     def draw(self, dc, replay=False):

@@ -1,7 +1,6 @@
-Whyteboard 0.34-5 - To do list
+Whyteboard 0.35 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sun 22 Feb 2009 21:40:06 GMT
-
+Sun 08 Mar 2009 21:25:22 GMT
 
 ---- TO FIX ----
 
@@ -9,18 +8,13 @@ Sun 22 Feb 2009 21:40:06 GMT
   a less "costly" implementation
 
 - only one thumbnail is being updated correctly when loading in a PDF/save file
-  really can't figure out why.
+  really can't figure out why (the methods are being called...)
 
-- export as gif isn't working for yet another weird reason
 
 ---- NEW FEATURES ----
 
--- When converting a ifle with ImageMagick, create thumbnails for a side panel
-   which allows you to jump quickly from page to page.
-   - May make them a copy of the Whyteboard tab, not thumbs of the PNG files -
-     so when you draw it will update the thumbnails.
-   - This may be computationally demanding, to take a memory screenshot of each
-     tab, i.e. to scale a tab down and created a BMP'd button for 50 tabs
+-- see: https://blueprints.launchpad.net/whyteboard
+
 
 ---- IMPROVEMENTS AND THOUGHTS ----
 

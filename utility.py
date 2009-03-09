@@ -4,16 +4,16 @@
 #
 # GNU General Public Licence (GPL)
 #
-# This program is free software; you can redistribute it and/or modify it under
+# Whyteboard is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation; either version 3 of the License, or (at your option) any later
 # version.
-# This program is distributed in the hope that it will be useful, but WITHOUT
+# Whyteboard is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
 # details.
 # You should have received a copy of the GNU General Public License along with
-# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
@@ -47,14 +47,12 @@ Image Tools have the assosicated image removed from their class upon saving,
 but are restored with it upon loading the file.
 """
 
+import wx
+
 import os
-import pdb
 import cPickle
 import random
-#import platform
 from copy import copy
-
-from wx import MessageBox, Bitmap, StandardPaths
 
 from whyteboard import Whyteboard
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
@@ -87,7 +85,7 @@ class Utility(object):
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
-        self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text,
+        self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note,
                       RoundRect, Eyedropper, Fill, ]
 
         # test to see if ImageMagick is installed
@@ -153,13 +151,13 @@ class Utility(object):
                     t = os.path.split(self.filename)[1] + ' - ' + self.gui.title
                     self.gui.SetTitle(t)
                 except cPickle.PickleError:
-                    MessageBox("Error saving file data")
+                    wx.MessageBox("Error saving file data")
                     self.saved = False
                     self.filename = None
                 finally:
                     f.close()
             else:
-                MessageBox("Error saving file data - no data to save")
+                wx.MessageBox("Error saving file data - no data to save")
                 self.saved = False
                 self.filename = None
 
@@ -189,11 +187,19 @@ class Utility(object):
             try:
                 temp = cPickle.load(f)
             except (cPickle.UnpicklingError, ValueError, ImportError):
-                MessageBox("%s has corrupt Whyteboard data. No action taken."
+                wx.MessageBox("%s has corrupt Whyteboard data. No action taken."
                             % self.filename)
                 return
             finally:
                 f.close()
+
+            #  Remove all tabs, thumbnails and tree note items
+            self.gui.board = None
+            self.gui.tabs.DeleteAllPages()
+
+            self.gui.thumbs.remove_all()
+            self.gui.notes.remove_all()
+            self.gui.tab_count = 0
 
             # change program settings and update the Preview window
             self.saved = True
@@ -208,19 +214,16 @@ class Utility(object):
             self.gui.control.preview.Refresh()
             self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
 
-            for x in range(0, self.gui.tab_count):
-                self.gui.thumbs.remove(x)
-                self.gui.tabs.RemovePage(x)
-            self.gui.tab_count = 0
-
             for x, shape in enumerate(temp[1]):
                 wb = Whyteboard(self.gui.tabs)
+                self.gui.board = wb
                 wb.shapes = temp[1][shape]
-                name = "#" + str(x + 1) + " - " + os.path.split(_file)[1]
+                name = "Tab " + str(x + 1)
                 self.gui.tabs.AddPage(wb, name)
                 self.gui.tab_count += 1
                 self.gui.tabs.SetSelection(x)
                 self.gui.thumbs.new_thumb()
+                self.gui.notes.add_tab()
 
                 # restore unpickleable settings
                 for s in temp[1][shape]:
@@ -230,9 +233,11 @@ class Utility(object):
                         s.restore_font()
                         s.update_scroll()
                     if isinstance(s, Image) :
-                        s.image = Bitmap(s.path)
+                        s.image = wx.Bitmap(s.path)
                         size = (s.image.GetWidth(), s.image.GetHeight())
                         wb.update_scrollbars(size)
+                    if isinstance(s, Note):
+                        self.gui.notes.add_note(s)
 
             # handle older file versions gracefully
             try:
@@ -243,12 +248,13 @@ class Utility(object):
             try:
                 self.gui.tabs.SetSelection(temp[0][3])
             except IndexError:
-                MessageBox("Warning: This save file was created in an older " +
-                "version of Whyteboard ("+version+"). Saving the file will " +
+                wx.MessageBox("Warning: This save file was created in an older "
+                + "version of Whyteboard ("+version+"). Saving the file will " +
                 "update it to the latest version, " + self.gui.version)
                 self.gui.tabs.SetSelection(0)
         else:
-            MessageBox("Whyteboard does not support the file-type .%s" % _type)
+            wx.MessageBox("Whyteboard doesn't support the filetype .%s" % _type)
+
 
     def convert(self, _file=None):
         """
@@ -266,8 +272,8 @@ class Utility(object):
 
         filename = os.path.split(_file)[1]
 
-        std_paths = StandardPaths.Get()
-        path = StandardPaths.GetUserLocalDataDir(std_paths)  # $HOME/.appName
+        std_paths = wx.StandardPaths.Get()
+        path = wx.StandardPaths.GetUserLocalDataDir(std_paths)  # $HOME/.appName
         path = os.path.join(path, "wtbd-tmp", "")  # "" forces slash at end
 
         # Create a random filename using letters and numbers
@@ -291,13 +297,13 @@ class Utility(object):
         #-trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
         # ------------------------------------------------
         # better PDF quality, takes longer to convert
-        cmd = "convert "+ _file +" "+ path + tmp_file +".png"
+        cmd = "convert " + _file + " " + path + tmp_file + ".png"
         self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]
         count = len(after) - len(before)
 
         if count == 1:
-            temp_path = path + tmp_file +".png"
+            temp_path = path + tmp_file + ".png"
             self.load_image(temp_path, self.gui.board)
             self.to_convert[index][1] = temp_path
         else:
@@ -311,11 +317,11 @@ class Utility(object):
                 wb = Whyteboard(self.gui.tabs)
 
                 # the tmp. file path, store it in the dict. for this file
-                temp_file = path + tmp_file +"-"+ str(x) +".png"
+                temp_file = path + tmp_file + "-" + str(x) + ".png"
                 self.load_image(temp_file, wb)
                 self.to_convert[index][x + 1] = temp_file
 
-                name = filename +" - pg."+ str(x+1)
+                name = "Tab "+ str(x + 1)
                 self.gui.tabs.AddPage(wb, name)
                 self.gui.tab_count += 1
                 self.gui.thumbs.new_thumb()
@@ -327,9 +333,33 @@ class Utility(object):
         Loads an image into the given Whyteboard tab. bitmap is the path to an
         image file to create a bitmap from.
         """
-        image = Bitmap(path)
+        image = wx.Bitmap(path)
         shape = Image(board, image, path)
         shape.button_down(0, 0)  # renders, updates scrollbars
+
+
+    def export(self, filename):
+        """
+        Exports the current view as a file. Select the appropriate wx constant
+        depending on the filetype. gif is buggered for some reason :-/
+        """
+        _name = os.path.splitext(filename)[1].replace(".", "").lower()
+
+        types = {"png": wx.BITMAP_TYPE_PNG, "jpg": wx.BITMAP_TYPE_JPEG, "jpeg":
+                 wx.BITMAP_TYPE_JPEG, "bmp": wx.BITMAP_TYPE_BMP, "gif":
+                 wx.BITMAP_TYPE_GIF,  "tiff": wx.BITMAP_TYPE_TIF, "pcx":
+                 wx.BITMAP_TYPE_PCX }
+
+        const = types[_name]
+
+        context = wx.BufferedDC(None, self.gui.board.buffer, wx.BUFFER_VIRTUAL_AREA)
+        memory = wx.MemoryDC()
+        x, y = self.gui.board.GetClientSizeTuple()
+        bitmap = wx.EmptyBitmap(x, y, -1)
+        memory.SelectObject(bitmap)
+        memory.Blit(0, 0, x, y, context, 0, 0)
+        memory.SelectObject(wx.NullBitmap)
+        bitmap.SaveFile(filename, const)
 
 
     def cleanup(self):

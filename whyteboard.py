@@ -4,16 +4,16 @@
 #
 # GNU General Public Licence (GPL)
 #
-# This program is free software; you can redistribute it and/or modify it under
+# Whyteboard is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation; either version 3 of the License, or (at your option) any later
 # version.
-# This program is distributed in the hope that it will be useful, but WITHOUT
+# Whyteboard is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
 # details.
 # You should have received a copy of the GNU General Public License along with
-# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 
@@ -25,8 +25,8 @@ its own undo/redo.
 """
 
 import wx
-import os
-from tools import Text
+
+from tools import Text, Note
 
 #----------------------------------------------------------------------
 
@@ -44,15 +44,17 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
-        self.tab = tab
 
-        self.select_tool()  # tool ID used to generate Tool object
+        self.tab = tab
         self.shapes = []  # list of shapes for re-drawing/saving
+        self.shape = None  # selected shape to draw with
+        self.notes = []
         self._undo = []  # list of actions to undo
         self._redo = []  # list of actions to redo
         self.overlay = wx.Overlay()  # drawing "rubber bands"
         self.drawing = False
         self.zoom = (1.0, 1.0)
+        self.select_tool()  # tool ID used to generate Tool object
 
         self.buffer = wx.EmptyBitmap(*self.virtual_size)
         dc = wx.BufferedDC(None, self.buffer)
@@ -107,10 +109,11 @@ class Whyteboard(wx.ScrolledWindow):
         Called when the left mouse button is pressed
         Either begins drawing, starts the drawing motion or ends drawing.
         """
-        if not isinstance(self.shape, Text):
-            self.drawing = True
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
+
+        if not isinstance(self.shape, Text):
+            self.drawing = True
 
 
     def left_motion(self, event):
@@ -180,9 +183,31 @@ class Whyteboard(wx.ScrolledWindow):
         Undoes an action, and adds it to the redo list.
         """
         shape = self.shapes.pop()
-        self._undo.append( shape )
-        self._redo.append( shape )
+        self._undo.append(shape)
+        self._redo.append(shape)
         self.redraw_all(True)
+
+        if isinstance(shape, Note):
+            # Find out this Note's element number in the Tree
+            number = 0
+            for item in self.shapes:
+                if isinstance(item, Note):
+                    if shape == item:
+                        break
+                    number += 1
+
+            # current tab tree element ID
+            notes = self.GetParent().GetParent().notes
+            tab = notes.tabs[self.get_tab()]
+            item, cookie = notes.tree.GetFirstChild(tab)
+
+            # now remove the correct note from the tab node
+            x = 0
+            while item:
+                if x == number:
+                    notes.tree.Delete(item)
+                x += 1
+                item, cookie = notes.tree.GetNextChild(tab, cookie)
 
 
 
@@ -195,6 +220,10 @@ class Whyteboard(wx.ScrolledWindow):
         self.shapes.append(item)
         self.redraw_all(True)
 
+        if isinstance(item, Note):
+            self.GetParent().GetParent().notes.add_note(item)
+
+
 
 
     def clear(self):
@@ -202,8 +231,7 @@ class Whyteboard(wx.ScrolledWindow):
         Removes all shapes from the "to-draw" list.
         """
         self.shapes = []
-        self.redraw_all()
-
+        self.redraw_all(True)
 
     def on_paint(self, event):
         """
@@ -211,20 +239,17 @@ class Whyteboard(wx.ScrolledWindow):
         """
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
 
-
     def get_tab(self):
         """
         Returns the current tab number of this Whyteboard instance.
         """
         return self.GetParent().GetParent().tabs.GetSelection()
 
-
     def update_thumb(self):
         """
         Updates this tab's thumb
         """
         self.GetParent().GetParent().thumbs.update(self.get_tab())
-
 
     def on_size(self, event):
         """
@@ -265,26 +290,6 @@ class Whyteboard(wx.ScrolledWindow):
             self.redraw_all()
         else:
             return False
-
-
-    def export(self, filename):
-        _name = os.path.splitext(filename)[1].replace(".", "").lower()
-
-        types = {"png": wx.BITMAP_TYPE_PNG, "jpg": wx.BITMAP_TYPE_JPEG, "jpeg":
-                 wx.BITMAP_TYPE_JPEG, "bmp": wx.BITMAP_TYPE_BMP, "gif":
-                 wx.BITMAP_TYPE_GIF,  "tiff": wx.BITMAP_TYPE_TIF, "pcx":
-                 wx.BITMAP_TYPE_PCX }
-
-        const = types[_name]
-
-        context = wx.BufferedDC(None, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-        memory = wx.MemoryDC()
-        x, y = self.GetClientSizeTuple()
-        bitmap = wx.EmptyBitmap(x, y, -1)
-        memory.SelectObject(bitmap)
-        memory.Blit(0, 0, x, y, context, 0, 0)
-        memory.SelectObject(wx.NullBitmap)
-        bitmap.SaveFile(filename, const)
 
 #----------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
-Whyteboard 0.34-5 - a simple image, PDF and postscript file annotator
+Whyteboard 0.35 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sun 22 Feb 2009 21:40:12 GMT
+Sun 08 Mar 2009 21:25:16 GMT
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -26,11 +26,12 @@ see what error occured and let me know, <sproaty -at- gmail -dot- com>
 
 Thumbnails aren't updating immediately when loading PDF/PS/.wtbd files.
 
-
+---
 Windows: when drawing an "outlined" shape (Rectangle/Ellipse/Circle/Line/Rounded
 Rectangle), the outline will mess up and appear oddly if the outline is dragged
 over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
+---
 Windows: issues with ImageMagick conflicting with a built-in Windows application
 named convert (also the name of the IM program used to convert PDFs). If you try
 to convert a PDF and receive a message in the console such as this:
@@ -42,11 +43,24 @@ Invalid Parameter - and
 Then you are experiencing the error. The link below offers some insight:
 http://savage.net.au/ImageMagick/html/install-convert.html
 
+---
 Also, I experienced ImageMagick giving a bunch of errors converting a PDF - it
 turns out that GhostScript needs to be installed too (on Windows XP, SP3)
 
 
 ---- VERSION HISTORY ----
+
+08 Mar 2009 - Side panel is now tabbed to select between thumbnails and a "tree"
+              view of all Notes (new feature) for each tab.
+              Notes are similar to how text is input, except a light yellow
+              background is drawn around it to indicate it's a note. In the
+              tree control, a note item can be double clicked upon to bring up
+              the text input dialog to change a note's text.
+
+              Bugfix: a thumbnail's text  labelnot being removed when the
+              thumbnail was removed.
+
+04 Mar 2009 - Bugfix under Windows: toggling thumbnails would cause an error.
 
 22 Feb 2009 - Bugfix with drawing 'outlined' shapes. Began work on text 'notes'.
               F5 will refresh all thumbnails since they're not refreshed upon
