@@ -218,6 +218,8 @@ class Notes(wx.Panel):
         text = note.text.replace("\n", " ")[:15]
         if not _id:
             _id = self.tabs[self.gui.tabs.GetSelection()]
+        else:
+            _id = self.tabs[_id]
 
         self.tree.AppendItem(_id, text, data=wx.TreeItemData(note))
         self.tree.Expand(_id)
@@ -307,14 +309,12 @@ class Thumbs(scrolled.ScrolledPanel):
         else:
             if len(self.thumbs):
                 _id = len(self.thumbs)
-            img = wx.ImageFromBitmap(wx.EmptyBitmap(160, 160))
+            img = wx.ImageFromBitmap(wx.EmptyBitmapRGBA(160, 160, 255, 255, 255, 0))
             img.ConvertColourToAlpha(255, 255, 255)
             bmp = wx.BitmapFromImage(img)
 
         text = wx.StaticText(self, label="Tab " + str(_id + 1))
         btn = ThumbButton(self, _id, bmp)
-        btn.SetBitmapHover(bmp)
-        btn.SetBitmapSelected(bmp)
         self.text.insert(_id, text)
         self.thumbs.insert(_id, btn)
 
@@ -424,6 +424,8 @@ class ThumbButton(wx.BitmapButton):
         self.thumb_id  = _id
         self.parent = parent
         self.Bind(wx.EVT_BUTTON, self.on_press)
+        self.SetBitmapHover(bitmap)
+        self.SetBitmapSelected(bitmap)
 
 
     def on_press(self, event):

@@ -35,25 +35,48 @@ class Tool(object):
         self.colour = colour
         self.thickness = thickness
         self.cursor = cursor
+        self.pen = None
+        self.brush = None
+        self.x = 0
+        self.y = 0
+
         self.make_pen()
 
     def button_down(self, x, y):
+        """
+        Left mouse button event
+        """
         pass
 
     def button_up(self, x, y):
+        """
+        Left button up.
+        """
         pass
 
     def motion(self, x, y):
+        """
+        Mouse in motion (usually while drawing)
+        """
         pass
 
     def draw(self, dc, replay=True):
+        """
+        Draws itself.
+        """
         pass
 
     def make_pen(self):
+        """
+        Creates a pen from the object after loading in a save file
+        """
         self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
         self.brush = wx.TRANSPARENT_BRUSH
 
     def preview(self, dc, width, height):
+        """
+        Tools' preview for the left-hand panel
+        """
         pass
 
 
@@ -159,8 +182,7 @@ class Rectangle(Tool):
 
         dc.SetPen(self.pen)
         dc.SetBrush(self.brush)
-        dc.SetTextForeground(self.colour)  # forces text colour
-        #dc.SetBackground(wx.Brush((0,0,0)))
+        dc.SetTextForeground(self.colour)  # forces text colour
         if not replay:
             self.draw_outline(dc)
 
@@ -181,7 +203,7 @@ class Circle(Rectangle):
     """
 
     def __init__(self, board, colour, thickness):
-        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
+        Rectangle.__init__(self, board, colour, thickness)
         self.radius  = 1
 
     def button_down(self, x, y):
@@ -234,7 +256,7 @@ class Line(Rectangle):
     """
 
     def __init__(self, board, colour, thickness):
-        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
+        Rectangle.__init__(self, board, colour, thickness)
         self.x2 = 0
         self.y2 = 0
 
@@ -275,7 +297,8 @@ class Text(Rectangle):
     """
 
     def __init__(self, board, colour, thickness):
-        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CHAR)
+        Rectangle.__init__(self, board, colour, thickness)
+        self.cursor = wx.CURSOR_CHAR
         self.font = None
         self.text = ""
         self.font_data = ""
@@ -351,7 +374,6 @@ class Note(Text):
     def button_up(self, x, y,):
         # don't add a blank note
         if super(Note, self).button_up(x, y):
-            self.board.notes.append(self)
             self.board.tab.GetParent().notes.add_note(self)
 
     def find_extent(self):
@@ -411,33 +433,6 @@ class Fill(Tool):
         dc.SetBrush(wx.Brush(self.colour))
         dc.DrawRectangle(10, 10, width - 20, height - 20)
 
-#----------------------------------------------------------------------
-
-
-class Arc(Tool):
-    """
-    Buggy.
-    """
-    def __init__(self, board, colour, thickness):
-        Tool.__init__(self, board, colour, thickness)
-
-    def button_down(self, x, y):
-        self.x = x
-        self.y = y
-        self.x2 = x
-        self.y2 = y
-        self.c1 = 300
-        self.c2 = 300
-        self.board.add_shape(self)
-
-    def motion(self, x, y):
-        self.x2 = x
-        self.y2 = y
-        self.c1 = 300
-        self.c2 = 300
-
-    def draw(self, dc, replay=False):
-        dc.DrawArc(self.x, self.y, self.x2, self.y2, self.c1, self.x2)
 
 #----------------------------------------------------------------------
 

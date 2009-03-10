@@ -180,17 +180,19 @@ class ProgressDialog(wx.Dialog):
     Shows a Progres Gauge while an operation is taking place.
     """
 
-    def __init__(self, gui, title):
+    def __init__(self, gui, title, to_add=1):
         """
         Defines a gauge and a timer which updates the gauge.
         """
-        wx.Dialog.__init__(self, gui, title=title,  size=(250, 100))
+        wx.Dialog.__init__(self, gui, title=title,  size=(325, 120),
+                          style=wx.CAPTION)
         self.count = 0
+        self.to_add = to_add
         self.timer = wx.Timer(self)
         self.gauge = wx.Gauge(self, range=100, size=(180, 30))
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.gauge, 0, wx.ALL, 5)
+        sizer.Add(self.gauge, 0, wx.ALL, 3)
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
@@ -202,7 +204,7 @@ class ProgressDialog(wx.Dialog):
         """
         Increases the gauge's progress.
         """
-        self.count += 1
+        self.count += self.to_add
         self.gauge.SetValue(self.count)
         if self.count == 100:
             self.count = 0
@@ -223,7 +225,7 @@ class TextInput(wx.Dialog):
         wx.Dialog.__init__(self, gui, title="Enter text",
                             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
-        self.ctrl = wx.TextCtrl(self, style=wx.TE_RICH | wx.TE_MULTILINE,
+        self.ctrl = wx.TextCtrl(self, style=wx.TE_RICH2 | wx.TE_MULTILINE,
                                                     size=(250, 100))
         extent = self.ctrl.GetFullTextExtent("Hy")
         lineHeight = extent[1] + extent[3]

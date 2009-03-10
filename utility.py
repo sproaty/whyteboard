@@ -57,7 +57,7 @@ from copy import copy
 from whyteboard import Whyteboard
 from dialogs import ProgressDialog
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
-                   Line, Note, Fill, Arc, Image, Zoom)
+                   Line, Note, Fill, Image, Zoom)
 
 
 #----------------------------------------------------------------------
@@ -194,13 +194,12 @@ class Utility(object):
             finally:
                 f.close()
 
-            self.gui.dlg = ProgressDialog(self.gui, "Loading...")
-            self.gui.dlg.Show()
+            self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
+            self.gui.dialog.Show()
 
             #  Remove all tabs, thumbnails and tree note items
             self.gui.board = None
             self.gui.tabs.DeleteAllPages()
-
             self.gui.thumbs.remove_all()
             self.gui.notes.remove_all()
             self.gui.tab_count = 0
@@ -218,32 +217,33 @@ class Utility(object):
             self.gui.control.preview.Refresh()
             self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
 
-            for x, shape in enumerate(temp[1]):
+            # Create tabs for every saved tab
+            for x, tab in enumerate(temp[1]):
                 wb = Whyteboard(self.gui.tabs)
-                self.gui.board = wb
-                wb.shapes = temp[1][shape]
+                wb.shapes = temp[1][tab]
                 name = "Tab " + str(x + 1)
                 self.gui.tabs.AddPage(wb, name)
                 self.gui.tab_count += 1
-                self.gui.tabs.SetSelection(x)
                 self.gui.thumbs.new_thumb()
                 self.gui.notes.add_tab()
 
-                # restore unpickleable settings
-                for s in temp[1][shape]:
-                    s.board = wb
+                # restore unpickleable settings to this tab's saved shapes
+                for tool in wb.shapes:
+                    tool.board = wb
 
-                    if isinstance(s, Text):
-                        s.restore_font()
-                        s.update_scroll()
-                    if isinstance(s, Image) :
-                        s.image = wx.Bitmap(s.path)
-                        size = (s.image.GetWidth(), s.image.GetHeight())
+                    if isinstance(tool, Text):
+                        tool.restore_font()
+                        tool.update_scroll()
+
+                        if isinstance(tool, Note):
+                            self.gui.notes.add_note(tool, x)
+
+                    if isinstance(tool, Image) :
+                        tool.image = wx.Bitmap(tool.path)
+                        size = (tool.image.GetWidth(), tool.image.GetHeight())
                         wb.update_scrollbars(size)
-                    if isinstance(s, Note):
-                        self.gui.notes.add_note(s)
 
-            wx.PostEvent(self.gui, self.gui.LoadEvent())
+            wx.PostEvent(self.gui, self.gui.LoadEvent())  # hide progress bar
 
             # handle older file versions gracefully
             try:
@@ -320,20 +320,20 @@ class Utility(object):
             for x in range(0, count):
                 wb = Whyteboard(self.gui.tabs)
 
-                # the tmp. file path, store it in the dict. for this file
+                # store the temp file path for this file in the dictionary
                 temp_file = path + tmp_file + "-" + str(x) + ".png"
                 self.load_image(temp_file, wb)
                 self.to_convert[index][x + 1] = temp_file
 
-                name = "Tab "+ str(x + 1)
-                self.gui.tabs.AddPage(wb, name)
+                self.gui.tabs.AddPage(wb, "Tab "+ str(x + 1))
                 self.gui.tab_count += 1
                 self.gui.thumbs.new_thumb()
                 self.gui.notes.add_tab()
 
-        wx.MilliSleep(500)
-        wx.SafeYield()
-        self.gui.on_refresh()  # force thumbnails
+        # Just in case it's a file with many pages
+        self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
+        self.gui.dialog.Show()
+        self.gui.on_done_load()
 
     def load_image(self, path, board):
         """

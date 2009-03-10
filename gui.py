@@ -56,7 +56,7 @@ class GUI(wx.Frame):
     event handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
-    version = "0.35-1"
+    version = "0.35.2"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
@@ -68,6 +68,12 @@ class GUI(wx.Frame):
 
         self.util = Utility(self)
         self.CreateStatusBar()
+
+        self.tb = None
+        self.menu = None
+        self.process = None
+        self.dialog = None
+
         self.make_toolbar()
         self.make_menu()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
@@ -103,7 +109,7 @@ class GUI(wx.Frame):
         view = wx.Menu()
         image = wx.Menu()
         _help = wx.Menu()
-        self.menuBar = wx.MenuBar()
+        self.menu = wx.MenuBar()
 
         _file.Append(wx.ID_NEW, "New &Tab\tCtrl-T", "Open a new tab")
         _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
@@ -130,12 +136,12 @@ class GUI(wx.Frame):
         image.Append(ID_CLEAR_ALL_TABS, "Clear &All Tabs", "Clear all open tabs")
 
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about Whyteboard")
-        self.menuBar.Append(_file, "&File")
-        self.menuBar.Append(history, "&History")
-        self.menuBar.Append(view, "&View")
-        self.menuBar.Append(image, "&Image")
-        self.menuBar.Append(_help, "&Help")
-        self.SetMenuBar(self.menuBar)
+        self.menu.Append(_file, "&File")
+        self.menu.Append(history, "&History")
+        self.menu.Append(view, "&View")
+        self.menu.Append(image, "&Image")
+        self.menu.Append(_help, "&Help")
+        self.SetMenuBar(self.menu)
 
 
     def do_bindings(self):
@@ -345,8 +351,8 @@ class GUI(wx.Frame):
         self.process = wx.Process(self)
         wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
 
-        self.dlg = ProgressDialog(self, "Converting...")
-        self.dlg.ShowModal()
+        self.dialog = ProgressDialog(self, "Converting...")
+        self.dialog.ShowModal()
 
 
     def on_end_process(self, event):
@@ -354,21 +360,23 @@ class GUI(wx.Frame):
         Destroy the progress Gauge/process after the convert process returns
         """
         self.process.Destroy()
-        self.dlg.Destroy()
-        del self.dlg
+        self.dialog.Destroy()
+        del self.dialog
         del self.process
 
 
-    def on_done_load(self, event):
+    def on_done_load(self, event=None):
         """
         Refreshes the thumbnails and destroys the progress dialog after WB file
         load.
         """
-        wx.MilliSleep(500)
+        self.dialog.SetTitle("Updating thumbs")
+        wx.MilliSleep(50)
+        wx.SafeYield()
         self.on_refresh()  # force thumbnails
 
-        self.dlg.Destroy()
-        del self.dlg
+        self.dialog.Destroy()
+        del self.dialog
 
 
     def on_exit(self, event=None):
@@ -418,9 +426,9 @@ class GUI(wx.Frame):
             undo = False
 
         self.tb.EnableTool(wx.ID_UNDO, undo)
-        self.menuBar.Enable(wx.ID_UNDO, undo)
+        self.menu.Enable(wx.ID_UNDO, undo)
         self.tb.EnableTool(wx.ID_REDO, redo)
-        self.menuBar.Enable(wx.ID_REDO, redo)
+        self.menu.Enable(wx.ID_REDO, redo)
 
 
 

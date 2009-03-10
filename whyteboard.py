@@ -48,7 +48,6 @@ class Whyteboard(wx.ScrolledWindow):
         self.tab = tab
         self.shapes = []  # list of shapes for re-drawing/saving
         self.shape = None  # selected shape to draw with
-        self.notes = []
         self._undo = []  # list of actions to undo
         self._redo = []  # list of actions to redo
         self.overlay = wx.Overlay()  # drawing "rubber bands"
@@ -156,7 +155,7 @@ class Whyteboard(wx.ScrolledWindow):
         int, corresponding to new - 1 = Tool ID in list below.
         Can be called with no new ID to reset itself with the current tool
         """
-        if new is None:
+        if not new:
             new = self.tab.GetParent().util.tool
         else:
             self.tab.GetParent().util.tool = new

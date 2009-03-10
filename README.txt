@@ -1,6 +1,6 @@
-Whyteboard 0.35 - a simple image, PDF and postscript file annotator
+Whyteboard 0.35.2 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sun 08 Mar 2009 21:25:16 GMT
+Tue 10 Mar 2009 23:14:18 GMT
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -12,14 +12,11 @@ http://www.imagemagick.net
 http://pages.cs.wisc.edu/~ghost/ - Windows users may need this for ImageMagick
 
 
-Next, download the latest Whyteboard file from Launchpad or Google Code. The
-source can be browsed at Launchpad, and is included in the download.
-
-Run any of the .py to launch the program, to installation needed!
+Run whyteboard.py or gui.py to launch the application, no installation needed!
 
 If nothing happens, try launching one of the scripts from the console:
- python whyteboard.py
-see what error occured and let me know, <sproaty -at- gmail -dot- com>
+$ python whyteboard.py
+see what error occured and let me know at, <sproaty -at- gmail -dot- com>
 
 
 ---- KNOWN BUGS ----
@@ -46,6 +43,10 @@ turns out that GhostScript needs to be installed too (on Windows XP, SP3)
 
 
 ---- VERSION HISTORY ----
+
+10 Mar 2009 - Bugfix: Can no longer cancel file load progress dialogs.
+              Performance increase: loading large .wtbd files
+              Notification of "updating thumbnails" after load/converting a file
 
 09 Mar 2009 - Bugfix: thumbnails not updating on file load
 
