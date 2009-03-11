@@ -1,4 +1,4 @@
-Whyteboard 0.35.2 - a simple image, PDF and postscript file annotator
+Whyteboard 0.35.3 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Tue 10 Mar 2009 23:14:18 GMT
 
@@ -43,6 +43,9 @@ turns out that GhostScript needs to be installed too (on Windows XP, SP3)
 
 
 ---- VERSION HISTORY ----
+
+11 Mar 2009 - Bugfix: thumbnails getting cut off with too many tabs
+              Can load in a file from the commmand line when running Whyteboard
 
 10 Mar 2009 - Bugfix: Can no longer cancel file load progress dialogs.
               Performance increase: loading large .wtbd files

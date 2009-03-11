@@ -30,6 +30,8 @@ import wx
 import  wx.lib.newevent
 
 import os
+import sys
+
 from copy import copy
 
 from tools import Image
@@ -56,7 +58,7 @@ class GUI(wx.Frame):
     event handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
-    version = "0.35.2"
+    version = "0.35.3"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
@@ -97,6 +99,14 @@ class GUI(wx.Frame):
         self.SetSizer(self.box)
         self.SetSizeWH(800, 600)
         self.Maximize(True)
+
+        try:
+            _file = sys.argv[1]
+            if _file:
+                if os.path.exists(_file):
+                    self.do_open(sys.argv[1])
+        except IndexError:
+            pass
 
 
     def make_menu(self):
@@ -361,7 +371,6 @@ class GUI(wx.Frame):
         """
         self.process.Destroy()
         self.dialog.Destroy()
-        del self.dialog
         del self.process
 
 
@@ -376,7 +385,6 @@ class GUI(wx.Frame):
         self.on_refresh()  # force thumbnails
 
         self.dialog.Destroy()
-        del self.dialog
 
 
     def on_exit(self, event=None):

@@ -188,7 +188,7 @@ class Notes(wx.Panel):
         self.gui = gui
         self.virtual = self.GetBestVirtualSize()
         self.tree = wx.TreeCtrl(self, size=(170, 800), style=wx.TR_HAS_BUTTONS)
-        self.root = self.tree.AddRoot("Notes:")
+        self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
         self.notes = []
         self.add_tab()
@@ -296,7 +296,7 @@ class Thumbs(scrolled.ScrolledPanel):
         self.SetAutoLayout(True)
         box.Fit(self)
 
-        self.SetScrollRate(0, 250)
+        self.SetScrollRate(0, 400)
         self.SetupScrolling(False, True)
 
 
@@ -309,7 +309,7 @@ class Thumbs(scrolled.ScrolledPanel):
         else:
             if len(self.thumbs):
                 _id = len(self.thumbs)
-            img = wx.ImageFromBitmap(wx.EmptyBitmapRGBA(160, 160, 255, 255, 255, 0))
+            img = wx.ImageFromBitmap(wx.EmptyBitmapRGBA(150, 150, 255, 255, 255, 0))
             img.ConvertColourToAlpha(255, 255, 255)
             bmp = wx.BitmapFromImage(img)
 
@@ -318,27 +318,23 @@ class Thumbs(scrolled.ScrolledPanel):
         self.text.insert(_id, text)
         self.thumbs.insert(_id, btn)
 
-        self.sizer.Add(text, flag=wx.CENTER)
-        self.sizer.Add(btn, flag=wx.EXPAND)
-
-        size = self.thumbs[_id].GetSize()
-        self.update_scrollbar((self.virtual[0], size[1]))
+        self.sizer.Add(text, flag=wx.ALIGN_CENTER | wx.TOP, border=5)
+        self.sizer.Add(btn, flag=wx.TOP | wx.LEFT, border=6)
+        self.SetVirtualSize(self.GetBestVirtualSize())
 
 
     def remove(self, _id):
         """
         Removes a thumbnail/label from the sizer and the managed widgets list.
         """
-        size = self.thumbs[_id].GetSize()
         self.sizer.Remove(self.thumbs[_id])
         self.sizer.Remove(self.text[_id])
         self.thumbs[_id].Hide()  # 'visibly' remove
         self.text[_id].Hide()
-        self.sizer.Layout()  # update sizer
 
         del self.thumbs[_id]  # 'physically' remove
         del self.text[_id]
-        self.update_scrollbar((self.virtual[0], -size[1]))
+        self.SetVirtualSize(self.GetBestVirtualSize())
 
         # now ensure all thumbnail classes are pointing to the right tab
         for x in range(0, len(self.thumbs)):
@@ -359,7 +355,7 @@ class Thumbs(scrolled.ScrolledPanel):
 
         self.thumbs = []
         self.text = []
-        self.virtual = self.GetBestVirtualSize()
+        self.SetVirtualSize(self.GetBestVirtualSize())
 
 
     def redraw(self, _id):
@@ -389,9 +385,8 @@ class Thumbs(scrolled.ScrolledPanel):
         Updates a single thumbnail.
         """
         bmp = self.redraw(_id)
+        self.thumbs[_id].buffer = bmp
         self.thumbs[_id].SetBitmapLabel(bmp)
-        self.thumbs[_id].SetBitmapHover(bmp)
-        self.thumbs[_id].SetBitmapSelected(bmp)
 
 
     def update_all(self):
@@ -400,17 +395,6 @@ class Thumbs(scrolled.ScrolledPanel):
         """
         for x in range(0, len(self.thumbs)):
             self.update(x)
-
-
-    def update_scrollbar(self, new_size):
-        """
-        Updates the Thumbnail's scrollbars when a thumbnail is added/removed.
-        """
-        width, height = new_size
-        y =  self.virtual[1] + height
-        self.virtual = (width, y)
-        self.SetVirtualSize(self.virtual)
-
 
 #----------------------------------------------------------------------
 
@@ -423,9 +407,9 @@ class ThumbButton(wx.BitmapButton):
         wx.BitmapButton.__init__(self, parent, bitmap=bitmap, size=(150, 150))
         self.thumb_id  = _id
         self.parent = parent
+        self.buffer = wx.EmptyBitmap(bitmap.GetSize()[0], bitmap.GetSize()[1])
         self.Bind(wx.EVT_BUTTON, self.on_press)
-        self.SetBitmapHover(bitmap)
-        self.SetBitmapSelected(bitmap)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
 
 
     def on_press(self, event):
@@ -433,6 +417,9 @@ class ThumbButton(wx.BitmapButton):
         Changes the tab to the selected button.
         """
         self.parent.gui.tabs.SetSelection(self.thumb_id)
+
+    def on_paint(self, event):
+        wx.BufferedPaintDC(self, self.buffer)
 
 #----------------------------------------------------------------------
 
