@@ -248,11 +248,11 @@ class TextInput(wx.Dialog):
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
 
         btnSizer = wx.StdDialogButtonSizer()
-        btnSizer.Add(self.okButton, 0, gap, 5)
-        btnSizer.Add(self.cancelButton, 0, gap, 5)
+        btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
+        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 5)
+        sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 7)
         sizer.Add(fontBtn, 0, gap | wx.ALIGN_RIGHT, 5)
         sizer.Add((10, 10)) # Spacer.
         btnSizer.Realize()
