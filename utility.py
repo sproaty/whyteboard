@@ -57,7 +57,7 @@ from copy import copy
 from whyteboard import Whyteboard
 from dialogs import ProgressDialog
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
-                   Line, Note, Fill, Image, Zoom)
+                   Line, Note, Fill, Image, Zoom, Select)
 
 
 #----------------------------------------------------------------------
@@ -87,7 +87,7 @@ class Utility(object):
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
         self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note,
-                      RoundRect, Eyedropper, Fill, ]
+                      RoundRect, Eyedropper, Fill, Select]
 
         # test to see if ImageMagick is installed
         #if platform.system() == "Linux":

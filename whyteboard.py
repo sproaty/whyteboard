@@ -74,12 +74,11 @@ class Whyteboard(wx.ScrolledWindow):
         x1, y1, x2, y2 = dc.GetBoundingBox()
         x1, y1 = self.CalcScrolledPosition(x1, y1)
         x2, y2 = self.CalcScrolledPosition(x2, y2)
-        # make a rectangle
+
         rect = wx.Rect()
         rect.SetTopLeft((x1, y1))
         rect.SetBottomRight((x2, y2))
         rect.Inflate(2, 2)
-        # refresh it
         self.RefreshRect(rect)
 
 
@@ -89,6 +88,8 @@ class Whyteboard(wx.ScrolledWindow):
         """
         dc = wx.BufferedDC(None, self.buffer)
         dc.Clear()
+
+        self.SetBackgroundColour((255, 255, 255))
         for s in self.shapes:
             s.draw(dc, True)
         self.Refresh()
@@ -126,6 +127,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.draw(dc)
             self.redraw_dirty(dc)
 
+
     def left_up(self, event):
         """
         Called when the left mouse button is released.
@@ -146,7 +148,6 @@ class Whyteboard(wx.ScrolledWindow):
                 self.select_tool()
                 self.update_thumb()
             self.drawing = False
-
 
 
     def select_tool(self, new=None):

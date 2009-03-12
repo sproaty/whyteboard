@@ -481,6 +481,64 @@ class Zoom(Tool):
 #----------------------------------------------------------------------
 
 
+class Select(Tool):
+    """
+    Select an item to move it around/edit text
+    """
+    def __init__(self, board, image, path):
+        Tool.__init__(self, board, (0, 0, 0), 1)
+        self.shape = None
+        self.dragging = False
+        self.count = None
+
+
+    def button_down(self, x, y):
+        print '-------'
+        print x, y
+        print '-------'
+        for count, shape in enumerate(self.board.shapes):
+            if isinstance(shape, Rectangle):
+                rect_x2_1 = shape.width + shape.x
+                rect_y2_1 = shape.height + shape.y
+                print str(count) +": " + str(shape.x)+", "+str(rect_x2_1)+" | "+str(shape.y)+", "+str(rect_y2_1)
+
+                rect_x2_2 = shape.x - shape.width
+                #rect_y2_2 = shape.y - shape.height
+
+                print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_1)
+
+                if ( ((x > rect_x2_1 and x < shape.x)
+                    and (y < rect_y2_1 and y > shape.y))
+                or ((x > rect_x2_2 and x > shape.x)
+                    and (y < rect_y2_1 and y > shape.y)) ):
+                    self.shape = self.board.shapes[count]
+                    self.dragging = True
+                    self.count = count
+
+
+    def motion(self, x, y):
+        if self.dragging:
+            self.shape.x = x
+            self.shape.y = y
+
+    def draw(self, dc, replay=False):
+        if self.dragging:
+            self.shape.draw(dc)
+
+
+    def button_up(self, x, y):
+        """
+        need to add pop(x) to remove current shape for proper undoing
+        !!!!!
+        """
+        if self.dragging:
+            del self.board.shapes[self.count]
+            self.board.add_shape(self)
+            self.board.redraw_all()
+            self.dragging = False
+
+#---------------------------------------------------------------------
+
 if __name__ == '__main__':
     from gui import WhyteboardApp
     app = WhyteboardApp(redirect=True)
