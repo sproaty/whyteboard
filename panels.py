@@ -23,6 +23,8 @@ This module contains classes for the GUI side panels.
 import wx
 from wx.lib import scrolledpanel as scrolled
 
+from copy import copy
+
 from dialogs import TextInput
 
 #----------------------------------------------------------------------
@@ -282,22 +284,17 @@ class Thumbs(scrolled.ScrolledPanel):
     def __init__(self, parent, gui):
         scrolled.ScrolledPanel.__init__(self, parent, size=(165, 600),
                                         style=wx.VSCROLL  | wx.RAISED_BORDER)
-
-        self.virtual = self.GetBestVirtualSize()
         self.gui = gui
         self.thumbs  = []
         self.text = []
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.new_thumb()  # inital thumb
+        self.thumbs[0].current = True
 
-        box = wx.BoxSizer(wx.VERTICAL)
-        box.Add(self.sizer)
-        self.SetSizer(box)
+        self.SetSizer(self.sizer)
         self.SetAutoLayout(True)
-        box.Fit(self)
-
-        self.SetScrollRate(0, 400)
-        self.SetupScrolling(False, True)
+        self.sizer.Fit(self)
+        self.SetScrollRate(0, 100)
 
 
     def new_thumb(self, _id=0):
@@ -317,6 +314,11 @@ class Thumbs(scrolled.ScrolledPanel):
         btn = ThumbButton(self, _id, bmp)
         self.text.insert(_id, text)
         self.thumbs.insert(_id, btn)
+
+        for x in self.thumbs:
+            if x is not btn:
+                x.current = False
+                x.SetBitmapLabel(x.buffer)
 
         self.sizer.Add(text, flag=wx.ALIGN_CENTER | wx.TOP, border=5)
         self.sizer.Add(btn, flag=wx.TOP | wx.LEFT, border=6)
@@ -385,8 +387,12 @@ class Thumbs(scrolled.ScrolledPanel):
         Updates a single thumbnail.
         """
         bmp = self.redraw(_id)
+        thumb = self.thumbs[_id]
+        thumb.SetBitmapLabel(bmp)
         self.thumbs[_id].buffer = bmp
-        self.thumbs[_id].SetBitmapLabel(bmp)
+
+        if thumb.current:
+            thumb.highlight()
 
 
     def update_all(self):
@@ -404,22 +410,40 @@ class ThumbButton(wx.BitmapButton):
     the button is pressed, it can switch to the proper tab.
     """
     def __init__(self, parent, _id, bitmap):
-        wx.BitmapButton.__init__(self, parent, bitmap=bitmap, size=(150, 150))
+        wx.BitmapButton.__init__(self, parent, size=(150, 150))
         self.thumb_id  = _id
         self.parent = parent
-        self.buffer = wx.EmptyBitmap(bitmap.GetSize()[0], bitmap.GetSize()[1])
+        self.SetBitmapLabel(bitmap)
+        self.buffer = bitmap
+        self.current = False  # active thumb?
         self.Bind(wx.EVT_BUTTON, self.on_press)
-        self.Bind(wx.EVT_PAINT, self.on_paint)
 
 
     def on_press(self, event):
         """
         Changes the tab to the selected button.
         """
+        if not self.current:
+            self.highlight()
         self.parent.gui.tabs.SetSelection(self.thumb_id)
 
-    def on_paint(self, event):
-        wx.BufferedPaintDC(self, self.buffer)
+
+    def highlight(self):
+        """
+        Highlights the current thumbnail with a light overlay.
+        """
+        _copy = copy(self.buffer)
+        dc = wx.MemoryDC()
+        dc.SelectObject(_copy)
+
+        gcdc = wx.GCDC(dc)
+        gcdc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 30)))
+        gcdc.SetPen(wx.Pen((0, 0, 0), 1, wx.TRANSPARENT))
+        gcdc.DrawRectangle(0, 0, 150, 150)
+
+        dc.SelectObject(wx.NullBitmap)
+        self.SetBitmapLabel(_copy)
+
 
 #----------------------------------------------------------------------
 

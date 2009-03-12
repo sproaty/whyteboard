@@ -45,7 +45,6 @@ from panels import ControlPanel, SidePanel
 
 ID_EXPORT = wx.NewId()
 ID_THUMBS = wx.NewId()
-ID_REFRESH = wx.NewId()
 ID_HISTORY = wx.NewId()
 ID_CLEAR_ALL = wx.NewId()      # remove all from current tab
 ID_CLEAR_TABS = wx.NewId()     # remove all drawings from all tabs, keep images
@@ -88,7 +87,7 @@ class GUI(wx.Frame):
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
-        self.on_refresh()  # force first thumb to update
+        #self.on_refresh()  # force first thumb to update
 
         self.do_bindings()
         self.update_menus()
@@ -135,7 +134,6 @@ class GUI(wx.Frame):
         history.AppendSeparator()
         history.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay your drawing history")
 
-        view.Append(ID_REFRESH, "&Refresh Thumbnails\tF5", "Refresh all thumbnails")
         view.Append(ID_THUMBS, " &Toggle Side Panel\tF9", "Toggle the side panel on or off", kind=wx.ITEM_CHECK)
         view.Check(ID_THUMBS, True)
 
@@ -165,13 +163,13 @@ class GUI(wx.Frame):
 
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
-                  "undo", "redo", "history", "thumbs", "refresh", "clear",
-                  "clear_all", "clear_tabs", "clear_all_tabs", "about", "exit"]
+                  "undo", "redo", "history", "thumbs", "clear", "clear_all",
+                  "clear_tabs", "clear_all_tabs", "about", "exit"]
 
         IDs = [wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE, wx.ID_SAVEAS,
                ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, ID_THUMBS,
-               ID_REFRESH, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_TABS,
-               ID_CLEAR_ALL_TABS, wx.ID_ABOUT, wx.ID_EXIT]
+               wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_TABS, ID_CLEAR_ALL_TABS,
+               wx.ID_ABOUT, wx.ID_EXIT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -346,7 +344,7 @@ class GUI(wx.Frame):
         self.box.Layout()
 
 
-    def on_refresh(self, event=None):
+    def on_refresh(self):
         """
         Refresh thumbnails.
         """
