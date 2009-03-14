@@ -28,10 +28,8 @@ indicator that shows an example of the drawing-to-be
 
 import wx
 import  wx.lib.newevent
-
 import os
 import sys
-
 from copy import copy
 
 from tools import Image
@@ -502,9 +500,10 @@ class GUI(wx.Frame):
 
 class WhyteboardApp(wx.App):
     def OnInit(self):
+        self.SetAppName("whyteboard")  # used to identify app in $HOME/
         frame = GUI(None)
         frame.Show(True)
-        self.SetAppName("whyteboard")  # used to identify app in $HOME/
+        frame.util.prompt_for_im()
         return True
 
 #----------------------------------------------------------------------

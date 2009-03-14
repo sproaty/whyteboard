@@ -48,14 +48,14 @@ but are restored with it upon loading the file.
 """
 
 import wx
-
 import os
 import cPickle
 import random
 from copy import copy
+from platform import system
 
 from whyteboard import Whyteboard
-from dialogs import ProgressDialog
+from dialogs import ProgressDialog, FindIM
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
                    Line, Note, Fill, Image, Zoom, Select)
 
@@ -89,11 +89,7 @@ class Utility(object):
         self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note,
                       RoundRect, Eyedropper, Fill, Select]
 
-        # test to see if ImageMagick is installed
-        #if platform.system() == "Linux":
-        #    value = os.system("which convert")
-        #    if value == 256:
-        #        MessageBox("ImageMagick was not found on your system. ")
+        self.im_location = None  # location of ImageMagick on windows
 
 
     def make_wildcard(self):
@@ -280,6 +276,7 @@ class Utility(object):
         path = wx.StandardPaths.GetUserLocalDataDir(std_paths)  # $HOME/.appName
         path = os.path.join(path, "wtbd-tmp", "")  # "" forces slash at end
 
+
         # Create a random filename using letters and numbers
         alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890-'
         _list = []
@@ -301,7 +298,9 @@ class Utility(object):
         #-trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
         # ------------------------------------------------
         # better PDF quality, takes longer to convert
-        cmd = "convert " + _file + " " + path + tmp_file + ".png"
+
+        print self.im_location
+        cmd = self.im_location + " " + _file + " " + path + tmp_file + ".png"
         self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]
         count = len(after) - len(before)
@@ -334,6 +333,7 @@ class Utility(object):
         self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
         self.gui.dialog.Show()
         self.gui.on_done_load()
+
 
     def load_image(self, path, board):
         """
@@ -380,6 +380,51 @@ class Utility(object):
                     if y is not 0:
                         os.remove(self.to_convert[x][y])
 
+
+    def prompt_for_im(self):
+        """
+        Prompts a Windows user for ImageMagick's directory location on
+        initialisation
+        """
+        if system() == "Linux":
+            value = os.system("which convert")
+            if value == 256:
+                MessageBox("ImageMagick was not found on your system. You will"+
+                 " not be able to load PDF and PS files until you install it.")
+            else:
+                self.im_location = "convert"
+        elif platform.system() == "Windows":
+
+            std_paths = wx.StandardPaths.Get()
+            path = wx.StandardPaths.GetUserLocalDataDir(std_paths)
+
+            if not os.path.isdir(path):
+                os.makedirs(path)
+
+            path = os.path.join(path, "user.pref")
+            if not os.path.exists(path):
+                dlg = FindIM(self, self.gui)
+                dlg.ShowModal()
+                if self.im_location:
+                    _file = open(path, "w")
+                    _file.write("imagemagick_location=" + self.im_location)
+            else:
+                for pref in open(path, "r"):
+                    self.check_im_path(pref.split("=")[1])
+
+
+    def check_im_path(self, path):
+        """
+        Checks the ImageMagick path before getting/setting the string to ensure
+        convert.exe exists
+        """
+        _file = os.path.join(path, "convert.exe")
+        if not os.path.exists(_file):
+            wx.MessageBox("This directory not not contain convert.exe.")
+            return False
+        else:
+            self.im_location = path
+            return True
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':

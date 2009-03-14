@@ -22,7 +22,6 @@ This module contains classes for the GUI side panels.
 
 import wx
 from wx.lib import scrolledpanel as scrolled
-
 from copy import copy
 
 from dialogs import TextInput

@@ -22,8 +22,9 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import wx
 import wx.html
-
+import os
 from copy import copy
+
 import tools
 
 #----------------------------------------------------------------------
@@ -304,6 +305,70 @@ class TextInput(wx.Dialog):
 
 #----------------------------------------------------------------------
 
+class FindIM(wx.Dialog):
+    """
+    Asks a user for the location of ImageMagick.
+    """
+    t = ("Whyteboard uses ImageMagick to load and convert PDF and PostScript " +
+    "files. \nUnfortunately, on Windows, this conflicts with a built-in system"+
+    " command.\n\n If you have installed ImageMagick, please select its"+
+    " installed directory.\n If not, you will be unable to load PDF, PS and "+
+    "SVG files.")
+
+    def __init__(self, parent, gui):
+        """
+        Standard constructor
+        """
+        wx.Dialog.__init__(self, gui, title="ImageMagick Notification")
+        self.parent = parent  # utility class
+        self.path = "C:/Program Files/"
+
+        text = wx.StaticText(self, label=self.t)
+        btn = wx.Button(self, label="Find location...")
+        gap = wx.LEFT | wx.TOP | wx.RIGHT
+
+        self.okButton = wx.Button(self, wx.ID_OK, "&OK")
+        self.okButton.SetDefault()
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+
+        btnSizer = wx.StdDialogButtonSizer()
+        btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
+        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(text, 1, gap | wx.EXPAND, 10)
+        sizer.Add(btn, 0, gap | wx.ALIGN_CENTRE, 10)
+        sizer.Add((10, 10)) # Spacer.
+        btnSizer.Realize()
+        sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
+        self.SetAutoLayout(True)
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+
+        btn.Bind(wx.EVT_BUTTON, self.browse)
+        self.okButton.Bind(wx.EVT_BUTTON, self.ok)
+        self.cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
+
+
+    def browse(self, event=None):
+        dlg = wx.DirDialog(self, "Choose a directory", self.path)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            self.path = dlg.GetPath()
+        else:
+            dlg.Destroy()
+
+
+    def ok(self, event=None):
+        if self.parent.check_im_path(self.path):
+            self.Close()
+
+
+    def cancel(self, event=None):
+        self.Close()
+
+#----------------------------------------------------------------------
+
 
 class About(wx.Dialog):
     """
@@ -319,7 +384,7 @@ class About(wx.Dialog):
         text = '''
 <html><body bgcolor="#6699CC">
  <table bgcolor="#F0F0F0" width="100%" border="1">
-  <tr><td align="center"><h1>Whyteboard '''+ parent.version+ '''</h1></td></tr>
+  <tr><td align="center"><h1>Whyteboard '''+ parent.version +'''</h1></td></tr>
  </table>
 
 <p>Whyteboard is a simple image annotation program, facilitating the
