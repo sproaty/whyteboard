@@ -55,7 +55,7 @@ class GUI(wx.Frame):
     event handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
-    version = "0.35.3"
+    version = "0.35.4"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
@@ -213,8 +213,8 @@ class GUI(wx.Frame):
         Opens a file, sets Utility's temp. file to the chosen file, prompts for
         an unsaved file and calls do_open().
         """
-        dlg = wx.FileDialog(self, "Open file...", os.getcwd(),
-                            style=wx.OPEN, wildcard = self.util.wildcard)
+        dlg = wx.FileDialog(self, "Open file...", style=wx.OPEN,
+                            wildcard = self.util.wildcard)
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()

@@ -1,6 +1,6 @@
-Whyteboard 0.35.3 - a simple image, PDF and postscript file annotator
+Whyteboard 0.35.4 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Tue 10 Mar 2009 23:14:18 GMT
+Sun 15 Mar 2009 05:21:53 GMT
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -25,24 +25,10 @@ Windows: when drawing an "outlined" shape (Rectangle/Ellipse/Circle/Line/Rounded
 Rectangle), the outline will mess up and appear oddly if the outline is dragged
 over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
----
-Windows: issues with ImageMagick conflicting with a built-in Windows application
-named convert (also the name of the IM program used to convert PDFs). If you try
-to convert a PDF and receive a message in the console such as this:
-
-C:\wb>python whyteboard.py
-
-Invalid Parameter - and
-
-Then you are experiencing the error. The link below offers some insight:
-http://savage.net.au/ImageMagick/html/install-convert.html
-
----
-Also, I experienced ImageMagick giving a bunch of errors converting a PDF - it
-turns out that GhostScript needs to be installed too (on Windows XP, SP3)
-
 
 ---- VERSION HISTORY ----
+
+
 
 11 Mar 2009 - Bugfix: thumbnails getting cut off with too many tabs
               Can load in a file from the commmand line when running Whyteboard

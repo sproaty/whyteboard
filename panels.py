@@ -187,7 +187,6 @@ class Notes(wx.Panel):
     def __init__(self, parent, gui):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         self.gui = gui
-        self.virtual = self.GetBestVirtualSize()
         self.tree = wx.TreeCtrl(self, size=(170, 800), style=wx.TR_HAS_BUTTONS)
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []

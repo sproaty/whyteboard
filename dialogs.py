@@ -22,7 +22,6 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import wx
 import wx.html
-import os
 from copy import copy
 
 import tools
@@ -362,7 +361,6 @@ class FindIM(wx.Dialog):
     def ok(self, event=None):
         if self.parent.check_im_path(self.path):
             self.Close()
-
 
     def cancel(self, event=None):
         self.Close()

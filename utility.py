@@ -87,7 +87,7 @@ class Utility(object):
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
         self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note,
-                      RoundRect, Eyedropper, Fill, Select]
+                      RoundRect, Eyedropper, Fill]
 
         self.im_location = None  # location of ImageMagick on windows
 
@@ -269,6 +269,13 @@ class Utility(object):
         An attempt at randomising the temp. file name is made using alphanumeric
         characters to help minimise conflict.
         """
+        if not self.im_location:
+            self.prompt_for_im()
+
+        # above will have changed this value if the user selected IM's dir.
+        if not self.im_location:
+            return
+
         if _file is None:
             _file = self.temp_file
 
@@ -278,10 +285,11 @@ class Utility(object):
 
 
         # Create a random filename using letters and numbers
-        alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890-'
+        alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@\"$%" +
+                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
         _list = []
 
-        for x in random.sample(alphabet, random.randint(3, 12)):
+        for x in random.sample(alphabet, random.randint(8, 20)):
             _list.append(x)
 
         string = "".join(_list)
@@ -299,8 +307,7 @@ class Utility(object):
         # ------------------------------------------------
         # better PDF quality, takes longer to convert
 
-        print self.im_location
-        cmd = self.im_location + " " + _file + " " + path + tmp_file + ".png"
+        cmd = "\""+self.im_location + "\" \"" + _file + "\" \"" + path + tmp_file + ".png\""
         self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]
         count = len(after) - len(before)
@@ -312,8 +319,9 @@ class Utility(object):
         else:
             # remove single tab with no drawings
             if self.gui.tab_count == 1 and not self.gui.board.shapes:
-                self.gui.thumbs.remove(0)
-                self.gui.tabs.RemovePage(0)
+                self.gui.tabs.DeletePage(0)
+                self.gui.thumbs.remove_all()
+                self.gui.notes.remove_all()
                 self.gui.tab_count = 0
 
             for x in range(0, count):
@@ -393,7 +401,7 @@ class Utility(object):
                  " not be able to load PDF and PS files until you install it.")
             else:
                 self.im_location = "convert"
-        elif platform.system() == "Windows":
+        elif system() == "Windows":
 
             std_paths = wx.StandardPaths.Get()
             path = wx.StandardPaths.GetUserLocalDataDir(std_paths)
@@ -406,8 +414,9 @@ class Utility(object):
                 dlg = FindIM(self, self.gui)
                 dlg.ShowModal()
                 if self.im_location:
+                    loc = self.im_location.replace("convert.exe", "")
                     _file = open(path, "w")
-                    _file.write("imagemagick_location=" + self.im_location)
+                    _file.write("imagemagick_location=" + loc)
             else:
                 for pref in open(path, "r"):
                     self.check_im_path(pref.split("=")[1])
@@ -420,13 +429,14 @@ class Utility(object):
         """
         _file = os.path.join(path, "convert.exe")
         if not os.path.exists(_file):
-            wx.MessageBox("This directory not not contain convert.exe.")
+            wx.MessageBox("This directory not not contain convert.exe")
             return False
         else:
-            self.im_location = path
+            self.im_location = _file
             return True
 
 #----------------------------------------------------------------------
+
 if __name__ == '__main__':
     from gui import WhyteboardApp
     app = WhyteboardApp()
