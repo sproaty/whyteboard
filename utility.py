@@ -307,6 +307,7 @@ class Utility(object):
         # ------------------------------------------------
         # better PDF quality, takes longer to convert
 
+        # need to escape all these as they could have spaces on windows
         cmd = "\""+self.im_location + "\" \"" + _file + "\" \"" + path + tmp_file + ".png\""
         self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]
@@ -397,8 +398,8 @@ class Utility(object):
         if system() == "Linux":
             value = os.system("which convert")
             if value == 256:
-                MessageBox("ImageMagick was not found on your system. You will"+
-                 " not be able to load PDF and PS files until you install it.")
+                wx.MessageBox("ImageMagick was not found on your system. You " +
+                "will be unable to load PDF and PS files until you install it.")
             else:
                 self.im_location = "convert"
         elif system() == "Windows":

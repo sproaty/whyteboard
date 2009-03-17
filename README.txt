@@ -28,7 +28,9 @@ over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
 ---- VERSION HISTORY ----
 
-
+15 Mar 2009 - Big bugfix on Windows: ImageMagick's convert program not being
+              found. Whyteboard prompts for its installed location and remembers
+              it. (will also notify Linux users if ImageMagick isn't installed)
 
 11 Mar 2009 - Bugfix: thumbnails getting cut off with too many tabs
               Can load in a file from the commmand line when running Whyteboard

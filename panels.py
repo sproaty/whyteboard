@@ -389,8 +389,8 @@ class Thumbs(scrolled.ScrolledPanel):
         thumb.SetBitmapLabel(bmp)
         self.thumbs[_id].buffer = bmp
 
-        if thumb.current:
-            thumb.highlight()
+        #if thumb.current:
+        #    thumb.highlight()
 
 
     def update_all(self):
@@ -421,8 +421,8 @@ class ThumbButton(wx.BitmapButton):
         """
         Changes the tab to the selected button.
         """
-        if not self.current:
-            self.highlight()
+        #if not self.current:
+        #    self.highlight()
         self.parent.gui.tabs.SetSelection(self.thumb_id)
 
 

@@ -25,6 +25,7 @@ its own undo/redo.
 """
 
 import wx
+import wx.lib.dragscroller
 
 from tools import Text, Note
 
@@ -44,6 +45,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
+        self.scroller = wx.lib.dragscroller.DragScroller(self)
 
         self.tab = tab
         self.shapes = []  # list of shapes for re-drawing/saving
@@ -63,6 +65,8 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.right_down)
+        self.Bind(wx.EVT_RIGHT_UP, self.right_up)
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
@@ -148,6 +152,19 @@ class Whyteboard(wx.ScrolledWindow):
                 self.select_tool()
                 self.update_thumb()
             self.drawing = False
+
+
+    def right_down(self, event):
+        """
+        Begin dragging the scroller to move around the panel
+        """
+        self.scroller.Start(event.GetPosition())
+
+    def right_up(self, event):
+        """
+        Stop dragging th scroller.
+        """
+        self.scroller.Stop()
 
 
     def select_tool(self, new=None):
