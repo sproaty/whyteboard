@@ -1,4 +1,4 @@
-Whyteboard 0.35.4 - a simple image, PDF and postscript file annotator
+Whyteboard 0.35.5 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Sun 15 Mar 2009 05:21:53 GMT
 
@@ -27,6 +27,9 @@ over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
 
 ---- VERSION HISTORY ----
+
+17 Mar 2009 - Added dragging around Whyteboard by holding down the right button
+              and moving the mouse
 
 15 Mar 2009 - Big bugfix on Windows: ImageMagick's convert program not being
               found. Whyteboard prompts for its installed location and remembers
