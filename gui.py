@@ -33,7 +33,7 @@ import sys
 
 
 from whyteboard import Whyteboard
-from utility import Utility
+from utility import Utility, FileDropTarget
 from dialogs import About, History, ProgressDialog
 from panels import ControlPanel, SidePanel
 
@@ -65,6 +65,7 @@ class GUI(wx.Frame):
            self.title, style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE)
 
         self.util = Utility(self)
+        #self.file_drop = FileDropTarget(self)
         self.CreateStatusBar()
         self.tb = None
         self.menu = None
@@ -336,7 +337,7 @@ class GUI(wx.Frame):
             self.panel.Hide()
         else:
             self.panel.Show()
-            self.on_refresh()
+            #self.on_refresh()
         self.box.Layout()
 
 
@@ -485,7 +486,6 @@ class WhyteboardApp(wx.App):
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
         frame = GUI(None)
         frame.Show(True)
-        frame.util.prompt_for_im()
         return True
 
 #----------------------------------------------------------------------

@@ -87,7 +87,7 @@ class Utility(object):
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
         self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note,
-                      RoundRect, Eyedropper, Fill]
+                      RoundRect, Eyedropper, Fill, Select, Zoom]
 
         self.im_location = None  # location of ImageMagick on windows
 
@@ -203,6 +203,7 @@ class Utility(object):
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
 
+
         # change program settings and update the Preview window
         self.saved = True
         self.colour = temp[0][0]
@@ -248,6 +249,7 @@ class Utility(object):
             self.gui.tabs.SetSelection(0)
 
         self.gui.update_menus()
+
 
     def convert(self, _file=None):
         """
@@ -324,9 +326,9 @@ class Utility(object):
                 temp_file = path + tmp_file + "-" + str(x) + ".png"
                 load_image(temp_file, wb)
                 self.to_convert[index][x + 1] = temp_file
-
-                self.gui.tabs.AddPage(wb, "Tab "+ str(x + 1))
                 self.gui.tab_count += 1
+                self.gui.tabs.AddPage(wb, "Tab "+ str(self.gui.tab_count))
+
                 self.gui.thumbs.new_thumb()
                 self.gui.notes.add_tab()
 
@@ -417,6 +419,25 @@ class Utility(object):
         else:
             self.im_location = _file
             return True
+
+
+#----------------------------------------------------------------------
+
+# Define File Drop Target class
+class FileDropTarget(wx.FileDropTarget):
+   """
+   implements Drop Target functionality for Files
+   """
+   def __init__(self, gui):
+      wx.FileDropTarget.__init__(self)
+      self.gui = gui
+
+   def OnDropFiles(self, x, y, filenames):
+      """ Implement File Drop """
+      self.gui.do_open(filenames[0])
+      # append a list of the file names dropped
+
+
 
 def load_image(path, board):
     """

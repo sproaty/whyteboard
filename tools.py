@@ -511,7 +511,7 @@ class Zoom(Tool):
 
     def button_down(self, x, y):
         x = self.board.zoom
-        new = (x[0] + 0.1, x[1] + 0.1)
+        new = (x[0] + 0.3, x[1] + 0.3)
         self.board.zoom = new
 
 #----------------------------------------------------------------------
@@ -539,9 +539,9 @@ class Select(Tool):
                 print str(count) +": " + str(shape.x)+", "+str(rect_x2_1)+" | "+str(shape.y)+", "+str(rect_y2_1)
 
                 rect_x2_2 = shape.x - shape.width
-                #rect_y2_2 = shape.y - shape.height
+                rect_y2_2 = shape.y - shape.height
 
-                print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_1)
+                print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_2)
 
                 if ( ((x > rect_x2_1 and x < shape.x)
                     and (y < rect_y2_1 and y > shape.y))
@@ -568,9 +568,12 @@ class Select(Tool):
         !!!!!
         """
         if self.dragging:
+            print self.board.shapes
             del self.board.shapes[self.count]
+            print self.board.shapes
             self.board.add_shape(self)
             self.board.redraw_all()
+            self.board.Refresh()
             self.dragging = False
 
 #---------------------------------------------------------------------

@@ -45,6 +45,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
+        #self.SetDropTarget(tab.GetParent().file_drop)
         self.scroller = wx.lib.dragscroller.DragScroller(self)
 
         self.tab = tab
@@ -91,9 +92,7 @@ class Whyteboard(wx.ScrolledWindow):
         Redraws all shapes that have been drawn already.
         """
         dc = wx.BufferedDC(None, self.buffer)
-        dc.Clear()
 
-        self.SetBackgroundColour((255, 255, 255))
         for s in self.shapes:
             s.draw(dc, True)
         self.Refresh()
