@@ -54,18 +54,18 @@ class GUI(wx.Frame):
     event handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
-    version = "0.35.5"
+    version = "0.35.7"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
-        wx.Frame.__init__(self, parent, title="Untitled - " +
-           self.title, style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE)
+        wx.Frame.__init__(self, parent, title="Untitled - " + self.title)
 
         self.util = Utility(self)
-        #self.file_drop = FileDropTarget(self)
+        self.file_drop = FileDropTarget(self)
+        self.SetDropTarget(self.file_drop)
         self.CreateStatusBar()
         self.tb = None
         self.menu = None
@@ -94,14 +94,6 @@ class GUI(wx.Frame):
         self.SetSizer(self.box)
         self.SetSizeWH(800, 600)
         self.Maximize(True)
-
-        try:
-            _file = sys.argv[1]
-            if _file:
-                if os.path.exists(_file):
-                    self.do_open(sys.argv[1])
-        except IndexError:
-            pass
 
 
     def make_menu(self):
@@ -337,7 +329,6 @@ class GUI(wx.Frame):
             self.panel.Hide()
         else:
             self.panel.Show()
-            #self.on_refresh()
         self.box.Layout()
 
 
@@ -486,6 +477,13 @@ class WhyteboardApp(wx.App):
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
         frame = GUI(None)
         frame.Show(True)
+        try:
+            _file = sys.argv[1]
+            if _file:
+                if os.path.exists(_file):
+                    frame.do_open(sys.argv[1])
+        except IndexError:
+            pass
         return True
 
 #----------------------------------------------------------------------

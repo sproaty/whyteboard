@@ -1,6 +1,6 @@
-Whyteboard 0.35.6 - a simple image, PDF and postscript file annotator
+Whyteboard 0.35.7 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 18 Mar 2009 04:09:04 GMT
+Wed 18 Mar 2009 17:19:13 GMT
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -25,6 +25,12 @@ Rectangle), the outline will mess up and appear oddly if the outline is dragged
 over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
 ---- VERSION HISTORY ----
+
+18 Mar 2009 - * Bugfix: toggling side panel on/off caused a lot of lag, should
+              only be noticeable now with around 65+ tabs open.
+              * Drag and drop support: drop any file that Whyteboard supports
+              into the drawing panel to load it
+              * Hold down the middle mouse button to scroll (was the right btn)
 
 18 Mar 2009 - * Improved undo/redo functionality. It is now possible to undo and
               redo the clear all drawings/clear all tabs' drawings functionality

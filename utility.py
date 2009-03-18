@@ -87,7 +87,7 @@ class Utility(object):
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
         self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note,
-                      RoundRect, Eyedropper, Fill, Select, Zoom]
+                      RoundRect, Eyedropper, Fill]
 
         self.im_location = None  # location of ImageMagick on windows
 
@@ -198,11 +198,11 @@ class Utility(object):
 
         #  Remove all tabs, thumbnails and tree note items
         self.gui.board = None
-        self.gui.tabs.DeleteAllPages()
+        for x in range(self.gui.tab_count -1, -1, -1):
+            self.gui.tabs.RemovePage(x)
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
-
 
         # change program settings and update the Preview window
         self.saved = True
@@ -278,8 +278,8 @@ class Utility(object):
 
 
         # Create a random filename using letters and numbers
-        alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@\"$%" +
-                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@$%" +
+                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
         _list = []
 
         for x in random.sample(alphabet, random.randint(8, 20)):
@@ -287,6 +287,8 @@ class Utility(object):
 
         string = "".join(_list)
         tmp_file = string +"-temp-"+ str(random.randrange(0, 999999))
+
+        print tmp_file
 
         if not os.path.isdir(path):
             os.makedirs(path)
@@ -303,6 +305,7 @@ class Utility(object):
         # convert "[file path]" "[destination-folder]" - quotes for Windows
         cmd = ("\""+self.im_location + "\" \"" + _file + "\" \""
                 + path + tmp_file + ".png\"")
+
         self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]
         count = len(after) - len(before)
@@ -423,21 +426,22 @@ class Utility(object):
 
 #----------------------------------------------------------------------
 
-# Define File Drop Target class
 class FileDropTarget(wx.FileDropTarget):
-   """
-   implements Drop Target functionality for Files
-   """
-   def __init__(self, gui):
-      wx.FileDropTarget.__init__(self)
-      self.gui = gui
-
-   def OnDropFiles(self, x, y, filenames):
-      """ Implement File Drop """
-      self.gui.do_open(filenames[0])
-      # append a list of the file names dropped
+    """
+    Implements drop target functionality to receive files
+    """
+    def __init__(self, obj):
+        wx.FileDropTarget.__init__(self)
+        self.obj = obj
 
 
+    def OnDropFiles(self, x, y, filenames):
+        """
+        Passes the first file to the load file method to handle
+        """
+        self.obj.do_open(filenames[0])
+
+#----------------------------------------------------------------------
 
 def load_image(path, board):
     """

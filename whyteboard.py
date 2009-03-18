@@ -45,7 +45,6 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
-        #self.SetDropTarget(tab.GetParent().file_drop)
         self.scroller = wx.lib.dragscroller.DragScroller(self)
 
         self.tab = tab
@@ -66,8 +65,8 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.right_down)
-        self.Bind(wx.EVT_RIGHT_UP, self.right_up)
+        self.Bind(wx.EVT_MIDDLE_DOWN, self.middle_down)
+        self.Bind(wx.EVT_MIDDLE_UP, self.middle_up)
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
@@ -92,6 +91,7 @@ class Whyteboard(wx.ScrolledWindow):
         Redraws all shapes that have been drawn already.
         """
         dc = wx.BufferedDC(None, self.buffer)
+        dc.Clear()
 
         for s in self.shapes:
             s.draw(dc, True)
@@ -142,9 +142,6 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.button_up(x, y)
             after = len(self.shapes)
 
-            if self.tab.GetParent().util.saved:
-                self.tab.GetParent().util.saved = False
-
             # update GUI menus
             if after - before is not 0:
                 self.tab.GetParent().update_menus()
@@ -153,17 +150,19 @@ class Whyteboard(wx.ScrolledWindow):
             self.drawing = False
 
 
-    def right_down(self, event):
+    def middle_down(self, event):
         """
         Begin dragging the scroller to move around the panel
         """
+        self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
         self.scroller.Start(event.GetPosition())
 
-    def right_up(self, event):
+    def middle_up(self, event):
         """
         Stop dragging th scroller.
         """
         self.scroller.Stop()
+        self.SetCursor(wx.StockCursor(self.shape.cursor) )
 
 
     def select_tool(self, new=None):
@@ -196,6 +195,8 @@ class Whyteboard(wx.ScrolledWindow):
 
         if self.redo_list:
             self.redo_list = []
+        if self.tab.GetParent().util.saved:
+            self.tab.GetParent().util.saved = False
 
     def undo(self):
         """
