@@ -1,6 +1,6 @@
-Whyteboard 0.35.5 - a simple image, PDF and postscript file annotator
+Whyteboard 0.35.6 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sun 15 Mar 2009 05:21:53 GMT
+Wed 18 Mar 2009 04:09:04 GMT
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -27,6 +27,9 @@ over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
 
 ---- VERSION HISTORY ----
+
+18 Mar 2009 - Improved undo/redo functionality. It is now possible to undo and
+              redo the clear all drawings/clear all tabs' drawings functionality
 
 17 Mar 2009 - Added dragging around Whyteboard by holding down the right button
               and moving the mouse

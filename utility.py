@@ -127,13 +127,7 @@ class Utility(object):
                 self.saved_shapes = temp
                 for x in temp:
                     for shape in temp[x]:
-                        # need to unlink unpickleable items; be restored on load
-                        if isinstance(shape, Image):
-                            shape.image = None
-                        if isinstance(shape, Text):
-                            shape.font = None
-
-                        shape.board, shape.pen, shape.brush = None, None, None
+                        shape.save()  # need to unlink unpickleable items;
 
                 # Now the unpickleable objects are gone, build the save file
                 tab = self.gui.tabs.GetSelection()
@@ -179,83 +173,79 @@ class Utility(object):
             self.load_image(self.temp_file, self.gui.board)
 
         elif _type.endswith("wtbd"):
-            temp = {}
-            f = open(self.filename, 'r')
-            try:
-                temp = cPickle.load(f)
-            except (cPickle.UnpicklingError, ValueError, ImportError):
-                wx.MessageBox("%s has corrupt Whyteboard data. No action taken."
-                            % self.filename)
-                return
-            finally:
-                f.close()
-
-            self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
-            self.gui.dialog.Show()
-
-            #  Remove all tabs, thumbnails and tree note items
-            self.gui.board = None
-            self.gui.tabs.DeleteAllPages()
-            self.gui.thumbs.remove_all()
-            self.gui.notes.remove_all()
-            self.gui.tab_count = 0
-
-            # change program settings and update the Preview window
-            self.saved = True
-            self.colour = temp[0][0]
-            self.thickness = temp[0][1]
-            self.tool = temp[0][2]
-            self.to_convert = temp[2]
-            self.saved_shapes = temp[1]
-            self.gui.control.change_tool()
-            self.gui.control.colour.SetColour(self.colour)
-            self.gui.control.thickness.SetSelection(self.thickness - 1)
-            self.gui.control.preview.Refresh()
-            self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
-
-            # Create tabs for every saved tab
-            for x, tab in enumerate(temp[1]):
-                wb = Whyteboard(self.gui.tabs)
-                wb.shapes = temp[1][tab]
-                name = "Tab " + str(x + 1)
-                self.gui.tabs.AddPage(wb, name)
-                self.gui.tab_count += 1
-                self.gui.thumbs.new_thumb()
-                self.gui.notes.add_tab()
-
-                # restore unpickleable settings to this tab's saved shapes
-                for tool in wb.shapes:
-                    tool.board = wb
-
-                    if isinstance(tool, Text):
-                        tool.restore_font()
-                        tool.update_scroll()
-
-                        if isinstance(tool, Note):
-                            self.gui.notes.add_note(tool, x)
-
-                    if isinstance(tool, Image) :
-                        tool.image = wx.Bitmap(tool.path)
-                        size = (tool.image.GetWidth(), tool.image.GetHeight())
-                        wb.update_scrollbars(size)
-
-            wx.PostEvent(self.gui, self.gui.LoadEvent())  # hide progress bar
-
-            # handle older file versions gracefully
-            try:
-                version = temp[0][4]
-            except IndexError:
-                version = "< 0.33"
-
-            try:
-                self.gui.tabs.SetSelection(temp[0][3])
-            except IndexError:
-                wx.MessageBox("Warning: This save file was created in an older "
-                + "version of Whyteboard ("+version+"). Saving the file will " +
-                "update it to the latest version, " + self.gui.version)
-                self.gui.tabs.SetSelection(0)
+            self.load_wtbd(filename)
         else:
             wx.MessageBox("Whyteboard doesn't support the filetype .%s" % _type)
+
+
+    def load_wtbd(self, filename):
+        """
+        Loads in a Whyteboard save file
+        """
+        temp = {}
+        f = open(self.filename, 'r')
+        try:
+            temp = cPickle.load(f)
+        except (cPickle.UnpicklingError, ValueError, ImportError):
+            wx.MessageBox("%s has corrupt Whyteboard data. No action taken."
+                        % self.filename)
+            return
+        finally:
+            f.close()
+
+        self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
+        self.gui.dialog.Show()
+
+        #  Remove all tabs, thumbnails and tree note items
+        self.gui.board = None
+        self.gui.tabs.DeleteAllPages()
+        self.gui.thumbs.remove_all()
+        self.gui.notes.remove_all()
+        self.gui.tab_count = 0
+
+        # change program settings and update the Preview window
+        self.saved = True
+        self.colour = temp[0][0]
+        self.thickness = temp[0][1]
+        self.tool = temp[0][2]
+        self.to_convert = temp[2]
+        self.saved_shapes = temp[1]
+        self.gui.control.change_tool()
+        self.gui.control.colour.SetColour(self.colour)
+        self.gui.control.thickness.SetSelection(self.thickness - 1)
+        self.gui.control.preview.Refresh()
+        self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
+
+        # re-create tabs and its saved drawings
+        for x, board in enumerate(temp[1]):
+            wb = Whyteboard(self.gui.tabs)
+            name = "Tab " + str(x + 1)
+            self.gui.tabs.AddPage(wb, name)
+            self.gui.tab_count += 1
+            self.gui.thumbs.new_thumb()
+            self.gui.notes.add_tab()
+
+            for shape in temp[1][board]:
+                shape.board = wb
+                shape.load()  # restore unpickleable settings
+                wb.add_shape(shape)
+            wb.redraw_all()
+
+        wx.PostEvent(self.gui, self.gui.LoadEvent())  # hide progress bar
+
+        # handle older file versions gracefully
+        try:
+            version = temp[0][4]
+        except IndexError:
+            version = "< 0.33"
+
+        try:
+            self.gui.tabs.SetSelection(temp[0][3])
+        except IndexError:
+            wx.MessageBox("Warning: This save file was created in an older "
+            + "version of Whyteboard ("+version+"). Saving the file will " +
+            "update it to the latest version, " + self.gui.version)
+            self.gui.tabs.SetSelection(0)
 
 
     def convert(self, _file=None):

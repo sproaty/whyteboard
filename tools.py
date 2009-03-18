@@ -80,6 +80,19 @@ class Tool(object):
         """
         pass
 
+    def save(self):
+        """
+        Defines how this class will pickle itself
+        """
+        self.board = None
+        self.pen = None
+        self.brush = None
+
+    def load(self):
+        """
+        Defines how this class will unpickle itself
+        """
+        pass
 
 #----------------------------------------------------------------------
 
@@ -327,7 +340,7 @@ class Text(Rectangle):
         return True
 
 
-    def update_scroll(self):
+    def update_scroll(self, redraw=True):
         """
         Updates the scrollbars of a Whyteboard if the entered text plus its
         position is vertically or horizontally larger than its current size.
@@ -335,8 +348,10 @@ class Text(Rectangle):
         self.find_extent()
         width, height = self.extent
 
-        if not self.board.update_scrollbars((width + self.x, height + self.y)):
+        size = (width + self.x, height + self.y)
+        if not self.board.update_scrollbars(size) and redraw:
             self.board.redraw_all()  # force render if they don't update
+
 
     def find_extent(self):
         """
@@ -347,7 +362,6 @@ class Text(Rectangle):
         self.extent = dummy.GetTextExtent(self.text)
         dummy.Destroy()
 
-
     def restore_font(self):
         self.font = wx.Font(0, 0, 0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
@@ -355,6 +369,7 @@ class Text(Rectangle):
     def draw(self, dc, replay=False):
         if not self.font:
             self.restore_font()
+            self.update_scroll()
         dc.SetFont(self.font)
         super(Text, self).draw(dc, replay, "Text", [self.text, self.x, self.y])
 
@@ -362,6 +377,13 @@ class Text(Rectangle):
         dc.SetTextForeground(self.colour)
         dc.DrawText("abcdef", 15, height / 2 - 10)
 
+    def save(self):
+        super(Text, self).save()
+        self.font = None
+
+    def load(self):
+        self.restore_font()
+        self.update_scroll(False)
 
 #----------------------------------------------------------------------
 
@@ -406,6 +428,11 @@ class Note(Text):
         dc.SetPen(wx.Pen((0, 0, 0), 1))
         dc.DrawRectangle(3, 3, width - 10, height - 10)
         dc.DrawText("abcdef", 15, height / 2 - 10)
+
+    def load(self):
+        super(Note, self).load()
+        gui = self.board.GetParent().GetParent()
+        gui.notes.add_note(self, gui.tab_count - 1)
 
 #----------------------------------------------------------------------
 
@@ -452,7 +479,6 @@ class Image(Tool):
         self.x = x
         self.y = y
         self.board.add_shape(self)
-        #self.board.shapes.insert(0, self)  # add as "first" image
         size = (self.image.GetWidth(), self.image.GetHeight())
         self.board.update_scrollbars(size)
 
@@ -462,6 +488,15 @@ class Image(Tool):
 
     def draw(self, dc, replay=False):
         dc.DrawBitmap(self.image, self.x, self.y)
+
+    def save(self):
+        super(Image, self).save()
+        self.image = None
+
+    def load(self):
+        self.image = wx.Bitmap(self.path)
+        size = (self.image.GetWidth(), self.image.GetHeight())
+        self.board.update_scrollbars(size)
 
 
 #----------------------------------------------------------------------

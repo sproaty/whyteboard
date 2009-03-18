@@ -27,7 +27,8 @@ its own undo/redo.
 import wx
 import wx.lib.dragscroller
 
-from tools import Text, Note
+from copy import copy
+from tools import Image, Text, Note
 
 #----------------------------------------------------------------------
 
@@ -50,8 +51,8 @@ class Whyteboard(wx.ScrolledWindow):
         self.tab = tab
         self.shapes = []  # list of shapes for re-drawing/saving
         self.shape = None  # selected shape to draw with
-        self._undo = []  # list of actions to undo
-        self._redo = []  # list of actions to redo
+        self.undo_list = []
+        self.redo_list = []
         self.overlay = wx.Overlay()  # drawing "rubber bands"
         self.drawing = False
         self.zoom = (1.0, 1.0)
@@ -193,62 +194,95 @@ class Whyteboard(wx.ScrolledWindow):
         Adds a shape to the "to-draw" list.
         """
         self.shapes.append(shape)
+        self.undo_list.append(shape)
 
+        if self.redo_list:
+            self.redo_list = []
 
     def undo(self):
         """
         Undoes an action, and adds it to the redo list.
         """
-        shape = self.shapes.pop()
-        self._undo.append(shape)
-        self._redo.append(shape)
-        self.redraw_all(True)
+        shape = self.undo_list.pop()
+        self.redo_list.append(shape)
 
         if isinstance(shape, Note):
-            # Find out this Note's element number in the Tree
-            number = 0
-            for item in self.shapes:
-                if isinstance(item, Note):
-                    if shape == item:
-                        break
-                    number += 1
+            self.undo_note(shape)
+            self.shapes.remove(shape)
+        elif shape.__class__.__name__ == "list":
+            [self.shapes.append(x) for x in shape]
+        else:
+            self.shapes.remove(shape)
 
-            # current tab tree element ID
-            notes = self.GetParent().GetParent().notes
-            tab = notes.tabs[self.get_tab()]
-            item, cookie = notes.tree.GetFirstChild(tab)
-
-            # now remove the correct note from the tab node
-            x = 0
-            while item:
-                if x == number:
-                    notes.tree.Delete(item)
-                x += 1
-                item, cookie = notes.tree.GetNextChild(tab, cookie)
-
+        self.redraw_all(True)
 
 
     def redo(self):
         """
         Redoes an action, and adds it to the undo list.
         """
-        item = self._redo.pop()
-        self._undo.append(item)  # add item to be removed onto redo stack
-        self.shapes.append(item)
-        self.redraw_all(True)
+        item = self.redo_list.pop()
 
         if isinstance(item, Note):
             self.GetParent().GetParent().notes.add_note(item)
+            self.shapes.append(item)
+        elif item.__class__.__name__ == "list":
+            [self.shapes.remove(x) for x in item]
+        else:
+            self.shapes.append(item)
+
+        self.undo_list.append(item)
+        self.redraw_all(True)
 
 
+    def undo_note(self, note):
+        """
+        Finds out the passed Note object's element number in the note tree.
+        Finds out this Whyteboard's tree ID and iterates over that tree node
+        to delete the note item.
+        """
+        number = 0
+        for item in self.shapes:
+            if isinstance(item, Note):
+                if note == item:
+                    break
+                number += 1
+
+        # current tab tree element ID
+        notes = self.GetParent().GetParent().notes
+        tab = notes.tabs[self.get_tab()]
+        item, cookie = notes.tree.GetFirstChild(tab)
+
+        x = 0
+        while item:
+            if x == number:
+                notes.tree.Delete(item)
+            x += 1
+            item, cookie = notes.tree.GetNextChild(tab, cookie)
 
 
-    def clear(self):
+    def clear(self, keep_images=False):
         """
         Removes all shapes from the "to-draw" list.
         """
-        self.shapes = []
-        self.redraw_all(True)
+        if not keep_images:
+            self.undo_list.append(self.shapes)
+            self.shapes = []
+        else:
+            to_remove = []
+            images = []
+
+            for x in self.shapes:
+                if isinstance(x, Image):
+                    images.append(x)
+                else:
+                    to_remove.append(x)
+
+            self.undo_list.append(to_remove)
+            self.shapes = images
+
+        self.redraw_all(update_thumb=True)
+
 
     def on_paint(self, event):
         """

@@ -32,7 +32,6 @@ import os
 import sys
 from copy import copy
 
-from tools import Image
 from whyteboard import Whyteboard
 from utility import Utility
 from dialogs import About, History, ProgressDialog
@@ -55,7 +54,7 @@ class GUI(wx.Frame):
     event handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
-    version = "0.35.4"
+    version = "0.35.5"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
@@ -67,7 +66,6 @@ class GUI(wx.Frame):
 
         self.util = Utility(self)
         self.CreateStatusBar()
-
         self.tb = None
         self.menu = None
         self.process = None
@@ -85,7 +83,6 @@ class GUI(wx.Frame):
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
-        #self.on_refresh()  # force first thumb to update
 
         self.do_bindings()
         self.update_menus()
@@ -214,7 +211,7 @@ class GUI(wx.Frame):
         an unsaved file and calls do_open().
         """
         dlg = wx.FileDialog(self, "Open file...", style=wx.OPEN,
-                            wildcard = self.util.wildcard)
+                            wildcard=self.util.wildcard)
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()
@@ -419,15 +416,15 @@ class GUI(wx.Frame):
 
 
     def update_menus(self):
-        if not self.board._redo:
-            redo = False
-        else:
+        """
+        Enables/disables the undo/redo button as appropriate.
+        """
+        undo = False
+        redo = False
+        if self.board.redo_list:
             redo = True
-
-        if self.board.shapes:
+        if self.board.undo_list:
             undo = True
-        else:
-            undo = False
 
         self.tb.EnableTool(wx.ID_UNDO, undo)
         self.menu.Enable(wx.ID_UNDO, undo)
@@ -435,24 +432,16 @@ class GUI(wx.Frame):
         self.menu.Enable(wx.ID_REDO, redo)
 
 
-
     def on_clear(self, event=None):
         """
-        Clears all drawings on the current tab, except images.
+        Clears *** current tab's *** drawings, except images.
         """
-        new_shapes = copy(self.board.shapes)
-
-        for x in self.board.shapes:
-            if not isinstance(x, Image):
-                new_shapes.remove(x)
-
-        self.board.shapes = new_shapes
-        self.board.redraw_all(True)
+        self.board.clear(keep_images=True)
         self.update_menus()
 
     def on_clear_all(self, event=None):
         """
-        Clears all items from the current tab
+        Clears *** current tab ***
         """
         self.board.clear()
         self.update_menus()
@@ -460,27 +449,21 @@ class GUI(wx.Frame):
 
     def on_clear_tabs(self, event=None):
         """
-        Clears all drawings, except images on all tabs.
+        Clears *** all tabs' *** drawings, except images.
         """
         for tab in range(self.tab_count):
-            wb = self.tabs.GetPage(tab)
-            new_shapes = copy(wb.shapes)
-
-            for x in wb.shapes:
-                if not isinstance(x, Image):
-                    new_shapes.remove(x)
-
-            wb.shapes = new_shapes
-            wb.redraw_all(True)
-            self.update_menus()
+            board = self.tabs.GetPage(tab)
+            board.clear(keep_images=True)
+        self.update_menus()
 
 
     def on_clear_all_tabs(self, event=None):
         """
-        Clears all items from the current tab
+        Clears *** all tabs ***
         """
-        for x in range(self.tab_count):
-            self.tabs.GetPage(x).clear()
+        for tab in range(self.tab_count):
+            board = self.tabs.GetPage(tab)
+            board.clear()
         self.update_menus()
 
 
