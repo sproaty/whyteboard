@@ -27,7 +27,6 @@ its own undo/redo.
 import wx
 import wx.lib.dragscroller
 
-from copy import copy
 from tools import Image, Text, Note
 
 #----------------------------------------------------------------------

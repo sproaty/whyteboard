@@ -304,7 +304,8 @@ class Thumbs(scrolled.ScrolledPanel):
         else:
             if len(self.thumbs):
                 _id = len(self.thumbs)
-            img = wx.ImageFromBitmap(wx.EmptyBitmapRGBA(150, 150, 255, 255, 255, 0))
+            img = wx.ImageFromBitmap(wx.EmptyBitmapRGBA(150, 150, 255, 255,
+                                                                    255, 0))
             img.ConvertColourToAlpha(255, 255, 255)
             bmp = wx.BitmapFromImage(img)
 

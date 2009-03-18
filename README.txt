@@ -18,18 +18,23 @@ If nothing happens, try launching one of the scripts from the console:
 $ python whyteboard.py
 see what error occured and let me know at, <sproaty -at- gmail -dot- com>
 
-
 ---- KNOWN BUGS ----
 
 Windows: when drawing an "outlined" shape (Rectangle/Ellipse/Circle/Line/Rounded
 Rectangle), the outline will mess up and appear oddly if the outline is dragged
 over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
-
 ---- VERSION HISTORY ----
 
-18 Mar 2009 - Improved undo/redo functionality. It is now possible to undo and
+18 Mar 2009 - * Improved undo/redo functionality. It is now possible to undo and
               redo the clear all drawings/clear all tabs' drawings functionality
+              * Redo is also fixed to more like other applications now: when you
+              undo twice and then draw a new shape, your redo history is lost.
+              Before you could redo the two undone shapes after the new drawing
+
+              * The ImageMagick folder locator will only pop-up when trying to
+              convert a file and when the directory is not set, not at
+              application start-up
 
 17 Mar 2009 - Added dragging around Whyteboard by holding down the right button
               and moving the mouse

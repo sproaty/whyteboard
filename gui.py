@@ -27,10 +27,10 @@ indicator that shows an example of the drawing-to-be
 """
 
 import wx
-import  wx.lib.newevent
+import wx.lib.newevent
 import os
 import sys
-from copy import copy
+
 
 from whyteboard import Whyteboard
 from utility import Utility
@@ -270,7 +270,8 @@ class GUI(wx.Frame):
         """
         Exports the current tab as an image.
         """
-        wc =  "PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|GIF (*.gif)|*.gif|BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff"
+        wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|GIF "+
+               "(*.gif)|*.gif|BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
         dlg = wx.FileDialog(self, "Export data to...", os.getcwd(),
                 style=wx.SAVE | wx.OVERWRITE_PROMPT, wildcard=wc)
         if dlg.ShowModal() == wx.ID_OK:
@@ -452,8 +453,7 @@ class GUI(wx.Frame):
         Clears *** all tabs' *** drawings, except images.
         """
         for tab in range(self.tab_count):
-            board = self.tabs.GetPage(tab)
-            board.clear(keep_images=True)
+            self.tabs.GetPage(tab).clear(keep_images=True)
         self.update_menus()
 
 
@@ -462,8 +462,7 @@ class GUI(wx.Frame):
         Clears *** all tabs ***
         """
         for tab in range(self.tab_count):
-            board = self.tabs.GetPage(tab)
-            board.clear()
+            self.tabs.GetPage(tab).clear()
         self.update_menus()
 
 

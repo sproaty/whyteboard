@@ -1,6 +1,6 @@
-Whyteboard 0.35.5 - To do list
+Whyteboard 0.35.6 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sun 15 Mar 2009 05:21:26 GMT
+Wed 18 Mar 2009 04:08:59 GMT
 
 ---- TO FIX ----
 

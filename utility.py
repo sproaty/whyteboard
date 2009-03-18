@@ -170,7 +170,7 @@ class Utility(object):
             self.convert()
 
         elif _type in self.types[3:]:
-            self.load_image(self.temp_file, self.gui.board)
+            load_image(self.temp_file, self.gui.board)
 
         elif _type.endswith("wtbd"):
             self.load_wtbd(filename)
@@ -247,6 +247,7 @@ class Utility(object):
             "update it to the latest version, " + self.gui.version)
             self.gui.tabs.SetSelection(0)
 
+        self.gui.update_menus()
 
     def convert(self, _file=None):
         """
@@ -297,15 +298,16 @@ class Utility(object):
         # ------------------------------------------------
         # better PDF quality, takes longer to convert
 
-        # need to escape all these as they could have spaces on windows
-        cmd = "\""+self.im_location + "\" \"" + _file + "\" \"" + path + tmp_file + ".png\""
+        # convert "[file path]" "[destination-folder]" - quotes for Windows
+        cmd = ("\""+self.im_location + "\" \"" + _file + "\" \""
+                + path + tmp_file + ".png\"")
         self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]
         count = len(after) - len(before)
 
         if count == 1:
             temp_path = path + tmp_file + ".png"
-            self.load_image(temp_path, self.gui.board)
+            load_image(temp_path, self.gui.board)
             self.to_convert[index][1] = temp_path
         else:
             # remove single tab with no drawings
@@ -320,7 +322,7 @@ class Utility(object):
 
                 # store the temp file path for this file in the dictionary
                 temp_file = path + tmp_file + "-" + str(x) + ".png"
-                self.load_image(temp_file, wb)
+                load_image(temp_file, wb)
                 self.to_convert[index][x + 1] = temp_file
 
                 self.gui.tabs.AddPage(wb, "Tab "+ str(x + 1))
@@ -332,16 +334,6 @@ class Utility(object):
         self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
         self.gui.dialog.Show()
         self.gui.on_done_load()
-
-
-    def load_image(self, path, board):
-        """
-        Loads an image into the given Whyteboard tab. bitmap is the path to an
-        image file to create a bitmap from.
-        """
-        image = wx.Bitmap(path)
-        shape = Image(board, image, path)
-        shape.button_down(0, 0)  # renders, updates scrollbars
 
 
     def export(self, filename):
@@ -425,6 +417,15 @@ class Utility(object):
         else:
             self.im_location = _file
             return True
+
+def load_image(path, board):
+    """
+    Loads an image into the given Whyteboard tab. bitmap is the path to an
+    image file to create a bitmap from.
+    """
+    image = wx.Bitmap(path)
+    shape = Image(board, image, path)
+    shape.button_down(0, 0)  # renders, updates scrollbars
 
 #----------------------------------------------------------------------
 
