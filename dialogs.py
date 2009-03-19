@@ -107,7 +107,7 @@ class History(wx.Dialog):
             if isinstance(s, tools.Image):
                 s.draw(dc)
 
-        for pen in shapes:
+        for count, pen in enumerate(shapes):
             # draw pen outline
             if isinstance(pen, tools.Pen):
                 pen.make_pen()
@@ -130,8 +130,25 @@ class History(wx.Dialog):
                             wx.Yield()
             else:
                 if self.looping and not self.paused:
-                    wx.MilliSleep(350)
-                    wx.Yield()
+                    try:
+                        # find the next non-Pen shape to get its time
+                        t = pen.time + 1
+                        for x in range(count + 1, len(shapes)):
+                            try:
+                                item = shapes[x]
+                                if not isinstance(item, tools.Pen):
+                                    t = item.time
+                                    break
+                            except IndexError:
+                                pass
+
+                        time = (t - pen.time) * 950
+                        if time > 8500:
+                            time = 8500
+                        wx.MilliSleep(time)
+                        wx.Yield()
+                    except IndexError:
+                        pass
                     pen.draw(dc, True)
 
                 else:  # loop is paused, wait for unpause/close/stop

@@ -288,13 +288,14 @@ class GUI(wx.Frame):
         Opens a new tab and selects it
         """
         wb = Whyteboard(self.tabs)
+        self.thumbs.new_thumb()
+        self.notes.add_tab()
         self.tab_count += 1
         self.tabs.AddPage(wb, "Tab "+ str(self.tab_count))
         self.current_tab = self.tab_count - 1
 
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
-        self.thumbs.new_thumb()
-        self.notes.add_tab()
+
 
 
     def on_change_tab(self, event=None):
@@ -302,9 +303,16 @@ class GUI(wx.Frame):
         Sets the GUI's board attribute to be the selected Whyteboard.
         """
         self.board = self.tabs.GetCurrentPage()
+        current = self.current_tab
         self.current_tab = self.tabs.GetSelection()
+        self.thumbs.Scroll(-1, self.current_tab)
         self.update_menus()  # update redo/undo
         self.control.change_tool()
+
+        if self.notes.tabs:
+            tree_id = self.notes.tabs[self.current_tab]
+            self.notes.tree.SelectItem(tree_id, True)
+
 
 
     def on_close_tab(self, event=None):

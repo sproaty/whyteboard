@@ -187,14 +187,21 @@ class Notes(wx.Panel):
     def __init__(self, parent, gui):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         self.gui = gui
-        self.tree = wx.TreeCtrl(self, size=(170, 800), style=wx.TR_HAS_BUTTONS)
+        #height = gui.GetClientSize()[1]
+        self.tree = wx.TreeCtrl(self, size=(170, -1), style=wx.TR_HAS_BUTTONS)
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
         self.notes = []
         self.add_tab()
-
         self.tree.Expand(self.root)
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
+
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(self.sizer)
+        self.sizer.Add(self.tree, 1)
+        #self.SetAutoLayout(True)
+        #self.sizer.Fit(self)
+
 
 
     def add_tab(self):
@@ -280,19 +287,18 @@ class Thumbs(scrolled.ScrolledPanel):
     Thumbnails of all tabs' drawings.
     """
     def __init__(self, parent, gui):
-        scrolled.ScrolledPanel.__init__(self, parent, size=(165, 600),
-                                        style=wx.VSCROLL  | wx.RAISED_BORDER)
+        scrolled.ScrolledPanel.__init__(self, parent, style=wx.VSCROLL |
+                                                            wx.RAISED_BORDER)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(self.sizer)
+        self.SetScrollRate(0, 200)
+
         self.gui = gui
         self.thumbs  = []
         self.text = []
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.new_thumb()  # inital thumb
         self.thumbs[0].current = True
 
-        self.SetSizer(self.sizer)
-        self.SetAutoLayout(True)
-        self.sizer.Fit(self)
-        self.SetScrollRate(0, 100)
 
 
     def new_thumb(self, _id=0):

@@ -146,6 +146,7 @@ class Rectangle(Tool):
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
+        self.time = None
 
     def button_down(self, x, y):
         self.x = x
@@ -164,6 +165,7 @@ class Rectangle(Tool):
         the screen and adds it to the shape list if the rectangle was actually
         drawn out, not just a single mouse click-realease.
         """
+        self.time = time.time()
         dc = wx.BufferedDC(None, self.board.buffer)
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
@@ -326,6 +328,7 @@ class Text(Rectangle):
     def button_up(self, x, y):
         self.x = x
         self.y = y
+        self.time = time.time()
         dlg = TextInput(self.board.GetParent().GetParent())  # GUI
 
         if dlg.ShowModal() == wx.ID_CANCEL:

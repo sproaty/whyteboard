@@ -26,6 +26,9 @@ over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
 ---- VERSION HISTORY ----
 
+19 Mar 2009 - Notes tree view / thumbnails panel scroll in relation to the
+              currently selected tab.
+
 18 Mar 2009 - * Bugfix: toggling side panel on/off caused a lot of lag, should
               only be noticeable now with around 65+ tabs open.
               * Drag and drop support: drop any file that Whyteboard supports
@@ -58,9 +61,9 @@ over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
 09 Mar 2009 - Bugfix: thumbnails not updating on file load
 
-08 Mar 2009 - Side panel is now tabbed to select between thumbnails and a "tree"
-              view of all Notes (new feature) for each tab.
-              Notes are similar to how text is input, except a light yellow
+08 Mar 2009 - * Side panel is now tabbed to select between thumbnails and a
+              "tree" view of all Notes (new feature) for each tab.
+              ..Notes are similar to how text is input, except a light yellow
               background is drawn around it to indicate it's a note. In the
               tree control, a note item can be double clicked upon to bring up
               the text input dialog to change a note's text.
