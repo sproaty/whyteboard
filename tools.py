@@ -152,6 +152,7 @@ class Rectangle(Tool):
         self.y = y
         self.width = 2
         self.height = 2
+        self.board.overlay = wx.Overlay()
 
     def motion(self, x, y):
         self.width = x - self.x
@@ -177,9 +178,9 @@ class Rectangle(Tool):
             self.board.redraw_dirty(dc)
 
     def draw_outline(self, dc):
-        odc = wx.DCOverlay(self.board.overlay, dc)
-        odc.Clear()
-        del odc
+        self.odc = wx.DCOverlay(self.board.overlay, dc)
+        self.odc.Clear()
+
 
 
     def draw(self, dc, replay=False, _type="Rectangle", args=[]):
@@ -190,9 +191,7 @@ class Rectangle(Tool):
         """
         if not args:
             args = [self.x, self.y, self.width, self.height]
-        if not self.pen:
-            self.make_pen()
-        if replay:
+        if replay or not self.pen:
             self.make_pen()
 
         dc.SetPen(self.pen)
@@ -203,6 +202,9 @@ class Rectangle(Tool):
 
         method = getattr(dc, "Draw" + _type)(*args)
         method
+
+        if not replay:
+            del self.odc
 
 
     def preview(self, dc, width, height):
