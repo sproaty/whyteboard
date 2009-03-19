@@ -198,8 +198,8 @@ class Utility(object):
 
         #  Remove all tabs, thumbnails and tree note items
         self.gui.board = None
-        for x in range(self.gui.tab_count -1, -1, -1):
-            self.gui.tabs.RemovePage(x)
+        while self.gui.tabs.GetPageCount():
+            self.gui.tabs.DeletePage(0)
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
