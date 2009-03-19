@@ -479,7 +479,6 @@ class GUI(wx.Frame):
 
 #----------------------------------------------------------------------
 
-
 class WhyteboardApp(wx.App):
     def OnInit(self):
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
@@ -496,7 +495,9 @@ class WhyteboardApp(wx.App):
 
 #----------------------------------------------------------------------
 
-
-if __name__ == '__main__':
+def main():
     app = WhyteboardApp(True)
     app.MainLoop()
+
+if __name__ == '__main__':
+    main()

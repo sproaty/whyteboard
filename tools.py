@@ -40,7 +40,6 @@ class Tool(object):
         self.brush = None
         self.x = 0
         self.y = 0
-
         self.make_pen()
 
     def button_down(self, x, y):
