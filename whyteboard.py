@@ -44,7 +44,8 @@ class Whyteboard(wx.ScrolledWindow):
         self.virtual_size = (1000, 1000)
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(20, 20)
-        self.SetBackgroundColour("White")
+        #self.SetBackgroundColour("White")
+        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.scroller = wx.lib.dragscroller.DragScroller(self)
 
         self.tab = tab
