@@ -55,12 +55,12 @@ class Whyteboard(wx.ScrolledWindow):
         self.overlay = wx.Overlay()  # drawing "rubber bands"
         self.drawing = False
         self.zoom = (1.0, 1.0)
-        self.select_tool()  # tool ID used to generate Tool object
+        self.select_tool()
 
         self.buffer = wx.EmptyBitmap(*self.virtual_size)
-        dc = wx.BufferedDC(None, self.buffer)
-        dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
-        dc.Clear()
+        #dc = wx.BufferedDC(None, self.buffer)
+        #dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
+        #dc.Clear()
 
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
@@ -208,7 +208,7 @@ class Whyteboard(wx.ScrolledWindow):
         if isinstance(shape, Note):
             self.undo_note(shape)
             self.shapes.remove(shape)
-        elif shape.__class__.__name__ == "list":
+        elif shape.__class__.__name__ == "list":  # cleared shapes, re-add
             [self.shapes.append(x) for x in shape]
         else:
             self.shapes.remove(shape)
@@ -225,7 +225,7 @@ class Whyteboard(wx.ScrolledWindow):
         if isinstance(item, Note):
             self.GetParent().GetParent().notes.add_note(item)
             self.shapes.append(item)
-        elif item.__class__.__name__ == "list":
+        elif item.__class__.__name__ == "list":  # cleared shapes, remove
             [self.shapes.remove(x) for x in item]
         else:
             self.shapes.append(item)

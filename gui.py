@@ -54,7 +54,7 @@ class GUI(wx.Frame):
     event handlers call the appropriate functions of other classes.
     """
     title = "Whyteboard"
-    version = "0.35.7"
+    version = "0.35.8"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
@@ -297,7 +297,6 @@ class GUI(wx.Frame):
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
 
 
-
     def on_change_tab(self, event=None):
         """
         Sets the GUI's board attribute to be the selected Whyteboard.
@@ -305,14 +304,13 @@ class GUI(wx.Frame):
         self.board = self.tabs.GetCurrentPage()
         current = self.current_tab
         self.current_tab = self.tabs.GetSelection()
-        self.thumbs.Scroll(-1, self.current_tab)
+        #self.thumbs.Scroll(-1, self.current_tab)
         self.update_menus()  # update redo/undo
         self.control.change_tool()
 
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
-
 
 
     def on_close_tab(self, event=None):

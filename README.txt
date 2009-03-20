@@ -1,6 +1,6 @@
-Whyteboard 0.35.7 - a simple image, PDF and postscript file annotator
+Whyteboard 0.35.8 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 18 Mar 2009 17:19:13 GMT
+Fri 20 Mar 2009 15:38:11 GMT
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -26,8 +26,11 @@ over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
 ---- VERSION HISTORY ----
 
-19 Mar 2009 - Notes tree view / thumbnails panel scroll in relation to the
-              currently selected tab.
+
+20 Mar 2009 - * Windows bugfix: outlined shapes not drawing properly
+              * Windows bugfix: wxPython errors on closing the application with
+                loaded images
+              * Bugfix with the eyedropper not updating the colour label.
 
 18 Mar 2009 - * Bugfix: toggling side panel on/off caused a lot of lag, should
               only be noticeable now with around 65+ tabs open.

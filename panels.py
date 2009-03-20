@@ -64,7 +64,6 @@ class ControlPanel(wx.Panel):
         self.colour.SetToolTip(wx.ToolTip("Sets the drawing colour"))
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
 
-
         choices = ''.join(str(i) + " " for i in range(1, 16) ).split()
 
         self.thickness = wx.ComboBox(self, choices=choices, size=(25, 25),
@@ -187,7 +186,6 @@ class Notes(wx.Panel):
     def __init__(self, parent, gui):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         self.gui = gui
-        #height = gui.GetClientSize()[1]
         self.tree = wx.TreeCtrl(self, size=(170, -1), style=wx.TR_HAS_BUTTONS)
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
@@ -199,9 +197,6 @@ class Notes(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
         self.sizer.Add(self.tree, 1)
-        #self.SetAutoLayout(True)
-        #self.sizer.Fit(self)
-
 
 
     def add_tab(self):
@@ -291,7 +286,7 @@ class Thumbs(scrolled.ScrolledPanel):
                                                             wx.RAISED_BORDER)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
-        self.SetScrollRate(0, 200)
+        self.SetScrollRate(0, 250)
 
         self.gui = gui
         self.thumbs  = []

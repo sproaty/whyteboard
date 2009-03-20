@@ -57,7 +57,7 @@ from platform import system
 from whyteboard import Whyteboard
 from dialogs import ProgressDialog, FindIM
 from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
-                   Line, Note, Fill, Image, Zoom, Select)
+                   Line, Note, Fill, Image, Zoom, Select, Eraser)
 
 
 #----------------------------------------------------------------------
@@ -87,7 +87,7 @@ class Utility(object):
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
         self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note,
-                      RoundRect, Eyedropper, Fill]
+                      RoundRect, Eyedropper, Fill, Select, Eraser]
 
         self.im_location = None  # location of ImageMagick on windows
 
@@ -147,11 +147,11 @@ class Utility(object):
                     self.filename = None
                 finally:
                     f.close()
-                    
+
                 for x in temp:
                     for shape in temp[x]:
                         shape.board = self.gui.tabs.GetPage(x)
-                        shape.load()                     
+                        shape.load()
             else:
                 wx.MessageBox("Error saving file data - no data to save")
                 self.saved = False
@@ -238,7 +238,7 @@ class Utility(object):
                 shape.load()  # restore unpickleable settings
                 wb.add_shape(shape)
             wb.redraw_all()
-                
+
 
         wx.PostEvent(self.gui, self.gui.LoadEvent())  # hide progress bar
 
