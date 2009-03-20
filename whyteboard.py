@@ -44,8 +44,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.virtual_size = (1000, 1000)
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(20, 20)
-        #self.SetBackgroundColour("White")
-        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+        self.SetBackgroundColour("White")
         self.scroller = wx.lib.dragscroller.DragScroller(self)
 
         self.tab = tab
@@ -126,7 +125,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         if self.drawing:
             x, y = self.convert_coords(event)
-            dc = wx.BufferedDC(None, self.buffer)
+            dc = wx.BufferedDC(None, self.buffer, wx.BUFFER_VIRTUAL_AREA)
             self.shape.motion(x, y)
             self.shape.draw(dc)
             self.redraw_dirty(dc)
@@ -284,7 +283,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.redraw_all(update_thumb=True)
 
 
-    def on_paint(self, event):
+    def on_paint(self, event=None):
         """
         Called when the window is exposed.
         """

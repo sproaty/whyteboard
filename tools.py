@@ -146,13 +146,14 @@ class Rectangle(Tool):
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
         self.time = None
-
+        self.board.overlay = wx.Overlay()
+        
     def button_down(self, x, y):
         self.x = x
         self.y = y
         self.width = 2
         self.height = 2
-        self.board.overlay = wx.Overlay()
+
 
     def motion(self, x, y):
         self.width = x - self.x
@@ -166,20 +167,29 @@ class Rectangle(Tool):
         drawn out, not just a single mouse click-realease.
         """
         self.time = time.time()
-        dc = wx.BufferedDC(None, self.board.buffer)
-        odc = wx.DCOverlay(self.board.overlay, dc)
-        odc.Clear()
-        del odc
-        self.board.overlay.Reset()
+        #dc = wx.BufferedDC(None, self.board.buffer)
+        #odc = wx.DCOverlay(self.board.overlay, dc)
+        #odc.Clear()
+        #del odc
+        #self.board.overlay.Reset()
 
         if x != self.x and y != self.y:
             self.board.add_shape(self)
-            self.draw(dc, True)
-            self.board.redraw_dirty(dc)
+            self.board.redraw_all()
+            #self.draw(dc, True)
+            #self.board.redraw_dirty(dc)
+            
 
-    def draw_outline(self, dc):
-        self.odc = wx.DCOverlay(self.board.overlay, dc)
-        self.odc.Clear()
+    def draw_outline(self, dc, _type, args):
+        odc = wx.DCOverlay(self.board.overlay, dc)
+        odc.Clear()
+        #ctx = wx.GraphicsContext_Create(dc)
+        dc.SetPen(self.pen)
+        dc.SetBrush(self.brush)
+       
+        method = getattr(dc, "Draw" + _type)(*args)
+        method        
+        del odc
 
 
 
@@ -191,20 +201,23 @@ class Rectangle(Tool):
         """
         if not args:
             args = [self.x, self.y, self.width, self.height]
-        if replay or not self.pen:
+        if not self.pen:
             self.make_pen()
-
+        if replay:
+            self.make_pen()
+        if not replay:
+            dc = wx.ClientDC(self.board)
+            self.draw_outline(dc, _type, args)
+            return
+            
         dc.SetPen(self.pen)
         dc.SetBrush(self.brush)
         dc.SetTextForeground(self.colour)  # forces text colour
-        if not replay:
-            self.draw_outline(dc)
+
 
         method = getattr(dc, "Draw" + _type)(*args)
         method
-
-        if not replay:
-            del self.odc
+           
 
 
     def preview(self, dc, width, height):

@@ -147,6 +147,11 @@ class Utility(object):
                     self.filename = None
                 finally:
                     f.close()
+                    
+                for x in temp:
+                    for shape in temp[x]:
+                        shape.board = self.gui.tabs.GetPage(x)
+                        shape.load()                     
             else:
                 wx.MessageBox("Error saving file data - no data to save")
                 self.saved = False
@@ -198,8 +203,8 @@ class Utility(object):
 
         #  Remove all tabs, thumbnails and tree note items
         self.gui.board = None
-        while self.gui.tabs.GetPageCount():
-            self.gui.tabs.DeletePage(0)
+        for x in range(self.gui.tab_count -1, -1, -1):
+            self.gui.tabs.RemovePage(x)
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
@@ -220,6 +225,8 @@ class Utility(object):
         # re-create tabs and its saved drawings
         for x, board in enumerate(temp[1]):
             wb = Whyteboard(self.gui.tabs)
+            dc = wx.ClientDC(wb)
+            dc.Clear()
             name = "Tab " + str(x + 1)
             self.gui.tabs.AddPage(wb, name)
             self.gui.tab_count += 1
@@ -231,6 +238,7 @@ class Utility(object):
                 shape.load()  # restore unpickleable settings
                 wb.add_shape(shape)
             wb.redraw_all()
+                
 
         wx.PostEvent(self.gui, self.gui.LoadEvent())  # hide progress bar
 
@@ -287,8 +295,6 @@ class Utility(object):
 
         string = "".join(_list)
         tmp_file = string +"-temp-"+ str(random.randrange(0, 999999))
-
-        print tmp_file
 
         if not os.path.isdir(path):
             os.makedirs(path)
