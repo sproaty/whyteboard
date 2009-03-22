@@ -103,8 +103,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Translate mouse x/y coords to virtual scroll ones.
         """
-        newpos = self.CalcUnscrolledPosition(event.GetX(), event.GetY())
-        return newpos
+        return self.CalcUnscrolledPosition(event.GetX(), event.GetY())
 
 
     def left_down(self, event):
@@ -168,7 +167,7 @@ class Whyteboard(wx.ScrolledWindow):
     def select_tool(self, new=None):
         """
         Changes the users' tool (and cursor) they are drawing with. new is an
-        int, corresponding to new - 1 = Tool ID in list below.
+        int, corresponding to new - 1 = Tool ID in Utility.items
         Can be called with no new ID to reset itself with the current tool
         """
         if not new:

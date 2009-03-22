@@ -40,11 +40,9 @@ class ControlPanel(wx.Panel):
         Stores a reference to the drawing preview and the toggled drawing tool.
         """
         wx.Panel.__init__(self, gui)
-
         self.gui = gui
         self.toggled = 1  # Pen initallly
         self.preview = DrawingPreview(self.gui)
-
         self.tools = {}
         sizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
 
@@ -58,11 +56,23 @@ class ControlPanel(wx.Panel):
             self.tools[x + 1] = b
 
         self.tools[self.toggled].SetValue(True)
-        spacing = 4
+        props = wx.StaticText(self, label="Colour:")
+        width = wx.StaticText(self, label="Thickness:")
+        prev = wx.StaticText(self, label="Preview:")
 
         self.colour = wx.ColourPickerCtrl(self)
         self.colour.SetToolTip(wx.ToolTip("Sets the drawing colour"))
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
+
+        self.colour_list = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
+                            'Cyan', 'Orange', 'Light Grey']
+
+        grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
+        for colour in self.colour_list:
+            bmp = self.make_bitmap(colour)
+            b = wx.BitmapButton(self, bitmap=bmp)
+            b.Bind(wx.EVT_BUTTON, lambda evt, col=colour: self.change_colour(evt, col))
+            grid.Add(b, 0)
 
         choices = ''.join(str(i) + " " for i in range(1, 16) ).split()
 
@@ -72,16 +82,32 @@ class ControlPanel(wx.Panel):
         self.thickness.SetToolTip(wx.ToolTip("Sets the drawing thickness"))
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
 
+        spacing = 4
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(sizer, 0, wx.ALL, spacing)
         box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
+        box.Add(props, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
+        box.Add(grid, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(self.colour, 0, wx.EXPAND | wx.ALL, spacing)
+        box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
+        box.Add(width, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.thickness, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
+        box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
         self.SetSizer(box)
         self.SetAutoLayout(True)
         box.Fit(self)
+
+
+    def make_bitmap(self, colour):
+        bmp = wx.EmptyBitmap(15, 15)
+        dc = wx.MemoryDC()
+        dc.SelectObject(bmp)
+        dc.SetBackground(wx.Brush(colour))
+        dc.Clear()
+        dc.SelectObject(wx.NullBitmap)
+        return bmp
 
 
     def change_tool(self, event=None, _id=None):
@@ -106,11 +132,16 @@ class ControlPanel(wx.Panel):
             self.gui.board.select_tool(new)
 
 
-    def change_colour(self, event=None):
+    def change_colour(self, event=None, colour=None):
         """
         Changes colour and updates the preview window.
+        event can also be a string representing a colour for the grid
         """
-        self.gui.util.colour = event.GetColour()
+        if not event and not colour:
+            colour = event.GetColour()
+
+        self.gui.util.colour = colour
+        self.colour.SetColour(colour)
         self.gui.board.select_tool()
         self.preview.Refresh()
 
@@ -164,16 +195,19 @@ class SidePanel(wx.Panel):
     """
     def __init__(self, gui):
         wx.Panel.__init__(self, gui, style=wx.RAISED_BORDER)
+        self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
+                                                  wx.CP_NO_TLW_RESIZE)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.cp.SetSizer(self.sizer)
         self.gui = gui
 
-        self.tabs = wx.Notebook(self)
+        self.tabs = wx.Notebook(self.cp.GetPane())
         self.thumbs = Thumbs(self.tabs, gui)
         self.notes = Notes(self.tabs, gui)
         self.tabs.AddPage(self.thumbs, "Thumbnails")
         self.tabs.AddPage(self.notes, "Notes")
-        self.sizer.Add(self.tabs, 1)
-        self.SetSizer(self.sizer)
+        self.sizer.Add(self.cp, 0)
+        self.sizer.Add(self.tabs, 0)
 
 #----------------------------------------------------------------------
 
