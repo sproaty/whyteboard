@@ -56,8 +56,7 @@ from platform import system
 
 from whyteboard import Whyteboard
 from dialogs import ProgressDialog, FindIM
-from tools import (Pen, Rectangle, Circle, Ellipse, RoundRect, Text, Eyedropper,
-                   Line, Note, Fill, Image, Zoom, Select, Eraser)
+import tools
 
 
 #----------------------------------------------------------------------
@@ -86,8 +85,7 @@ class Utility(object):
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
-        self.items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note,
-                      RoundRect, Eyedropper, Fill, Select, Eraser]
+        self.items = tools.items
 
         self.im_location = None  # location of ImageMagick on windows
 
@@ -225,9 +223,7 @@ class Utility(object):
         # re-create tabs and its saved drawings
         for x, board in enumerate(temp[1]):
             wb = Whyteboard(self.gui.tabs)
-            dc = wx.ClientDC(wb)
-            dc.Clear()
-            name = "Tab " + str(x + 1)
+            name = "Sheet " + str(x + 1)
             self.gui.tabs.AddPage(wb, name)
             self.gui.tab_count += 1
             self.gui.thumbs.new_thumb()
@@ -238,7 +234,6 @@ class Utility(object):
                 shape.load()  # restore unpickleable settings
                 wb.add_shape(shape)
             wb.redraw_all()
-
 
         wx.PostEvent(self.gui, self.gui.LoadEvent())  # hide progress bar
 
@@ -336,7 +331,7 @@ class Utility(object):
                 load_image(temp_file, wb)
                 self.to_convert[index][x + 1] = temp_file
                 self.gui.tab_count += 1
-                self.gui.tabs.AddPage(wb, "Tab "+ str(self.gui.tab_count))
+                self.gui.tabs.AddPage(wb, "Sheet "+ str(self.gui.tab_count))
 
                 self.gui.thumbs.new_thumb()
                 self.gui.notes.add_tab()
@@ -455,7 +450,7 @@ def load_image(path, board):
     image file to create a bitmap from.
     """
     image = wx.Bitmap(path)
-    shape = Image(board, image, path)
+    shape = tools.Image(board, image, path)
     shape.button_down(0, 0)  # renders, updates scrollbars
 
 #----------------------------------------------------------------------

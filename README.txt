@@ -1,6 +1,6 @@
-Whyteboard 0.35.8 - a simple image, PDF and postscript file annotator
+Whyteboard 0.35.9- a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Fri 20 Mar 2009 15:38:11 GMT
+Wed 25 Mar 2009 20:42:09 GMT
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -26,6 +26,8 @@ over itself. Currently looking into this, strangely it doesn't happen on Linux.
 
 ---- VERSION HISTORY ----
 
+25 Mar 2009 - * Misc. UI improvements: more labels/small grid of drawing colours
+              * Flood fill temporarily removed, was too buggy
 
 20 Mar 2009 - * Windows bugfix: outlined shapes not drawing properly
               * Windows bugfix: wxPython errors on closing the application with

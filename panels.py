@@ -137,7 +137,7 @@ class ControlPanel(wx.Panel):
         Changes colour and updates the preview window.
         event can also be a string representing a colour for the grid
         """
-        if not event and not colour:
+        if event and not colour:
             colour = event.GetColour()
 
         self.gui.util.colour = colour
@@ -198,16 +198,16 @@ class SidePanel(wx.Panel):
         self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                                   wx.CP_NO_TLW_RESIZE)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.cp.SetSizer(self.sizer)
+        self.SetSizer(self.sizer)
         self.gui = gui
 
-        self.tabs = wx.Notebook(self.cp.GetPane())
+        self.tabs = wx.Notebook(self)
         self.thumbs = Thumbs(self.tabs, gui)
         self.notes = Notes(self.tabs, gui)
         self.tabs.AddPage(self.thumbs, "Thumbnails")
         self.tabs.AddPage(self.notes, "Notes")
-        self.sizer.Add(self.cp, 0)
-        self.sizer.Add(self.tabs, 0)
+        self.sizer.Add(self.tabs, 1)
+
 
 #----------------------------------------------------------------------
 
@@ -218,7 +218,7 @@ class Notes(wx.Panel):
     Notes can be clicked upon to be edited
     """
     def __init__(self, parent, gui):
-        wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
+        wx.Panel.__init__(self, parent, size=(170, -1), style=wx.RAISED_BORDER)
         self.gui = gui
         self.tree = wx.TreeCtrl(self, size=(170, -1), style=wx.TR_HAS_BUTTONS)
         self.root = self.tree.AddRoot("Whyteboard")
@@ -241,7 +241,7 @@ class Notes(wx.Panel):
         if not _id:
             _id = 0
         data = wx.TreeItemData(_id)
-        t = self.tree.AppendItem(self.root, "Tab " + str(_id + 1), data=data)
+        t = self.tree.AppendItem(self.root, "Sheet " + str(_id + 1), data=data)
         self.tabs.insert(_id, t)
 
 
@@ -273,7 +273,7 @@ class Notes(wx.Panel):
         # now ensure all nodes are linked to the right tab
         for x in range(self.gui.current_tab, len(self.tabs)):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
-            self.tree.SetItemText(self.tabs[x], "Tab " + str(x + 1))
+            self.tree.SetItemText(self.tabs[x], "Sheet " + str(x + 1))
 
 
     def remove_all(self):
@@ -316,8 +316,8 @@ class Thumbs(scrolled.ScrolledPanel):
     Thumbnails of all tabs' drawings.
     """
     def __init__(self, parent, gui):
-        scrolled.ScrolledPanel.__init__(self, parent, style=wx.VSCROLL |
-                                                            wx.RAISED_BORDER)
+        scrolled.ScrolledPanel.__init__(self, parent, size=(170, -1),
+                                        style=wx.VSCROLL | wx.RAISED_BORDER)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
         self.SetScrollRate(0, 250)
@@ -344,7 +344,7 @@ class Thumbs(scrolled.ScrolledPanel):
             img.ConvertColourToAlpha(255, 255, 255)
             bmp = wx.BitmapFromImage(img)
 
-        text = wx.StaticText(self, label="Tab " + str(_id + 1))
+        text = wx.StaticText(self, label="Sheet " + str(_id + 1))
         btn = ThumbButton(self, _id, bmp)
         self.text.insert(_id, text)
         self.thumbs.insert(_id, btn)
@@ -375,7 +375,7 @@ class Thumbs(scrolled.ScrolledPanel):
         # now ensure all thumbnail classes are pointing to the right tab
         for x in range(0, len(self.thumbs)):
             self.thumbs[x].thumb_id = x
-            self.text[x].SetLabel("Tab " + str(x + 1))
+            self.text[x].SetLabel("Sheet " + str(x + 1))
 
 
     def remove_all(self):

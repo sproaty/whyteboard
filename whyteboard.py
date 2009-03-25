@@ -181,7 +181,10 @@ class Whyteboard(wx.ScrolledWindow):
 
         params = [self, colour, thickness]
         self.shape = items[new - 1](*params)  # create new Tool object
-        self.SetCursor(wx.StockCursor(self.shape.cursor) )
+        if isinstance(self.shape.cursor, wx.Image):
+            self.SetCursor(wx.Cursor(self.shape.cursor, wx.BITMAP_TYPE_BITMAP))
+        else:
+            self.SetCursor(wx.StockCursor(self.shape.cursor) )
         self.GetParent().GetParent().control.preview.Refresh()
 
 

@@ -18,6 +18,9 @@
 
 """
 This module contains classes which can be drawn onto a Whyteboard frame
+
+Note: the list "items" at the bottom contains all the classes that can be drawn
+with by the user (e.g. they can't draw an image directly)
 """
 
 import wx
@@ -31,7 +34,7 @@ from dialogs import TextInput
 class Tool(object):
     """Abstract class representing a tool: Drawing board/colour/thickness"""
 
-    def __init__(self, board, colour, thickness, cursor = wx.CURSOR_PENCIL):
+    def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
         self.board = board
         self.colour = colour
         self.thickness = thickness
@@ -101,8 +104,8 @@ class Pen(Tool):
     A free-hand pen.
     """
 
-    def __init__(self, board, colour, thickness):
-        Tool.__init__(self, board, colour, thickness)
+    def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
+        Tool.__init__(self, board, colour, thickness, cursor)
         self.points = []  # ALL x1, y1, x2, y2 coords to render
         self.time = []  # list of times for each point, for redrawing
 
@@ -293,7 +296,7 @@ class Line(Rectangle):
 
 #----------------------------------------------------------------------
 
-class Eyedropper(Tool):
+class Eyedrop(Tool):
     """
     Selects the colour at the specified x,y coords
     """
@@ -595,10 +598,27 @@ class Eraser(Pen):
     Erases stuff
     """
     def __init__(self, board, colour, thickness):
-        Pen.__init__(self, board, (255, 255, 255), thickness + 3)
+#        cursor = wx.EmptyBitmap(thickness + 1, thickness + 1)
+#        memory = wx.MemoryDC()
+#        memory.SelectObject(cursor)
+#        memory.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
+#        memory.DrawRectangle(0, 0, thickness + 1, thickness + 1)
+#        memory.SelectObject(wx.NullBitmap)
+
+#        img = wx.ImageFromBitmap(cursor)
+
+        Pen.__init__(self, board, (255, 255, 255), thickness)
+
+    def preview(self, dc, width, height):
+        thickness = self.thickness + 1
+        dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
+        dc.DrawRectangle(15, 15, 15 + thickness, 15 + thickness)
 
 
 #---------------------------------------------------------------------
+
+items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note, RoundRect,
+        Eyedrop, Eraser]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

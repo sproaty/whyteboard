@@ -31,7 +31,7 @@ import wx.lib.newevent
 import os
 import sys
 
-
+import icon
 from whyteboard import Whyteboard
 from utility import Utility, FileDropTarget
 from dialogs import About, History, ProgressDialog
@@ -62,6 +62,8 @@ class GUI(wx.Frame):
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
         wx.Frame.__init__(self, parent, title="Untitled - " + self.title)
+        ico = icon.whyteboard.getIcon()
+        self.SetIcon(ico)
 
         self.util = Utility(self)
         self.file_drop = FileDropTarget(self)
@@ -79,7 +81,7 @@ class GUI(wx.Frame):
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
         self.board = Whyteboard(self.tabs)  # the active whiteboard tab
-        self.tabs.AddPage(self.board, "Tab 1")
+        self.tabs.AddPage(self.board, "Sheet 1")
 
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
@@ -291,7 +293,7 @@ class GUI(wx.Frame):
         self.thumbs.new_thumb()
         self.notes.add_tab()
         self.tab_count += 1
-        self.tabs.AddPage(wb, "Tab "+ str(self.tab_count))
+        self.tabs.AddPage(wb, "Sheet "+ str(self.tab_count))
         self.current_tab = self.tab_count - 1
 
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
@@ -324,7 +326,7 @@ class GUI(wx.Frame):
             self.tab_count -= 1
 
             for x in range(self.current_tab, self.tab_count):
-                self.tabs.SetPageText(x, "Tab " + str(x + 1))
+                self.tabs.SetPageText(x, "Sheet " + str(x + 1))
 
 
     def on_thumbs(self, event):

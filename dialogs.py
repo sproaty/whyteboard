@@ -42,7 +42,7 @@ class History(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         _max = len(gui.board.shapes)+50
         self.slider = wx.Slider(self, minValue=1, maxValue=_max, size=(200, 50),
-                    style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS )
+                    style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL )
 
         self.slider.SetTickFreq(5, 1)
 
@@ -50,13 +50,22 @@ class History(wx.Dialog):
         btn_stop = wx.Button(self, label="Stop", size=(45, 30) )
         btn_pause = wx.Button(self, label="Pause", size=(50, 30) )
         btn_play = wx.Button(self, label="Play", size=(45, 30) )
-
         historySizer.Add(btn_play, 0,  wx.ALL, 2)
         historySizer.Add(btn_pause, 0,  wx.ALL, 2)
         historySizer.Add(btn_stop, 0,  wx.ALL, 2)
 
+
+        #self.okButton = wx.Button(self, wx.ID_OK, "&OK")
+        #self.okButton.SetDefault()
+        #self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+        #btnSizer = wx.StdDialogButtonSizer()
+        #btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
+        #btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
+
+
         sizer.Add(self.slider, 0, wx.ALL, 5)
         sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
+        #sizer.Add(btnSizer, 0, wx.LEFT | wx.TOP | wx.RIGHT | wx.ALIGN_CENTRE, 5)
 
         self.SetSizer(sizer)
         sizer.Fit(self)
@@ -130,25 +139,8 @@ class History(wx.Dialog):
                             wx.Yield()
             else:
                 if self.looping and not self.paused:
-                    try:
-                        # find the next non-Pen shape to get its time
-                        t = pen.time + 1
-                        for x in range(count + 1, len(shapes)):
-                            try:
-                                item = shapes[x]
-                                if not isinstance(item, tools.Pen):
-                                    t = item.time
-                                    break
-                            except IndexError:
-                                pass
-
-                        time = (t - pen.time) * 950
-                        if time > 8500:
-                            time = 8500
-                        wx.MilliSleep(time)
-                        wx.Yield()
-                    except IndexError:
-                        pass
+                    wx.MilliSleep(350)
+                    wx.Yield()
                     pen.draw(dc, True)
 
                 else:  # loop is paused, wait for unpause/close/stop
@@ -184,6 +176,10 @@ class History(wx.Dialog):
         """
         self.stop()
         self.EndModal(1)
+
+    def on_key_down(self, event):
+        if event.GetKeyCode() == wx.K_ESCAPE:
+            self.on_close()
 
     def scroll(self, event):
         pass
@@ -242,6 +238,8 @@ class TextInput(wx.Dialog):
         wx.Dialog.__init__(self, gui, title="Enter text",
                             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
+        self.gui = gui
+        self.text = ""  # track before/after changes for backspace
         self.ctrl = wx.TextCtrl(self, style=wx.TE_RICH2 | wx.TE_MULTILINE,
                                                     size=(250, 100))
         extent = self.ctrl.GetFullTextExtent("Hy")
@@ -281,6 +279,7 @@ class TextInput(wx.Dialog):
 
         self.set_focus()
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
+        #self.Bind(wx.EVT_TEXT, self.update_board, self.ctrl)
 
 
     def on_font(self, evt):
@@ -301,6 +300,10 @@ class TextInput(wx.Dialog):
             self.ctrl.SetFont(self.font)
             # Update dialog for the new height of the text
             self.GetSizer().Fit(self)
+            #self.gui.board.redraw_all()
+            #wx.MilliSleep(50)
+            #wx.SafeYield()
+            #self.update_board()
 
         dlg.Destroy()
         self.set_focus()
@@ -309,6 +312,24 @@ class TextInput(wx.Dialog):
         selection = self.ctrl.GetSelection()
         self.ctrl.SetFocus()
         self.ctrl.SetSelection(*selection)
+
+
+    def update_board(self, event=None):
+        val = self.ctrl.GetValue()
+        #if len(self.text) > len(val):
+            #self.gui.board.redraw_all()
+            #wx.SafeYield()
+            #self.ctrl.SetFocus()
+        self.text = val
+        board = self.gui.board
+
+
+        dc = wx.BufferedDC(wx.ClientDC(board), board.buffer)
+
+        dc.SetTextForeground(board.shape.colour)
+        dc.SetFont(self.ctrl.GetFont())
+        dc.DrawText(val, board.shape.x, board.shape.y)
+        board.redraw_dirty(dc)
 
 
     def transfer_data(self, text_obj):
