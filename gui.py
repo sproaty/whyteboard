@@ -53,7 +53,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    title = "Whyteboard"
+    title = "Whyteboa9d"
     version = "0.35.8"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 

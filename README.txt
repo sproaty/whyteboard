@@ -27,6 +27,7 @@ over itself. Currently looking into this, strangely it doesn't happen on Linux.
 ---- VERSION HISTORY ----
 
 25 Mar 2009 - * Misc. UI improvements: more labels/small grid of drawing colours
+              * Added eraser tool
               * Flood fill temporarily removed, was too buggy
 
 20 Mar 2009 - * Windows bugfix: outlined shapes not drawing properly
