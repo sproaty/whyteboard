@@ -108,6 +108,7 @@ class Utility(object):
         self.wildcard = '|'.join(wc_list)
 
 
+
     def save_file(self):
         """
         Saves the file if there is any drawn data to save. Any loaded Image
@@ -386,8 +387,8 @@ class Utility(object):
         if system() == "Linux":
             value = os.system("which convert")
             if value == 256:
-                wx.MessageBox("ImageMagick was not found on your system. You " +
-                "will be unable to load PDF and PS files until you install it.")
+                wx.MessageBox("ImageMagick was not found. You will be unable " +
+                              "to load PDF and PS files until it is installed.")
             else:
                 self.im_location = "convert"
         elif system() == "Windows":
@@ -418,7 +419,7 @@ class Utility(object):
         """
         _file = os.path.join(path, "convert.exe")
         if not os.path.exists(_file):
-            wx.MessageBox("This directory not not contain convert.exe")
+            wx.MessageBox(path + " does not contain convert.exe")
             return False
         else:
             self.im_location = _file

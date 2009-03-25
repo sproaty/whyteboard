@@ -46,6 +46,10 @@ ID_HISTORY = wx.NewId()
 ID_CLEAR_ALL = wx.NewId()      # remove all from current tab
 ID_CLEAR_TABS = wx.NewId()     # remove all drawings from all tabs, keep images
 ID_CLEAR_ALL_TABS = wx.NewId() # remove all from all tabs
+ID_PDF = wx.NewId()
+ID_PS = wx.NewId()
+ID_IMG = wx.NewId()
+
 
 class GUI(wx.Frame):
     """
@@ -53,8 +57,8 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    title = "Whyteboa9d"
-    version = "0.35.8"
+    title = "Whyteboard"
+    version = "0.35.9"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
@@ -109,15 +113,22 @@ class GUI(wx.Frame):
         image = wx.Menu()
         _help = wx.Menu()
         self.menu = wx.MenuBar()
+        imp = wx.Menu()
+        imp.Append(ID_PDF, 'PDF')
+        imp.Append(ID_PS, 'PostScript')
+        imp.Append(ID_IMG, 'Image')
 
-        _file.Append(wx.ID_NEW, "New &Tab\tCtrl-T", "Open a new tab")
+
+        _file.Append(wx.ID_NEW, "New &Sheet\tCtrl-T", "Add a new sheet")
         _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
+        _file.Append(wx.ID_CLOSE, "&Remove Sheet\tCtrl-W", "Close the current sheet")
+        _file.AppendSeparator()
         _file.Append(wx.ID_SAVE, "&Save\tCtrl-S", "Save the Whyteboard data")
         _file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl-Shift-S", "Save the Whyteboard data in a new file")
-        _file.Append(ID_EXPORT, "&Export\tCtrl-E", "Export the current tab's contents to an image")
+        _file.AppendMenu(-1, '&Import File', imp)
+        _file.Append(ID_EXPORT, "&Export Sheet\tCtrl-E", "Export the current sheet to an image file")
         _file.AppendSeparator()
-        _file.Append(wx.ID_CLOSE, "&Close Tab\tCtrl-W", "Close current tab")
-        _file.Append(wx.ID_EXIT, "E&xit\tAlt-F4", "Terminate Whyteboard")
+        _file.Append(wx.ID_EXIT, "Quit\tAlt-F4", "Quit Whyteboard")
 
         history.Append(wx.ID_UNDO, "&Undo\tCtrl-Z", "Undo the last operation")
         history.Append(wx.ID_REDO, "&Redo\tCtrl-Y", "Redo the last undone operation")
@@ -127,11 +138,11 @@ class GUI(wx.Frame):
         view.Append(ID_THUMBS, " &Toggle Side Panel\tF9", "Toggle the side panel on or off", kind=wx.ITEM_CHECK)
         view.Check(ID_THUMBS, True)
 
-        image.Append(wx.ID_CLEAR, "&Clear Tab's Drawings", "Clear drawings on the current tab (keep images)")
-        image.Append(ID_CLEAR_ALL, "Clear &Tab", "Clear the current tab")
+        image.Append(wx.ID_CLEAR, "&Clear Sheets' Drawings", "Clear drawings on the current sheet (keep images)")
+        image.Append(ID_CLEAR_ALL, "Clear &Sheet", "Clear the current sheet")
         image.AppendSeparator()
-        image.Append(ID_CLEAR_TABS, "Clear All Tabs' &Drawings", "Clear all tabs of drawings (keep images)")
-        image.Append(ID_CLEAR_ALL_TABS, "Clear &All Tabs", "Clear all open tabs")
+        image.Append(ID_CLEAR_TABS, "Clear All Sheets' &Drawings", "Clear all sheets' drawings (keep images)")
+        image.Append(ID_CLEAR_ALL_TABS, "Clear &All Sheets", "Clear all sheets")
 
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about Whyteboard")
         self.menu.Append(_file, "&File")
@@ -151,6 +162,9 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
 
+        ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }
+        [self.Bind(wx.EVT_MENU, lambda evt, text=key: self.on_open(evt, text),
+                    id=ids[key]) for key in ids]
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
                   "undo", "redo", "history", "thumbs", "clear", "clear_all",
@@ -200,13 +214,18 @@ class GUI(wx.Frame):
             self.util.saved = True
 
 
-    def on_open(self, event=None):
+    def on_open(self, event=None, text=None):
         """
         Opens a file, sets Utility's temp. file to the chosen file, prompts for
         an unsaved file and calls do_open().
         """
-        dlg = wx.FileDialog(self, "Open file...", style=wx.OPEN,
-                            wildcard=self.util.wildcard)
+        wc = self.util.wildcard
+        if text == "img":
+            wc = wc[ wc.find("I") : wc.find("P") ]  # image to page
+        elif text:
+            wc = wc[ wc.find("P"):]  # page descriptions
+
+        dlg = wx.FileDialog(self, "Open file...", style=wx.OPEN, wildcard=wc)
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()

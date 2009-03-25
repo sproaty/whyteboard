@@ -346,11 +346,8 @@ class FindIM(wx.Dialog):
     """
     Asks a user for the location of ImageMagick.
     """
-    t = ("Whyteboard uses ImageMagick to load and convert PDF and PostScript " +
-    "files. \nUnfortunately, on Windows, this conflicts with a built-in system"+
-    " command.\n\n If you have installed ImageMagick, please select its"+
-    " installed directory.\n If not, you will be unable to load PDF, PS and "+
-    "SVG files.")
+    t = ("Whyteboard uses ImageMagick to load PDF, SVG and PS files. \n"
+    "Please select its installed location.")
 
     def __init__(self, parent, gui):
         """

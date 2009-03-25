@@ -29,6 +29,8 @@ over itself. Currently looking into this, strangely it doesn't happen on Linux.
 25 Mar 2009 - * Misc. UI improvements: more labels/small grid of drawing colours
               * Added eraser tool
               * Flood fill temporarily removed, was too buggy
+              * Tabs renamed to Sheets
+              * Import -> PDF/PS/Image menu items (as well as through Open)
 
 20 Mar 2009 - * Windows bugfix: outlined shapes not drawing properly
               * Windows bugfix: wxPython errors on closing the application with
