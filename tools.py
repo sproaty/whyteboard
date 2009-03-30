@@ -26,6 +26,7 @@ with by the user (e.g. they can't draw an image directly)
 import wx
 import time
 
+from copy import copy
 from dialogs import TextInput
 
 #----------------------------------------------------------------------
@@ -225,10 +226,9 @@ class Circle(Rectangle):
     """
     Draws a circle. Extended from a Rectangle to save on repeated code.
     """
-
     def __init__(self, board, colour, thickness):
         Rectangle.__init__(self, board, colour, thickness)
-        self.radius  = 1
+        self.radius = 1
 
     def button_down(self, x, y):
         self.x = x
@@ -259,6 +259,20 @@ class Ellipse(Rectangle):
 
 #----------------------------------------------------------------------
 
+class Circle2(Ellipse):
+    """
+    Draws a circle. Extended from a Rectangle to save on repeated code.
+    """
+
+    def motion(self, x, y):
+        #print x, y
+        super(Ellipse, self).motion(x, y)
+        #print self.x, self.y, self.width, self.height
+        if self.height < self.width:
+            self.height = self.width
+        else:
+            self.width = self.height
+
 
 class RoundRect(Rectangle):
     """
@@ -278,7 +292,6 @@ class Line(Rectangle):
     """
     Draws a line. Extended from a Rectangle for outline code.
     """
-
     def __init__(self, board, colour, thickness):
         Rectangle.__init__(self, board, colour, thickness)
         self.x2 = 0
@@ -300,16 +313,17 @@ class Eyedrop(Tool):
     """
     Selects the colour at the specified x,y coords
     """
-
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
 
     def button_down(self, x, y):
         dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
         colour = dc.GetPixel(x, y)  # get colour
-        self.board.GetParent().GetParent().control.colour.SetColour(colour)
-        self.board.GetParent().GetParent().util.colour = colour
-        self.board.GetParent().GetParent().control.preview.Refresh()
+        board = self.board.GetParent().GetParent()
+
+        board.control.colour.SetColour(colour)
+        board.util.colour = colour
+        board.control.preview.Refresh()
 
 
 #----------------------------------------------------------------------
@@ -321,7 +335,6 @@ class Text(Rectangle):
     storing its values is stored. This string is then used to reconstruct the
     font.
     """
-
     def __init__(self, board, colour, thickness):
         Rectangle.__init__(self, board, colour, thickness)
         self.cursor = wx.CURSOR_CHAR
@@ -336,6 +349,11 @@ class Text(Rectangle):
         self.y = y
 
     def button_up(self, x, y):
+        """
+        Shows the text input dialog, creates a new Shape object if the cancel
+        button was pressed, otherwise updates the object's text, checks that the
+        text string contains any letters and if so, adds itself to the list
+        """
         self.x = x
         self.y = y
         self.time = time.time()
@@ -581,13 +599,14 @@ class Select(Tool):
                     and (y < rect_y2_1 and y > shape.y)) ):
                         found = True
             if found:
-                self.shape = self.board.shapes[count]
+                self.shape = copy(self.board.shapes[count])
                 self.dragging = True
                 self.count = count
 
 
     def motion(self, x, y):
         if self.dragging:
+            print self.shape.x, self.shape.y
             self.shape.x = x
             self.shape.y = y
 
@@ -602,10 +621,14 @@ class Select(Tool):
         !!!!!
         """
         if self.dragging:
+            #print '0000000000;'
+            print self.shape.x, self.shape.y
             #print self.board.shapes
-            #del self.board.shapes[self.count]
+            del self.board.shapes[self.count]
             #print self.board.shapes
-            #self.board.add_shape(self)
+            self.board.add_shape(self.shape, self.count)
+            #print self.board.shapes
+            #print '----'
             self.board.redraw_all()
             #self.board.Refresh()
             self.dragging = False
@@ -615,19 +638,22 @@ class Select(Tool):
 
 class Eraser(Pen):
     """
-    Erases stuff
+    Erases stuff. Has a custom cursor from a drawn rectangle on a DC, turned
+    into an image and into a cursor.
     """
     def __init__(self, board, colour, thickness):
-#        cursor = wx.EmptyBitmap(thickness + 1, thickness + 1)
-#        memory = wx.MemoryDC()
-#        memory.SelectObject(cursor)
-#        memory.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
-#        memory.DrawRectangle(0, 0, thickness + 1, thickness + 1)
-#        memory.SelectObject(wx.NullBitmap)
+        cursor = wx.EmptyBitmap(thickness + 1, thickness + 1)
+        memory = wx.MemoryDC()
+        memory.SelectObject(cursor)
+        memory.SetPen(wx.Pen((255, 255, 255), 1))  # border
+        memory.SetBrush(wx.Brush((0, 0, 0)))
+        memory.DrawRectangle(0, 0, thickness + 1, thickness + 1)
+        memory.SelectObject(wx.NullBitmap)
 
-#        img = wx.ImageFromBitmap(cursor)
+        img = wx.ImageFromBitmap(cursor)
+        cursor = wx.CursorFromImage(img)
 
-        Pen.__init__(self, board, (255, 255, 255), thickness)
+        Pen.__init__(self, board, (255, 255, 255), thickness, cursor)
 
     def preview(self, dc, width, height):
         thickness = self.thickness + 1
@@ -638,7 +664,7 @@ class Eraser(Pen):
 #---------------------------------------------------------------------
 
 items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note, RoundRect,
-        Eyedrop, Select, Eraser]
+        Eyedrop, Eraser]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

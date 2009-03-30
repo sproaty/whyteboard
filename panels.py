@@ -41,7 +41,7 @@ class ControlPanel(wx.Panel):
         """
         wx.Panel.__init__(self, gui)
         self.gui = gui
-        self.toggled = 1  # Pen initallly
+        self.toggled = 1  # Pen, initallly
         self.preview = DrawingPreview(self.gui)
         self.tools = {}
         sizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
@@ -62,7 +62,6 @@ class ControlPanel(wx.Panel):
 
         self.colour = wx.ColourPickerCtrl(self)
         self.colour.SetToolTip(wx.ToolTip("Sets the drawing colour"))
-        self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
 
         self.colour_list = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
                             'Cyan', 'Orange', 'Light Grey']
@@ -71,16 +70,16 @@ class ControlPanel(wx.Panel):
         for colour in self.colour_list:
             bmp = self.make_bitmap(colour)
             b = wx.BitmapButton(self, bitmap=bmp)
-            b.Bind(wx.EVT_BUTTON, lambda evt, col=colour: self.change_colour(evt, col))
+            method = lambda evt, col=colour: self.change_colour(evt, col)
+            b.Bind(wx.EVT_BUTTON, method)
             grid.Add(b, 0)
 
         choices = ''.join(str(i) + " " for i in range(1, 16) ).split()
 
-        self.thickness = wx.ComboBox(self, choices=choices, size=(25, 25),
+        self.thickness = wx.ComboBox(self, choices=choices, size=(20, 20),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
         self.thickness.SetToolTip(wx.ToolTip("Sets the drawing thickness"))
-        self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
 
         spacing = 4
         box = wx.BoxSizer(wx.VERTICAL)
@@ -98,13 +97,18 @@ class ControlPanel(wx.Panel):
         self.SetSizer(box)
         self.SetAutoLayout(True)
         box.Fit(self)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
 
+        self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
+        self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
+        self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
 
     def scroll(self, event):
+        """
+        Scrolls the thickness drop-down box (for Windows)
+        """
         box = self.thickness
         val = box.GetSelection()
-        if event.GetWheelRotation() > 0:  # down
+        if event.GetWheelRotation() > 0:  # mousewheel down
             val -= 1
             if val <= 0:
                 val = 0
@@ -114,7 +118,11 @@ class ControlPanel(wx.Panel):
         box.SetSelection(val)
         self.change_thickness()
 
+
     def make_bitmap(self, colour):
+        """
+        Draws a small coloured bitmap for a colour grid button
+        """
         bmp = wx.EmptyBitmap(15, 15)
         dc = wx.MemoryDC()
         dc.SelectObject(bmp)
@@ -123,14 +131,13 @@ class ControlPanel(wx.Panel):
         dc.SelectObject(wx.NullBitmap)
         return bmp
 
-
     def change_tool(self, event=None, _id=None):
         """
         Toggles the tool buttons on/off and calls select_tool on the drawing
         panel.
         """
         if event:
-            new = int(event.GetId() )  # get widget ID (set in method above)
+            new = int(event.GetId() )  # get widget ID
         elif _id:
             new = _id
         else:
@@ -152,7 +159,7 @@ class ControlPanel(wx.Panel):
         event can also be a string representing a colour for the grid
         """
         if event and not colour:
-            colour = event.GetColour()
+            colour = event.GetColour()  # from the colour button
 
         self.gui.util.colour = colour
         self.colour.SetColour(colour)
@@ -182,11 +189,11 @@ class DrawingPreview(wx.Window):
         wx.Window.__init__(self, gui, style=wx.RAISED_BORDER)
         self.gui = gui
         self.SetBackgroundColour(wx.WHITE)
-        self.SetSize((45, 45))
-        self.Bind(wx.EVT_PAINT, self.paint)
+        self.SetSize((40, 40))
+        self.Bind(wx.EVT_PAINT, self.on_paint)
         self.SetToolTip(wx.ToolTip("A preview of your drawing"))
 
-    def paint(self, event=None):
+    def on_paint(self, event=None):
         """
         Draws the tool inside the box when tool/colour/thickness
         is changed
@@ -197,6 +204,10 @@ class DrawingPreview(wx.Window):
             dc.SetBrush(self.gui.board.shape.brush)
             width, height = self.GetClientSize()
             self.gui.board.shape.preview(dc, width, height)
+
+            dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
+            width, height = self.GetClientSize()
+            dc.DrawRectangle(0, 0, width, height)  # draw a border..
 
 
 #----------------------------------------------------------------------
@@ -238,11 +249,12 @@ class Notes(wx.Panel):
         self.notes = []
         self.add_tab()
         self.tree.Expand(self.root)
-        self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
         self.sizer.Add(self.tree, 1)
+        self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
+        self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
 
 
     def add_tab(self):
@@ -314,20 +326,49 @@ class Notes(wx.Panel):
 
             if dlg.ShowModal() == wx.ID_CANCEL:
                 dlg.Destroy()
+
             else:
                 dlg.transfer_data(item)  # grab font and text data
                 item.font_data = item.font.GetNativeFontInfoDesc()
 
                 if not item.text:
-                    item.text = text
-                    self.gui.board.redraw_all()
+                    item.text = text  # don't want a blank item
                 else:
-                    item.update_scroll()
                     self.tree.SetItemText(event.GetItem(),
                                       item.text.replace("\n", " ")[:15])
+                item.update_scroll()
+
+
+    def pop_up(self, event):
+        """
+        Brings up the context menu on right click
+        """
+        self.PopupMenu(NotesPopupMenu(self, event))
 
 #----------------------------------------------------------------------
 
+class NotesPopupMenu(wx.Menu):
+    """
+    A context pop-up menu for notes, allowing the editing of a note or switching
+    the tab selection to a particular sheet. The event is passed around, coming
+    from a TreeCtrlEvent
+    """
+    def __init__(self, parent, event):
+        wx.Menu.__init__(self)
+        self.parent = parent
+        item = parent.tree.GetPyData(event.GetItem())
+        ID = wx.NewId()
+
+        if isinstance(item, int):  # sheet node
+            e = wx.MenuItem(self, ID, 'Switch to')
+        else:
+            e = wx.MenuItem(self, ID, 'Edit')
+
+        self.AppendItem(e)
+        method = lambda x: parent.on_click(event)
+        self.Bind(wx.EVT_MENU, method, id=ID)
+
+#----------------------------------------------------------------------
 
 class Thumbs(scrolled.ScrolledPanel):
     """
@@ -489,7 +530,7 @@ class ThumbButton(wx.BitmapButton):
         dc.SelectObject(_copy)
 
         gcdc = wx.GCDC(dc)
-        gcdc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 30)))
+        gcdc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 30)))  # light blue
         gcdc.SetPen(wx.Pen((0, 0, 0), 1, wx.TRANSPARENT))
         gcdc.DrawRectangle(0, 0, 150, 150)
 

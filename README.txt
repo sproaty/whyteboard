@@ -30,12 +30,13 @@ xx Mar 2009 - * Windows UI improvement: change the thickness by scrolling the
                 the default behaviour under GNOME)
               * Next/Previous sheet in the "Sheets" menu (which previously was
                 "Image") - Ctrl+Tab / Ctrl-Shift+Tab shortcut keys
-              * Resize canvas
               * Menus renamed, organised differently
-              * Text/notes update on the canvas as you type
+              * Popup context menu on Notes Tree: Edit (note), Switch To (sheet)
+              * Text/notes appear on the canvas as you type
+              * Eraser has a custom rectangle cursor, depending on its size
               * Escape button exits "History" dialog
               * Updated "About" menu
-              * Bugfix: cannot add a blank text/note object
+              * Bugfix: can no longer add a blank text/note object
 
 25 Mar 2009 - * Misc. UI improvements: more labels/small grid of drawing colours
               * Added eraser tool

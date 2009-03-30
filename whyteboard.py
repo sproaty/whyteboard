@@ -144,7 +144,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.button_up(x, y)
             after = len(self.shapes)
 
-            # update GUI menus
+            # update GUI menus, as the new shape was added
             if after - before is not 0:
                 self.tab.GetParent().update_menus()
                 self.select_tool()
@@ -173,31 +173,37 @@ class Whyteboard(wx.ScrolledWindow):
         int, corresponding to new - 1 = Tool ID in Utility.items
         Can be called with no new ID to reset itself with the current tool
         """
+        parent = self.tab.GetParent()
         if not new:
-            new = self.tab.GetParent().util.tool
+            new = parent.util.tool
         else:
-            self.tab.GetParent().util.tool = new
+            parent.util.tool = new
 
-        items = self.tab.GetParent().util.items
-        colour = self.tab.GetParent().util.colour
-        thickness = self.tab.GetParent().util.thickness
-
-        params = [self, colour, thickness]
+        items = parent.util.items
+        colour = parent.util.colour
+        thickness = parent.util.thickness
+        params = [self, colour, thickness]  # Object constructor parameters
         self.shape = items[new - 1](*params)  # create new Tool object
-        if isinstance(self.shape.cursor, wx.Image):
-            self.SetCursor(wx.Cursor(self.shape.cursor, wx.BITMAP_TYPE_BITMAP))
+
+        if isinstance(self.shape.cursor, wx.Cursor):
+            self.SetCursor(self.shape.cursor)
         else:
             self.SetCursor(wx.StockCursor(self.shape.cursor) )
         self.GetParent().GetParent().control.preview.Refresh()
 
 
-    def add_shape(self, shape):
+    def add_shape(self, shape, pos=None):
         """
         Adds a shape to the "to-draw" list.
         """
-        self.shapes.append(shape)
+        if not pos:
+            self.shapes.append(shape)
+        else:
+            self.shapes.insert(pos, shape)
         self.undo_list.append(shape)
 
+        # clear redo list, as adding a new shape is not re-doable until it is
+        # undone
         if self.redo_list:
             self.redo_list = []
         if self.tab.GetParent().util.saved:
@@ -205,7 +211,8 @@ class Whyteboard(wx.ScrolledWindow):
 
     def undo(self):
         """
-        Undoes an action, and adds it to the redo list.
+        Undoes an action, and adds it to the redo list. Re-add any cleared shape
+        one-by-one because each shape is then undoable
         """
         shape = self.undo_list.pop()
         self.redo_list.append(shape)
@@ -213,7 +220,7 @@ class Whyteboard(wx.ScrolledWindow):
         if isinstance(shape, Note):
             self.undo_note(shape)
             self.shapes.remove(shape)
-        elif shape.__class__.__name__ == "list":  # cleared shapes, re-add
+        elif shape.__class__.__name__ == "list":  # cleared, add one-by-one
             [self.shapes.append(x) for x in shape]
         else:
             self.shapes.remove(shape)
@@ -230,7 +237,7 @@ class Whyteboard(wx.ScrolledWindow):
         if isinstance(item, Note):
             self.GetParent().GetParent().notes.add_note(item)
             self.shapes.append(item)
-        elif item.__class__.__name__ == "list":  # cleared shapes, remove
+        elif item.__class__.__name__ == "list":  # cleared, remove one-by-one
             [self.shapes.remove(x) for x in item]
         else:
             self.shapes.append(item)
@@ -276,6 +283,9 @@ class Whyteboard(wx.ScrolledWindow):
             to_remove = []
             images = []
 
+            # build up a list of shapes to undo. If keeping images, stick them
+            # into a separate list, and set the shapes to that (which will be
+            # blank if clear all was selected).
             for x in self.shapes:
                 if isinstance(x, Image):
                     images.append(x)

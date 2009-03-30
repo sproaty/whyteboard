@@ -289,17 +289,17 @@ class GUI(wx.Frame):
 
     def on_export(self, event):
         """
-        Exports the current tab as an image.
+        Exports the current sheet as an image.
         """
-        wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|GIF "+
-               "(*.gif)|*.gif|BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
-        dlg = wx.FileDialog(self, "Export data to...", os.getcwd(),
-                style=wx.SAVE | wx.OVERWRITE_PROMPT, wildcard=wc)
+        wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|"+
+               "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
+        dlg = wx.FileDialog(self, "Export data to...", style=wx.SAVE |
+                             wx.OVERWRITE_PROMPT, wildcard=wc)
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
             _name = os.path.splitext(filename)[1].replace(".", "")
 
-            types = {0: "png", 1: "jpg", 2: "gif", 3: "bmp", 4: "tiff"}
+            types = {0: "png", 1: "jpg", 2: "bmp", 3: "tiff"}
 
             if not os.path.splitext(filename)[1]:
                 _name = types[dlg.GetFilterIndex()]

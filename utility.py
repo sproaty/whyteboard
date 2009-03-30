@@ -206,7 +206,7 @@ class Utility(object):
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
-        
+
         # change program settings and update the Preview window
         self.saved = True
         self.colour = temp[0][0]
@@ -218,8 +218,8 @@ class Utility(object):
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
         self.gui.control.preview.Refresh()
-        self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)        
-        
+        self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
+
         # re-create tabs and its saved drawings
         for x, board in enumerate(temp[1]):
             wb = Whyteboard(self.gui.tabs)
@@ -231,15 +231,13 @@ class Utility(object):
             self.gui.notes.add_tab()
 
             for shape in temp[1][board]:
-                shape.board = wb
+                shape.board = wb  # restore board
                 shape.load()  # restore unpickleable settings
                 wb.add_shape(shape)
-                
             wb.redraw_all()
-                      
 
         # close progress bar, handle older file versions gracefully
-        wx.PostEvent(self.gui, self.gui.LoadEvent())  
+        wx.PostEvent(self.gui, self.gui.LoadEvent())
 
         try:
             version = temp[0][4]
@@ -279,10 +277,10 @@ class Utility(object):
         if _file is None:
             _file = self.temp_file
 
+        # grab user's home path; $HOME/.appName
         std_paths = wx.StandardPaths.Get()
-        path = wx.StandardPaths.GetUserLocalDataDir(std_paths)  # $HOME/.appName
+        path = wx.StandardPaths.GetUserLocalDataDir(std_paths)
         path = os.path.join(path, "wtbd-tmp", "")  # "" forces slash at end
-
 
         # Create a random filename using letters and numbers
         alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@$%" +
@@ -354,11 +352,10 @@ class Utility(object):
         _name = os.path.splitext(filename)[1].replace(".", "").lower()
 
         types = {"png": wx.BITMAP_TYPE_PNG, "jpg": wx.BITMAP_TYPE_JPEG, "jpeg":
-                 wx.BITMAP_TYPE_JPEG, "bmp": wx.BITMAP_TYPE_BMP, "gif":
-                 wx.BITMAP_TYPE_GIF,  "tiff": wx.BITMAP_TYPE_TIF, "pcx":
-                 wx.BITMAP_TYPE_PCX }
+                 wx.BITMAP_TYPE_JPEG, "bmp": wx.BITMAP_TYPE_BMP, "tiff":
+                 wx.BITMAP_TYPE_TIF, "pcx": wx.BITMAP_TYPE_PCX }
 
-        const = types[_name]
+        const = types[_name]  # grab the right image type from dict. above
 
         context = wx.BufferedDC(None, self.gui.board.buffer, wx.BUFFER_VIRTUAL_AREA)
         memory = wx.MemoryDC()
@@ -367,7 +364,7 @@ class Utility(object):
         memory.SelectObject(bitmap)
         memory.Blit(0, 0, x, y, context, 0, 0)
         memory.SelectObject(wx.NullBitmap)
-        bitmap.SaveFile(filename, const)
+        bitmap.SaveFile(filename, const)  # write to disk
 
 
     def cleanup(self):
@@ -396,6 +393,7 @@ class Utility(object):
                 self.im_location = "convert"
         elif system() == "Windows":
 
+            # try and read preference file from home directory
             std_paths = wx.StandardPaths.Get()
             path = wx.StandardPaths.GetUserLocalDataDir(std_paths)
 
@@ -407,10 +405,12 @@ class Utility(object):
                 dlg = FindIM(self, self.gui)
                 dlg.ShowModal()
                 if self.im_location:
+                    # save the ImageMagick directory location
                     loc = self.im_location.replace("convert.exe", "")
                     _file = open(path, "w")
                     _file.write("imagemagick_location=" + loc)
             else:
+                # verify loaded file's IM directory is valid
                 for pref in open(path, "r"):
                     self.check_im_path(pref.split("=")[1])
 
@@ -435,16 +435,16 @@ class FileDropTarget(wx.FileDropTarget):
     """
     Implements drop target functionality to receive files
     """
-    def __init__(self, obj):
+    def __init__(self, gui):
         wx.FileDropTarget.__init__(self)
-        self.obj = obj
+        self.gui = gui
 
 
     def OnDropFiles(self, x, y, filenames):
         """
         Passes the first file to the load file method to handle
         """
-        self.obj.do_open(filenames[0])
+        self.gui.do_open(filenames[0])
 
 #----------------------------------------------------------------------
 

@@ -43,10 +43,10 @@ class History(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         _max = len(gui.board.shapes)+50
-        self.slider = wx.Slider(self, minValue=1, maxValue=_max, size=(200, 50),
-                    style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL )
+        #self.slider = wx.Slider(self, minValue=1, maxValue=_max, size=(200, 50),
+        #            style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL )
 
-        self.slider.SetTickFreq(5, 1)
+        #self.slider.SetTickFreq(5, 1)
 
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
         btn_stop = wx.Button(self, label="Stop", size=(45, 30) )
@@ -70,8 +70,8 @@ class History(wx.Dialog):
         #btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
 
 
-        sizer.Add(self.slider, 0, wx.ALL, 5)
-        sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
+        #sizer.Add(self.slider, 0, wx.ALL, 5)
+        sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
         sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE, 5)
         #sizer.Add(btnSizer, 0, wx.LEFT | wx.TOP | wx.RIGHT | wx.ALIGN_CENTRE, 5)
 
@@ -183,7 +183,6 @@ class History(wx.Dialog):
         Called when the dialog is closed; stops the replay and ends the modal
         view, allowing the GUI to Destroy() the dialog.
         """
-        print '....'
         self.stop()
         self.EndModal(1)
 
@@ -246,12 +245,13 @@ class TextInput(wx.Dialog):
         """
         Standard constructor - sets text to supplied text variable, if present.
         """
-        wx.Dialog.__init__(self, gui, title="Enter text",
+        wx.Dialog.__init__(self, gui, title="Enter text", pos=(200, 200),
                             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+
         self.gui = gui
         self.note = None
         self.ctrl = wx.TextCtrl(self, style=wx.TE_RICH2 | wx.TE_MULTILINE,
-                                                    size=(250, 100))
+                                                    size=(300, 120))
         extent = self.ctrl.GetFullTextExtent("Hy")
         lineHeight = extent[1] + extent[3]
         self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
@@ -328,14 +328,15 @@ class TextInput(wx.Dialog):
 
     def update_canvas(self, event=None):
         """
-        Updates the canvas with the inputted text
+        Updates the canvas with the inputted text. We want to work with a copy
+        of the shape, not the actual shape.
         """
         if self.note:
-            shape = self.note
+            shape = copy(self.note)
             board = shape.board
         else:
             board = self.gui.board
-            shape = board.shape
+            shape = copy(board.shape)
         board.redraw_all()
 
         dc = wx.BufferedDC(wx.ClientDC(board), board.buffer)
