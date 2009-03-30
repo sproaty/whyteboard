@@ -186,10 +186,6 @@ class History(wx.Dialog):
         self.stop()
         self.EndModal(1)
 
-    def on_key_down(self, event):
-        if event.GetKeyCode() == wx.K_ESCAPE:
-            self.on_close()
-
     def scroll(self, event):
         pass
 
@@ -501,13 +497,13 @@ class IntValidator(wx.PyValidator):
     def Clone(self):
         return IntValidator()
 
-    def TransferFromWindow(sel):
+    def TransferFromWindow(self):
         """
         Need to override to stop a message box popping up
         """
         return True
 
-    def TransferToWindow(sel):
+    def TransferToWindow(self):
         """
         Need to override to stop a message box popping up
         """
@@ -552,7 +548,7 @@ class About(wx.Dialog):
         Displays the HTML box with various constraints.
         """
         wx.Dialog.__init__(self, parent, title='About Whyteboard',
-                           size=(420, 465))
+                           size=(420, 450))
 
         text = '''
 <html><body bgcolor="#6699CC">
@@ -571,8 +567,7 @@ annotation of PDF and PostScript documents, and most image formats.</p>
 
 <p>Whyteboard is based on a demonstration application for wxPython; SuperDoodle,
 by Robin Dunn, &copy; 1997-2006.</p>
-<p>Modified by Steven Sproat, &copy; 2009.<br />
-Many thanks to the helpful users in #python on FreeNode!</p>
+<p>Modified by Steven Sproat, &copy; 2009.<p>
 </body></html>'''
 
         html = wx.html.HtmlWindow(self, -1)

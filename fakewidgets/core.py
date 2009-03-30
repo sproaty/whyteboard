@@ -63,6 +63,10 @@ class EmptyIcon(object):
         self.calls.append(attr)
         return lambda *args, **kwds: None
 
+class EmptyBitmap(object):
+    def __init__(self, *args, **kwds):
+        self.calls = []
+
 class Bitmap(object):
     def __init__(self, filename=None, flag=None):
         self.filename = filename
@@ -101,18 +105,20 @@ class Font(object):
         self.calls.append(attr)
         return lambda *args, **kwds: None
 
-def Pen(object):
-    def __init__(self, bill):
-        pass
+class Pen(object):
+    def __init__(self, *args, **kwds):
+        self.__dict__.update(kwds)
+        self.calls = []
 
+class Brush(object):
+    def __init__(self, *args, **kwds):
+        self.__dict__.update(kwds)
+        self.calls = []
 
-def Brush(object):
-    def __init__(self, style):
-        pass
-
-def StockCursor(object):
-    def __init__(self, style):
-        pass
+class StockCursor(object):
+    def __init__(self, *args, **kwds):
+        self.__dict__.update(kwds)
+        self.calls = []
 
 class ImageList(object):
     def __init__(self, width, height, *args):
@@ -131,8 +137,29 @@ class ImageList(object):
         self.calls.append(attr)
         return lambda *args, **kwds: None
 
+class DC(object):
+    def __init__(self, *args, **kwds):
+        self.__dict__.update(kwds)
+        self.calls = []
+
+    def __getattr__(self, attr):
+        """Just fake any other methods"""
+        self.calls.append(attr)
+        return lambda *args, **kwds: None
+
+class BufferedDC(DC):
+    pass
+
+class PaintDC(DC):
+    pass
+
+class ClientDC(DC):
+    pass
+
 def BitmapFromIcon(icon):
     return Bitmap()
+
+
 
 ############
 # Windows
@@ -154,6 +181,15 @@ class Window(object):
 
     def Disable(self):
         self.Enabled=False
+
+    def Show(self):
+        pass
+
+    def Refresh(self):
+        pass
+
+    def RefreshRect(self):
+        pass
 
     def Destroy(self):
         pass
@@ -186,11 +222,19 @@ class Window(object):
         return Sizer()
 
     def GetParent(self):
-        return Window(None)
+        return self.parent
+
+    def SetBackgroundColour(self, *size):
+        pass
+    def ClearBackground(self):
+        pass
 
 
 class ScrolledWindow(Window):
     def SetVirtualSize(self, *size):
+        pass
+
+    def SetVirtualSizeHints(self, *size):
         pass
 
     def SetScrollRate(self, *size):
@@ -199,7 +243,26 @@ class ScrolledWindow(Window):
     def SetVirtualSize(self, *size):
         pass
 
-    def SetBackgroundColour(self, *size):
+class Panel(Window):
+    def __init__(self, *args, **kwds):
+        Window.__init__(self, *args, **kwds)
+
+    def __getattr__(self, attr):
+        """Just fake any other methods"""
+        self.calls.append(attr)
+        return lambda *args, **kwds: None
+
+class ScrolledPanel(Panel):
+    def SetVirtualSize(self, *size):
+        pass
+
+    def SetVirtualSizeHints(self, *size):
+        pass
+
+    def SetScrollRate(self, *size):
+        pass
+
+    def SetVirtualSize(self, *size):
         pass
 
 ############
@@ -388,27 +451,30 @@ class StatusBar(Window):
         self.calls.append(attr)
         return lambda *args, **kwds: None
 
-class Panel(Window):
-    def __init__(self, *args, **kwds):
-        Window.__init__(self, *args, **kwds)
-
-    def __getattr__(self, attr):
-        """Just fake any other methods"""
-        self.calls.append(attr)
-        return lambda *args, **kwds: None
 
 class Notebook(Window):
-    def __init__(self, *args, **kwds):
-        Window.__init__(self, *args, **kwds)
+    def __init__(self, parent, *args, **kwds):
+        Window.__init__(self,parent, *args, **kwds)
         self.pages = []
+        self.parent = parent
 
     def AddPage(self, page, title=""):
         self.pages.append((page, title))
 
+    def GetSelection(self):
+        pass
+
     def GetParent(self):
         from tools import Pen, Rectangle
         thing = Window(None)
-        util = Window(None)
+        util = Window(self.parent)
+
+        thing.panel = Panel(self.parent)
+        thing.notes = Panel(self.parent)
+        thing.thumbs = ScrolledPanel(self.parent)
+        thing.tabs = Notebook(None)
+        thing.control = Window(self.parent)
+        thing.control.preview = Window(self.parent)
 
         util.items = [Pen, Rectangle]
         util.tool = 1

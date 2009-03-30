@@ -70,13 +70,13 @@ class ControlPanel(wx.Panel):
         for colour in self.colour_list:
             bmp = self.make_bitmap(colour)
             b = wx.BitmapButton(self, bitmap=bmp)
-            method = lambda evt, col=colour: self.change_colour(evt, col)
+            method = lambda evt, col = colour: self.change_colour(evt, col)
             b.Bind(wx.EVT_BUTTON, method)
             grid.Add(b, 0)
 
         choices = ''.join(str(i) + " " for i in range(1, 16) ).split()
 
-        self.thickness = wx.ComboBox(self, choices=choices, size=(20, 20),
+        self.thickness = wx.ComboBox(self, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
         self.thickness.SetToolTip(wx.ToolTip("Sets the drawing thickness"))
@@ -189,7 +189,7 @@ class DrawingPreview(wx.Window):
         wx.Window.__init__(self, gui, style=wx.RAISED_BORDER)
         self.gui = gui
         self.SetBackgroundColour(wx.WHITE)
-        self.SetSize((40, 40))
+        self.SetSize((45, 45))
         self.Bind(wx.EVT_PAINT, self.on_paint)
         self.SetToolTip(wx.ToolTip("A preview of your drawing"))
 

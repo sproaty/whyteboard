@@ -266,7 +266,7 @@ class Circle2(Ellipse):
 
     def motion(self, x, y):
         #print x, y
-        super(Ellipse, self).motion(x, y)
+        super(Circle2, self).motion(x, y)
         #print self.x, self.y, self.width, self.height
         if self.height < self.width:
             self.height = self.width
@@ -606,7 +606,6 @@ class Select(Tool):
 
     def motion(self, x, y):
         if self.dragging:
-            print self.shape.x, self.shape.y
             self.shape.x = x
             self.shape.y = y
 
@@ -639,21 +638,21 @@ class Select(Tool):
 class Eraser(Pen):
     """
     Erases stuff. Has a custom cursor from a drawn rectangle on a DC, turned
-    into an image and into a cursor.
+    into an image then into a cursor.
     """
     def __init__(self, board, colour, thickness):
-        cursor = wx.EmptyBitmap(thickness + 1, thickness + 1)
+        cursor = wx.EmptyBitmap(thickness + 2, thickness + 2)
         memory = wx.MemoryDC()
         memory.SelectObject(cursor)
         memory.SetPen(wx.Pen((255, 255, 255), 1))  # border
         memory.SetBrush(wx.Brush((0, 0, 0)))
-        memory.DrawRectangle(0, 0, thickness + 1, thickness + 1)
+        memory.DrawRectangle(0, 0, thickness + 2, thickness + 2)
         memory.SelectObject(wx.NullBitmap)
 
         img = wx.ImageFromBitmap(cursor)
         cursor = wx.CursorFromImage(img)
 
-        Pen.__init__(self, board, (255, 255, 255), thickness, cursor)
+        Pen.__init__(self, board, (255, 255, 255), thickness + 1, cursor)
 
     def preview(self, dc, width, height):
         thickness = self.thickness + 1
@@ -664,7 +663,7 @@ class Eraser(Pen):
 #---------------------------------------------------------------------
 
 items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note, RoundRect,
-        Eyedrop, Eraser]
+        Eyedrop,  Eraser]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

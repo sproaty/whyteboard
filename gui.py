@@ -169,7 +169,7 @@ class GUI(wx.Frame):
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
 
         ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }
-        [self.Bind(wx.EVT_MENU, lambda evt, text=key: self.on_open(evt, text),
+        [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
@@ -330,7 +330,6 @@ class GUI(wx.Frame):
         Sets the GUI's board attribute to be the selected Whyteboard.
         """
         self.board = self.tabs.GetCurrentPage()
-        current = self.current_tab
         self.current_tab = self.tabs.GetSelection()
         #self.thumbs.Scroll(-1, self.current_tab)
         self.update_menus()  # update redo/undo

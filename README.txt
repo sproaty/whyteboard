@@ -1,6 +1,6 @@
 Whyteboard 0.36 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 25 Mar 2009 20:42:09 GMT
+Mon 30 Mar 2009 17:04:19 BST
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -25,7 +25,7 @@ Windows: loading in a .wtbd file, a new drawing will overwrite the loaded one
 
 ---- VERSION HISTORY ----
 
-xx Mar 2009 - * Windows UI improvement: change the thickness by scrolling the
+30 Mar 2009 - * Windows UI improvement: change the thickness by scrolling the
                 mousewheel on the drop-down box, no need to click it. (this is
                 the default behaviour under GNOME)
               * Next/Previous sheet in the "Sheets" menu (which previously was

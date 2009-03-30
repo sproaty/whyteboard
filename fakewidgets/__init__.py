@@ -17,7 +17,5 @@ Example:
 """
 
 import core
-import aui
 import html
-import wizard
 import sized

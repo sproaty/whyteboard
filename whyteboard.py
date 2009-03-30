@@ -189,7 +189,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.SetCursor(self.shape.cursor)
         else:
             self.SetCursor(wx.StockCursor(self.shape.cursor) )
-        self.GetParent().GetParent().control.preview.Refresh()
+        parent.control.preview.Refresh()
 
 
     def add_shape(self, shape, pos=None):
