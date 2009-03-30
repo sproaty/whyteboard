@@ -348,9 +348,12 @@ class Text(Rectangle):
 
         dlg.transfer_data(self)  # grab font and text data
         self.font_data = self.font.GetNativeFontInfoDesc()
-        self.board.add_shape(self)
-        self.update_scroll()
-        return True
+
+        if self.text:
+            self.board.add_shape(self)
+            self.update_scroll()
+            return True
+        return
 
 
     def update_scroll(self, redraw=True):
@@ -375,7 +378,11 @@ class Text(Rectangle):
         self.extent = dummy.GetTextExtent(self.text)
         dummy.Destroy()
 
+
     def restore_font(self):
+        """
+        Updates the text's font to the saved font data
+        """
         self.font = wx.Font(0, 0, 0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
 
@@ -544,27 +551,39 @@ class Select(Tool):
 
 
     def button_down(self, x, y):
-        print '-------'
-        print x, y
-        print '-------'
+        #print x, y
+        #print '-------'
         for count, shape in enumerate(self.board.shapes):
-            if isinstance(shape, Rectangle):
+            found = False
+
+            if isinstance(shape, Text):
+                width = shape.x + shape.extent[0]
+                height = shape.y + shape.extent[1]
+                print "%s -- %s" % (x, shape.x)
+                print "%s -- %s" % (y, shape.y)
+
+                if x > shape.x and x < width and y > shape.y and y < height:
+                    found = True
+
+            elif isinstance(shape, Rectangle):
                 rect_x2_1 = shape.width + shape.x
                 rect_y2_1 = shape.height + shape.y
-                print str(count) +": " + str(shape.x)+", "+str(rect_x2_1)+" | "+str(shape.y)+", "+str(rect_y2_1)
+                #print str(count) +": " + str(shape.x)+", "+str(rect_x2_1)+" | "+str(shape.y)+", "+str(rect_y2_1)
 
                 rect_x2_2 = shape.x - shape.width
                 rect_y2_2 = shape.y - shape.height
 
-                print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_2)
+                #print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_2)
 
                 if ( ((x > rect_x2_1 and x < shape.x)
                     and (y < rect_y2_1 and y > shape.y))
                 or ((x > rect_x2_2 and x > shape.x)
                     and (y < rect_y2_1 and y > shape.y)) ):
-                    self.shape = self.board.shapes[count]
-                    self.dragging = True
-                    self.count = count
+                        found = True
+            if found:
+                self.shape = self.board.shapes[count]
+                self.dragging = True
+                self.count = count
 
 
     def motion(self, x, y):
@@ -583,13 +602,14 @@ class Select(Tool):
         !!!!!
         """
         if self.dragging:
-            print self.board.shapes
-            del self.board.shapes[self.count]
-            print self.board.shapes
-            self.board.add_shape(self)
+            #print self.board.shapes
+            #del self.board.shapes[self.count]
+            #print self.board.shapes
+            #self.board.add_shape(self)
             self.board.redraw_all()
-            self.board.Refresh()
+            #self.board.Refresh()
             self.dragging = False
+            #print self.shape.x
 
 #---------------------------------------------------------------------
 
@@ -618,7 +638,7 @@ class Eraser(Pen):
 #---------------------------------------------------------------------
 
 items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note, RoundRect,
-        Eyedrop, Eraser]
+        Eyedrop, Select, Eraser]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

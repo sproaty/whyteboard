@@ -98,7 +98,21 @@ class ControlPanel(wx.Panel):
         self.SetSizer(box)
         self.SetAutoLayout(True)
         box.Fit(self)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
 
+
+    def scroll(self, event):
+        box = self.thickness
+        val = box.GetSelection()
+        if event.GetWheelRotation() > 0:  # down
+            val -= 1
+            if val <= 0:
+                val = 0
+        else:
+            val += 1
+
+        box.SetSelection(val)
+        self.change_thickness()
 
     def make_bitmap(self, colour):
         bmp = wx.EmptyBitmap(15, 15)
@@ -149,7 +163,7 @@ class ControlPanel(wx.Panel):
         """
         Changes thickness and updates the preview window.
         """
-        self.gui.util.thickness = event.GetSelection()
+        self.gui.util.thickness = self.thickness.GetSelection()
         self.gui.board.select_tool()
         self.preview.Refresh()
 
@@ -171,7 +185,6 @@ class DrawingPreview(wx.Window):
         self.SetSize((45, 45))
         self.Bind(wx.EVT_PAINT, self.paint)
         self.SetToolTip(wx.ToolTip("A preview of your drawing"))
-
 
     def paint(self, event=None):
         """
@@ -195,8 +208,7 @@ class SidePanel(wx.Panel):
     """
     def __init__(self, gui):
         wx.Panel.__init__(self, gui, style=wx.RAISED_BORDER)
-        self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
-                                                  wx.CP_NO_TLW_RESIZE)
+
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
         self.gui = gui
@@ -297,6 +309,7 @@ class Notes(wx.Panel):
         if isinstance(item, int):
             self.gui.tabs.SetSelection(item)
         else:
+            text = item.text
             dlg = TextInput(self.gui, item)
 
             if dlg.ShowModal() == wx.ID_CANCEL:
@@ -304,8 +317,13 @@ class Notes(wx.Panel):
             else:
                 dlg.transfer_data(item)  # grab font and text data
                 item.font_data = item.font.GetNativeFontInfoDesc()
-                item.update_scroll()
-                self.tree.SetItemText(event.GetItem(),
+
+                if not item.text:
+                    item.text = text
+                    self.gui.board.redraw_all()
+                else:
+                    item.update_scroll()
+                    self.tree.SetItemText(event.GetItem(),
                                       item.text.replace("\n", " ")[:15])
 
 #----------------------------------------------------------------------

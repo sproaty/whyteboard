@@ -42,9 +42,12 @@ class Whyteboard(wx.ScrolledWindow):
         """
         wx.ScrolledWindow.__init__(self, tab, style=wx.CLIP_CHILDREN)
         self.virtual_size = (1000, 1000)
+        self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.virtual_size)
+
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
+        self.ClearBackground()
         self.scroller = wx.lib.dragscroller.DragScroller(self)
 
         self.tab = tab
@@ -312,33 +315,36 @@ class Whyteboard(wx.ScrolledWindow):
         self.redraw_all()
 
 
-    def update_scrollbars(self, new_size):
+    def update_scrollbars(self, new_size, ignore_min=False):
         """
         Updates the Whyteboard's scrollbars if the loaded image/text string
         is bigger than the scrollbar's current size.
+        Ignore_min is used when the user is resizing the canvas manually
         """
         width, height = new_size
-        if width > self.virtual_size[0]:
-            x = width
-        else:
-            x = self.virtual_size[0]
+        update = True
+        if not ignore_min:
+            if width > self.virtual_size[0]:
+                x = width
+            else:
+                x = self.virtual_size[0]
 
-        if height > self.virtual_size[1]:
-            y = height
-        else:
-            y =  self.virtual_size[1]
+            if height > self.virtual_size[1]:
+                y = height
+            else:
+                y =  self.virtual_size[1]
 
-        update = False
-        #  update the scrollbars and the board's buffer size
-        if x > self.virtual_size[0]:
-            update = True
-        elif y > self.virtual_size[1]:
-            update = True
+            update = False
+            #  update the scrollbars and the board's buffer size
+            if x > self.virtual_size[0]:
+                update = True
+            elif y > self.virtual_size[1]:
+                update = True
 
         if update:
             self.virtual_size = (x, y)
-            self.SetVirtualSize((x, y))
             self.buffer = wx.EmptyBitmap(*(x, y))
+            self.SetVirtualSize((x, y))
             self.redraw_all()
         else:
             return False

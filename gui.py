@@ -34,7 +34,7 @@ import sys
 import icon
 from whyteboard import Whyteboard
 from utility import Utility, FileDropTarget
-from dialogs import About, History, ProgressDialog
+from dialogs import About, History, ProgressDialog, Resize
 from panels import ControlPanel, SidePanel
 
 
@@ -43,6 +43,9 @@ from panels import ControlPanel, SidePanel
 ID_EXPORT = wx.NewId()
 ID_THUMBS = wx.NewId()
 ID_HISTORY = wx.NewId()
+ID_RESIZE = wx.NewId()
+ID_PREV = wx.NewId()
+ID_NEXT = wx.NewId()
 ID_CLEAR_ALL = wx.NewId()      # remove all from current tab
 ID_CLEAR_TABS = wx.NewId()     # remove all drawings from all tabs, keep images
 ID_CLEAR_ALL_TABS = wx.NewId() # remove all from all tabs
@@ -57,8 +60,8 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    title = "Whyteboard"
-    version = "0.35.9"
+    version = "0.36"
+    title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
@@ -108,9 +111,9 @@ class GUI(wx.Frame):
         do_bindings/make_toolbar
         """
         _file = wx.Menu()
-        history = wx.Menu()
+        edit = wx.Menu()
         view = wx.Menu()
-        image = wx.Menu()
+        sheets = wx.Menu()
         _help = wx.Menu()
         self.menu = wx.MenuBar()
         imp = wx.Menu()
@@ -118,37 +121,40 @@ class GUI(wx.Frame):
         imp.Append(ID_PS, 'PostScript')
         imp.Append(ID_IMG, 'Image')
 
-
-        _file.Append(wx.ID_NEW, "New &Sheet\tCtrl-T", "Add a new sheet")
-        _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
-        _file.Append(wx.ID_CLOSE, "&Remove Sheet\tCtrl-W", "Close the current sheet")
+        _file.Append(wx.ID_NEW, "&New Sheet\tCtrl+T", "Add a new sheet")
+        _file.Append(wx.ID_OPEN, "&Open\tCtrl+O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
+        _file.Append(wx.ID_CLOSE, "&Remove Sheet\tCtrl+W", "Close the current sheet")
         _file.AppendSeparator()
-        _file.Append(wx.ID_SAVE, "&Save\tCtrl-S", "Save the Whyteboard data")
-        _file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl-Shift-S", "Save the Whyteboard data in a new file")
-        _file.AppendMenu(-1, '&Import File', imp)
-        _file.Append(ID_EXPORT, "&Export Sheet\tCtrl-E", "Export the current sheet to an image file")
+        _file.Append(wx.ID_SAVE, "&Save\tCtrl+S", "Save the Whyteboard data")
+        _file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl+Shift+S", "Save the Whyteboard data in a new file")
+        _file.AppendMenu(+1, '&Import File', imp)
+        _file.Append(ID_EXPORT, "&Export Sheet\tCtrl+E", "Export the current sheet to an image file")
         _file.AppendSeparator()
-        _file.Append(wx.ID_EXIT, "Quit\tAlt-F4", "Quit Whyteboard")
+        _file.Append(wx.ID_EXIT, "&Quit\tAlt+F4", "Quit Whyteboard")
 
-        history.Append(wx.ID_UNDO, "&Undo\tCtrl-Z", "Undo the last operation")
-        history.Append(wx.ID_REDO, "&Redo\tCtrl-Y", "Redo the last undone operation")
-        history.AppendSeparator()
-        history.Append(ID_HISTORY, "&History Viewer\tCtrl-H", "View and replay your drawing history")
+        edit.Append(wx.ID_UNDO, "&Undo\tCtrl+Z", "Undo the last operation")
+        edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
+        #edit.AppendSeparator()
+        #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
 
+        view.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
         view.Append(ID_THUMBS, " &Toggle Side Panel\tF9", "Toggle the side panel on or off", kind=wx.ITEM_CHECK)
         view.Check(ID_THUMBS, True)
 
-        image.Append(wx.ID_CLEAR, "&Clear Sheets' Drawings", "Clear drawings on the current sheet (keep images)")
-        image.Append(ID_CLEAR_ALL, "Clear &Sheet", "Clear the current sheet")
-        image.AppendSeparator()
-        image.Append(ID_CLEAR_TABS, "Clear All Sheets' &Drawings", "Clear all sheets' drawings (keep images)")
-        image.Append(ID_CLEAR_ALL_TABS, "Clear &All Sheets", "Clear all sheets")
+        sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
+        sheets.Append(ID_PREV, "&Previous Sheet\tCtrl+Shift+Tab", "Go to the previous sheet")
+        sheets.AppendSeparator()
+        sheets.Append(wx.ID_CLEAR, "&Clear Sheets' Drawings", "Clear drawings on the current sheet (keep images)")
+        sheets.Append(ID_CLEAR_ALL, "Clear &Sheet", "Clear the current sheet")
+        sheets.AppendSeparator()
+        sheets.Append(ID_CLEAR_TABS, "Clear All Sheets' &Drawings", "Clear all sheets' drawings (keep images)")
+        sheets.Append(ID_CLEAR_ALL_TABS, "Clear &All Sheets", "Clear all sheets")
 
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about Whyteboard")
         self.menu.Append(_file, "&File")
-        self.menu.Append(history, "&History")
+        self.menu.Append(edit, "&Edit")
         self.menu.Append(view, "&View")
-        self.menu.Append(image, "&Image")
+        self.menu.Append(sheets, "&Sheets")
         self.menu.Append(_help, "&Help")
         self.SetMenuBar(self.menu)
 
@@ -167,13 +173,14 @@ class GUI(wx.Frame):
                     id=ids[key]) for key in ids]
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
-                  "undo", "redo", "history", "thumbs", "clear", "clear_all",
-                  "clear_tabs", "clear_all_tabs", "about", "exit"]
+                  "undo", "redo", "history", "thumbs", "resize", "prev", "next",
+                  "clear", "clear_all", "clear_sheets", "clear_all_sheets",
+                  "about", "exit"]
 
         IDs = [wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE, wx.ID_SAVEAS,
                ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, ID_THUMBS,
-               wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_TABS, ID_CLEAR_ALL_TABS,
-               wx.ID_ABOUT, wx.ID_EXIT]
+               ID_RESIZE, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
+               ID_CLEAR_TABS, ID_CLEAR_ALL_TABS, wx.ID_ABOUT, wx.ID_EXIT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -341,8 +348,8 @@ class GUI(wx.Frame):
         if self.tab_count:
             self.notes.remove(self.current_tab)
             self.thumbs.remove(self.current_tab)
-            self.tabs.RemovePage(self.current_tab)
             self.tab_count -= 1
+            self.tabs.RemovePage(self.current_tab)
 
             for x in range(self.current_tab, self.tab_count):
                 self.tabs.SetPageText(x, "Sheet " + str(x + 1))
@@ -437,37 +444,58 @@ class GUI(wx.Frame):
 
     def update_menus(self):
         """
-        Enables/disables the undo/redo button as appropriate.
+        Enables/disables the undo/redo/next/prev button as appropriate.
         """
         undo = False
         redo = False
+        next = False
+        prev = False
+
         if self.board.redo_list:
             redo = True
         if self.board.undo_list:
             undo = True
+        if self.current_tab > 0:
+            prev = True
+        if self.tab_count > 1 and (self.current_tab + 1 < self.tab_count):
+            next = True
 
         self.tb.EnableTool(wx.ID_UNDO, undo)
         self.menu.Enable(wx.ID_UNDO, undo)
         self.tb.EnableTool(wx.ID_REDO, redo)
         self.menu.Enable(wx.ID_REDO, redo)
+        self.menu.Enable(ID_PREV, prev)
+        self.menu.Enable(ID_NEXT, next)
 
+    def on_prev(self, event=None):
+        """
+        Changes to the previous sheet
+        """
+        self.tabs.SetSelection(self.current_tab - 1)
+
+    def on_next(self, event=None):
+        """
+        Changes to the next sheet
+        """
+        self.tabs.SetSelection(self.current_tab + 1)
 
     def on_clear(self, event=None):
         """
-        Clears *** current tab's *** drawings, except images.
+        Clears *** current sheet's *** drawings, except images.
         """
         self.board.clear(keep_images=True)
         self.update_menus()
 
+
     def on_clear_all(self, event=None):
         """
-        Clears *** current tab ***
+        Clears *** current sheet ***
         """
         self.board.clear()
         self.update_menus()
 
 
-    def on_clear_tabs(self, event=None):
+    def on_clear_sheets(self, event=None):
         """
         Clears *** all tabs' *** drawings, except images.
         """
@@ -476,7 +504,7 @@ class GUI(wx.Frame):
         self.update_menus()
 
 
-    def on_clear_all_tabs(self, event=None):
+    def on_clear_all_sheets(self, event=None):
         """
         Clears *** all tabs ***
         """
@@ -484,6 +512,10 @@ class GUI(wx.Frame):
             self.tabs.GetPage(tab).clear()
         self.update_menus()
 
+    def on_resize(self, event=None):
+        dlg = Resize(self)
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def on_about(self, event=None):
         dlg = About(self)

@@ -22,6 +22,7 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import wx
 import wx.html
+import string
 from copy import copy
 
 import tools
@@ -34,7 +35,8 @@ class History(wx.Dialog):
     """
 
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui, title="History Player", size=(400, 200))
+        wx.Dialog.__init__(self, gui, title="History Player", size=(400, 200),
+                           style=wx.CLOSE_BOX | wx.CAPTION)
         self.gui = gui
         self.looping = False
         self.paused = False
@@ -54,7 +56,12 @@ class History(wx.Dialog):
         historySizer.Add(btn_pause, 0,  wx.ALL, 2)
         historySizer.Add(btn_stop, 0,  wx.ALL, 2)
 
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+        self.cancelButton.SetDefault()
 
+
+        btnSizer = wx.StdDialogButtonSizer()
+        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
         #self.okButton = wx.Button(self, wx.ID_OK, "&OK")
         #self.okButton.SetDefault()
         #self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
@@ -65,6 +72,7 @@ class History(wx.Dialog):
 
         sizer.Add(self.slider, 0, wx.ALL, 5)
         sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
+        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE, 5)
         #sizer.Add(btnSizer, 0, wx.LEFT | wx.TOP | wx.RIGHT | wx.ALIGN_CENTRE, 5)
 
         self.SetSizer(sizer)
@@ -75,6 +83,7 @@ class History(wx.Dialog):
         btn_pause.Bind(wx.EVT_BUTTON, self.pause)
         btn_stop.Bind(wx.EVT_BUTTON, self.stop)
         self.Bind(wx.EVT_CLOSE, self.on_close)
+        self.cancelButton.Bind(wx.EVT_BUTTON, self.on_close)
         #self.slider.Bind(wx.EVT_SCROLL, self.scroll)
 
 
@@ -174,6 +183,7 @@ class History(wx.Dialog):
         Called when the dialog is closed; stops the replay and ends the modal
         view, allowing the GUI to Destroy() the dialog.
         """
+        print '....'
         self.stop()
         self.EndModal(1)
 
@@ -228,18 +238,18 @@ class ProgressDialog(wx.Dialog):
 
 class TextInput(wx.Dialog):
     """
-    Shows a text input screen.
+    Shows a text input screen, updates the canvas' text as text is being input
+    and has methods for
     """
 
     def __init__(self, gui, note=None):
         """
-        Standard constructor - sets text to supplied text variable.
+        Standard constructor - sets text to supplied text variable, if present.
         """
         wx.Dialog.__init__(self, gui, title="Enter text",
                             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
-
         self.gui = gui
-        self.text = ""  # track before/after changes for backspace
+        self.note = None
         self.ctrl = wx.TextCtrl(self, style=wx.TE_RICH2 | wx.TE_MULTILINE,
                                                     size=(250, 100))
         extent = self.ctrl.GetFullTextExtent("Hy")
@@ -248,6 +258,7 @@ class TextInput(wx.Dialog):
         self.font = self.ctrl.GetFont()
 
         if note:
+            self.note = note
             self.ctrl.SetValue(note.text)
             self.ctrl.SetForegroundColour(note.colour)
             self.font.SetNativeFontInfoFromString(note.font_data)
@@ -279,7 +290,8 @@ class TextInput(wx.Dialog):
 
         self.set_focus()
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
-        #self.Bind(wx.EVT_TEXT, self.update_board, self.ctrl)
+        self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
+        self.Bind(wx.EVT_BUTTON, self.on_close, self.cancelButton)
 
 
     def on_font(self, evt):
@@ -290,7 +302,6 @@ class TextInput(wx.Dialog):
         data = wx.FontData()
         data.EnableEffects(True)
         data.SetInitialFont(self.font)
-
         dlg = wx.FontDialog(self, data)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -300,37 +311,44 @@ class TextInput(wx.Dialog):
             self.ctrl.SetFont(self.font)
             # Update dialog for the new height of the text
             self.GetSizer().Fit(self)
-            #self.gui.board.redraw_all()
-            #wx.MilliSleep(50)
-            #wx.SafeYield()
-            #self.update_board()
+            self.update_canvas()
 
         dlg.Destroy()
         self.set_focus()
 
+
     def set_focus(self):
+        """
+        Sets the focus to the text and places the cursor at the end of the text
+        """
         selection = self.ctrl.GetSelection()
         self.ctrl.SetFocus()
         self.ctrl.SetSelection(*selection)
 
 
-    def update_board(self, event=None):
-        val = self.ctrl.GetValue()
-        #if len(self.text) > len(val):
-            #self.gui.board.redraw_all()
-            #wx.SafeYield()
-            #self.ctrl.SetFocus()
-        self.text = val
-        board = self.gui.board
-
+    def update_canvas(self, event=None):
+        """
+        Updates the canvas with the inputted text
+        """
+        if self.note:
+            shape = self.note
+            board = shape.board
+        else:
+            board = self.gui.board
+            shape = board.shape
+        board.redraw_all()
 
         dc = wx.BufferedDC(wx.ClientDC(board), board.buffer)
+        if isinstance(shape, tools.Note):
+            self.transfer_data(shape)
+            shape.find_extent()
+            dc.SetBrush(wx.Brush((255, 223, 120)))
+            dc.SetPen(wx.Pen((0, 0, 0), 1))
+            dc.DrawRectangle(shape.x - 10, shape.y - 10, *shape.extent)
 
-        dc.SetTextForeground(board.shape.colour)
+        dc.SetTextForeground(shape.colour)
         dc.SetFont(self.ctrl.GetFont())
-        dc.DrawText(val, board.shape.x, board.shape.y)
-        board.redraw_dirty(dc)
-
+        dc.DrawText(self.ctrl.GetValue(), shape.x, shape.y)
 
     def transfer_data(self, text_obj):
         """
@@ -339,6 +357,13 @@ class TextInput(wx.Dialog):
         text_obj.text = self.ctrl.GetValue()
         text_obj.font = self.font
 
+
+    def on_close(self, event):
+        """
+        Removes the preview by redrawing current shapes
+        """
+        self.gui.board.redraw_all()
+        self.Destroy()
 
 #----------------------------------------------------------------------
 
@@ -402,6 +427,120 @@ class FindIM(wx.Dialog):
 
 #----------------------------------------------------------------------
 
+class Resize(wx.Dialog):
+    """
+    Allows the user to resize a sheet's canvas
+    """
+
+    def __init__(self, gui):
+        """
+        Two text controls for inputting the size, limited to integers only
+        using a Validator class
+        """
+        wx.Dialog.__init__(self, gui, title="Resize Canvas")
+
+        self.gui = gui
+        gap = wx.LEFT | wx.TOP | wx.RIGHT
+        width, height = self.gui.board.GetVirtualSize()
+
+        csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
+        self.hctrl = wx.TextCtrl(self, validator = IntValidator())
+        self.wctrl = wx.TextCtrl(self, validator = IntValidator())
+        csizer.Add(wx.StaticText(self, label="Width:"), 0, wx.TOP | wx.ALIGN_RIGHT, 10)
+        csizer.Add(self.wctrl, 1, gap, 7)
+        csizer.Add(wx.StaticText(self, label="Height:"), 0, wx.TOP | wx.ALIGN_RIGHT, 7)
+        csizer.Add(self.hctrl, 1, gap, 7)
+
+        self.hctrl.SetValue(str(height))
+        self.wctrl.SetValue(str(width))
+
+        self.okButton = wx.Button(self, wx.ID_OK, "&OK")
+        self.okButton.SetDefault()
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+
+        btnSizer = wx.StdDialogButtonSizer()
+        btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
+        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(csizer, 0, gap, 7)
+        sizer.Add((10, 10)) # Spacer.
+        btnSizer.Realize()
+        sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
+
+        self.SetAutoLayout(True)
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+
+        self.okButton.Bind(wx.EVT_BUTTON, self.ok)
+
+
+    def ok(self, event):
+        """
+        Set the virtual canvas size
+        """
+        value = (int(self.wctrl.GetValue()), int(self.hctrl.GetValue()))
+        board = self.gui.board
+        board.SetVirtualSize(value)
+        #board.SetSize(value)
+        board.SetBackgroundColour("Grey")
+        board.ClearBackground()
+        self.Close()
+
+#----------------------------------------------------------------------
+
+class IntValidator(wx.PyValidator):
+    """
+    Only allows integer input for the resize text boxes
+    """
+    def __init__(self):
+        wx.PyValidator.__init__(self)
+        self.Bind(wx.EVT_CHAR, self.on_char)
+
+    def Clone(self):
+        return IntValidator()
+
+    def TransferFromWindow(sel):
+        """
+        Need to override to stop a message box popping up
+        """
+        return True
+
+    def TransferToWindow(sel):
+        """
+        Need to override to stop a message box popping up
+        """
+        return True
+
+    def Validate(self, win):
+        """
+        The actual validation method called on the input
+        """
+        tc = self.GetWindow()
+        val = tc.GetValue()
+
+        for x in val:
+            if x not in string.digits:
+                return False
+        return True
+
+
+    def on_char(self, event):
+        """
+        Ensure a keypress is a digit
+        """
+        key = event.GetKeyCode()
+
+        if key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255:
+            event.Skip()
+            return
+
+        if chr(key) in string.digits:
+            event.Skip()
+            return
+        return
+
+#----------------------------------------------------------------------
 
 class About(wx.Dialog):
     """
@@ -412,7 +551,7 @@ class About(wx.Dialog):
         Displays the HTML box with various constraints.
         """
         wx.Dialog.__init__(self, parent, title='About Whyteboard',
-                           size=(420, 380))
+                           size=(420, 465))
 
         text = '''
 <html><body bgcolor="#6699CC">
@@ -420,11 +559,17 @@ class About(wx.Dialog):
   <tr><td align="center"><h1>Whyteboard '''+ parent.version +'''</h1></td></tr>
  </table>
 
+<p><a href="http://code.google.com/p/whyteboard/wiki/UsingWhyteboard">View The
+Whyteboard Manual</a>.</p>
+
 <p>Whyteboard is a simple image annotation program, facilitating the
 annotation of PDF and PostScript documents, and most image formats.</p>
 
-<p>It is based on a demonstration application for wxPython; SuperDoodle, by
-Robin Dunn, &copy; 1997-2006.</p>
+<p>It offers a tabbed interface with live updating thumbnails for each "sheet".
+<br />You may replay your drawing history, and undo and redo actions.</p>
+
+<p>Whyteboard is based on a demonstration application for wxPython; SuperDoodle,
+by Robin Dunn, &copy; 1997-2006.</p>
 <p>Modified by Steven Sproat, &copy; 2009.<br />
 Many thanks to the helpful users in #python on FreeNode!</p>
 </body></html>'''

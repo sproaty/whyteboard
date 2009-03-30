@@ -1,4 +1,4 @@
-Whyteboard 0.35.9- a simple image, PDF and postscript file annotator
+Whyteboard 0.36 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Wed 25 Mar 2009 20:42:09 GMT
 
@@ -16,15 +16,26 @@ Run whyteboard.py or gui.py to launch the application, no installation needed!
 
 If nothing happens, try launching one of the scripts from the console:
 $ python whyteboard.py
-see what error occured and let me know at, <sproaty -at- gmail -dot- com>
+see what error occurred and let me know at, <sproaty -at- gmail -dot- com>
 
 ---- KNOWN BUGS ----
 
-Windows: when drawing an "outlined" shape (Rectangle/Ellipse/Circle/Line/Rounded
-Rectangle), the outline will mess up and appear oddly if the outline is dragged
-over itself. Currently looking into this, strangely it doesn't happen on Linux.
+Windows: loading in a .wtbd file doesn't set the correct Tool
+Windows: loading in a .wtbd file, a new drawing will overwrite the loaded one
 
 ---- VERSION HISTORY ----
+
+xx Mar 2009 - * Windows UI improvement: change the thickness by scrolling the
+                mousewheel on the drop-down box, no need to click it. (this is
+                the default behaviour under GNOME)
+              * Next/Previous sheet in the "Sheets" menu (which previously was
+                "Image") - Ctrl+Tab / Ctrl-Shift+Tab shortcut keys
+              * Resize canvas
+              * Menus renamed, organised differently
+              * Text/notes update on the canvas as you type
+              * Escape button exits "History" dialog
+              * Updated "About" menu
+              * Bugfix: cannot add a blank text/note object
 
 25 Mar 2009 - * Misc. UI improvements: more labels/small grid of drawing colours
               * Added eraser tool

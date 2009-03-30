@@ -1,4 +1,4 @@
-Whyteboard 0.35.9 - To do list
+Whyteboard 0.36 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Wed 25 Mar 2009 20:42:15 GMT
 
@@ -10,12 +10,13 @@ Wed 25 Mar 2009 20:42:15 GMT
 ---- NEW FEATURES ----
 
 -- see: https://blueprints.launchpad.net/whyteboard
+- Improved file sharing
+- History slider to jump through slide's replay
+- Rename tabs, undo tab close
 
 
 ---- IMPROVEMENTS AND THOUGHTS ----
 
--- Make the slider in the history dialog move forward/backwards through the
-   pen replay
 
 -- Make a loaded PDF/PS the background image, thus everything gets written over
    that image

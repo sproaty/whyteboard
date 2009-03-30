@@ -161,8 +161,6 @@ class Utility(object):
         """
         Loads in a file, passes it to convert if it is a convertable file,
         then either loads an image or unpickles a whyteboard file
-
-        Loading in a whyteboard file recursively calls this method.
         """
         if filename is None:
             filename = self.temp_file
@@ -184,7 +182,8 @@ class Utility(object):
 
     def load_wtbd(self, filename):
         """
-        Loads in a Whyteboard save file
+        Closes all tabs, loads in a Whyteboard save file into their proper
+        tab
         """
         temp = {}
         f = open(self.filename, 'r')
@@ -207,7 +206,7 @@ class Utility(object):
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
-
+        
         # change program settings and update the Preview window
         self.saved = True
         self.colour = temp[0][0]
@@ -215,16 +214,17 @@ class Utility(object):
         self.tool = temp[0][2]
         self.to_convert = temp[2]
         self.saved_shapes = temp[1]
-        self.gui.control.change_tool()
+        self.gui.control.change_tool(_id = self.tool)
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
         self.gui.control.preview.Refresh()
-        self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
-
+        self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)        
+        
         # re-create tabs and its saved drawings
         for x, board in enumerate(temp[1]):
             wb = Whyteboard(self.gui.tabs)
             name = "Sheet " + str(x + 1)
+            dc = wx.BufferedDC(None, wb.buffer)
             self.gui.tabs.AddPage(wb, name)
             self.gui.tab_count += 1
             self.gui.thumbs.new_thumb()
@@ -234,11 +234,13 @@ class Utility(object):
                 shape.board = wb
                 shape.load()  # restore unpickleable settings
                 wb.add_shape(shape)
+                
             wb.redraw_all()
+                      
 
-        wx.PostEvent(self.gui, self.gui.LoadEvent())  # hide progress bar
+        # close progress bar, handle older file versions gracefully
+        wx.PostEvent(self.gui, self.gui.LoadEvent())  
 
-        # handle older file versions gracefully
         try:
             version = temp[0][4]
         except IndexError:
@@ -253,6 +255,7 @@ class Utility(object):
             self.gui.tabs.SetSelection(0)
 
         self.gui.update_menus()
+        self.gui.board.select_tool()
 
 
     def convert(self, _file=None):
