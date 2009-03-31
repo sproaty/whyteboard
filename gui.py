@@ -112,7 +112,7 @@ class GUI(wx.Frame):
         """
         _file = wx.Menu()
         edit = wx.Menu()
-        view = wx.Menu()
+        #view = wx.Menu()
         sheets = wx.Menu()
         _help = wx.Menu()
         self.menu = wx.MenuBar()
@@ -136,10 +136,7 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
         edit.AppendSeparator()
         #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
-
         edit.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
-        #view.Append(ID_THUMBS, " &Toggle Side Panel\tF9", "Toggle the side panel on or off", kind=wx.ITEM_CHECK)
-        #view.Check(ID_THUMBS, True)
 
         sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
         sheets.Append(ID_PREV, "&Previous Sheet\tCtrl+Shift+Tab", "Go to the previous sheet")
@@ -167,27 +164,25 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
-        self.tabs.Bind(wx.EVT_ENTER_WINDOW, self.on_yeh)
 
         ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
-                  "undo", "redo", "history", "thumbs", "resize", "prev", "next",
-                  "clear", "clear_all", "clear_sheets", "clear_all_sheets",
-                  "about", "exit"]
+                  "undo", "redo", "history", "resize", "prev", "next", "clear",
+                  "clear_all", "clear_sheets", "clear_all_sheets", "about",
+                  "exit"]
 
         IDs = [wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE, wx.ID_SAVEAS,
-               ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, ID_THUMBS,
-               ID_RESIZE, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
-               ID_CLEAR_TABS, ID_CLEAR_ALL_TABS, wx.ID_ABOUT, wx.ID_EXIT]
+               ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, ID_RESIZE,
+               ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,  ID_CLEAR_TABS,
+               ID_CLEAR_ALL_TABS, wx.ID_ABOUT, wx.ID_EXIT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
             self.Bind(wx.EVT_MENU, method, id=_id )
-    def on_yeh(self, e):
-        print 'hgfhn'
+
 
     def make_toolbar(self):
         """
@@ -354,17 +349,6 @@ class GUI(wx.Frame):
 
             for x in range(self.current_tab, self.tab_count):
                 self.tabs.SetPageText(x, "Sheet " + str(x + 1))
-
-
-    def on_thumbs(self, event):
-        """
-        Toggles the thumnnail panel on and off.
-        """
-        if self.box.IsShown(self.panel):
-            self.panel.Hide()
-        else:
-            self.panel.Show()
-        self.box.Layout()
 
 
     def on_refresh(self):

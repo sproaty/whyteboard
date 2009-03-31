@@ -22,7 +22,7 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import wx
 import wx.html
-import string
+
 from copy import copy
 
 import tools
@@ -62,18 +62,10 @@ class History(wx.Dialog):
 
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
-        #self.okButton = wx.Button(self, wx.ID_OK, "&OK")
-        #self.okButton.SetDefault()
-        #self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
-        #btnSizer = wx.StdDialogButtonSizer()
-        #btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
-        #btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
-
 
         #sizer.Add(self.slider, 0, wx.ALL, 5)
         sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
         sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE, 5)
-        #sizer.Add(btnSizer, 0, wx.LEFT | wx.TOP | wx.RIGHT | wx.ALIGN_CENTRE, 5)
 
         self.SetSizer(sizer)
         sizer.Fit(self)
@@ -346,8 +338,6 @@ class TextInput(wx.Dialog):
         dc.SetTextForeground(shape.colour)
         dc.SetFont(self.ctrl.GetFont())
         dc.DrawText(self.ctrl.GetValue(), shape.x, shape.y)
-        
-        print self.ctrl.GetValue()
 
     def transfer_data(self, text_obj):
         """
@@ -361,8 +351,7 @@ class TextInput(wx.Dialog):
         """
         Removes the preview by redrawing current shapes
         """
-        event.Skip()#self.gui.board.redraw_all()
-        #self.Destroy()
+        event.Skip()
 
 #----------------------------------------------------------------------
 
@@ -519,7 +508,7 @@ class IntValidator(wx.PyValidator):
         val = tc.GetValue()
 
         for x in val:
-            if not isdigit(x):
+            if not x.isdigit:
                 return False
         return True
 
@@ -534,7 +523,7 @@ class IntValidator(wx.PyValidator):
             event.Skip()
             return
 
-        if chr(key) in string.digits:
+        if chr(key) in '0123456789':
             event.Skip()
             return
         return

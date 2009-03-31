@@ -221,8 +221,8 @@ class SidePanel(wx.Panel):
         wx.Panel.__init__(self, gui, style=wx.RAISED_BORDER)
         self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)                                    
-        
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -231,14 +231,14 @@ class SidePanel(wx.Panel):
         self.notes = Notes(self.tabs, gui)
         self.tabs.AddPage(self.thumbs, "Thumbnails")
         self.tabs.AddPage(self.notes, "Notes")
-        
+
         csizer.Add(self.tabs, 1, wx.EXPAND)
         sizer.Add(self.cp, 1, wx.EXPAND)
-        
-        self.SetSizer(sizer)   
-        self.cp.GetPane().SetSizer(csizer)               
+
+        self.SetSizer(sizer)
+        self.cp.GetPane().SetSizer(csizer)
         self.cp.Expand()
-        
+
 
     def toggle(self, evt):
         """
@@ -246,7 +246,7 @@ class SidePanel(wx.Panel):
         """
         frame = self.GetTopLevelParent()
         frame.Layout()
-        
+
 
 #----------------------------------------------------------------------
 
@@ -268,7 +268,7 @@ class Notes(wx.Panel):
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.tree, 1, wx.EXPAND)
-        self.SetSizer(self.sizer)        
+        self.SetSizer(self.sizer)
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
 
@@ -350,7 +350,7 @@ class Notes(wx.Panel):
                 item.font_data = item.font.GetNativeFontInfoDesc()
 
                 if not item.text:
-                    item.text = text  # don't want a blank item                    
+                    item.text = text  # don't want a blank item
                 else:
                     self.tree.SetItemText(event.GetItem(),
                                       item.text.replace("\n", " ")[:15])

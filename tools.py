@@ -468,7 +468,7 @@ class Note(Text):
         dc.SetBrush(wx.Brush((255, 223, 120)))
         dc.SetPen(wx.Pen((0, 0, 0), 1))
         dc.DrawRectangle(3, 3, width - 10, height - 10)
-        dc.SetTextForeground(self.colour)        
+        dc.SetTextForeground(self.colour)
         dc.DrawText("abcdef", 15, height / 2 - 10)
 
     def load(self):
