@@ -30,8 +30,9 @@ Windows: loading in a .wtbd file, a new drawing will overwrite the loaded one
                 the default behaviour under GNOME)
               * Next/Previous sheet in the "Sheets" menu (which previously was
                 "Image") - Ctrl+Tab / Ctrl-Shift+Tab shortcut keys
+              * Side panel is now "collapsible" instead of a "toggle" menu item
               * Menus renamed, organised differently
-              * Popup context menu on Notes Tree: Edit (note), Switch To (sheet)
+              * Popup context menu on Notes tree: Edit (note), Switch To (sheet)
               * Text/notes appear on the canvas as you type
               * Eraser has a custom rectangle cursor, depending on its size
               * Escape button exits "History" dialog

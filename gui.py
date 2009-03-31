@@ -134,12 +134,12 @@ class GUI(wx.Frame):
 
         edit.Append(wx.ID_UNDO, "&Undo\tCtrl+Z", "Undo the last operation")
         edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
-        #edit.AppendSeparator()
+        edit.AppendSeparator()
         #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
 
-        view.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
-        view.Append(ID_THUMBS, " &Toggle Side Panel\tF9", "Toggle the side panel on or off", kind=wx.ITEM_CHECK)
-        view.Check(ID_THUMBS, True)
+        edit.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
+        #view.Append(ID_THUMBS, " &Toggle Side Panel\tF9", "Toggle the side panel on or off", kind=wx.ITEM_CHECK)
+        #view.Check(ID_THUMBS, True)
 
         sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
         sheets.Append(ID_PREV, "&Previous Sheet\tCtrl+Shift+Tab", "Go to the previous sheet")
@@ -153,7 +153,7 @@ class GUI(wx.Frame):
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about Whyteboard")
         self.menu.Append(_file, "&File")
         self.menu.Append(edit, "&Edit")
-        self.menu.Append(view, "&View")
+        #self.menu.Append(view, "&View")
         self.menu.Append(sheets, "&Sheets")
         self.menu.Append(_help, "&Help")
         self.SetMenuBar(self.menu)
@@ -167,6 +167,7 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
+        self.tabs.Bind(wx.EVT_ENTER_WINDOW, self.on_yeh)
 
         ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
@@ -185,7 +186,8 @@ class GUI(wx.Frame):
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
             self.Bind(wx.EVT_MENU, method, id=_id )
-
+    def on_yeh(self, e):
+        print 'hgfhn'
 
     def make_toolbar(self):
         """

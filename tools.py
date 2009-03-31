@@ -361,8 +361,9 @@ class Text(Rectangle):
 
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
+            self.board.redraw_all()
             self.board.select_tool()
-            return
+            return False
 
         dlg.transfer_data(self)  # grab font and text data
         self.font_data = self.font.GetNativeFontInfoDesc()
@@ -371,7 +372,8 @@ class Text(Rectangle):
             self.board.add_shape(self)
             self.update_scroll()
             return True
-        return
+        else:
+            return False
 
 
     def update_scroll(self, redraw=True):
@@ -436,6 +438,8 @@ class Note(Text):
         # don't add a blank note
         if super(Note, self).button_up(x, y):
             self.board.tab.GetParent().notes.add_note(self)
+        else:
+            self.board.redraw_all()
 
     def find_extent(self):
         """
@@ -462,9 +466,9 @@ class Note(Text):
 
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush((255, 223, 120)))
-        dc.SetTextForeground(self.colour)
         dc.SetPen(wx.Pen((0, 0, 0), 1))
         dc.DrawRectangle(3, 3, width - 10, height - 10)
+        dc.SetTextForeground(self.colour)        
         dc.DrawText("abcdef", 15, height / 2 - 10)
 
     def load(self):

@@ -219,18 +219,34 @@ class SidePanel(wx.Panel):
     """
     def __init__(self, gui):
         wx.Panel.__init__(self, gui, style=wx.RAISED_BORDER)
+        self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
+                                     wx.CP_NO_TLW_RESIZE)
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)                                    
+        
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        csizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(self.sizer)
-        self.gui = gui
-
-        self.tabs = wx.Notebook(self)
+        self.tabs = wx.Notebook(self.cp.GetPane())
         self.thumbs = Thumbs(self.tabs, gui)
         self.notes = Notes(self.tabs, gui)
         self.tabs.AddPage(self.thumbs, "Thumbnails")
         self.tabs.AddPage(self.notes, "Notes")
-        self.sizer.Add(self.tabs, 1)
+        
+        csizer.Add(self.tabs, 1, wx.EXPAND)
+        sizer.Add(self.cp, 1, wx.EXPAND)
+        
+        self.SetSizer(sizer)   
+        self.cp.GetPane().SetSizer(csizer)               
+        self.cp.Expand()
+        
 
+    def toggle(self, evt):
+        """
+        Toggles the pane and its widgets
+        """
+        frame = self.GetTopLevelParent()
+        frame.Layout()
+        
 
 #----------------------------------------------------------------------
 
@@ -251,8 +267,8 @@ class Notes(wx.Panel):
         self.tree.Expand(self.root)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(self.sizer)
-        self.sizer.Add(self.tree, 1)
+        self.sizer.Add(self.tree, 1, wx.EXPAND)
+        self.SetSizer(self.sizer)        
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
 
@@ -322,17 +338,19 @@ class Notes(wx.Panel):
             self.gui.tabs.SetSelection(item)
         else:
             text = item.text
+            font = item.font_data
             dlg = TextInput(self.gui, item)
 
             if dlg.ShowModal() == wx.ID_CANCEL:
                 dlg.Destroy()
-
+                item.font_data = font
+                self.gui.board.redraw_all()
             else:
                 dlg.transfer_data(item)  # grab font and text data
                 item.font_data = item.font.GetNativeFontInfoDesc()
 
                 if not item.text:
-                    item.text = text  # don't want a blank item
+                    item.text = text  # don't want a blank item                    
                 else:
                     self.tree.SetItemText(event.GetItem(),
                                       item.text.replace("\n", " ")[:15])

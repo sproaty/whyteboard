@@ -51,6 +51,7 @@ class TestWhyteboard(unittest.TestCase):
         self.board.add_shape(tools.Image(self.board, (0, 0, 0), 1))
         self.assertEqual(len(self.board.shapes), 3)
 
+
     def testUndo(self):
         pass#self.board.undo()  # pop image
         #print self.board.shapes

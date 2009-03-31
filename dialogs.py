@@ -241,7 +241,7 @@ class TextInput(wx.Dialog):
         """
         Standard constructor - sets text to supplied text variable, if present.
         """
-        wx.Dialog.__init__(self, gui, title="Enter text", pos=(200, 200),
+        wx.Dialog.__init__(self, gui, title="Enter text", pos=(600, 600),
                             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 
         self.gui = gui
@@ -276,7 +276,7 @@ class TextInput(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 7)
         sizer.Add(fontBtn, 0, gap | wx.ALIGN_RIGHT, 5)
-        sizer.Add((10, 10)) # Spacer.
+        sizer.Add((10, 10))  # Spacer.
         btnSizer.Realize()
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
 
@@ -333,7 +333,7 @@ class TextInput(wx.Dialog):
         else:
             board = self.gui.board
             shape = copy(board.shape)
-        board.redraw_all()
+        board.redraw_all()  # stops overlapping text
 
         dc = wx.BufferedDC(wx.ClientDC(board), board.buffer)
         if isinstance(shape, tools.Note):
@@ -346,6 +346,8 @@ class TextInput(wx.Dialog):
         dc.SetTextForeground(shape.colour)
         dc.SetFont(self.ctrl.GetFont())
         dc.DrawText(self.ctrl.GetValue(), shape.x, shape.y)
+        
+        print self.ctrl.GetValue()
 
     def transfer_data(self, text_obj):
         """
@@ -359,8 +361,8 @@ class TextInput(wx.Dialog):
         """
         Removes the preview by redrawing current shapes
         """
-        self.gui.board.redraw_all()
-        self.Destroy()
+        event.Skip()#self.gui.board.redraw_all()
+        #self.Destroy()
 
 #----------------------------------------------------------------------
 
@@ -517,7 +519,7 @@ class IntValidator(wx.PyValidator):
         val = tc.GetValue()
 
         for x in val:
-            if x not in string.digits:
+            if not isdigit(x):
                 return False
         return True
 
