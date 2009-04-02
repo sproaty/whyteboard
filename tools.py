@@ -575,17 +575,21 @@ class Select(Tool):
     def button_down(self, x, y):
         #print x, y
         #print '-------'
+        self.board.shapes.reverse()
         for count, shape in enumerate(self.board.shapes):
             found = False
 
             if isinstance(shape, Text):
                 width = shape.x + shape.extent[0]
                 height = shape.y + shape.extent[1]
-                print "%s -- %s" % (x, shape.x)
-                print "%s -- %s" % (y, shape.y)
-
+                #print "%s -- %s" % (x, shape.x)
+                #print "%s -- %s" % (y, shape.y)
                 if x > shape.x and x < width and y > shape.y and y < height:
                     found = True
+
+            elif isinstance(shape, Circle):
+                print shape.radius ** 2, x ** 2 + y ** 2# <= shape.radius ** 2
+#                    print 'yep'
 
             elif isinstance(shape, Rectangle):
                 rect_x2_1 = shape.width + shape.x
@@ -602,10 +606,22 @@ class Select(Tool):
                 or ((x > rect_x2_2 and x > shape.x)
                     and (y < rect_y2_1 and y > shape.y)) ):
                         found = True
+
+            elif isinstance(shape, Image):
+                width, height = shape.image.GetSize()
+                rect_x = shape.x
+                rect_y = shape.y
+                rect_x2 = rect_x + width
+                rect_y2 = rect_y + height
+
+                if x > rect_x and x < rect_x2 and y > rect_y and y < rect_y2:
+                    found = True
+
             if found:
                 self.shape = copy(self.board.shapes[count])
                 self.dragging = True
                 self.count = count
+                break
 
 
     def motion(self, x, y):
@@ -616,6 +632,7 @@ class Select(Tool):
     def draw(self, dc, replay=False):
         if self.dragging:
             self.shape.draw(dc)
+            self.board.redraw_dirty(dc)
 
 
     def button_up(self, x, y):
@@ -632,7 +649,7 @@ class Select(Tool):
             self.board.add_shape(self.shape, self.count)
             #print self.board.shapes
             #print '----'
-            self.board.redraw_all()
+            self.board.redraw_all(update_thumb=True)
             #self.board.Refresh()
             self.dragging = False
             #print self.shape.x
@@ -667,7 +684,7 @@ class Eraser(Pen):
 #---------------------------------------------------------------------
 
 items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note, RoundRect,
-        Eyedrop,  Eraser]
+        Eyedrop, Select, Eraser]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

@@ -56,7 +56,6 @@ class ControlPanel(wx.Panel):
             self.tools[x + 1] = b
 
         self.tools[self.toggled].SetValue(True)
-        props = wx.StaticText(self, label="Colour:")
         width = wx.StaticText(self, label="Thickness:")
         prev = wx.StaticText(self, label="Preview:")
 
@@ -85,7 +84,6 @@ class ControlPanel(wx.Panel):
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(sizer, 0, wx.ALL, spacing)
         box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add(props, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(grid, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(self.colour, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
@@ -95,7 +93,6 @@ class ControlPanel(wx.Panel):
         box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
         self.SetSizer(box)
-        self.SetAutoLayout(True)
         box.Fit(self)
 
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
@@ -331,7 +328,7 @@ class Notes(wx.Panel):
         """
         item = self.tree.GetPyData(event.GetItem())
 
-        if type(item) == None:
+        if item is None:
             return  # clicked on the root node
 
         if isinstance(item, int):
@@ -369,7 +366,7 @@ class NotesPopupMenu(wx.Menu):
     """
     A context pop-up menu for notes, allowing the editing of a note or switching
     the tab selection to a particular sheet. The event is passed around, coming
-    from a TreeCtrlEvent
+    from a TreeCtrlEvent. No popup menu happens for the root node.
     """
     def __init__(self, parent, event):
         wx.Menu.__init__(self)
@@ -377,12 +374,14 @@ class NotesPopupMenu(wx.Menu):
         item = parent.tree.GetPyData(event.GetItem())
         ID = wx.NewId()
 
+        if item is None:
+            return  # root node
         if isinstance(item, int):  # sheet node
-            e = wx.MenuItem(self, ID, 'Switch to')
+            menu = wx.MenuItem(self, ID, "Switch to")
         else:
-            e = wx.MenuItem(self, ID, 'Edit')
+            menu = wx.MenuItem(self, ID, "Edit")
 
-        self.AppendItem(e)
+        self.AppendItem(menu)
         method = lambda x: parent.on_click(event)
         self.Bind(wx.EVT_MENU, method, id=ID)
 

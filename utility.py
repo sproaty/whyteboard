@@ -223,8 +223,9 @@ class Utility(object):
         # re-create tabs and its saved drawings
         for x, board in enumerate(temp[1]):
             wb = Whyteboard(self.gui.tabs)
+            wb.select_tool()
             name = "Sheet " + str(x + 1)
-            dc = wx.BufferedDC(None, wb.buffer)
+            #dc = wx.MemoryDC(wb.buffer)
             self.gui.tabs.AddPage(wb, name)
             self.gui.tab_count += 1
             self.gui.thumbs.new_thumb()
@@ -234,10 +235,21 @@ class Utility(object):
                 shape.board = wb  # restore board
                 shape.load()  # restore unpickleable settings
                 wb.add_shape(shape)
+                #shape.draw(dc)
+                #wb.redraw_dirty(dc)
+            #dc.SelectObject(wx.NullBitmap)
+            #wb.ClearBackground()
             wb.redraw_all()
+            wb.Refresh()
+            
 
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
+        wx.MilliSleep(50)
+        #wx.SafeYield()
+        print self.gui.board.shape
+        self.gui.board.select_tool(temp[0][2])
+        print self.gui.board.shape
 
         try:
             version = temp[0][4]

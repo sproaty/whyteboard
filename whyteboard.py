@@ -35,18 +35,19 @@ class Whyteboard(wx.ScrolledWindow):
     """
     The drawing frame of the application.
     """
-
     def __init__(self, tab):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        wx.ScrolledWindow.__init__(self, tab, style=wx.CLIP_CHILDREN)
+        wx.ScrolledWindow.__init__(self, tab)
         self.virtual_size = (1000, 1000)
         self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.virtual_size)
 
         self.SetScrollRate(20, 20)
         self.SetBackgroundColour("White")
+        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Windows!
+
         self.ClearBackground()
         self.scroller = wx.lib.dragscroller.DragScroller(self)
 
@@ -59,11 +60,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.drawing = False
         self.zoom = (1.0, 1.0)
         self.select_tool()
-
         self.buffer = wx.EmptyBitmap(*self.virtual_size)
-        #dc = wx.BufferedDC(None, self.buffer)
-        #dc.SetBackground(wx.Brush(self.GetBackgroundColour()))
-        #dc.Clear()
 
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
@@ -74,47 +71,13 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
 
-    def redraw_dirty(self, dc):
-        """
-        Figure out what part of the window to refresh.
-        """
-        x1, y1, x2, y2 = dc.GetBoundingBox()
-        x1, y1 = self.CalcScrolledPosition(x1, y1)
-        x2, y2 = self.CalcScrolledPosition(x2, y2)
-
-        rect = wx.Rect()
-        rect.SetTopLeft((x1, y1))
-        rect.SetBottomRight((x2, y2))
-        rect.Inflate(2, 2)
-        self.RefreshRect(rect)
-
-
-    def redraw_all(self, update_thumb=False):
-        """
-        Redraws all shapes that have been drawn already.
-        """
-        dc = wx.BufferedDC(None, self.buffer)
-        dc.Clear()
-
-        for s in self.shapes:
-            s.draw(dc, True)
-        self.Refresh()
-        if update_thumb:
-            self.update_thumb()
-
-    def convert_coords(self, event):
-        """
-        Translate mouse x/y coords to virtual scroll ones.
-        """
-        return self.CalcUnscrolledPosition(event.GetX(), event.GetY())
-
-
     def left_down(self, event):
         """
         Called when the left mouse button is pressed
         Either begins drawing, starts the drawing motion or ends drawing.
         """
         x, y = self.convert_coords(event)
+        #self.select_tool()
         self.shape.button_down(x, y)
 
         if not isinstance(self.shape, Text):
@@ -152,19 +115,32 @@ class Whyteboard(wx.ScrolledWindow):
             self.drawing = False
 
 
-    def middle_down(self, event):
+    def redraw_dirty(self, dc):
         """
-        Begin dragging the scroller to move around the panel
+        Figure out what part of the window to refresh.
         """
-        self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
-        self.scroller.Start(event.GetPosition())
+        x1, y1, x2, y2 = dc.GetBoundingBox()
+        x1, y1 = self.CalcScrolledPosition(x1, y1)
+        x2, y2 = self.CalcScrolledPosition(x2, y2)
 
-    def middle_up(self, event):
+        rect = wx.Rect()
+        rect.SetTopLeft((x1, y1))
+        rect.SetBottomRight((x2, y2))
+        rect.Inflate(2, 2)
+        self.RefreshRect(rect)
+
+    def redraw_all(self, update_thumb=False):
         """
-        Stop dragging th scroller.
+        Redraws all shapes that have been drawn already.
         """
-        self.scroller.Stop()
-        self.SetCursor(wx.StockCursor(self.shape.cursor) )
+        dc = wx.BufferedDC(None, self.buffer)
+        dc.Clear()
+
+        for s in self.shapes:
+            s.draw(dc, True)
+        self.Refresh()
+        if update_thumb:
+            self.update_thumb()
 
 
     def select_tool(self, new=None):
@@ -183,8 +159,10 @@ class Whyteboard(wx.ScrolledWindow):
         colour = parent.util.colour
         thickness = parent.util.thickness
         params = [self, colour, thickness]  # Object constructor parameters
+        self.shape = None
         self.shape = items[new - 1](*params)  # create new Tool object
 
+        #print self.shape
         if isinstance(self.shape.cursor, wx.Cursor):
             self.SetCursor(self.shape.cursor)
         else:
@@ -297,6 +275,27 @@ class Whyteboard(wx.ScrolledWindow):
 
         self.redraw_all(update_thumb=True)
 
+
+    def convert_coords(self, event):
+        """
+        Translate mouse x/y coords to virtual scroll ones.
+        """
+        return self.CalcUnscrolledPosition(event.GetX(), event.GetY())
+
+
+    def middle_down(self, event):
+        """
+        Begin dragging the scroller to move around the panel
+        """
+        self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
+        self.scroller.Start(event.GetPosition())
+
+    def middle_up(self, event):
+        """
+        Stop dragging th scroller.
+        """
+        self.scroller.Stop()
+        self.SetCursor(wx.StockCursor(self.shape.cursor) )
 
     def on_paint(self, event=None):
         """

@@ -388,7 +388,6 @@ class FindIM(wx.Dialog):
         sizer.Add((10, 10)) # Spacer.
         btnSizer.Realize()
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
-        self.SetAutoLayout(True)
         self.SetSizer(sizer)
         sizer.Fit(self)
 
@@ -456,7 +455,6 @@ class Resize(wx.Dialog):
         btnSizer.Realize()
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
 
-        self.SetAutoLayout(True)
         self.SetSizer(sizer)
         sizer.Fit(self)
 
@@ -579,7 +577,6 @@ by Robin Dunn, &copy; 1997-2006.</p>
         lc.height.AsIs()
         button.SetConstraints(lc)
 
-        self.SetAutoLayout(True)
         self.Layout()
         self.CentreOnParent(wx.BOTH)
 

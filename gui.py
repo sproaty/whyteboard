@@ -33,6 +33,7 @@ import sys
 
 import icon
 from whyteboard import Whyteboard
+from tools import Image
 from utility import Utility, FileDropTarget
 from dialogs import About, History, ProgressDialog, Resize
 from panels import ControlPanel, SidePanel
@@ -60,7 +61,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.36"
+    version = "0.36.1"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -136,6 +137,7 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
         edit.AppendSeparator()
         #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
+        edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
         edit.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
 
         sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
@@ -170,14 +172,14 @@ class GUI(wx.Frame):
                     id=ids[key]) for key in ids]
 
         functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
-                  "undo", "redo", "history", "resize", "prev", "next", "clear",
-                  "clear_all", "clear_sheets", "clear_all_sheets", "about",
-                  "exit"]
+                  "undo", "redo", "history", "paste",  "resize", "prev", "next",
+                  "clear", "clear_all", "clear_sheets", "clear_all_sheets",
+                  "about", "exit"]
 
         IDs = [wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE, wx.ID_SAVEAS,
-               ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, ID_RESIZE,
-               ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,  ID_CLEAR_TABS,
-               ID_CLEAR_ALL_TABS, wx.ID_ABOUT, wx.ID_EXIT]
+               ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, wx.ID_PASTE,
+               ID_RESIZE, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
+               ID_CLEAR_TABS, ID_CLEAR_ALL_TABS, wx.ID_ABOUT, wx.ID_EXIT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -350,6 +352,21 @@ class GUI(wx.Frame):
             for x in range(self.current_tab, self.tab_count):
                 self.tabs.SetPageText(x, "Sheet " + str(x + 1))
 
+    def on_paste(self, event=None):
+        """
+        Receives a bitmap object, if available from the clipboard.
+        """
+        bmp = wx.BitmapDataObject()
+        wx.TheClipboard.Open()
+        success = wx.TheClipboard.GetData(bmp)
+        wx.TheClipboard.Close()
+        if success:
+            shape = Image(self.board, bmp.GetBitmap(), None)
+            shape.button_down(0, 0)
+            self.board.redraw_all()
+        else:
+            wx.MessageBox("There is no image data in the clipboard.",
+                            "Paste Error")
 
     def on_refresh(self):
         """
