@@ -125,7 +125,6 @@ class History(wx.Dialog):
 
                 for x, p in enumerate(pen.points):
                     if self.looping and not self.paused:
-
                         try:
                             wx.MilliSleep((pen.time[x + 1] - pen.time[x]) * 950)
                             wx.Yield()
@@ -133,7 +132,6 @@ class History(wx.Dialog):
                             pass
 
                         dc.DrawLine(p[0], p[1], p[2], p[3])
-
                     else:  # loop is paused, wait for unpause/close/stop
                         while self.paused:
                             wx.MicroSleep(100)
@@ -235,7 +233,6 @@ class TextInput(wx.Dialog):
         """
         wx.Dialog.__init__(self, gui, title="Enter text", pos=(600, 600),
                             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
-
         self.gui = gui
         self.note = None
         self.ctrl = wx.TextCtrl(self, style=wx.TE_RICH2 | wx.TE_MULTILINE,

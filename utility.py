@@ -241,15 +241,13 @@ class Utility(object):
             #wb.ClearBackground()
             wb.redraw_all()
             wb.Refresh()
-            
+
 
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
         wx.MilliSleep(50)
         #wx.SafeYield()
-        print self.gui.board.shape
         self.gui.board.select_tool(temp[0][2])
-        print self.gui.board.shape
 
         try:
             version = temp[0][4]
@@ -314,6 +312,7 @@ class Utility(object):
 
         #cmd = "convert -density 294 "+ _file +" -resample 108 -unsharp 0x.5 \
         #-trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
+
         # ------------------------------------------------
         # better PDF quality, takes longer to convert
 

@@ -396,7 +396,7 @@ class Thumbs(scrolled.ScrolledPanel):
                                         style=wx.VSCROLL | wx.RAISED_BORDER)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
-        self.SetScrollRate(0, 250)
+        self.SetScrollRate(0, 150)
 
         self.gui = gui
         self.thumbs  = []

@@ -162,7 +162,6 @@ class Whyteboard(wx.ScrolledWindow):
         self.shape = None
         self.shape = items[new - 1](*params)  # create new Tool object
 
-        #print self.shape
         if isinstance(self.shape.cursor, wx.Cursor):
             self.SetCursor(self.shape.cursor)
         else:

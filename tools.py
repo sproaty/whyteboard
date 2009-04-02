@@ -307,6 +307,32 @@ class Line(Rectangle):
     def preview(self, dc, width, height):
         dc.DrawLine(10, height / 2, width - 10, height / 2)
 
+#---------------------------------------------------------------------
+
+class Eraser(Pen):
+    """
+    Erases stuff. Has a custom cursor from a drawn rectangle on a DC, turned
+    into an image then into a cursor.
+    """
+    def __init__(self, board, colour, thickness):
+        cursor = wx.EmptyBitmap(thickness + 2, thickness + 2)
+        memory = wx.MemoryDC()
+        memory.SelectObject(cursor)
+        memory.SetPen(wx.Pen((255, 255, 255), 1))  # border
+        memory.SetBrush(wx.Brush((0, 0, 0)))
+        memory.DrawRectangle(0, 0, thickness + 2, thickness + 2)
+        memory.SelectObject(wx.NullBitmap)
+
+        img = wx.ImageFromBitmap(cursor)
+        cursor = wx.CursorFromImage(img)
+
+        Pen.__init__(self, board, (255, 255, 255), thickness + 1, cursor)
+
+    def preview(self, dc, width, height):
+        thickness = self.thickness + 1
+        dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
+        dc.DrawRectangle(15, 15, 15 + thickness, 15 + thickness)
+
 #----------------------------------------------------------------------
 
 class Eyedrop(Tool):
@@ -558,8 +584,8 @@ class Zoom(Tool):
         new = (x[0] + 0.3, x[1] + 0.3)
         self.board.zoom = new
 
-#----------------------------------------------------------------------
 
+#----------------------------------------------------------------------
 
 class Select(Tool):
     """
@@ -654,37 +680,28 @@ class Select(Tool):
             self.dragging = False
             #print self.shape.x
 
-#---------------------------------------------------------------------
+#----------------------------------------------------------------------
 
-class Eraser(Pen):
+class RectSelect(Rectangle):
     """
-    Erases stuff. Has a custom cursor from a drawn rectangle on a DC, turned
-    into an image then into a cursor.
+    Rectangle selection tool
     """
-    def __init__(self, board, colour, thickness):
-        cursor = wx.EmptyBitmap(thickness + 2, thickness + 2)
-        memory = wx.MemoryDC()
-        memory.SelectObject(cursor)
-        memory.SetPen(wx.Pen((255, 255, 255), 1))  # border
-        memory.SetBrush(wx.Brush((0, 0, 0)))
-        memory.DrawRectangle(0, 0, thickness + 2, thickness + 2)
-        memory.SelectObject(wx.NullBitmap)
+    def draw(self, dc, replay=False):
+        odc = wx.DCOverlay(self.board.overlay, dc)
+        odc.Clear()
 
-        img = wx.ImageFromBitmap(cursor)
-        cursor = wx.CursorFromImage(img)
+        dc.SetPen(wx.BLACK_DASHED_PEN)
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.DrawRectangle(self.x, self.y, self.width, self.height)        del odc
 
-        Pen.__init__(self, board, (255, 255, 255), thickness + 1, cursor)
-
-    def preview(self, dc, width, height):
-        thickness = self.thickness + 1
-        dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
-        dc.DrawRectangle(15, 15, 15 + thickness, 15 + thickness)
+    def button_up(self, x, y):
+        self.board.redraw_all()
 
 
 #---------------------------------------------------------------------
 
-items = [Pen, Rectangle, Line, Ellipse, Circle, Text, Note, RoundRect,
-        Eyedrop, Select, Eraser]
+items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle,  RoundRect,
+        Eyedrop]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp
