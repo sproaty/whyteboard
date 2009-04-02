@@ -1,28 +1,22 @@
-Whyteboard 0.36 - To do list
+Whyteboard 0.36.1 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Mon 30 Mar 2009 17:04:17 BST
-
----- TO FIX ----
-
-- flood fill not being rendered when scrolling/maximising window, need to find
-  a less "costly" implementation
 
 ---- NEW FEATURES ----
 
 -- see: https://blueprints.launchpad.net/whyteboard
 - Improved file sharing
-- History slider to jump through slide's replay
+- backwards/forwards compatibility
 - Rename tabs, undo tab close
 
+Eventually, long term:
 
----- IMPROVEMENTS AND THOUGHTS ----
+ - network support w/ twisted
+ - "select" tool to move drawn items around (in progress)
+ - slider bar to "move" through a drawing's timeline in a replay
+ -
 
 
--- Make a loaded PDF/PS the background image, thus everything gets written over
-   that image
-    -- Needs to be done for single "page" images, is currently working on multi
-       page PDFs
-    -- can be done, but forces -all- drawings over -every- image
-        -- loading in an image over any drawn text will overwrite it..
+---- TO FIX ----
 
--- Option for keeping or removing temporary files and converting on file load
+- Few windows errors, see readme

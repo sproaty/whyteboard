@@ -120,10 +120,11 @@ class Utility(object):
 
             # load in every shape from every tab
             for x in range(0, self.gui.tab_count):
+                self.save_pasted_images(self.gui.tabs.GetPage(x).shapes)
                 temp[x] = copy(self.gui.tabs.GetPage(x).shapes)
 
             if temp:
-                self.saved_shapes = temp
+                self.saved_shapes = self.save_pasted_images(temp)
                 for x in temp:
                     for shape in temp[x]:
                         shape.save()  # need to unlink unpickleable items;
@@ -155,6 +156,21 @@ class Utility(object):
                 wx.MessageBox("Error saving file data - no data to save")
                 self.saved = False
                 self.filename = None
+
+
+    def save_pasted_images(self, shapes):
+        """
+        When saving a Whyteboard file, any pasted Images (e.g. image = None)
+        will be saved to a directory in the user's home directory, and the image
+        reference changed.
+        """
+        for shape in shapes:
+            if isinstance(shape, tools.Image):
+                if not shape.path:
+                    path = get_home_dir("pastes")
+                    tmp_file = path + make_filename() + ".jpg"
+                    shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
+                    shape.path = tmp_file
 
 
     def load_file(self, filename=None):
@@ -225,7 +241,6 @@ class Utility(object):
             wb = Whyteboard(self.gui.tabs)
             wb.select_tool()
             name = "Sheet " + str(x + 1)
-            #dc = wx.MemoryDC(wb.buffer)
             self.gui.tabs.AddPage(wb, name)
             self.gui.tab_count += 1
             self.gui.thumbs.new_thumb()
@@ -235,18 +250,12 @@ class Utility(object):
                 shape.board = wb  # restore board
                 shape.load()  # restore unpickleable settings
                 wb.add_shape(shape)
-                #shape.draw(dc)
-                #wb.redraw_dirty(dc)
-            #dc.SelectObject(wx.NullBitmap)
-            #wb.ClearBackground()
+
             wb.redraw_all()
             wb.Refresh()
 
-
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
-        wx.MilliSleep(50)
-        #wx.SafeYield()
         self.gui.board.select_tool(temp[0][2])
 
         try:
@@ -261,9 +270,6 @@ class Utility(object):
             + "version of Whyteboard ("+version+"). Saving the file will " +
             "update it to the latest version, " + self.gui.version)
             self.gui.tabs.SetSelection(0)
-
-        self.gui.update_menus()
-        self.gui.board.select_tool()
 
 
     def convert(self, _file=None):
@@ -283,28 +289,11 @@ class Utility(object):
         # above will have changed this value if the user selected IM's dir.
         if not self.im_location:
             return
-
         if _file is None:
             _file = self.temp_file
 
-        # grab user's home path; $HOME/.appName
-        std_paths = wx.StandardPaths.Get()
-        path = wx.StandardPaths.GetUserLocalDataDir(std_paths)
-        path = os.path.join(path, "wtbd-tmp", "")  # "" forces slash at end
-
-        # Create a random filename using letters and numbers
-        alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@$%" +
-                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        _list = []
-
-        for x in random.sample(alphabet, random.randint(8, 20)):
-            _list.append(x)
-
-        string = "".join(_list)
-        tmp_file = string +"-temp-"+ str(random.randrange(0, 999999))
-
-        if not os.path.isdir(path):
-            os.makedirs(path)
+        path = get_home_dir("wtbd-tmp")
+        tmp_file = make_filename()  #
 
         index = len(self.to_convert)
         self.to_convert[index] = { 0: str(_file) }
@@ -312,11 +301,11 @@ class Utility(object):
 
         #cmd = "convert -density 294 "+ _file +" -resample 108 -unsharp 0x.5 \
         #-trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
-
         # ------------------------------------------------
         # better PDF quality, takes longer to convert
+        # ------------------------------------------------
+        # convert "[file path]" "[destination-folder]" -- quotes for Windows
 
-        # convert "[file path]" "[destination-folder]" - quotes for Windows
         cmd = ("\""+self.im_location + "\" \"" + _file + "\" \""
                 + path + tmp_file + ".png\"")
 
@@ -403,15 +392,9 @@ class Utility(object):
             else:
                 self.im_location = "convert"
         elif system() == "Windows":
-
-            # try and read preference file from home directory
-            std_paths = wx.StandardPaths.Get()
-            path = wx.StandardPaths.GetUserLocalDataDir(std_paths)
-
-            if not os.path.isdir(path):
-                os.makedirs(path)
-
+            path = get_home_dir()
             path = os.path.join(path, "user.pref")
+
             if not os.path.exists(path):
                 dlg = FindIM(self, self.gui)
                 dlg.ShowModal()
@@ -440,6 +423,19 @@ class Utility(object):
             return True
 
 
+    def get_clipboard(self):
+        """
+        Checks the clipboard for any valid image data to paste
+        """
+        bmp = wx.BitmapDataObject()
+        wx.TheClipboard.Open()
+        success = wx.TheClipboard.GetData(bmp)
+        wx.TheClipboard.Close()
+        if success:
+            return bmp
+        else:
+            return False
+
 #----------------------------------------------------------------------
 
 class FileDropTarget(wx.FileDropTarget):
@@ -467,6 +463,36 @@ def load_image(path, board):
     image = wx.Bitmap(path)
     shape = tools.Image(board, image, path)
     shape.button_down(0, 0)  # renders, updates scrollbars
+
+
+def make_filename():
+    """
+    Create a random filename using letters, numbers and other characters
+    """
+    alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@$% " +
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    _list = []
+    for x in random.sample(alphabet, random.randint(8, 20)):
+        _list.append(x)
+
+    string = "".join(_list)
+    return string +"-temp-"+ str(random.randrange(0, 999999))
+
+
+def get_home_dir(extra_path=None):
+    """
+    Returns the home directory for Whyteboard cross-platformally
+    If the extra path is supplied, it is appended to the home directory.
+    The directory is verified to see if it exists: if doesn't, it is created.
+    """
+    std_paths = wx.StandardPaths.Get()
+    path = wx.StandardPaths.GetUserLocalDataDir(std_paths)
+    if extra_path:
+        path = os.path.join(path, extra_path, "")   # "" forces slash at end
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    return path
 
 #----------------------------------------------------------------------
 

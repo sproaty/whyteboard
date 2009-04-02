@@ -11,6 +11,7 @@ http://www.wxpython.org/download.php
 http://www.imagemagick.net
 http://pages.cs.wisc.edu/~ghost/ - Windows users may need this for ImageMagick
 
+***
 
 Run whyteboard.py or gui.py to launch the application, no installation needed!
 
@@ -22,12 +23,16 @@ see what error occurred and let me know at, <sproaty -at- gmail -dot- com>
 
 Windows: loading in a .wtbd file doesn't set the correct Tool
 Windows: loading in a .wtbd file, a new drawing will overwrite the loaded one
+Windows: newline text is not working.
 
 ---- VERSION HISTORY ----
 
+03 Apr 2009 - * Paste image support. Pasted images will be saved to a temporary
+                directory; duplicated pasted images won't be saved twice.
+
 02 Apr 2009 - * Fixed an issue with 'flickering' on Windows
-              * Can paste an image into Whyteboard.
               * Bugfix: "edit" right-click popup menu on the Note root node.
+              * Preview for the eyedrop (just shows current colour)
 
 30 Mar 2009 - * Windows UI improvement: change the thickness by scrolling the
                 mousewheel on the drop-down box, no need to click it. (this is

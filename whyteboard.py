@@ -77,7 +77,6 @@ class Whyteboard(wx.ScrolledWindow):
         Either begins drawing, starts the drawing motion or ends drawing.
         """
         x, y = self.convert_coords(event)
-        #self.select_tool()
         self.shape.button_down(x, y)
 
         if not isinstance(self.shape, Text):
@@ -109,7 +108,6 @@ class Whyteboard(wx.ScrolledWindow):
 
             # update GUI menus, as the new shape was added
             if after - before is not 0:
-                self.tab.GetParent().update_menus()
                 self.select_tool()
                 self.update_thumb()
             self.drawing = False

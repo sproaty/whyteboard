@@ -42,10 +42,9 @@ class History(wx.Dialog):
         self.paused = False
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        _max = len(gui.board.shapes)+50
+        #_max = len(gui.board.shapes)+50
         #self.slider = wx.Slider(self, minValue=1, maxValue=_max, size=(200, 50),
         #            style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL )
-
         #self.slider.SetTickFreq(5, 1)
 
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -124,6 +123,7 @@ class History(wx.Dialog):
                 dc.SetPen(pen.pen)
 
                 for x, p in enumerate(pen.points):
+
                     if self.looping and not self.paused:
                         try:
                             wx.MilliSleep((pen.time[x + 1] - pen.time[x]) * 950)
@@ -150,7 +150,7 @@ class History(wx.Dialog):
         self.stop()  # restore other drawn items
 
 
-    def pause(self, event):
+    def pause(self, event=None):
         """
         Pauses/unpauses the replay.
         """
@@ -177,7 +177,8 @@ class History(wx.Dialog):
         self.EndModal(1)
 
     def scroll(self, event):
-        pass
+        self.pause()
+        self.x
 
 
 #----------------------------------------------------------------------

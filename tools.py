@@ -70,6 +70,12 @@ class Tool(object):
         """
         pass
 
+    def hit_test(self, x, y):
+        """
+        Returns true/false on whether a mouseclick in "inside" the shape
+        """
+        pass
+
     def make_pen(self):
         """
         Creates a pen from the object after loading in a save file
@@ -218,6 +224,23 @@ class Rectangle(Tool):
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
 
+    def hit_test(self, x, y):
+        rect_x2_1 = self.width + self.x
+        rect_y2_1 = self.height + self.y
+        #print str(count) +": " + str(shape.x)+", "+str(rect_x2_1)+" | "+str(shape.y)+", "+str(rect_y2_1)
+
+        rect_x2_2 = self.x - self.width
+        rect_y2_2 = self.y - self.height
+
+        #print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_2)
+
+        if ( ((x > rect_x2_1 and x < self.x)
+            and (y < rect_y2_1 and y > self.y))
+        or ((x > rect_x2_2 and x > self.x)
+            and (y < rect_y2_1 and y > self.y)) ):
+            return True
+        else:
+            return False
 
 #----------------------------------------------------------------------
 
@@ -243,6 +266,9 @@ class Circle(Rectangle):
 
     def preview(self, dc, width, height):
         dc.DrawCircle(width/2, height/2, 15)
+
+    def hit_test(self, x, y):
+        pass
 
 #----------------------------------------------------------------------
 
@@ -272,7 +298,7 @@ class Circle2(Ellipse):
             self.height = self.width
         else:
             self.width = self.height
-
+#----------------------------------------------------------------------
 
 class RoundRect(Rectangle):
     """
@@ -331,7 +357,7 @@ class Eraser(Pen):
     def preview(self, dc, width, height):
         thickness = self.thickness + 1
         dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
-        dc.DrawRectangle(15, 15, 15 + thickness, 15 + thickness)
+        dc.DrawRectangle(20, 20, 5 + thickness, 5 + thickness)
 
 #----------------------------------------------------------------------
 
@@ -350,6 +376,10 @@ class Eyedrop(Tool):
         board.control.colour.SetColour(colour)
         board.util.colour = colour
         board.control.preview.Refresh()
+
+    def preview(self, dc, width, height):
+        dc.SetBrush(wx.Brush(self.board.GetParent().GetParent().util.colour))
+        dc.DrawRectangle(20, 20, 5, 5)
 
 
 #----------------------------------------------------------------------
@@ -450,6 +480,15 @@ class Text(Rectangle):
     def load(self):
         self.restore_font()
         self.update_scroll(False)
+
+    def hit_test(self,x, y):
+        width = self.x + self.extent[0]
+        height = self.y + self.extent[1]
+
+        if x > self.x and x < width and y > self.y and y < height:
+            return True
+        else:
+            return False
 
 #----------------------------------------------------------------------
 
@@ -568,6 +607,17 @@ class Image(Tool):
         size = (self.image.GetWidth(), self.image.GetHeight())
         self.board.update_scrollbars(size)
 
+    def hit_test(self, x, y):
+        width, height = self.image.GetSize()
+        rect_x = self.x
+        rect_y = self.y
+        rect_x2 = rect_x + width
+        rect_y2 = rect_y + height
+
+        if x > rect_x and x < rect_x2 and y > rect_y and y < rect_y2:
+            return True
+        else:
+            return False
 
 #----------------------------------------------------------------------
 
@@ -591,64 +641,40 @@ class Select(Tool):
     """
     Select an item to move it around/edit text
     """
+    count = 0
     def __init__(self, board, image, path):
-        Tool.__init__(self, board, (0, 0, 0), 1)
+        Tool.__init__(self, board, (0, 0, 0), 1, wx.CURSOR_ARROW)
         self.shape = None
         self.dragging = False
-        self.count = None
 
 
     def button_down(self, x, y):
-        #print x, y
-        #print '-------'
-        self.board.shapes.reverse()
-        for count, shape in enumerate(self.board.shapes):
-            found = False
-
-            if isinstance(shape, Text):
-                width = shape.x + shape.extent[0]
-                height = shape.y + shape.extent[1]
-                #print "%s -- %s" % (x, shape.x)
-                #print "%s -- %s" % (y, shape.y)
-                if x > shape.x and x < width and y > shape.y and y < height:
-                    found = True
-
-            elif isinstance(shape, Circle):
-                print shape.radius ** 2, x ** 2 + y ** 2# <= shape.radius ** 2
-#                    print 'yep'
-
-            elif isinstance(shape, Rectangle):
-                rect_x2_1 = shape.width + shape.x
-                rect_y2_1 = shape.height + shape.y
-                #print str(count) +": " + str(shape.x)+", "+str(rect_x2_1)+" | "+str(shape.y)+", "+str(rect_y2_1)
-
-                rect_x2_2 = shape.x - shape.width
-                rect_y2_2 = shape.y - shape.height
-
-                #print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_2)
-
-                if ( ((x > rect_x2_1 and x < shape.x)
-                    and (y < rect_y2_1 and y > shape.y))
-                or ((x > rect_x2_2 and x > shape.x)
-                    and (y < rect_y2_1 and y > shape.y)) ):
-                        found = True
-
-            elif isinstance(shape, Image):
-                width, height = shape.image.GetSize()
-                rect_x = shape.x
-                rect_y = shape.y
-                rect_x2 = rect_x + width
-                rect_y2 = rect_y + height
-
-                if x > rect_x and x < rect_x2 and y > rect_y and y < rect_y2:
-                    found = True
-
-            if found:
-                self.shape = copy(self.board.shapes[count])
+        """
+        Sees if a shape is underneath the mouse coords, and allows the shape to
+        be re-dragged to place
+        """
+        shapes = self.board.shapes
+        shapes.reverse()
+        for count, shape in enumerate(shapes):
+            if shape.hit_test(x, y):
+                self.shape = copy(shapes[count])
                 self.dragging = True
                 self.count = count
-                break
 
+                #print '--------##'
+                #print 'before'
+                #print self.board.shapes
+                del self.board.shapes[self.count]
+                #print '-----'
+                #print self.board.shapes
+                #print '-----'
+                #self.board.add_shape(self.shape, self.count)
+                #print 'after'
+                #print self.board.shapes
+
+                #print '----'
+                #self.board.redraw_all(update_thumb=True)
+                break
 
     def motion(self, x, y):
         if self.dragging:
@@ -658,8 +684,6 @@ class Select(Tool):
     def draw(self, dc, replay=False):
         if self.dragging:
             self.shape.draw(dc)
-            self.board.redraw_dirty(dc)
-
 
     def button_up(self, x, y):
         """
@@ -667,13 +691,10 @@ class Select(Tool):
         !!!!!
         """
         if self.dragging:
-            #print '0000000000;'
-            print self.shape.x, self.shape.y
-            #print self.board.shapes
-            del self.board.shapes[self.count]
-            #print self.board.shapes
             self.board.add_shape(self.shape, self.count)
+            #print 'after'
             #print self.board.shapes
+
             #print '----'
             self.board.redraw_all(update_thumb=True)
             #self.board.Refresh()
@@ -690,7 +711,7 @@ class RectSelect(Rectangle):
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
 
-        dc.SetPen(wx.BLACK_DASHED_PEN)
+        dc.SetPen(wx.Pen(wx.BLACK, 1, wx.USER_DASH))
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         dc.DrawRectangle(self.x, self.y, self.width, self.height)        del odc
 
@@ -701,7 +722,7 @@ class RectSelect(Rectangle):
 #---------------------------------------------------------------------
 
 items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle,  RoundRect,
-        Eyedrop]
+        Eyedrop, Select]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

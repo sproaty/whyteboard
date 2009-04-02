@@ -86,6 +86,7 @@ class GUI(wx.Frame):
         self.make_menu()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.current_tab = 0
+        self.count = 0  # used to update menu timings
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
         self.board = Whyteboard(self.tabs)  # the active whiteboard tab
@@ -113,7 +114,6 @@ class GUI(wx.Frame):
         """
         _file = wx.Menu()
         edit = wx.Menu()
-        #view = wx.Menu()
         sheets = wx.Menu()
         _help = wx.Menu()
         self.menu = wx.MenuBar()
@@ -152,7 +152,6 @@ class GUI(wx.Frame):
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about Whyteboard")
         self.menu.Append(_file, "&File")
         self.menu.Append(edit, "&Edit")
-        #self.menu.Append(view, "&View")
         self.menu.Append(sheets, "&Sheets")
         self.menu.Append(_help, "&Help")
         self.SetMenuBar(self.menu)
@@ -192,16 +191,19 @@ class GUI(wx.Frame):
         """
         self.tb = self.CreateToolBar()
 
-        ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_UNDO, wx.ID_REDO]
-        arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_UNDO,
-                wx.ART_REDO]
-        tips = ["New Tab", "Open a File", "Save Drawing", "Undo Action",
-                "Redo the Undone Action"]
+        ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_PASTE, wx.ID_UNDO,
+                wx.ID_REDO]
+        arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_PASTE,
+                 wx.ART_UNDO, wx.ART_REDO]
+        tips = ["New Sheet", "Open a File", "Save Drawing", "Paste Image",
+                 "Undo the Last Action", "Redo the Last Undone Action"]
 
         x = 0
         for _id, art_id, tip in zip(ids, arts, tips):
             if x == 3:
                 self.tb.AddSeparator()
+            if x >= 3:
+                self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=_id)
             art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
             self.tb.AddSimpleTool(_id, art, tip)
             x += 1
@@ -224,6 +226,7 @@ class GUI(wx.Frame):
         """
         Opens a file, sets Utility's temp. file to the chosen file, prompts for
         an unsaved file and calls do_open().
+        text is img/pdf/ps for the "import file" menu item
         """
         wc = self.util.wildcard
         if text == "img":
@@ -331,7 +334,6 @@ class GUI(wx.Frame):
         self.board = self.tabs.GetCurrentPage()
         self.current_tab = self.tabs.GetSelection()
         #self.thumbs.Scroll(-1, self.current_tab)
-        self.update_menus()  # update redo/undo
         self.control.change_tool()
 
         if self.notes.tabs:
@@ -352,21 +354,67 @@ class GUI(wx.Frame):
             for x in range(self.current_tab, self.tab_count):
                 self.tabs.SetPageText(x, "Sheet " + str(x + 1))
 
+
+    def update_menus(self, event=None):
+        """
+        Enables/disables the undo/redo/next/prev button as appropriate.
+        It is called every 50ms and uses a counter to update the GUI less often
+        than the 50ms, as it's too performance intense
+        """
+        self.count += 1
+        paste = self.menu.FindItemById(wx.ID_PASTE).IsEnabled()
+        if event:
+            event.SetUpdateInterval(50)
+            undo = redo = next = prev = False
+        else:
+            undo = self.menu.FindItemById(wx.ID_UNDO).IsEnabled()
+            redo = self.menu.FindItemById(wx.ID_REDO).IsEnabled()
+            next = self.menu.FindItemById(ID_NEXT).IsEnabled()
+            prev = self.menu.FindItemById(ID_PREV).IsEnabled()
+
+        if self.count % 25:
+            # we update the GUI to the inverse of the bool value if the button
+            # should be enabled
+            if self.board.redo_list:
+                redo = not redo
+            if self.board.undo_list:
+                undo = not undo
+            if self.current_tab > 0:
+                prev = not prev
+            if self.tab_count > 1 and (self.current_tab + 1 < self.tab_count):
+                next = not next
+
+            self.tb.EnableTool(wx.ID_UNDO, undo)
+            self.menu.Enable(wx.ID_UNDO, undo)
+            self.tb.EnableTool(wx.ID_REDO, redo)
+            self.menu.Enable(wx.ID_REDO, redo)
+            self.menu.Enable(ID_PREV, prev)
+            self.menu.Enable(ID_NEXT, next)
+
+        if self.count == 100:
+            #  causes seg faults if accessed too often
+            check = self.util.get_clipboard()
+            if check:
+                paste = True
+            else:
+                paste = False
+
+            self.count = 0
+
+        self.tb.EnableTool(wx.ID_PASTE, paste)
+        self.menu.Enable(wx.ID_PASTE, paste)
+
+
     def on_paste(self, event=None):
         """
-        Receives a bitmap object, if available from the clipboard.
+        Receives a bitmap object, if available from the clipboard, and creates
+        a new Image object. Its file path is not set, yet.
         """
-        bmp = wx.BitmapDataObject()
-        wx.TheClipboard.Open()
-        success = wx.TheClipboard.GetData(bmp)
-        wx.TheClipboard.Close()
-        if success:
+        bmp = self.util.get_clipboard()
+        if bmp:
             shape = Image(self.board, bmp.GetBitmap(), None)
             shape.button_down(0, 0)
             self.board.redraw_all()
-        else:
-            wx.MessageBox("There is no image data in the clipboard.",
-                            "Paste Error")
 
     def on_refresh(self):
         """
@@ -433,7 +481,6 @@ class GUI(wx.Frame):
         Calls undo on the active tab and updates the menus
         """
         self.board.undo()
-        self.update_menus()
 
 
     def on_redo(self, event=None):
@@ -441,33 +488,7 @@ class GUI(wx.Frame):
         Calls redo on the active tab and updates the menus
         """
         self.board.redo()
-        self.update_menus()
 
-
-    def update_menus(self):
-        """
-        Enables/disables the undo/redo/next/prev button as appropriate.
-        """
-        undo = False
-        redo = False
-        next = False
-        prev = False
-
-        if self.board.redo_list:
-            redo = True
-        if self.board.undo_list:
-            undo = True
-        if self.current_tab > 0:
-            prev = True
-        if self.tab_count > 1 and (self.current_tab + 1 < self.tab_count):
-            next = True
-
-        self.tb.EnableTool(wx.ID_UNDO, undo)
-        self.menu.Enable(wx.ID_UNDO, undo)
-        self.tb.EnableTool(wx.ID_REDO, redo)
-        self.menu.Enable(wx.ID_REDO, redo)
-        self.menu.Enable(ID_PREV, prev)
-        self.menu.Enable(ID_NEXT, next)
 
     def on_prev(self, event=None):
         """
@@ -486,7 +507,6 @@ class GUI(wx.Frame):
         Clears *** current sheet's *** drawings, except images.
         """
         self.board.clear(keep_images=True)
-        self.update_menus()
 
 
     def on_clear_all(self, event=None):
@@ -494,7 +514,6 @@ class GUI(wx.Frame):
         Clears *** current sheet ***
         """
         self.board.clear()
-        self.update_menus()
 
 
     def on_clear_sheets(self, event=None):
@@ -503,7 +522,6 @@ class GUI(wx.Frame):
         """
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear(keep_images=True)
-        self.update_menus()
 
 
     def on_clear_all_sheets(self, event=None):
@@ -512,7 +530,7 @@ class GUI(wx.Frame):
         """
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear()
-        self.update_menus()
+
 
     def on_resize(self, event=None):
         dlg = Resize(self)
