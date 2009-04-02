@@ -72,7 +72,7 @@ class GUI(wx.Frame):
         wx.Frame.__init__(self, parent, title="Untitled - " + self.title)
         ico = icon.whyteboard.getIcon()
         self.SetIcon(ico)
-
+        self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
         self.util = Utility(self)
         self.file_drop = FileDropTarget(self)
         self.SetDropTarget(self.file_drop)
@@ -81,23 +81,18 @@ class GUI(wx.Frame):
         self.menu = None
         self.process = None
         self.dialog = None
-
         self.make_toolbar()
         self.make_menu()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.current_tab = 0
-        self.count = 0  # used to update menu timings
+
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
         self.board = Whyteboard(self.tabs)  # the active whiteboard tab
         self.tabs.AddPage(self.board, "Sheet 1")
-
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
-
-        self.do_bindings()
-        self.update_menus()
         self.box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         self.box.Add(self.control, 0, wx.EXPAND)
         self.box.Add(self.tabs, 2, wx.EXPAND)
@@ -105,6 +100,12 @@ class GUI(wx.Frame):
         self.SetSizer(self.box)
         self.SetSizeWH(800, 600)
         self.Maximize(True)
+
+        self.count = 0  # used to update menu timings
+        wx.UpdateUIEvent.SetUpdateInterval(50)
+        wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
+        self.do_bindings()
+        #self.update_menus()
 
 
     def make_menu(self):
@@ -198,14 +199,17 @@ class GUI(wx.Frame):
         tips = ["New Sheet", "Open a File", "Save Drawing", "Paste Image",
                  "Undo the Last Action", "Redo the Last Undone Action"]
 
+        # add tools, add a separator and bind paste/undo/redo for UI updating
         x = 0
         for _id, art_id, tip in zip(ids, arts, tips):
-            if x == 3:
+            art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
+            self.tb.AddSimpleTool(_id, art, tip)
+
+            if x == 2:
                 self.tb.AddSeparator()
             if x >= 3:
                 self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=_id)
-            art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
-            self.tb.AddSimpleTool(_id, art, tip)
+                self.tb.EnableTool(_id, False)
             x += 1
 
         self.tb.Realize()
@@ -220,6 +224,25 @@ class GUI(wx.Frame):
         else:
             self.util.save_file()
             self.util.saved = True
+
+
+    def on_save_as(self, event=None):
+        """
+        Prompts for the filename and location to save to.
+        """
+        dlg = wx.FileDialog(self, "Save Whyteboard As...", os.getcwd(),
+                style=wx.SAVE | wx.OVERWRITE_PROMPT,
+                wildcard = "Whyteboard file (*.wtbd)|*.wtbd")
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+            if not os.path.splitext(filename)[1]:  # no file extension
+                filename += '.wtbd'
+
+            # only store whyteboard files, not an image as the current file
+            if filename.endswith(".wtbd"):
+                self.util.filename = filename
+                self.on_save()
+        dlg.Destroy()
 
 
     def on_open(self, event=None, text=None):
@@ -270,25 +293,6 @@ class GUI(wx.Frame):
         self.util.load_file()
 
 
-    def on_save_as(self, event=None):
-        """
-        Prompts for the filename and location to save to.
-        """
-        dlg = wx.FileDialog(self, "Save Whyteboard As...", os.getcwd(),
-                style=wx.SAVE | wx.OVERWRITE_PROMPT,
-                wildcard = "Whyteboard file (*.wtbd)|*.wtbd")
-        if dlg.ShowModal() == wx.ID_OK:
-            filename = dlg.GetPath()
-            if not os.path.splitext(filename)[1]:  # no file extension
-                filename += '.wtbd'
-
-            # only store whyteboard files, not an image as the current file
-            if filename.endswith(".wtbd"):
-                self.util.filename = filename
-                self.on_save()
-        dlg.Destroy()
-
-
     def on_export(self, event):
         """
         Exports the current sheet as an image.
@@ -323,7 +327,6 @@ class GUI(wx.Frame):
         self.tab_count += 1
         self.tabs.AddPage(wb, "Sheet "+ str(self.tab_count))
         self.current_tab = self.tab_count - 1
-
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
 
 
@@ -362,47 +365,55 @@ class GUI(wx.Frame):
         than the 50ms, as it's too performance intense
         """
         self.count += 1
-        paste = self.menu.FindItemById(wx.ID_PASTE).IsEnabled()
-        if event:
-            event.SetUpdateInterval(50)
-            undo = redo = next = prev = False
-        else:
-            undo = self.menu.FindItemById(wx.ID_UNDO).IsEnabled()
-            redo = self.menu.FindItemById(wx.ID_REDO).IsEnabled()
-            next = self.menu.FindItemById(ID_NEXT).IsEnabled()
-            prev = self.menu.FindItemById(ID_PREV).IsEnabled()
+        do = False#self.menu.FindItemById(event.GetId()).IsEnabled()
+        #paste = self.menu.FindItemById(wx.ID_PASTE).IsEnabled()
+        #if event:
+        #undo = redo = next = prev = False
+#        else:
+#            paste = False
+#            undo = self.menu.FindItemById(wx.ID_UNDO).IsEnabled()
+#            redo = self.menu.FindItemById(wx.ID_REDO).IsEnabled()
+#            next = self.menu.FindItemById(ID_NEXT).IsEnabled()
+#            prev = self.menu.FindItemById(ID_PREV).IsEnabled()
 
-        if self.count % 25:
+        if self.count % 25 and event.GetId() is not wx.ID_PASTE:
             # we update the GUI to the inverse of the bool value if the button
             # should be enabled
-            if self.board.redo_list:
-                redo = not redo
-            if self.board.undo_list:
-                undo = not undo
-            if self.current_tab > 0:
-                prev = not prev
-            if self.tab_count > 1 and (self.current_tab + 1 < self.tab_count):
-                next = not next
+            if self.board.redo_list and event.GetId() == wx.ID_REDO:
+                do = not do
+            if self.board.undo_list and event.GetId() == wx.ID_UNDO:
+                do = not do
+            if self.current_tab > 0 and event.GetId() == wx.ID_PREV:
+                do = not do
+            if (self.tab_count > 1 and (self.current_tab + 1 < self.tab_count)
+             and event.GetId() == wx.ID_NEXT):
+                do = not do
 
-            self.tb.EnableTool(wx.ID_UNDO, undo)
-            self.menu.Enable(wx.ID_UNDO, undo)
-            self.tb.EnableTool(wx.ID_REDO, redo)
-            self.menu.Enable(wx.ID_REDO, redo)
-            self.menu.Enable(ID_PREV, prev)
-            self.menu.Enable(ID_NEXT, next)
+            event.Enable(do)
+#            self.tb.EnableTool(wx.ID_UNDO, undo)
+#            self.menu.Enable(wx.ID_UNDO, undo)
+#            self.tb.EnableTool(wx.ID_REDO, redo)
+#            self.menu.Enable(wx.ID_REDO, redo)
+#            self.menu.Enable(ID_PREV, prev)
+#            self.menu.Enable(ID_NEXT, next)
 
-        if self.count == 100:
-            #  causes seg faults if accessed too often
-            check = self.util.get_clipboard()
-            if check:
-                paste = True
-            else:
-                paste = False
+        if self.count >= 73:
 
-            self.count = 0
+            if event.GetId() == wx.ID_PASTE:
+                print 'yes'
+                #  causes seg faults if accessed too often
+                #check = self.util.get_clipboard()
+                #if check:
+                #    _bool = True
+                #else:
+                #    _bool = False
+                #event.Enable(_bool)
 
-        self.tb.EnableTool(wx.ID_PASTE, paste)
-        self.menu.Enable(wx.ID_PASTE, paste)
+            if self.count == 75:
+                self.count = 0
+
+        #self.tb.EnableTool(wx.ID_PASTE, paste)
+        #self.menu.Enable(wx.ID_PASTE, paste)
 
 
     def on_paste(self, event=None):
