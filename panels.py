@@ -86,10 +86,10 @@ class ControlPanel(wx.Panel):
         box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(grid, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(self.colour, 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
+        #box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(width, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.thickness, 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
+        #box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
         self.SetSizer(box)
@@ -335,12 +335,16 @@ class Notes(wx.Panel):
             self.gui.tabs.SetSelection(item)
         else:
             text = item.text
-            font = item.font_data
+            font = item.font
+            font_data = item.font_data
             dlg = TextInput(self.gui, item)
 
             if dlg.ShowModal() == wx.ID_CANCEL:
                 dlg.Destroy()
-                item.font_data = font
+                item.text = text
+                item.font = font
+                item.font_data = font_data
+                item.find_extent()
                 self.gui.board.redraw_all()
             else:
                 dlg.transfer_data(item)  # grab font and text data

@@ -160,17 +160,31 @@ class Utility(object):
 
     def save_pasted_images(self, shapes):
         """
-        When saving a Whyteboard file, any pasted Images (e.g. image = None)
+        When saving a Whyteboard file, any pasted Images (with path == None)
         will be saved to a directory in the user's home directory, and the image
         reference changed.
+        If the same image is pasted many times, it will be only stored once and
+        all images with that common image filepath will be updated.
         """
-        for shape in shapes:
+        data = {}
+        for x, shape in enumerate(shapes):
             if isinstance(shape, tools.Image):
+                img1 = shape.image.ConvertToImage()
+
                 if not shape.path:
-                    path = get_home_dir("pastes")
-                    tmp_file = path + make_filename() + ".jpg"
-                    shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
-                    shape.path = tmp_file
+                    for path in data:
+                        if data[path] == img1.GetData():
+                            shape.path = path
+                            break
+
+                    #  the above iteration didn't find any common pastes
+                    if not shape.path:
+                        path = get_home_dir("pastes")
+                        tmp_file = path + make_filename() + ".jpg"
+                        shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
+                        shape.path = tmp_file
+
+                        data[shape.path] = img1.GetData()
 
 
     def load_file(self, filename=None):

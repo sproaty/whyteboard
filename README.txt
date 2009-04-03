@@ -28,8 +28,10 @@ Windows: newline text is not working.
 ---- VERSION HISTORY ----
 
 03 Apr 2009 - * Paste image support. Pasted images will be saved to a temporary
-                directory; duplicated pasted images won't be saved twice.
-               * Copy selection as bitmap with new tool: RectSelect
+                directory; duplicated pasted images will be saved in one file.
+              * Copy selection as bitmap with new tool: RectSelect
+              * Bugfix: Editing a note and pressing backspace updates the note
+                properly
 
 02 Apr 2009 - * Fixed an issue with 'flickering' on Windows
               * Bugfix: "edit" right-click popup menu on the Note root node.

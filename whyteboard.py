@@ -81,7 +81,7 @@ class Whyteboard(wx.ScrolledWindow):
 
         if not isinstance(self.shape, Text):
             self.drawing = True
-            if self.check_copy():
+            if self.check_copy():  # remove previous select rectangles
                 self.shapes.pop()
                 self.redraw_all()
 
@@ -95,7 +95,6 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.motion(x, y)
             self.shape.draw(dc)
             self.redraw_dirty(dc)
-
 
     def left_up(self, event):
         """

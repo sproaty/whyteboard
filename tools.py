@@ -232,17 +232,23 @@ class Rectangle(Tool):
         rect_x2_2 = self.x - self.width
         rect_y2_2 = self.y - self.height
 
-        #print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_2)
+        if rect_x2_2 < 0:
+            rect_x2_2 = -rect_x2_2
+        if rect_y2_2 < 0:
+            rect_y2_2 = -rect_y2_2
 
-#        if ( ((x > rect_x2_1 and x < self.x)
-#            and (y < rect_y2_1 and y > self.y))
-#        or ((x > rect_x2_2 and x > self.x)
-#            and (y < rect_y2_1 and y > self.y)) ):
-        rect = wx.Rect(self.x, self.y, self.width, self.height)
-        return rect.InsideXY(x, y)
-        #    return True
-        #else:
-        #    return False
+        #print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_2)
+        #rect = wx.Rect(self.x, self.y, self.width, self.height)
+        #return rect.InsideXY(x, y)
+
+        if ( ((x > rect_x2_1 and x < self.x)
+            and (y < rect_y2_1 and y > self.y))
+        or ((x > rect_x2_2 and x > self.x)
+            and (y < rect_y2_1 and y > self.y)) ):
+
+            return True
+        else:
+            return False
 
 #----------------------------------------------------------------------
 
@@ -728,11 +734,11 @@ class RectSelect(Rectangle):
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
 
-            dc.SetPen(wx.Pen(wx.BLACK, 1, wx.USER_DASH))
+            dc.SetPen(wx.BLACK_DASHED_PEN)
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
             dc.DrawRectangle(self.x, self.y, self.width, self.height)            del odc
         else:
-            dc.SetPen(wx.Pen(wx.BLACK, 1, wx.USER_DASH))
+            dc.SetPen(wx.BLACK_DASHED_PEN)
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
             dc.DrawRectangle(self.x, self.y, self.width, self.height)
 
@@ -741,6 +747,10 @@ class RectSelect(Rectangle):
             self.board.shapes.append(self)
             self.board.redraw_all()
 
+    def preview(self, dc, width, height):
+        dc.SetPen(wx.BLACK_DASHED_PEN)
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.DrawRectangle(10, 10, width - 20, height - 20)
 
 #---------------------------------------------------------------------
 

@@ -244,6 +244,7 @@ class TextInput(wx.Dialog):
         self.font = self.ctrl.GetFont()
 
         if note:
+            #self.text = ""
             self.note = note
             self.ctrl.SetValue(note.text)
             self.ctrl.SetForegroundColour(note.colour)
@@ -318,7 +319,8 @@ class TextInput(wx.Dialog):
         of the shape, not the actual shape.
         """
         if self.note:
-            shape = copy(self.note)
+            #self.text = self.note.text
+            shape = self.note
             board = shape.board
         else:
             board = self.gui.board
@@ -349,6 +351,8 @@ class TextInput(wx.Dialog):
         """
         Removes the preview by redrawing current shapes
         """
+        #if self.note:
+        #    self.note.text = self.text
         event.Skip()
 
 #----------------------------------------------------------------------

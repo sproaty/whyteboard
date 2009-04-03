@@ -33,7 +33,7 @@ import sys
 
 import icon
 from whyteboard import Whyteboard
-from tools import Image
+from tools import Image, RectSelect
 from utility import Utility, FileDropTarget
 from dialogs import About, History, ProgressDialog, Resize
 from panels import ControlPanel, SidePanel
@@ -101,10 +101,11 @@ class GUI(wx.Frame):
         self.Maximize(True)
 
         self.count = 0  # used to update menu timings
-        wx.UpdateUIEvent.SetUpdateInterval(50)
+        self.can_paste = False
+        wx.UpdateUIEvent.SetUpdateInterval(65)
         wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         self.do_bindings()
-        self.update_menus()
+        #self.update_menus()
 
 
     def make_menu(self):
@@ -359,8 +360,51 @@ class GUI(wx.Frame):
             for x in range(self.current_tab, self.tab_count):
                 self.tabs.SetPageText(x, "Sheet " + str(x + 1))
 
+    def update_menus(self, event):
+        """
+        Enables/disables the undo/redo/next/prev button as appropriate.
+        It is called every 50ms and uses a counter to update the GUI less often
+        than the 50ms, as it's too performance intense
+        """
+        _id = event.GetId()
 
-    def update_menus(self, event=None):
+        if _id == wx.ID_PASTE:
+            self.count += 1
+
+            if self.count == 5:
+                check = self.util.get_clipboard()
+
+                if check:
+                    self.can_paste = True
+                else:
+                    self.can_paste = False
+                self.count = 0
+            event.Enable(self.can_paste)
+            return
+
+        do = False
+
+        if not _id == wx.ID_COPY:
+            # update the GUI to the inverse of the bool value if the button
+            # should be enabled
+            if event.GetId() == wx.ID_REDO and self.board.redo_list:
+                do = True
+            if event.GetId() == wx.ID_UNDO and self.board.undo_list:
+                do = True
+            if event.GetId() == ID_PREV and self.current_tab > 0:
+                do = True
+            if (event.GetId() == ID_NEXT and self.tab_count > 1 and
+             (self.current_tab + 1 < self.tab_count)):
+                do = True
+        elif self.board:
+             # stops a c++ error on exit (deleted reference)
+            if self.board.check_copy():
+                do = True
+
+        event.Enable(do)
+
+
+    def update_menus2(self, event=None):
         """
         Enables/disables the undo/redo/next/prev button as appropriate.
         It is called every 50ms and uses a counter to update the GUI less often
@@ -369,7 +413,7 @@ class GUI(wx.Frame):
         #f = lambda a, b: self.tb.EnableTool(a, b); self.menu.Enable(a, bl)
         #f(wx.ID_PASTE, True)
         self.count += 1
-        paste = self.menu.FindItemById(wx.ID_PASTE).IsEnabled()
+        paste = False#self.menu.FindItemById(wx.ID_PASTE).IsEnabled()
         copy = False#self.menu.FindItemById(wx.ID_COPY).IsEnabled()
         undo = redo = next = prev = False
 
@@ -414,6 +458,7 @@ class GUI(wx.Frame):
         self.enable(wx.ID_PASTE, paste)
         self.enable(wx.ID_COPY, copy)
 
+
     def enable(self, _id, _bool):
         """
         Enables/disables menu/toolbar
@@ -431,7 +476,6 @@ class GUI(wx.Frame):
         rect = (shape.x, shape.y, shape.width, shape.height)
         bmp = self.util.set_clipboard(rect)
 
-        #self.board.shapes.append(shape)
 
     def on_paste(self, event):
         """
