@@ -61,7 +61,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.36.1"
+    version = "0.36.2"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -105,7 +105,7 @@ class GUI(wx.Frame):
         wx.UpdateUIEvent.SetUpdateInterval(50)
         wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         self.do_bindings()
-        #self.update_menus()
+        self.update_menus()
 
 
     def make_menu(self):
@@ -365,55 +365,49 @@ class GUI(wx.Frame):
         than the 50ms, as it's too performance intense
         """
         self.count += 1
-        do = False#self.menu.FindItemById(event.GetId()).IsEnabled()
-        #paste = self.menu.FindItemById(wx.ID_PASTE).IsEnabled()
-        #if event:
-        #undo = redo = next = prev = False
-#        else:
-#            paste = False
-#            undo = self.menu.FindItemById(wx.ID_UNDO).IsEnabled()
-#            redo = self.menu.FindItemById(wx.ID_REDO).IsEnabled()
-#            next = self.menu.FindItemById(ID_NEXT).IsEnabled()
-#            prev = self.menu.FindItemById(ID_PREV).IsEnabled()
+        paste = self.menu.FindItemById(wx.ID_PASTE).IsEnabled()
+        undo = redo = next = prev = False
 
-        if self.count % 25 and event.GetId() is not wx.ID_PASTE:
+        if not event:
+            #undo = self.menu.FindItemById(wx.ID_UNDO).IsEnabled()
+            #redo = self.menu.FindItemById(wx.ID_REDO).IsEnabled()
+            #next = self.menu.FindItemById(ID_NEXT).IsEnabled()
+            #prev = self.menu.FindItemById(ID_PREV).IsEnabled()
+            if self.util.get_clipboard():
+                paste = True
+            else:
+                paste = False
+
+        if self.count % 25:
             # we update the GUI to the inverse of the bool value if the button
             # should be enabled
-            if self.board.redo_list and event.GetId() == wx.ID_REDO:
-                do = not do
-            if self.board.undo_list and event.GetId() == wx.ID_UNDO:
-                do = not do
-            if self.current_tab > 0 and event.GetId() == wx.ID_PREV:
-                do = not do
-            if (self.tab_count > 1 and (self.current_tab + 1 < self.tab_count)
-             and event.GetId() == wx.ID_NEXT):
-                do = not do
+            if self.board.redo_list:
+                redo = not redo
+            if self.board.undo_list:
+                undo = not undo
+            if self.current_tab > 0:
+                prev = not prev
+            if self.tab_count > 1 and (self.current_tab + 1 < self.tab_count):
+                next = not next
 
-            event.Enable(do)
-#            self.tb.EnableTool(wx.ID_UNDO, undo)
-#            self.menu.Enable(wx.ID_UNDO, undo)
-#            self.tb.EnableTool(wx.ID_REDO, redo)
-#            self.menu.Enable(wx.ID_REDO, redo)
-#            self.menu.Enable(ID_PREV, prev)
-#            self.menu.Enable(ID_NEXT, next)
+            self.tb.EnableTool(wx.ID_UNDO, undo)
+            self.menu.Enable(wx.ID_UNDO, undo)
+            self.tb.EnableTool(wx.ID_REDO, redo)
+            self.menu.Enable(wx.ID_REDO, redo)
+            self.menu.Enable(ID_PREV, prev)
+            self.menu.Enable(ID_NEXT, next)
 
-        if self.count >= 73:
+        if self.count == 50:
+            #  causes seg faults if accessed too often
+            check = self.util.get_clipboard()
+            if check:
+                paste = True
+            else:
+                paste = False
+            self.count = 0
 
-            if event.GetId() == wx.ID_PASTE:
-                print 'yes'
-                #  causes seg faults if accessed too often
-                #check = self.util.get_clipboard()
-                #if check:
-                #    _bool = True
-                #else:
-                #    _bool = False
-                #event.Enable(_bool)
-
-            if self.count == 75:
-                self.count = 0
-
-        #self.tb.EnableTool(wx.ID_PASTE, paste)
-        #self.menu.Enable(wx.ID_PASTE, paste)
+        self.tb.EnableTool(wx.ID_PASTE, paste)
+        self.menu.Enable(wx.ID_PASTE, paste)
 
 
     def on_paste(self, event=None):
@@ -426,6 +420,7 @@ class GUI(wx.Frame):
             shape = Image(self.board, bmp.GetBitmap(), None)
             shape.button_down(0, 0)
             self.board.redraw_all()
+
 
     def on_refresh(self):
         """

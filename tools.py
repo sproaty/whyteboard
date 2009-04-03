@@ -234,13 +234,15 @@ class Rectangle(Tool):
 
         #print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_2)
 
-        if ( ((x > rect_x2_1 and x < self.x)
-            and (y < rect_y2_1 and y > self.y))
-        or ((x > rect_x2_2 and x > self.x)
-            and (y < rect_y2_1 and y > self.y)) ):
-            return True
-        else:
-            return False
+#        if ( ((x > rect_x2_1 and x < self.x)
+#            and (y < rect_y2_1 and y > self.y))
+#        or ((x > rect_x2_2 and x > self.x)
+#            and (y < rect_y2_1 and y > self.y)) ):
+        rect = wx.Rect(self.x, self.y, self.width, self.height)
+        return rect.InsideXY(x, y)
+        #    return True
+        #else:
+        #    return False
 
 #----------------------------------------------------------------------
 
@@ -660,7 +662,7 @@ class Select(Tool):
                 self.shape = copy(shapes[count])
                 self.dragging = True
                 self.count = count
-
+                #self.prev = (self.shape.x, self.shape.y)
                 #print '--------##'
                 #print 'before'
                 #print self.board.shapes
@@ -678,8 +680,18 @@ class Select(Tool):
 
     def motion(self, x, y):
         if self.dragging:
+            #hotspot = self.dragStartPos - self.dragShape.pos
+            #self.dragImage = wx.DragImage(self.shape.image,
+            #                             wx.StockCursor(wx.CURSOR_HAND))
+            #self.dragImage.BeginDrag(self.prev, self.board, False)
+
             self.shape.x = x
             self.shape.y = y
+
+            #self.dragImage.Move((x, y))
+            #self.dragImage.Show()
+            #self.prev = (x, y)
+
 
     def draw(self, dc, replay=False):
         if self.dragging:
@@ -690,7 +702,10 @@ class Select(Tool):
         need to add pop(x) to remove current shape for proper undoing
         !!!!!
         """
+        #self.dragImage.Hide()
+        #self.dragImage.EndDrag()
         if self.dragging:
+
             self.board.add_shape(self.shape, self.count)
             #print 'after'
             #print self.board.shapes
