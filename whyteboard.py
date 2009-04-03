@@ -95,6 +95,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.motion(x, y)
             self.shape.draw(dc)
             self.redraw_dirty(dc)
+            del dc
 
     def left_up(self, event):
         """

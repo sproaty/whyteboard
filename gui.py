@@ -363,8 +363,9 @@ class GUI(wx.Frame):
             self.tab_count -= 1
             self.tabs.RemovePage(self.current_tab)  # fires on_change_tab
 
-            #for x in range(self.current_tab, self.tab_count):
-            #    self.tabs.SetPageText(x, "Sheet " + str(x + 1))
+            for x in range(self.current_tab, self.tab_count):
+                if self.tabs.GetPageText(x).startswith("Sheet "):
+                    self.tabs.SetPageText(x, "Sheet " + str(x + 1))
 
 
     def update_menus(self, event):
@@ -415,8 +416,7 @@ class GUI(wx.Frame):
         """
         shape = self.board.shapes.pop()
         self.board.redraw_all()
-        args = shape.draw_args()
-        rect = wx.Rect(*args)
+        rect = wx.Rect(shape.x, shape.y, shape.width, shape.height)
         bmp = self.util.set_clipboard(rect)
 
         self.count = 4

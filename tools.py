@@ -148,6 +148,7 @@ class Pen(Tool):
 #----------------------------------------------------------------------
 
 
+
 class Rectangle(Tool):
     """
     The rectangle and its descended classes (ellipse/rounded rect) use an
@@ -162,34 +163,44 @@ class Rectangle(Tool):
     def button_down(self, x, y):
         self.x = x
         self.y = y
-        #self.width = 2
-        #self.height = 2
-        self.x2 = x
-        self.y2 = x
+        self.width = 2
+        self.height = 2
 
 
     def motion(self, x, y):
-        #print x, y
-        self.x2 = x
-        self.y2 = y
-        #self.width = x - self.x
-        #self.height = y - self.y
+        self.width = x - self.x
+        self.height = y - self.y
 
 
     def button_up(self, x, y):
+        """
+        Clears the created overlay for rubber banding, draws the rectangle onto
+        the screen and adds it to the shape list if the rectangle was actually
+        drawn out, not just a single mouse click-realease.
+        """
+        #self.time = time.time()
+        dc = wx.BufferedDC(None, self.board.buffer)
+        odc = wx.DCOverlay(self.board.overlay, dc)
+        odc.Clear()
+        del odc
+        self.board.overlay.Reset()
+
         if x != self.x and y != self.y:
             self.board.add_shape(self)
             self.board.redraw_all()
 
+
     def draw_outline(self, dc, _type, args):
         odc = wx.DCOverlay(self.board.overlay, dc)
         odc.Clear()
+
         dc.SetPen(self.pen)
         dc.SetBrush(self.brush)
 
         method = getattr(dc, "Draw" + _type)(*args)
         method
         del odc
+
 
 
     def draw(self, dc, replay=False, _type="Rectangle", args=[]):
@@ -199,15 +210,13 @@ class Rectangle(Tool):
         When called for a replay it renders itself; doesn't draw a temp outline.
         """
         if not args:
-            args = self.draw_args()
-            print args
-            #print self.x, self.y, self.x2 - self.x, self.y2 - self.y
+            args = [self.x, self.y, self.width, self.height]
         if not self.pen:
             self.make_pen()
         if replay:
             self.make_pen()
         if not replay:
-            dc = wx.ClientDC(self.board)
+            #dc = wx.ClientDC(self.board)
             self.draw_outline(dc, _type, args)
             return
 
@@ -217,11 +226,9 @@ class Rectangle(Tool):
         method = getattr(dc, "Draw" + _type)(*args)
         method
 
-    def draw_args(self):
-        x = [self.x, self.x2]; x.sort()
-        y = [self.y, self.y2]; y.sort()
-        #args = [self.x, self.y, self.x2 - self.x, self.y2 - self.y]
-        return [x[0], y[0], x[1] - x[0], y[1] - y[0]]
+
+    def preview(self, dc, width, height):
+        dc.DrawRectangle(5, 5, width - 15, height - 15)
 
 
     def preview(self, dc, width, height):
@@ -243,7 +250,7 @@ class Rectangle(Tool):
         #print str(count) +": " + str(shape.x)+", "+str(rect_x2_2)+" | "+str(shape.y)+", "+str(rect_y2_2)
         #args = [self.x, self.y, self.x2 - self.x, self.y2 - self.y]
 
-        rect = wx.Rect(*self.draw_args())
+        rect = wx.Rect(self.x, self.y, self.width, self.height)
         return rect.InsideXY(x, y)
 
 #        if ( ((x > rect_x2_1 and x < self.x)
@@ -733,28 +740,6 @@ class RectSelect(Rectangle):
     """
     Rectangle selection tool
     """
-    def button_down(self, x, y):
-        #self.rect = wx.Rect(x, y, 0, 0)
-        self.x = self.x2 = x
-        self.y = self.y2 = y
-        self.pos = (self.x, self.y)
-        self.size = (0, 0)
-        #self.x2 = self.y2 = 0
-        #self.width = 2
-        #self.height = 2
-
-    def motion(self, x, y):
-        #self.x2 = x# - self.x2
-        #self.y2 = y# - self.y2
-        self.update((x, y))
-        #atr = self.draw_args()
-        #self.pos = (atr[0], atr[1])
-        #self.size = (atr[2], atr[3])
-        #self.width = x - self.x
-        #self.height = y - self.y
-        #print self.width,  self.height
-        #self.rect.Deflate(x - self.x, y - self.y)
-
     def draw(self, dc, replay=False):
         if not replay:
             dc = wx.ClientDC(self.board)
@@ -762,32 +747,18 @@ class RectSelect(Rectangle):
             odc.Clear()
             dc.SetPen(wx.BLACK_DASHED_PEN)
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
-            #print self.draw_args()
-            dc.DrawRectangle(self.pos[0], self.pos[1], self.size[0], self.size[1])            del odc
+
+            dc.DrawRectangle(self.x, self.y, self.width, self.height)            del odc
         else:
             dc.SetPen(wx.BLACK_DASHED_PEN)
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
-            dc.DrawRectangle(self.pos[0], self.pos[1], self.size[0], self.size[1])
+            dc.DrawRectangle(self.x, self.y, self.width, self.height)
 
-    def update(self, coords):
-        x = [coords[0], self.x]
-        y = [coords[1], self.y]
-        x.sort()
-        y.sort()
-        width = x[1]-x[0]
-        height = y[1]-y[0]
-
-        self.pos = (x[0], y[0])
-        self.size = (width,height)
 
     def button_up(self, x, y):
         if x != self.x and y != self.y:
             self.board.shapes.append(self)
             self.board.redraw_all()
-            self.update((x, y))
-            #atr = self.draw_args()
-            #self.pos = (atr[0], atr[1])
-            #self.size = (atr[2], atr[3])
 
     def preview(self, dc, width, height):
         dc.SetPen(wx.BLACK_DASHED_PEN)
