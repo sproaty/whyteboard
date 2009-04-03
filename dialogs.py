@@ -33,7 +33,6 @@ class History(wx.Dialog):
     """
     Creates a history replaying dialog and methods for its functionality
     """
-
     def __init__(self, gui):
         wx.Dialog.__init__(self, gui, title="History Player", size=(400, 200),
                            style=wx.CLOSE_BOX | wx.CAPTION)
@@ -151,17 +150,13 @@ class History(wx.Dialog):
 
 
     def pause(self, event=None):
-        """
-        Pauses/unpauses the replay.
-        """
+        """Pauses/unpauses the replay."""
         if self.looping:
             self.paused = not self.paused
 
 
     def stop(self, event=None):
-        """
-        Stops the replay.
-        """
+        """Stops the replay."""
         if self.looping or self.paused:
             self.looping = False
             self.paused = False
@@ -188,11 +183,8 @@ class ProgressDialog(wx.Dialog):
     """
     Shows a Progres Gauge while an operation is taking place.
     """
-
     def __init__(self, gui, title, to_add=1):
-        """
-        Defines a gauge and a timer which updates the gauge.
-        """
+        """Defines a gauge and a timer which updates the gauge."""
         wx.Dialog.__init__(self, gui, title=title,  size=(325, 120),
                           style=wx.CAPTION)
         self.count = 0
@@ -210,9 +202,7 @@ class ProgressDialog(wx.Dialog):
         self.timer.Start(20)
 
     def on_timer(self, event):
-        """
-        Increases the gauge's progress.
-        """
+        """Increases the gauge's progress."""
         self.count += self.to_add
         self.gauge.SetValue(self.count)
         if self.count == 100:
@@ -227,7 +217,6 @@ class TextInput(wx.Dialog):
     Shows a text input screen, updates the canvas' text as text is being input
     and has methods for
     """
-
     def __init__(self, gui, note=None):
         """
         Standard constructor - sets text to supplied text variable, if present.
@@ -327,7 +316,7 @@ class TextInput(wx.Dialog):
             shape = copy(board.shape)
         board.redraw_all()  # stops overlapping text
 
-        dc = wx.BufferedDC(wx.ClientDC(board), board.buffer)
+        dc = wx.BufferedDC(None, board.buffer)
         if isinstance(shape, tools.Note):
             self.transfer_data(shape)
             shape.find_extent()
@@ -340,19 +329,12 @@ class TextInput(wx.Dialog):
         dc.DrawText(self.ctrl.GetValue(), shape.x, shape.y)
 
     def transfer_data(self, text_obj):
-        """
-        Transfers the dialog's data to an object.
-        """
+        """Transfers the dialog's data to an object."""
         text_obj.text = self.ctrl.GetValue()
         text_obj.font = self.font
 
-
     def on_close(self, event):
-        """
-        Removes the preview by redrawing current shapes
-        """
-        #if self.note:
-        #    self.note.text = self.text
+        """Leaves dialog.ShowModal() == wx.ID_CANCEL to handle closing"""
         event.Skip()
 
 #----------------------------------------------------------------------
@@ -420,7 +402,6 @@ class Resize(wx.Dialog):
     """
     Allows the user to resize a sheet's canvas
     """
-
     def __init__(self, gui):
         """
         Two text controls for inputting the size, limited to integers only

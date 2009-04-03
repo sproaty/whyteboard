@@ -24,13 +24,13 @@ loading a standard image.
 The saved file structure is:
 
   dictionary { 0: [colour, thickness, tool, tab, version],   - program settings
-               1: shapes { 0: [shape1, shape2, .. shapeN],   - tab 1 / shapes
-                           1: [shape1, shape2, .. shapeN],   - tab 2 / shapes
+               1: shapes { 0: [shape1, shape2, .. shapeN],  1 / shapes
+                           1: [shape1, shape2, .. shapeN],  2 / shapes
                            ..
                            N: [shape1, shape2, .. shapeN]
                          }
-               2: files  { 0: { 0: filename,                 - converted files
-                                1: temp-file-1.png,          - linked tmp file
+               2: files  { 0: { 0: filename,                  - converted files
+                                1: temp-file-1.png,           - linked tmp file
                                 2: temp-file-2.png,
                                 ...
                               },
@@ -41,6 +41,11 @@ The saved file structure is:
                               },
                             ...
                          }
+               3: names: [ 0: 'sheet 1'
+                           1: 'sheet 2'
+                           2: 'sheet 3'
+                           ...
+                         ]
              }
 
 Image Tools have the assosicated image removed from their class upon saving,
@@ -79,7 +84,7 @@ class Utility(object):
         self.to_convert = {}   # list of files
         self.filename = None   # ACTIVE .wtbd file
         self.temp_file = None  # selected file (.wtdb/png/pdf - doesn't matter)
-        self.saved_shapes = {}  # used for undo/redo checking save state
+        #self.saved_shapes = {}  # used for undo/redo checking save state
         self.saved = True
         self.colour = "Black"
         self.thickness = 1
@@ -117,11 +122,13 @@ class Utility(object):
         """
         if self.filename:
             temp = {}
+            names =  []
 
             # load in every shape from every tab
             for x in range(0, self.gui.tab_count):
                 self.save_pasted_images(self.gui.tabs.GetPage(x).shapes)
                 temp[x] = copy(self.gui.tabs.GetPage(x).shapes)
+                names.append(self.gui.tabs.GetPageText(x))
 
             if temp:
                 self.saved_shapes = self.save_pasted_images(temp)
@@ -134,7 +141,8 @@ class Utility(object):
                 _file = { 0: [self.colour, self.thickness, self.tool, tab,
                               self.gui.version],
                           1: temp,
-                          2: self.to_convert }
+                          2: self.to_convert,
+                          3: names }
 
                 f = open(self.filename, 'w')
                 try:
@@ -243,7 +251,7 @@ class Utility(object):
         self.thickness = temp[0][1]
         self.tool = temp[0][2]
         self.to_convert = temp[2]
-        self.saved_shapes = temp[1]
+        #self.saved_shapes = temp[1]
         self.gui.control.change_tool(_id = self.tool)
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
@@ -254,13 +262,17 @@ class Utility(object):
         for x, board in enumerate(temp[1]):
             wb = Whyteboard(self.gui.tabs)
             wb.select_tool()
-            name = "Sheet " + str(x + 1)
+            try:
+                name = temp[3][x]
+            except KeyError:
+                name = "Sheet " + str(x + 1)
+
             self.gui.tabs.AddPage(wb, name)
             self.gui.tab_count += 1
             self.gui.thumbs.new_thumb()
             self.gui.notes.add_tab()
 
-            for shape in temp[1][board]:
+            for shape in temp[1][x]:
                 shape.board = wb  # restore board
                 shape.load()  # restore unpickleable settings
                 wb.add_shape(shape)
@@ -347,7 +359,8 @@ class Utility(object):
                 load_image(temp_file, wb)
                 self.to_convert[index][x + 1] = temp_file
                 self.gui.tab_count += 1
-                self.gui.tabs.AddPage(wb, "Sheet "+ str(self.gui.tab_count))
+                name = os.path.split(_file)[1] + " p" + str(x + 1)
+                self.gui.tabs.AddPage(wb, name)
 
                 self.gui.thumbs.new_thumb()
                 self.gui.notes.add_tab()
@@ -449,12 +462,12 @@ class Utility(object):
             return bmp
         return False
 
-    def set_clipboard(self, rectangle):
+    def set_clipboard(self, rect):
         """
         Sets the clipboard with a bitmap image data of a selection
         rectangle = (x, y, width, height)
         """
-        temp = self.gui.board.buffer.GetSubBitmap(rectangle)
+        temp = self.gui.board.buffer.GetSubBitmap(rect)
         bmp = wx.BitmapDataObject()
         bmp.SetBitmap(temp)
 

@@ -362,11 +362,11 @@ class Notes(wx.Panel):
         """
         Brings up the context menu on right click
         """
-        self.PopupMenu(NotesPopupMenu(self, event))
+        self.PopupMenu(NotesPopup(self, event))
 
 #----------------------------------------------------------------------
 
-class NotesPopupMenu(wx.Menu):
+class NotesPopup(wx.Menu):
     """
     A context pop-up menu for notes, allowing the editing of a note or switching
     the tab selection to a particular sheet. The event is passed around, coming
@@ -388,6 +388,53 @@ class NotesPopupMenu(wx.Menu):
         self.AppendItem(menu)
         method = lambda x: parent.on_click(event)
         self.Bind(wx.EVT_MENU, method, id=ID)
+
+#----------------------------------------------------------------------
+
+class SheetsPopup(wx.Menu):
+    """
+    A context pop-up menu for sheets, allowing to close and rename sheets.
+    """
+    def __init__(self, parent, pos):
+        wx.Menu.__init__(self)
+
+        self.parent = parent
+        sheet = self.parent.tabs.HitTest(pos)
+        rename = wx.NewId()
+
+        if sheet[0] < 0:
+            self.sheet = self.parent.current_tab
+        else:
+            self.sheet = sheet[0]
+
+        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, "New Sheet\t"))
+        self.AppendSeparator()
+        self.AppendItem(wx.MenuItem(self, rename, "Rename Sheet"))
+        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, "Close Sheet"))
+
+        self.Bind(wx.EVT_MENU, self.rename, id=rename)
+        self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
+
+
+    def rename(self, event):
+        """Rename the selected sheet"""
+        dlg = wx.TextEntryDialog(self.parent, "Rename this sheet to:", "Rename sheet")
+        dlg.SetValue(self.parent.tabs.GetPageText(self.sheet))
+
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            dlg.Destroy()
+        else:
+            self.parent.tabs.SetPageText(self.sheet, dlg.GetValue())
+
+    def close(self, event):
+        """
+        The close event uses current_tab to know which sheet to close, so set
+        it to the selected tab from the menu
+        """
+        self.parent.current_tab = self.sheet
+        self.parent.on_close_tab()
+
+
 
 #----------------------------------------------------------------------
 

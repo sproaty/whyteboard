@@ -36,7 +36,7 @@ from whyteboard import Whyteboard
 from tools import Image, RectSelect
 from utility import Utility, FileDropTarget
 from dialogs import About, History, ProgressDialog, Resize
-from panels import ControlPanel, SidePanel
+from panels import ControlPanel, SidePanel, SheetsPopup
 
 
 #----------------------------------------------------------------------
@@ -100,12 +100,16 @@ class GUI(wx.Frame):
         self.SetSizeWH(800, 600)
         self.Maximize(True)
 
-        self.count = 0  # used to update menu timings
-        self.can_paste = False
+        if self.util.get_clipboard():
+            self.can_paste = True
+        else:
+            self.can_paste = False
+
+        self.count = 4  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(65)
         wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         self.do_bindings()
-        #self.update_menus()
+        self.UpdateWindowUI()
 
 
     def make_menu(self):
@@ -167,6 +171,8 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
+        #self.Bind(wx.EVT_RIGHT_UP, self.on_right)
+        self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
 
         ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
@@ -355,16 +361,17 @@ class GUI(wx.Frame):
             self.notes.remove(self.current_tab)
             self.thumbs.remove(self.current_tab)
             self.tab_count -= 1
-            self.tabs.RemovePage(self.current_tab)
+            self.tabs.RemovePage(self.current_tab)  # fires on_change_tab
 
-            for x in range(self.current_tab, self.tab_count):
-                self.tabs.SetPageText(x, "Sheet " + str(x + 1))
+            #for x in range(self.current_tab, self.tab_count):
+            #    self.tabs.SetPageText(x, "Sheet " + str(x + 1))
+
 
     def update_menus(self, event):
         """
         Enables/disables the undo/redo/next/prev button as appropriate.
-        It is called every 50ms and uses a counter to update the GUI less often
-        than the 50ms, as it's too performance intense
+        It is called every 65ms and uses a counter to update the GUI less often
+        than the 65ms, as it's too performance intense
         """
         _id = event.GetId()
 
@@ -381,7 +388,6 @@ class GUI(wx.Frame):
                 self.count = 0
             event.Enable(self.can_paste)
             return
-
         do = False
 
         if not _id == wx.ID_COPY:
@@ -397,74 +403,11 @@ class GUI(wx.Frame):
              (self.current_tab + 1 < self.tab_count)):
                 do = True
         elif self.board:
-             # stops a c++ error on exit (deleted reference)
             if self.board.check_copy():
                 do = True
 
         event.Enable(do)
 
-
-    def update_menus2(self, event=None):
-        """
-        Enables/disables the undo/redo/next/prev button as appropriate.
-        It is called every 50ms and uses a counter to update the GUI less often
-        than the 50ms, as it's too performance intense
-        """
-        #f = lambda a, b: self.tb.EnableTool(a, b); self.menu.Enable(a, bl)
-        #f(wx.ID_PASTE, True)
-        self.count += 1
-        paste = False#self.menu.FindItemById(wx.ID_PASTE).IsEnabled()
-        copy = False#self.menu.FindItemById(wx.ID_COPY).IsEnabled()
-        undo = redo = next = prev = False
-
-        if not event:
-            if self.util.get_clipboard():
-                paste = True
-            else:
-                paste = False
-
-        if self.count % 25:
-            # update the GUI to the inverse of the bool value if the button
-            # should be enabled
-            if self.board.redo_list:
-                redo = not redo
-            if self.board.undo_list:
-                undo = not undo
-            if self.current_tab > 0:
-                prev = not prev
-            if self.tab_count > 1 and (self.current_tab + 1 < self.tab_count):
-                next = not next
-
-            self.enable(wx.ID_UNDO, undo)
-            self.enable(wx.ID_REDO, redo)
-            self.menu.Enable(ID_PREV, prev)
-            self.menu.Enable(ID_NEXT, next)
-
-        if self.count % 50:
-            #  causes seg faults if accessed too often
-            check = self.util.get_clipboard()
-            if check:
-                paste = True
-            else:
-                paste = False
-
-            if self.board:  # stops a c++ error on exit (deleted reference)
-                if self.board.check_copy():
-                    copy = True
-                else:
-                    copy = False
-            self.count = 0
-
-        self.enable(wx.ID_PASTE, paste)
-        self.enable(wx.ID_COPY, copy)
-
-
-    def enable(self, _id, _bool):
-        """
-        Enables/disables menu/toolbar
-        """
-        self.tb.EnableTool(_id, _bool)
-        self.menu.Enable(_id, _bool)
 
     def on_copy(self, event):
         """
@@ -472,9 +415,12 @@ class GUI(wx.Frame):
         """
         shape = self.board.shapes.pop()
         self.board.redraw_all()
-
-        rect = (shape.x, shape.y, shape.width, shape.height)
+        args = shape.draw_args()
+        rect = wx.Rect(*args)
         bmp = self.util.set_clipboard(rect)
+
+        self.count = 4
+        self.UpdateWindowUI()  # force paste to enable
 
 
     def on_paste(self, event):
@@ -487,14 +433,6 @@ class GUI(wx.Frame):
             shape = Image(self.board, bmp.GetBitmap(), None)
             shape.button_down(0, 0)
             self.board.redraw_all()
-
-
-    def on_refresh(self):
-        """
-        Refresh all thumbnails.
-        """
-        self.thumbs.update_all()
-
 
     def convert_dialog(self, cmd):
         """
@@ -509,9 +447,7 @@ class GUI(wx.Frame):
 
 
     def on_end_process(self, event):
-        """
-        Destroy the progress Gauge/process after the convert process returns
-        """
+        """Destroy the progress process after convert returns"""
         self.process.Destroy()
         self.dialog.Destroy()
         del self.process
@@ -526,7 +462,6 @@ class GUI(wx.Frame):
         wx.MilliSleep(50)
         wx.SafeYield()
         self.on_refresh()  # force thumbnails
-
         self.dialog.Destroy()
 
 
@@ -549,60 +484,47 @@ class GUI(wx.Frame):
             self.Destroy()
 
 
+    def tab_popup(self, event):
+        """ Pops up the tab context menu. """
+        self.PopupMenu(SheetsPopup(self, (event.GetX(), event.GetY())))
+
     def on_undo(self, event=None):
-        """
-        Calls undo on the active tab and updates the menus
-        """
+        """ Calls undo on the active tab and updates the menus """
         self.board.undo()
 
-
     def on_redo(self, event=None):
-        """
-        Calls redo on the active tab and updates the menus
-        """
+        """ Calls redo on the active tab and updates the menus """
         self.board.redo()
 
-
     def on_prev(self, event=None):
-        """
-        Changes to the previous sheet
-        """
+        """ Changes to the previous sheet """
         self.tabs.SetSelection(self.current_tab - 1)
 
     def on_next(self, event=None):
-        """
-        Changes to the next sheet
-        """
+        """ Changes to the next sheet """
         self.tabs.SetSelection(self.current_tab + 1)
 
     def on_clear(self, event=None):
-        """
-        Clears *** current sheet's *** drawings, except images.
-        """
+        """ Clears current sheet's drawings, except images. """
         self.board.clear(keep_images=True)
 
-
     def on_clear_all(self, event=None):
-        """
-        Clears *** current sheet ***
-        """
+        """ Clears current sheet """
         self.board.clear()
 
-
     def on_clear_sheets(self, event=None):
-        """
-        Clears *** all tabs' *** drawings, except images.
-        """
+        """ Clears all sheets' drawings, except images. """
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear(keep_images=True)
 
-
     def on_clear_all_sheets(self, event=None):
-        """
-        Clears *** all tabs ***
-        """
+        """ Clears all sheets ***"""
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear()
+
+    def on_refresh(self):
+        """Refresh all thumbnails."""
+        self.thumbs.update_all()
 
 
     def on_resize(self, event=None):
@@ -619,7 +541,6 @@ class GUI(wx.Frame):
         dlg = History(self)
         dlg.ShowModal()
         dlg.Destroy()
-
 
 #----------------------------------------------------------------------
 

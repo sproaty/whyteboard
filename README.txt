@@ -32,6 +32,11 @@ Windows: newline text is not working.
               * Copy selection as bitmap with new tool: RectSelect
               * Bugfix: Editing a note and pressing backspace updates the note
                 properly
+              * Cleaner code for managing UI button updates (enabling/disabling
+                undo/redo/copy/paste)
+              * Popup menu on the sheet bar. Added "rename" option for sheets,
+                which are saved into a save file. Can also close a sheet and
+                open a new sheet from the menu
 
 02 Apr 2009 - * Fixed an issue with 'flickering' on Windows
               * Bugfix: "edit" right-click popup menu on the Note root node.
