@@ -723,21 +723,29 @@ class RectSelect(Rectangle):
     Rectangle selection tool
     """
     def draw(self, dc, replay=False):
-        odc = wx.DCOverlay(self.board.overlay, dc)
-        odc.Clear()
+        if not replay:
+            dc = wx.ClientDC(self.board)
+            odc = wx.DCOverlay(self.board.overlay, dc)
+            odc.Clear()
 
-        dc.SetPen(wx.Pen(wx.BLACK, 1, wx.USER_DASH))
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.DrawRectangle(self.x, self.y, self.width, self.height)        del odc
+            dc.SetPen(wx.Pen(wx.BLACK, 1, wx.USER_DASH))
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.DrawRectangle(self.x, self.y, self.width, self.height)            del odc
+        else:
+            dc.SetPen(wx.Pen(wx.BLACK, 1, wx.USER_DASH))
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.DrawRectangle(self.x, self.y, self.width, self.height)
 
     def button_up(self, x, y):
-        self.board.redraw_all()
+        if x != self.x and y != self.y:
+            self.board.shapes.append(self)
+            self.board.redraw_all()
 
 
 #---------------------------------------------------------------------
 
 items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle,  RoundRect,
-        Eyedrop, Select]
+        Eyedrop, Select, RectSelect]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

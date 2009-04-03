@@ -27,7 +27,7 @@ its own undo/redo.
 import wx
 import wx.lib.dragscroller
 
-from tools import Image, Text, Note
+from tools import Image, Text, Note, RectSelect
 
 #----------------------------------------------------------------------
 
@@ -81,7 +81,9 @@ class Whyteboard(wx.ScrolledWindow):
 
         if not isinstance(self.shape, Text):
             self.drawing = True
-
+            if self.check_copy():
+                self.shapes.pop()
+                self.redraw_all()
 
     def left_motion(self, event):
         """
@@ -272,6 +274,18 @@ class Whyteboard(wx.ScrolledWindow):
 
         self.redraw_all(update_thumb=True)
 
+
+    def check_copy(self):
+        """
+        Checks to see if a rectangle selection is made to enable/disable the
+        copy button. Returns the selection shape, if so.
+        """
+        if self.shapes:
+            shape = self.shapes[len(self.shapes)-1]
+
+            if isinstance(shape, RectSelect):
+                return shape
+        return False
 
     def convert_coords(self, event):
         """

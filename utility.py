@@ -418,9 +418,9 @@ class Utility(object):
         if not os.path.exists(_file):
             wx.MessageBox(path + " does not contain convert.exe")
             return False
-        else:
-            self.im_location = _file
-            return True
+
+        self.im_location = _file
+        return True
 
 
     def get_clipboard(self):
@@ -433,8 +433,21 @@ class Utility(object):
         wx.TheClipboard.Close()
         if success:
             return bmp
-        else:
-            return False
+        return False
+
+    def set_clipboard(self, rectangle):
+        """
+        Sets the clipboard with a bitmap image data of a selection
+        rectangle = (x, y, width, height)
+        """
+        temp = self.gui.board.buffer.GetSubBitmap(rectangle)
+        bmp = wx.BitmapDataObject()
+        bmp.SetBitmap(temp)
+
+        wx.TheClipboard.Open()
+        success = wx.TheClipboard.SetData(bmp)
+        wx.TheClipboard.Close()
+
 
 #----------------------------------------------------------------------
 
