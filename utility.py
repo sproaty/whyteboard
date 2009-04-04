@@ -384,9 +384,9 @@ class Utility(object):
 
         const = types[_name]  # grab the right image type from dict. above
 
-        context = wx.BufferedDC(None, self.gui.board.buffer, wx.BUFFER_VIRTUAL_AREA)
+        context = wx.MemoryDC(self.gui.board.buffer)
         memory = wx.MemoryDC()
-        x, y = self.gui.board.GetClientSizeTuple()
+        x, y = self.gui.board.buffer.GetSize()
         bitmap = wx.EmptyBitmap(x, y, -1)
         memory.SelectObject(bitmap)
         memory.Blit(0, 0, x, y, context, 0, 0)

@@ -129,7 +129,7 @@ class History(wx.Dialog):
                             wx.Yield()
                         except IndexError:
                             pass
-
+                        
                         dc.DrawLine(p[0], p[1], p[2], p[3])
                     else:  # loop is paused, wait for unpause/close/stop
                         while self.paused:

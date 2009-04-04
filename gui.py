@@ -127,8 +127,8 @@ class GUI(wx.Frame):
         _import.Append(ID_PS, 'PostScript')
         _import.Append(ID_IMG, 'Image')
 
-        _file.Append(wx.ID_NEW, "&New Sheet\tCtrl+T", "Add a new sheet")
-        _file.Append(wx.ID_OPEN, "&Open\tCtrl+O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
+        _file.Append(wx.ID_NEW, "&New Sheet\tCtrl-T", "Add a new sheet")
+        _file.Append(wx.ID_OPEN, "&Open", "Load a Whyteboard save file, an image or convert a PDF/PS document")
         _file.Append(wx.ID_CLOSE, "&Remove Sheet\tCtrl+W", "Close the current sheet")
         _file.AppendSeparator()
         _file.Append(wx.ID_SAVE, "&Save\tCtrl+S", "Save the Whyteboard data")
@@ -171,7 +171,10 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
-        #self.Bind(wx.EVT_RIGHT_UP, self.on_right)
+        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_NEXT)
+        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_PREV)
+
+
         self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
 
         ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }
@@ -187,7 +190,7 @@ class GUI(wx.Frame):
                ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, wx.ID_COPY,
                wx.ID_PASTE, ID_RESIZE, ID_PREV, ID_NEXT, wx.ID_CLEAR,
                ID_CLEAR_ALL, ID_CLEAR_SHEETS, wx.ID_ABOUT, wx.ID_EXIT,
-               ID_CLEAR_ALL_SHEETS,]
+               ID_CLEAR_ALL_SHEETS]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -302,7 +305,7 @@ class GUI(wx.Frame):
         self.util.load_file()
 
 
-    def on_export(self, event):
+    def on_export(self, event=None):
         """
         Exports the current sheet as an image.
         """
@@ -351,6 +354,8 @@ class GUI(wx.Frame):
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
+        if event:
+            event.Skip()  # possible 'tabs share buffer' fix on windows??
 
 
     def on_close_tab(self, event=None):
@@ -378,7 +383,6 @@ class GUI(wx.Frame):
 
         if _id == wx.ID_PASTE:
             self.count += 1
-
             if self.count == 5:
                 check = self.util.get_clipboard()
 
@@ -416,7 +420,7 @@ class GUI(wx.Frame):
         """
         shape = self.board.shapes.pop()
         self.board.redraw_all()
-        rect = wx.Rect(shape.x, shape.y, shape.width, shape.height)
+        rect = wx.Rect(*shape.draw_args())
         bmp = self.util.set_clipboard(rect)
 
         self.count = 4

@@ -25,18 +25,23 @@ Windows: loading in a .wtbd file doesn't set the correct Tool
 Windows: loading in a .wtbd file, a new drawing will overwrite the loaded one
 Windows: newline text is not working.
 
+
 ---- VERSION HISTORY ----
 
-03 Apr 2009 - * Paste image support. Pasted images will be saved to a temporary
+04 Apr 2009 - * Paste image support. Pasted images will be saved to a temporary
                 directory; duplicated pasted images will be saved in one file.
               * Copy selection as bitmap with new tool: RectSelect
-              * Bugfix: Editing a note and pressing backspace updates the note
-                properly
+              * Popup menu on the sheet bar. Added "rename" option for sheets,
+                which are saved into a save file. Can also close a sheet, open
+                a new sheet or export the selected one from the menu
               * Cleaner code for managing UI button updates (enabling/disabling
                 undo/redo/copy/paste)
-              * Popup menu on the sheet bar. Added "rename" option for sheets,
-                which are saved into a save file. Can also close a sheet and
-                open a new sheet from the menu
+              * Bugfix: Editing a note and pressing backspace updates the note
+                properly
+              * Bugfix: drawing outlined shapes weirdness outside the default
+                scrollbar region (introduced in 0.35.8)
+              * Bugfix: exporting image saves whole sheet, not just the visible
+                area
 
 02 Apr 2009 - * Fixed an issue with 'flickering' on Windows
               * Bugfix: "edit" right-click popup menu on the Note root node.

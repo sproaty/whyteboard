@@ -39,24 +39,22 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        wx.ScrolledWindow.__init__(self, tab)
+        wx.ScrolledWindow.__init__(self, tab, style=wx.WANTS_CHARS)
         self.virtual_size = (1000, 1000)
         self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.virtual_size)
+        self.SetScrollRate(3, 3)
 
-        self.SetScrollRate(20, 20)
-        self.SetBackgroundColour("White")
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Windows!
-
+        self.SetBackgroundColour("White")
         self.ClearBackground()
         self.scroller = wx.lib.dragscroller.DragScroller(self)
 
         self.tab = tab
         self.shapes = []  # list of shapes for re-drawing/saving
-        self.shape = None  # selected shape to draw with
+        self.shape = None  # currently selected shape to draw with
         self.undo_list = []
         self.redo_list = []
-        self.overlay = wx.Overlay()  # drawing "rubber bands"
         self.drawing = False
         self.zoom = (1.0, 1.0)
         self.select_tool()
@@ -92,10 +90,12 @@ class Whyteboard(wx.ScrolledWindow):
         if self.drawing:
             x, y = self.convert_coords(event)
             dc = wx.BufferedDC(None, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+            #dc = wx.ClientDC(self)
+            #dc = )
             self.shape.motion(x, y)
             self.shape.draw(dc)
             self.redraw_dirty(dc)
-            del dc
+            #del dc
 
     def left_up(self, event):
         """
@@ -287,6 +287,7 @@ class Whyteboard(wx.ScrolledWindow):
                 return shape
         return False
 
+
     def convert_coords(self, event):
         """
         Translate mouse x/y coords to virtual scroll ones.
@@ -312,7 +313,8 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Called when the window is exposed.
         """
-        wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+        dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+        del dc
 
     def get_tab(self):
         """

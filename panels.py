@@ -401,18 +401,21 @@ class SheetsPopup(wx.Menu):
         self.parent = parent
         sheet = self.parent.tabs.HitTest(pos)
         rename = wx.NewId()
+        export = wx.NewId()
 
         if sheet[0] < 0:
             self.sheet = self.parent.current_tab
         else:
             self.sheet = sheet[0]
 
-        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, "New Sheet\t"))
+        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, "New Sheet"))
+        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, "Close Sheet"))
         self.AppendSeparator()
         self.AppendItem(wx.MenuItem(self, rename, "Rename Sheet"))
-        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, "Close Sheet"))
+        self.AppendItem(wx.MenuItem(self, export, "Export Sheet"))
 
         self.Bind(wx.EVT_MENU, self.rename, id=rename)
+        self.Bind(wx.EVT_MENU, self.export, id=export)
         self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
 
 
@@ -434,6 +437,12 @@ class SheetsPopup(wx.Menu):
         self.parent.current_tab = self.sheet
         self.parent.on_close_tab()
 
+    def export(self, event):
+        """Export the selected tab"""
+        board = self.parent.board
+        self.parent.board = self.parent.tabs.GetPage(self.sheet)
+        self.parent.on_export()
+        self.parent.board = board
 
 
 #----------------------------------------------------------------------
