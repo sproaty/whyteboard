@@ -105,7 +105,6 @@ class Tool(object):
 
 #----------------------------------------------------------------------
 
-
 class Pen(Tool):
     """
     A free-hand pen.
@@ -141,12 +140,12 @@ class Pen(Tool):
     def preview(self, dc, width, height):
         """
         Points below make a curly line to show an example Pen drawing
-        """        points = ((52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9), (47, 9), (46, 9), (46, 8), (45, 8), (44, 8), (43, 8), (42, 8), (41, 8), (40, 8), (39, 8), (38, 8), (37, 8), (36, 8), (35, 8), (34, 8), (33, 8), (32, 8), (31, 8), (30, 8), (29, 8), (28, 8), (27, 8), (27, 10), (26, 10), (26, 11), (26, 12), (26, 13), (26, 14), (26, 15), (26, 16), (28, 18), (30, 19), (31, 21), (34, 22), (36, 24), (37, 26), (38, 27), (40, 28), (40, 29), (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33), (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37), (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37))
+        """
+        points = ((52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9), (47, 9), (46, 9), (46, 8), (45, 8), (44, 8), (43, 8), (42, 8), (41, 8), (40, 8), (39, 8), (38, 8), (37, 8), (36, 8), (35, 8), (34, 8), (33, 8), (32, 8), (31, 8), (30, 8), (29, 8), (28, 8), (27, 8), (27, 10), (26, 10), (26, 11), (26, 12), (26, 13), (26, 14), (26, 15), (26, 16), (28, 18), (30, 19), (31, 21), (34, 22), (36, 24), (37, 26), (38, 27), (40, 28), (40, 29), (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33), (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37), (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37))
 
         dc.DrawSpline(points)
 
 #----------------------------------------------------------------------
-
 
 
 class Rectangle(Tool):
@@ -177,50 +176,52 @@ class Rectangle(Tool):
             self.board.add_shape(self)
             self.board.redraw_all()
 
-    def draw(self, dc, replay=False, _type="Rectangle", args=[], pen=wx.SOLID):
+    def draw(self, dc, replay=False, _type="Rectangle", pen=wx.SOLID):
         """
         Draws a shape polymorphically, using Python's introspection; can be
         called by its sub-classes.
         When called for a replay it renders itself; doesn't draw a temp outline.
-        """
-        if not args:
-            args = self.draw_args()#[self.x, self.y, self.w, self.h]
+        """        args = self.draw_args()
+
         if not self.pen or not self.brush:
             self.make_pen()
         if replay:
             self.make_pen()
         if not replay:
-
             #  invert the colour to draw as that colour is inverted
             # (so we draw the right colour - invert of an invert)
+            cdc = wx.ClientDC(self.board)
+            self.board.PrepareDC(cdc)
+            dc = wx.BufferedDC(cdc, self.board.buffer)
+
             col = self.find_inverse(wx.Colour(*self.pen.GetColour()))
+            dc.SetLogicalFunction(wx.XOR)
             dc.SetBrush(self.brush)
             dc.SetPen(wx.Pen(col, self.thickness, pen))
-            dc.SetLogicalFunction(wx.XOR)
+
 
             if self.RBRect:
                 method = getattr(dc, "Draw" + _type)(*self.RBRect)
                 method
-
+            #dc.SetLogicalFunction(wx.XOR)
             # args can be of variable length...
             self.RBRect = [x for x in args]
             method = getattr(dc, "Draw" + _type)(*self.RBRect)
             method
-
             return
 
         # draw normal rect.
         dc.SetPen(wx.Pen(self.colour, self.thickness, pen))
         dc.SetBrush(self.brush)
-        dc.SetTextForeground(self.colour)  # forces text colour
+        dc.SetTextForeground(self.colour)  # forces text colour
         method = getattr(dc, "Draw" + _type)(*args)
         method
 
 
     def draw_args(self):
+        """ Shape's custom drawing arguments """
         x = [self.x, self.w]; x.sort()
         y = [self.y, self.h]; y.sort()
-        #args = [self.x, self.y, self.x2 - self.x, self.y2 - self.y]
         return [x[0], y[0], x[1] - x[0], y[1] - y[0]]
 
     def find_inverse(self, colour):
@@ -236,7 +237,6 @@ class Rectangle(Tool):
     def hit_test(self, x, y):
         rect = wx.Rect(*self.draw_args())
         return rect.InsideXY(x, y)
-
 
 #----------------------------------------------------------------------
 
@@ -257,8 +257,10 @@ class Circle(Rectangle):
         self.radius = self.x - x
 
     def draw(self, dc, replay=False):
-        super(Circle, self).draw(dc, replay, "Circle", [self.x, self.y,
-              self.radius])
+        super(Circle, self).draw(dc, replay, "Circle")
+
+    def draw_args(self):
+        return [self.x, self.y, self.radius]
 
     def preview(self, dc, width, height):
         dc.DrawCircle(width/2, height/2, 15)
@@ -279,26 +281,27 @@ class Ellipse(Rectangle):
     def preview(self, dc, width, height):
         dc.DrawEllipse(5, 5, width - 12, height - 12)
 
-#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
 
 class RoundRect(Rectangle):
     """
     Easily extends from Rectangle.
     """
     def draw(self, dc, replay=False):
-        super(RoundRect, self).draw(dc, replay, "RoundedRectangle", self.draw_args())
+        super(RoundRect, self).draw(dc, replay, "RoundedRectangle")
 
     def preview(self, dc, width, height):
         dc.DrawRoundedRectangle(5, 5, width - 15, height - 15, 45)
 
     def draw_args(self):
-        x = [self.x, self.w]; x.sort()
-        y = [self.y, self.h]; y.sort()
-        #args = [self.x, self.y, self.x2 - self.x, self.y2 - self.y]
-        return [x[0], y[0], x[1] - x[0], y[1] - y[0], 45]
+        args = super(RoundRect, self).draw_args()# [self.x, self.w]; x.sort()
+        args.append(90)  # edge angle
+        return args
 
     def hit_test(self, x, y):
-        pas
+        pass
+
 #----------------------------------------------------------------------
 
 
@@ -308,21 +311,34 @@ class Line(Rectangle):
     """
     def __init__(self, board, colour, thickness):
         Rectangle.__init__(self, board, colour, thickness)
-        self.x2 = 0
-        self.y2 = 0
+
+    def button_down(self, x, y):
+        self.x = self.x2 = x
+        self.y = self.y2 = y
 
     def motion(self, x, y):
         self.x2 = x
         self.y2 = y
 
+    def button_up(self, x, y):
+        """ Don't add a 'blank' line """
+        if self.x2 != self.x or self.y2 != self.y:
+            self.board.add_shape(self)
+            self.board.redraw_all()
+
     def draw(self, dc, replay=False):
-        super(Line, self).draw(dc, replay, "Line", [self.x, self.y, self.x2,
-                                                    self.y2])
+        super(Line, self).draw(dc, replay, "Line")
+
+    def draw_args(self):
+        return [self.x, self.y, self.x2, self.y2]
+
     def preview(self, dc, width, height):
         dc.DrawLine(10, height / 2, width - 10, height / 2)
 
     def hit_test(self, x, y):
-        pas
+        rect = wx.Rect(*self.draw_args())
+        return rect.InsideXY(x, y)
+
 #---------------------------------------------------------------------
 
 class Eraser(Pen):
@@ -457,7 +473,10 @@ class Text(Rectangle):
             self.restore_font()
             self.update_scroll()
         dc.SetFont(self.font)
-        super(Text, self).draw(dc, replay, "Text", [self.text, self.x, self.y])
+        super(Text, self).draw(dc, replay, "Text")
+
+    def draw_args(self):
+        return [self.text, self.x, self.y]
 
     def preview(self, dc, width, height):
         dc.SetTextForeground(self.colour)
@@ -714,7 +733,7 @@ class RectSelect(Rectangle):
         Rectangle.__init__(self, board, (0, 0, 0), 2)
 
     def draw(self, dc, replay=False):
-        super(RectSelect, self).draw(dc, replay, "Rectangle", pen=wx.SHORT_DASH)
+        super(RectSelect, self).draw(dc, replay, "Rectangle", wx.SHORT_DASH)
 #        if not replay:
 #            dc = wx.ClientDC(self.board)
 #            odc = wx.DCOverlay(self.board.overlay, dc)
@@ -722,7 +741,8 @@ class RectSelect(Rectangle):
 #            dc.SetPen(wx.BLACK_DASHED_PEN)
 #            dc.SetBrush(wx.TRANSPARENT_BRUSH)
 
-#            dc.DrawRectangle(self.x, self.y, self.width, self.height)#            del odc
+#            dc.DrawRectangle(self.x, self.y, self.width, self.height)
+#            del odc
 #        else:
 #            dc.SetPen(wx.BLACK_DASHED_PEN)
 #            dc.SetBrush(wx.TRANSPARENT_BRUSH)

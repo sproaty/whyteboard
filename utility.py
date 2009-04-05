@@ -359,7 +359,7 @@ class Utility(object):
                 load_image(temp_file, wb)
                 self.to_convert[index][x + 1] = temp_file
                 self.gui.tab_count += 1
-                name = os.path.split(_file)[1] + " p" + str(x + 1)
+                name = os.path.split(_file)[1] + " - " + str(x + 1)
                 self.gui.tabs.AddPage(wb, name)
 
                 self.gui.thumbs.new_thumb()

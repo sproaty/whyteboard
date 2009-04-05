@@ -128,7 +128,7 @@ class GUI(wx.Frame):
         _import.Append(ID_IMG, 'Image')
 
         _file.Append(wx.ID_NEW, "&New Sheet\tCtrl-T", "Add a new sheet")
-        _file.Append(wx.ID_OPEN, "&Open", "Load a Whyteboard save file, an image or convert a PDF/PS document")
+        _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
         _file.Append(wx.ID_CLOSE, "&Remove Sheet\tCtrl+W", "Close the current sheet")
         _file.AppendSeparator()
         _file.Append(wx.ID_SAVE, "&Save\tCtrl+S", "Save the Whyteboard data")

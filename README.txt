@@ -26,6 +26,7 @@ Windows: loading in a .wtbd file, a new drawing will overwrite the loaded one
 Windows: newline text is not working.
 
 
+
 ---- VERSION HISTORY ----
 
 04 Apr 2009 - * Paste image support. Pasted images will be saved to a temporary
@@ -34,15 +35,16 @@ Windows: newline text is not working.
               * Popup menu on the sheet bar. Added "rename" option for sheets,
                 which are saved into a save file. Can also close a sheet, open
                 a new sheet or export the selected one from the menu
-              * Cleaner code for managing UI button updates (enabling/disabling
-                undo/redo/copy/paste)
+              * Cleaner code for managing UI button enabling/disabling
               * Bugfix: Editing a note and pressing backspace updates the note
                 properly
               * Bugfix: drawing outlined shapes weirdness outside the default
                 scrollbar region (introduced in 0.35.8)
               * Bugfix: exporting image saves whole sheet, not just the visible
                 area
+              * Bugfix: Adding a line sometimes wasn't being actually added
 
+              
 02 Apr 2009 - * Fixed an issue with 'flickering' on Windows
               * Bugfix: "edit" right-click popup menu on the Note root node.
               * Preview for the eyedrop (just shows current colour)

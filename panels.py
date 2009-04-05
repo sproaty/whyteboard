@@ -427,7 +427,8 @@ class SheetsPopup(wx.Menu):
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
         else:
-            self.parent.tabs.SetPageText(self.sheet, dlg.GetValue())
+            if dlg.GetValue():
+                self.parent.tabs.SetPageText(self.sheet, dlg.GetValue())
 
     def close(self, event):
         """
