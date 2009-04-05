@@ -313,8 +313,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Called when the window is exposed.
         """
-        dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-        del dc
+        wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
 
     def get_tab(self):
         """

@@ -115,7 +115,7 @@ class History(wx.Dialog):
             if isinstance(s, tools.Image):
                 s.draw(dc)
 
-        for count, pen in enumerate(shapes):
+        for pen in shapes:
             # draw pen outline
             if isinstance(pen, tools.Pen):
                 pen.make_pen()
@@ -129,7 +129,7 @@ class History(wx.Dialog):
                             wx.Yield()
                         except IndexError:
                             pass
-                        
+
                         dc.DrawLine(p[0], p[1], p[2], p[3])
                     else:  # loop is paused, wait for unpause/close/stop
                         while self.paused:
@@ -173,7 +173,6 @@ class History(wx.Dialog):
 
     def scroll(self, event):
         self.pause()
-        self.x
 
 
 #----------------------------------------------------------------------

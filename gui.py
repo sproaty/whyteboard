@@ -33,7 +33,7 @@ import sys
 
 import icon
 from whyteboard import Whyteboard
-from tools import Image, RectSelect
+from tools import Image
 from utility import Utility, FileDropTarget
 from dialogs import About, History, ProgressDialog, Resize
 from panels import ControlPanel, SidePanel, SheetsPopup
@@ -421,7 +421,7 @@ class GUI(wx.Frame):
         shape = self.board.shapes.pop()
         self.board.redraw_all()
         rect = wx.Rect(*shape.draw_args())
-        bmp = self.util.set_clipboard(rect)
+        self.util.set_clipboard(rect)
 
         self.count = 4
         self.UpdateWindowUI()  # force paste to enable

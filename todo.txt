@@ -1,6 +1,6 @@
 Whyteboard 0.36.2 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Mon 30 Mar 2009 17:04:17 BST
+Sun 05 Apr 2009 04:22:38 BST
 
 ---- NEW FEATURES ----
 
@@ -20,3 +20,4 @@ Eventually, long term:
 ---- TO FIX ----
 
 - Few windows errors, see readme
+- investigate into performance of using PrepareDC in draw rectangle

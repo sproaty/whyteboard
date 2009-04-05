@@ -152,6 +152,8 @@ class Rectangle(Tool):
     """
     The rectangle and its descended classes (ellipse/rounded rect) use an
     overlay as a rubber banding method of drawing itself over other shapes.
+
+    Currently hacked to bits
     """
 
     def __init__(self, board, colour, thickness):
@@ -188,22 +190,23 @@ class Rectangle(Tool):
         if replay:
             self.make_pen()
         if not replay:
-            #  invert the colour to draw as that colour is inverted
-            # (so we draw the right colour - invert of an invert)
+
+            # THIS MAY BE PERFORMANCE-HEAVY (but it's ok on my machine...)
             cdc = wx.ClientDC(self.board)
             self.board.PrepareDC(cdc)
             dc = wx.BufferedDC(cdc, self.board.buffer)
 
-            col = self.find_inverse(wx.Colour(*self.pen.GetColour()))
+            #  invert the colour to draw as that colour is inverted
+            # (so we draw the right colour - invert of an invert)
+            col = find_inverse(wx.Colour(*self.pen.GetColour()))
             dc.SetLogicalFunction(wx.XOR)
             dc.SetBrush(self.brush)
             dc.SetPen(wx.Pen(col, self.thickness, pen))
 
-
             if self.RBRect:
                 method = getattr(dc, "Draw" + _type)(*self.RBRect)
                 method
-            #dc.SetLogicalFunction(wx.XOR)
+            dc.SetLogicalFunction(wx.XOR)
             # args can be of variable length...
             self.RBRect = [x for x in args]
             method = getattr(dc, "Draw" + _type)(*self.RBRect)
@@ -222,13 +225,7 @@ class Rectangle(Tool):
         """ Shape's custom drawing arguments """
         x = [self.x, self.w]; x.sort()
         y = [self.y, self.h]; y.sort()
-        return [x[0], y[0], x[1] - x[0], y[1] - y[0]]
-
-    def find_inverse(self, colour):
-        r = 255 - colour.Red()
-        g = 255 - colour.Green()
-        b = 255 - colour.Blue()
-        return wx.Colour(r, g, b)
+        return [x[0], y[0], x[1] - x[0], y[1] - y[0]]
 
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
@@ -418,7 +415,6 @@ class Text(Rectangle):
         """
         self.x = x
         self.y = y
-        self.time = time.time()
         dlg = TextInput(self.board.GetParent().GetParent())  # GUI
 
         if dlg.ShowModal() == wx.ID_CANCEL:
@@ -490,7 +486,7 @@ class Text(Rectangle):
         self.restore_font()
         self.update_scroll(False)
 
-    def hit_test(self,x, y):
+    def hit_test(self, x, y):
         width = self.x + self.extent[0]
         height = self.y + self.extent[1]
 
@@ -727,26 +723,13 @@ class Select(Tool):
 
 class RectSelect(Rectangle):
     """
-    Rectangle selection tool
+    Rectangle selection tool, used to select a region to copy/paste
     """
     def __init__(self, board, image, path):
         Rectangle.__init__(self, board, (0, 0, 0), 2)
 
     def draw(self, dc, replay=False):
         super(RectSelect, self).draw(dc, replay, "Rectangle", wx.SHORT_DASH)
-#        if not replay:
-#            dc = wx.ClientDC(self.board)
-#            odc = wx.DCOverlay(self.board.overlay, dc)
-#            odc.Clear()
-#            dc.SetPen(wx.BLACK_DASHED_PEN)
-#            dc.SetBrush(wx.TRANSPARENT_BRUSH)
-
-#            dc.DrawRectangle(self.x, self.y, self.width, self.height)
-#            del odc
-#        else:
-#            dc.SetPen(wx.BLACK_DASHED_PEN)
-#            dc.SetBrush(wx.TRANSPARENT_BRUSH)
-#            dc.DrawRectangle(self.x, self.y, self.width, self.height)
 
     def button_up(self, x, y):
         """ Important: appends the shape, but not to the undo list """
@@ -759,14 +742,21 @@ class RectSelect(Rectangle):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         dc.DrawRectangle(10, 10, width - 20, height - 20)
 
-
     def hit_test(self, x, y):
         pass
 
 #---------------------------------------------------------------------
 
+def find_inverse(colour):
+    """ Invert an RGB colour """
+    r = 255 - colour.Red()
+    g = 255 - colour.Green()
+    b = 255 - colour.Blue()
+    return wx.Colour(r, g, b)
+
+# items to draw with
 items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle,  RoundRect,
-        Eyedrop, Select, RectSelect]
+        Eyedrop, RectSelect]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

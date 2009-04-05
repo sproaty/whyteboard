@@ -131,7 +131,7 @@ class Utility(object):
                 names.append(self.gui.tabs.GetPageText(x))
 
             if temp:
-                self.saved_shapes = self.save_pasted_images(temp)
+                self.save_pasted_images(temp)
                 for x in temp:
                     for shape in temp[x]:
                         shape.save()  # need to unlink unpickleable items;
@@ -175,7 +175,7 @@ class Utility(object):
         all images with that common image filepath will be updated.
         """
         data = {}
-        for x, shape in enumerate(shapes):
+        for shape in shapes:
             if isinstance(shape, tools.Image):
                 img1 = shape.image.ConvertToImage()
 
@@ -259,7 +259,7 @@ class Utility(object):
         self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
 
         # re-create tabs and its saved drawings
-        for x, board in enumerate(temp[1]):
+        for x in temp[1]:
             wb = Whyteboard(self.gui.tabs)
             wb.select_tool()
             try:
@@ -472,7 +472,7 @@ class Utility(object):
         bmp.SetBitmap(temp)
 
         wx.TheClipboard.Open()
-        success = wx.TheClipboard.SetData(bmp)
+        wx.TheClipboard.SetData(bmp)
         wx.TheClipboard.Close()
 
 
