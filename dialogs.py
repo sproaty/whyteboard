@@ -367,7 +367,7 @@ class FindIM(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(text, 1, gap | wx.EXPAND, 10)
-        sizer.Add(btn, 0, gap | wx.ALIGN_CENTRE, 10)
+        sizer.Add(btn, 0, gap | wx.ALIGN_CENTRE, 20)
         sizer.Add((10, 10)) # Spacer.
         btnSizer.Realize()
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)

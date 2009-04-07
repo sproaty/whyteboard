@@ -44,6 +44,7 @@ class ControlPanel(wx.Panel):
         self.toggled = 1  # Pen, initallly
         self.preview = DrawingPreview(self.gui)
         self.tools = {}
+        #wx.ToolTip.SetDelay(5000)
         sizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
 
         # Get list of class names as strings for each drawable tool
@@ -51,6 +52,7 @@ class ControlPanel(wx.Panel):
 
         for x, name in enumerate(items):
             b = wx.ToggleButton(self, x + 1, name)
+            b.SetToolTipString(gui.util.items[x].tooltip)
             b.Bind(wx.EVT_TOGGLEBUTTON, self.change_tool, id=x + 1)
             sizer.Add(b, 0)
             self.tools[x + 1] = b
@@ -60,7 +62,7 @@ class ControlPanel(wx.Panel):
         prev = wx.StaticText(self, label="Preview:")
 
         self.colour = wx.ColourPickerCtrl(self)
-        self.colour.SetToolTip(wx.ToolTip("Sets the drawing colour"))
+        self.colour.SetToolTipString("Select a custom colour")
 
         self.colour_list = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
                             'Cyan', 'Orange', 'Light Grey']
@@ -78,7 +80,7 @@ class ControlPanel(wx.Panel):
         self.thickness = wx.ComboBox(self, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
-        self.thickness.SetToolTip(wx.ToolTip("Sets the drawing thickness"))
+        self.thickness.SetToolTipString("Sets the drawing thickness")
 
         spacing = 4
         box = wx.BoxSizer(wx.VERTICAL)
@@ -98,6 +100,7 @@ class ControlPanel(wx.Panel):
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
+
 
     def scroll(self, event):
         """
@@ -188,7 +191,7 @@ class DrawingPreview(wx.Window):
         self.SetBackgroundColour(wx.WHITE)
         self.SetSize((45, 45))
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        self.SetToolTip(wx.ToolTip("A preview of your drawing"))
+        self.SetToolTipString("A preview of your drawing")
 
     def on_paint(self, event=None):
         """
@@ -588,6 +591,7 @@ class ThumbButton(wx.BitmapButton):
         self.buffer = bitmap
         self.current = False  # active thumb?
         self.Bind(wx.EVT_BUTTON, self.on_press)
+        self.SetBackgroundColour(wx.WHITE)
 
 
     def on_press(self, event):

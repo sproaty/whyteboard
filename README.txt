@@ -1,6 +1,6 @@
-Whyteboard 0.36.2 - a simple image, PDF and postscript file annotator
+Whyteboard 0.36.3 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sun 05 Apr 2009 04:22:33 BST
+Tue 07 Apr 2009 10:10:10 BST
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -21,14 +21,18 @@ see what error occurred and let me know at, <sproaty -at- gmail -dot- com>
 
 ---- KNOWN BUGS ----
 
-Windows: loading in a .wtbd file doesn't set the correct Tool
-Windows: loading in a .wtbd file, a new drawing will overwrite the loaded one
-Windows: newline text is not working.
 Possible: drawing outlined rectangles may be CPU intensive
 
 
 
 ---- VERSION HISTORY ----
+
+07 Apr 2009 - * Tooltips for each item on the toolbox
+              * "New Window" menu item to launch a new Whyteboard instance.
+              * Important Windows bugfix: .wtbd drawings being "overwritten" on
+                load.
+              * Important Windows bugfix: .wtbd drawings not restoring the saved
+                selected tool.
 
 05 Apr 2009 - * Paste image support. Pasted images will be saved to a temporary
                 directory; duplicated pasted images will be saved in one file.

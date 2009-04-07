@@ -33,7 +33,8 @@ from dialogs import TextInput
 
 
 class Tool(object):
-    """Abstract class representing a tool: Drawing board/colour/thickness"""
+    """ Abstract class representing a tool: Drawing board/colour/thickness """
+    tooltip = ""
 
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
         self.board = board
@@ -46,69 +47,51 @@ class Tool(object):
         self.y = 0
         self.make_pen()
 
+
     def button_down(self, x, y):
-        """
-        Left mouse button event
-        """
+        """ Left mouse button event """
         pass
 
     def button_up(self, x, y):
-        """
-        Left button up.
-        """
+        """ Left button up. """
         pass
 
     def motion(self, x, y):
-        """
-        Mouse in motion (usually while drawing)
-        """
+        """ Mouse in motion (usually while drawing) """
         pass
 
     def draw(self, dc, replay=True):
-        """
-        Draws itself.
-        """
+        """ Draws itself. """
         pass
 
     def hit_test(self, x, y):
-        """
-        Returns true/false on whether a mouseclick in "inside" the shape
-        """
+        """ Returns true/false if a mouseclick in "inside" the shape """
         pass
 
     def make_pen(self):
-        """
-        Creates a pen from the object after loading in a save file
-        """
+        """ Creates a pen from the object after loading in a save file """
         self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
         self.brush = wx.TRANSPARENT_BRUSH
 
     def preview(self, dc, width, height):
-        """
-        Tools' preview for the left-hand panel
-        """
+        """ Tools' preview for the left-hand panel """
         pass
 
     def save(self):
-        """
-        Defines how this class will pickle itself
-        """
+        """ Defines how this class will pickle itself """
         self.board = None
         self.pen = None
         self.brush = None
 
     def load(self):
-        """
-        Defines how this class will unpickle itself
-        """
+        """ Defines how this class will unpickle itself """
         pass
 
 #----------------------------------------------------------------------
 
 class Pen(Tool):
-    """
-    A free-hand pen.
-    """
+    """ A free-hand pen. """
+    tooltip = "Draw strokes with a brush"
 
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
         Tool.__init__(self, board, colour, thickness, cursor)
@@ -124,7 +107,6 @@ class Pen(Tool):
             self.board.add_shape(self)
 
     def motion(self, x, y):
-
         self.points.append( [self.x, self.y, x, y] )
         self.time.append(time.time() )
         self.x = x
@@ -138,9 +120,7 @@ class Pen(Tool):
 
 
     def preview(self, dc, width, height):
-        """
-        Points below make a curly line to show an example Pen drawing
-        """
+        """ Points below make a curly line to show an example Pen drawing   """
         points = ((52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9), (47, 9), (46, 9), (46, 8), (45, 8), (44, 8), (43, 8), (42, 8), (41, 8), (40, 8), (39, 8), (38, 8), (37, 8), (36, 8), (35, 8), (34, 8), (33, 8), (32, 8), (31, 8), (30, 8), (29, 8), (28, 8), (27, 8), (27, 10), (26, 10), (26, 11), (26, 12), (26, 13), (26, 14), (26, 15), (26, 16), (28, 18), (30, 19), (31, 21), (34, 22), (36, 24), (37, 26), (38, 27), (40, 28), (40, 29), (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33), (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37), (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37))
 
         dc.DrawSpline(points)
@@ -155,22 +135,23 @@ class Rectangle(Tool):
 
     Currently hacked to bits
     """
+    tooltip = "Draw a rectangle"
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
-        self.RBRect = None
+        self.rect = None
 
     def button_down(self, x, y):
         self.x = x
         self.y = y
-        self.w = x
-        self.h = y
+        self.width = x
+        self.height = y
 
     def motion(self, x, y):
-        #self.w = x - self.x
-        #self.h = y - self.y
-        self.w = x
-        self.h = y
+        #self.width = x - self.x
+        #self.height = y - self.y
+        self.width = x
+        self.height = y
 
     def button_up(self, x, y):
         """ Only adds the shape if it was actually dragged out """
@@ -183,7 +164,7 @@ class Rectangle(Tool):
         Draws a shape polymorphically, using Python's introspection; can be
         called by its sub-classes.
         When called for a replay it renders itself; doesn't draw a temp outline.
-        """        args = self.draw_args()
+        """        args = self.get_args()
 
         if not self.pen or not self.brush:
             self.make_pen()
@@ -203,13 +184,13 @@ class Rectangle(Tool):
             dc.SetBrush(self.brush)
             dc.SetPen(wx.Pen(col, self.thickness, pen))
 
-            if self.RBRect:
-                method = getattr(dc, "Draw" + _type)(*self.RBRect)
+            if self.rect:
+                method = getattr(dc, "Draw" + _type)(*self.rect)
                 method
             dc.SetLogicalFunction(wx.XOR)
             # args can be of variable length...
-            self.RBRect = [x for x in args]
-            method = getattr(dc, "Draw" + _type)(*self.RBRect)
+            self.rect = [x for x in args]
+            method = getattr(dc, "Draw" + _type)(*self.rect)
             method
             return
 
@@ -221,10 +202,10 @@ class Rectangle(Tool):
         method
 
 
-    def draw_args(self):
+    def get_args(self):
         """ Shape's custom drawing arguments """
-        x = [self.x, self.w]; x.sort()
-        y = [self.y, self.h]; y.sort()
+        x = [self.x, self.width]; x.sort()
+        y = [self.y, self.height]; y.sort()
         return [x[0], y[0], x[1] - x[0], y[1] - y[0]]
 
     def preview(self, dc, width, height):
@@ -232,7 +213,7 @@ class Rectangle(Tool):
 
 
     def hit_test(self, x, y):
-        rect = wx.Rect(*self.draw_args())
+        rect = wx.Rect(*self.get_args())
         return rect.InsideXY(x, y)
 
 #----------------------------------------------------------------------
@@ -242,6 +223,8 @@ class Circle(Rectangle):
     """
     Draws a circle. Extended from a Rectangle to save on repeated code.
     """
+    tooltip = "Draw a circle"
+
     def __init__(self, board, colour, thickness):
         Rectangle.__init__(self, board, colour, thickness)
         self.radius = 1
@@ -256,7 +239,7 @@ class Circle(Rectangle):
     def draw(self, dc, replay=False):
         super(Circle, self).draw(dc, replay, "Circle")
 
-    def draw_args(self):
+    def get_args(self):
         return [self.x, self.y, self.radius]
 
     def preview(self, dc, width, height):
@@ -285,14 +268,15 @@ class RoundRect(Rectangle):
     """
     Easily extends from Rectangle.
     """
+    tooltip = "Draw a rounded rectangle"
     def draw(self, dc, replay=False):
         super(RoundRect, self).draw(dc, replay, "RoundedRectangle")
 
     def preview(self, dc, width, height):
         dc.DrawRoundedRectangle(5, 5, width - 15, height - 15, 45)
 
-    def draw_args(self):
-        args = super(RoundRect, self).draw_args()# [self.x, self.w]; x.sort()
+    def get_args(self):
+        args = super(RoundRect, self).get_args()# [self.x, self.width]; x.sort()
         args.append(90)  # edge angle
         return args
 
@@ -306,6 +290,7 @@ class Line(Rectangle):
     """
     Draws a line. Extended from a Rectangle for outline code.
     """
+    tooltip = "Draw a straight line"
     def __init__(self, board, colour, thickness):
         Rectangle.__init__(self, board, colour, thickness)
 
@@ -326,14 +311,14 @@ class Line(Rectangle):
     def draw(self, dc, replay=False):
         super(Line, self).draw(dc, replay, "Line")
 
-    def draw_args(self):
+    def get_args(self):
         return [self.x, self.y, self.x2, self.y2]
 
     def preview(self, dc, width, height):
         dc.DrawLine(10, height / 2, width - 10, height / 2)
 
     def hit_test(self, x, y):
-        rect = wx.Rect(*self.draw_args())
+        rect = wx.Rect(*self.get_args())
         return rect.InsideXY(x, y)
 
 #---------------------------------------------------------------------
@@ -343,6 +328,8 @@ class Eraser(Pen):
     Erases stuff. Has a custom cursor from a drawn rectangle on a DC, turned
     into an image then into a cursor.
     """
+    tooltip = "Erase a painting to the background"
+
     def __init__(self, board, colour, thickness):
         cursor = wx.EmptyBitmap(thickness + 2, thickness + 2)
         memory = wx.MemoryDC()
@@ -368,6 +355,8 @@ class Eyedrop(Tool):
     """
     Selects the colour at the specified x,y coords
     """
+    tooltip = "Picks a colour from the selected pixel"
+
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
 
@@ -394,6 +383,8 @@ class Text(Rectangle):
     storing its values is stored. This string is then used to reconstruct the
     font.
     """
+    tooltip = "Input text"
+
     def __init__(self, board, colour, thickness):
         Rectangle.__init__(self, board, colour, thickness)
         self.cursor = wx.CURSOR_CHAR
@@ -471,7 +462,7 @@ class Text(Rectangle):
         dc.SetFont(self.font)
         super(Text, self).draw(dc, replay, "Text")
 
-    def draw_args(self):
+    def get_args(self):
         return [self.text, self.x, self.y]
 
     def preview(self, dc, width, height):
@@ -504,6 +495,8 @@ class Note(Text):
     yellow background (to show that it's a note). An overview of notes for each
     tab can be viewed on the side panel.
     """
+    tooltip = "Insert a note"
+
     def button_up(self, x, y,):
         # don't add a blank note
         if super(Note, self).button_up(x, y):
@@ -646,6 +639,7 @@ class Select(Tool):
     """
     Select an item to move it around/edit text
     """
+    tooltip = "Select a shape to move it"
     count = 0
     def __init__(self, board, image, path):
         Tool.__init__(self, board, (0, 0, 0), 1, wx.CURSOR_ARROW)
@@ -665,32 +659,24 @@ class Select(Tool):
                 self.shape = copy(shapes[count])
                 self.dragging = True
                 self.count = count
-                #self.prev = (self.shape.x, self.shape.y)
-                #print '--------##'
-                #print 'before'
-                #print self.board.shapes
-                del self.board.shapes[self.count]
-                #print '-----'
-                #print self.board.shapes
-                #print '-----'
-                #self.board.add_shape(self.shape, self.count)
-                #print 'after'
-                #print self.board.shapes
-
-                #print '----'
-                #self.board.redraw_all(update_thumb=True)
+                #del self.board.shapes[self.count]
                 break
 
     def motion(self, x, y):
         if self.dragging:
+            shape = self.shape
             #hotspot = self.dragStartPos - self.dragShape.pos
             #self.dragImage = wx.DragImage(self.shape.image,
             #                             wx.StockCursor(wx.CURSOR_HAND))
             #self.dragImage.BeginDrag(self.prev, self.board, False)
+            #print shape.width - x
+            #print shape.y - y
 
-            self.shape.x = x
-            self.shape.y = y
-
+            #print shape.width
+            shape.x = x
+            shape.y = y
+            #shape.width = x
+            #shape.height = y
             #self.dragImage.Move((x, y))
             #self.dragImage.Show()
             #self.prev = (x, y)
@@ -705,11 +691,10 @@ class Select(Tool):
         need to add pop(x) to remove current shape for proper undoing
         !!!!!
         """
-        #self.dragImage.Hide()
+        #self.dragImage.heightide()
         #self.dragImage.EndDrag()
         if self.dragging:
-
-            self.board.add_shape(self.shape, self.count)
+            #self.board.add_shape(self.shape, self.count)
             #print 'after'
             #print self.board.shapes
 
@@ -725,6 +710,7 @@ class RectSelect(Rectangle):
     """
     Rectangle selection tool, used to select a region to copy/paste
     """
+    tooltip = "Select a rectangular region for copying"
     def __init__(self, board, image, path):
         Rectangle.__init__(self, board, (0, 0, 0), 2)
 
@@ -734,8 +720,10 @@ class RectSelect(Rectangle):
     def button_up(self, x, y):
         """ Important: appends the shape, but not to the undo list """
         if x != self.x and y != self.y:
+            self.board.GetParent().GetParent().GetStatusBar().SetStatusText("You can now copy this region")
             self.board.shapes.append(self)
             self.board.redraw_all()
+
 
     def preview(self, dc, width, height):
         dc.SetPen(wx.BLACK_DASHED_PEN)

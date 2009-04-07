@@ -30,6 +30,7 @@ import wx
 import wx.lib.newevent
 import os
 import sys
+import subprocess
 
 import icon
 from whyteboard import Whyteboard
@@ -41,8 +42,8 @@ from panels import ControlPanel, SidePanel, SheetsPopup
 
 #----------------------------------------------------------------------
 
+ID_NEW = wx.NewId()
 ID_EXPORT = wx.NewId()
-ID_THUMBS = wx.NewId()
 ID_HISTORY = wx.NewId()
 ID_RESIZE = wx.NewId()
 ID_PREV = wx.NewId()
@@ -60,7 +61,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.36.2"
+    version = "0.36.3"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -127,6 +128,10 @@ class GUI(wx.Frame):
         _import.Append(ID_PS, 'PostScript')
         _import.Append(ID_IMG, 'Image')
 
+        new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new Whyteboard instance")
+        new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
+        _file.AppendItem(new)
+
         _file.Append(wx.ID_NEW, "&New Sheet\tCtrl-T", "Add a new sheet")
         _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
         _file.Append(wx.ID_CLOSE, "&Remove Sheet\tCtrl+W", "Close the current sheet")
@@ -156,6 +161,7 @@ class GUI(wx.Frame):
         sheets.Append(ID_CLEAR_ALL_SHEETS, "Clear &All Sheets", "Clear all sheets")
 
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about Whyteboard")
+
         self.menu.Append(_file, "&File")
         self.menu.Append(edit, "&Edit")
         self.menu.Append(sheets, "&Sheets")
@@ -181,16 +187,16 @@ class GUI(wx.Frame):
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        functs = ["new_tab", "close_tab", "open", "save", "save_as", "export",
-                  "undo", "redo", "history", "copy", "paste",  "resize", "prev",
-                  "next", "clear", "clear_all", "clear_sheets", "about", "exit",
-                  "clear_all_sheets" ]
+        functs = ["new_win", "new_tab", "close_tab", "open", "save", "save_as",
+                 "export", "undo", "redo", "history", "copy", "paste", "resize",
+                 "prev", "next", "clear", "clear_all", "clear_sheets", "about",
+                 "exit", "clear_all_sheets"]
 
-        IDs = [wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE, wx.ID_SAVEAS,
-               ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY, wx.ID_COPY,
-               wx.ID_PASTE, ID_RESIZE, ID_PREV, ID_NEXT, wx.ID_CLEAR,
-               ID_CLEAR_ALL, ID_CLEAR_SHEETS, wx.ID_ABOUT, wx.ID_EXIT,
-               ID_CLEAR_ALL_SHEETS]
+        IDs = [ID_NEW, wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE,
+              wx.ID_SAVEAS, ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY,
+              wx.ID_COPY, wx.ID_PASTE, ID_RESIZE, ID_PREV, ID_NEXT, wx.ID_CLEAR,
+              ID_CLEAR_ALL, ID_CLEAR_SHEETS, wx.ID_ABOUT, wx.ID_EXIT,
+              ID_CLEAR_ALL_SHEETS]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -326,7 +332,16 @@ class GUI(wx.Frame):
                 wx.MessageBox("Invalid filetype to export as.", "Invalid type")
             else:
                 self.util.export(filename)
+
         dlg.Destroy()
+
+
+    def on_new_win(self, event=None):
+        """
+        Fires up a new Whyteboard window
+        """
+        process = ["python", os.path.abspath(sys.argv[0])]
+        subprocess.Popen(process)
 
 
     def on_new_tab(self, event=None):
@@ -354,8 +369,6 @@ class GUI(wx.Frame):
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
-        if event:
-            event.Skip()  # possible 'tabs share buffer' fix on windows??
 
 
     def on_close_tab(self, event=None):
@@ -420,7 +433,7 @@ class GUI(wx.Frame):
         """
         shape = self.board.shapes.pop()
         self.board.redraw_all()
-        rect = wx.Rect(*shape.draw_args())
+        rect = wx.Rect(*shape.get_args())
         self.util.set_clipboard(rect)
 
         self.count = 4

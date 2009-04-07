@@ -238,30 +238,26 @@ class Utility(object):
         self.gui.dialog.Show()
 
         #  Remove all tabs, thumbnails and tree note items
-        self.gui.board = None
         for x in range(self.gui.tab_count -1, -1, -1):
             self.gui.tabs.RemovePage(x)
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
+        self.gui.board.Destroy()
 
         # change program settings and update the Preview window
-        self.saved = True
         self.colour = temp[0][0]
         self.thickness = temp[0][1]
         self.tool = temp[0][2]
         self.to_convert = temp[2]
-        #self.saved_shapes = temp[1]
-        self.gui.control.change_tool(_id = self.tool)
+        #self.gui.control.change_tool(_id = self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
-        self.gui.control.preview.Refresh()
         self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
-            wb = Whyteboard(self.gui.tabs)
-            wb.select_tool()
+            self.gui.board = wb = Whyteboard(self.gui.tabs)
             try:
                 name = temp[3][x]
             except KeyError:
@@ -271,18 +267,17 @@ class Utility(object):
             self.gui.tab_count += 1
             self.gui.thumbs.new_thumb()
             self.gui.notes.add_tab()
+            self.gui.tabs.SetSelection(x)
 
             for shape in temp[1][x]:
                 shape.board = wb  # restore board
                 shape.load()  # restore unpickleable settings
                 wb.add_shape(shape)
-
             wb.redraw_all()
-            wb.Refresh()
 
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
-        self.gui.board.select_tool(temp[0][2])
+        self.saved = True
 
         try:
             version = temp[0][4]
@@ -325,15 +320,16 @@ class Utility(object):
         self.to_convert[index] = { 0: str(_file) }
         before = os.walk(path).next()[2]  # file count before convert
 
-        #cmd = "convert -density 294 "+ _file +" -resample 108 -unsharp 0x.5 \
-        #-trim +repage -bordercolor white -border 7 "+ path + tmp_file +".png"
-        # ------------------------------------------------
-        # better PDF quality, takes longer to convert
-        # ------------------------------------------------
         # convert "[file path]" "[destination-folder]" -- quotes for Windows
+        full_path = os.path.join(path + tmp_file + ".png")
+        #cmd = '"%s" -density 294 "%s" -resample 108 -unsharp 0x.5 -trim +repage -bordercolor white -border 7 "%s"' % (self.im_location, _file, full_path)
+        #print cmd
 
-        cmd = ("\""+self.im_location + "\" \"" + _file + "\" \""
-                + path + tmp_file + ".png\"")
+        # ------------------------------------------------
+        # better PDF quality, but takes longer to convert
+        # ------------------------------------------------
+
+        cmd = '"%s" "%s" "%s"' % (self.im_location, _file, full_path)
 
         self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]

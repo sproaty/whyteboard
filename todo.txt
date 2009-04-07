@@ -1,6 +1,6 @@
-Whyteboard 0.36.2 - To do list
+Whyteboard 0.36.3 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sun 05 Apr 2009 04:22:38 BST
+Tue 07 Apr 2009 10:10:03 BST T
 
 ---- NEW FEATURES ----
 
@@ -14,10 +14,7 @@ Eventually, long term:
  - network support w/ twisted
  - "select" tool to move drawn items around (in progress)
  - slider bar to "move" through a drawing's timeline in a replay
- -
-
 
 ---- TO FIX ----
 
-- Few windows errors, see readme
 - investigate into performance of using PrepareDC in draw rectangle
