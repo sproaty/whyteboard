@@ -148,8 +148,6 @@ class Rectangle(Tool):
         self.height = y
 
     def motion(self, x, y):
-        #self.width = x - self.x
-        #self.height = y - self.y
         self.width = x
         self.height = y
 
@@ -210,7 +208,6 @@ class Rectangle(Tool):
 
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
-
 
     def hit_test(self, x, y):
         rect = wx.Rect(*self.get_args())
@@ -556,7 +553,6 @@ class Fill(Tool):
         cdc = wx.ClientDC(self.board)
         dc = wx.BufferedDC(cdc, self.board.buffer)  # create tmp DC
         self.draw(dc)
-        #self.board.Refresh()
         self.board.add_shape(self)
 
     def draw(self, dc, replay=False):
@@ -613,6 +609,9 @@ class Image(Tool):
         rect_y2 = rect_y + height
 
         if x > rect_x and x < rect_x2 and y > rect_y and y < rect_y2:
+            img = self.image.ConvertToImage()
+            img = img.Rotate90()
+            self.image = wx.BitmapFromImage(img)
             return True
         else:
             return False
@@ -744,7 +743,7 @@ def find_inverse(colour):
 
 # items to draw with
 items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle,  RoundRect,
-        Eyedrop, RectSelect]
+        Eyedrop, Select, RectSelect]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

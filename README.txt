@@ -27,6 +27,8 @@ Possible: drawing outlined rectangles may be CPU intensive
 
 ---- VERSION HISTORY ----
 
+0X Apr 2009 - * Paste selection as new sheet
+
 07 Apr 2009 - * Tooltips for each item on the toolbox
               * "New Window" menu item to launch a new Whyteboard instance.
               * Important Windows bugfix: .wtbd drawings being "overwritten" on

@@ -410,7 +410,7 @@ class Resize(wx.Dialog):
 
         self.gui = gui
         gap = wx.LEFT | wx.TOP | wx.RIGHT
-        width, height = self.gui.board.GetVirtualSize()
+        width, height = self.gui.board.virtual_size
 
         csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
         self.hctrl = wx.TextCtrl(self, validator = IntValidator())
@@ -450,7 +450,7 @@ class Resize(wx.Dialog):
         value = (int(self.wctrl.GetValue()), int(self.hctrl.GetValue()))
         board = self.gui.board
         board.SetVirtualSize(value)
-        #board.SetSize(value)
+        board.SetSize(value)
         board.SetBackgroundColour("Grey")
         board.ClearBackground()
         self.Close()
@@ -519,7 +519,7 @@ class About(wx.Dialog):
         Displays the HTML box with various constraints.
         """
         wx.Dialog.__init__(self, parent, title='About Whyteboard',
-                           size=(420, 450))
+                           size=(860, 450))
 
         text = '''
 <html><body bgcolor="#6699CC">

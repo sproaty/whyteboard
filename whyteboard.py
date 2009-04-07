@@ -39,7 +39,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        wx.ScrolledWindow.__init__(self, tab, style=wx.WANTS_CHARS)
+        wx.ScrolledWindow.__init__(self, tab)
         self.virtual_size = (1000, 1000)
         self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.virtual_size)
@@ -289,48 +289,34 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def convert_coords(self, event):
-        """
-        Translate mouse x/y coords to virtual scroll ones.
-        """
+        """ Translate mouse x/y coords to virtual scroll ones. """
         return self.CalcUnscrolledPosition(event.GetX(), event.GetY())
 
 
     def middle_down(self, event):
-        """
-        Begin dragging the scroller to move around the panel
-        """
+        """ Begin dragging the scroller to move around the panel """
         self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
         self.scroller.Start(event.GetPosition())
 
     def middle_up(self, event):
-        """
-        Stop dragging th scroller.
-        """
+        """ Stop dragging the scroller. """
         self.scroller.Stop()
         self.SetCursor(wx.StockCursor(self.shape.cursor) )
 
     def on_paint(self, event=None):
-        """
-        Called when the window is exposed.
-        """
+        """ Called when the window is exposed. """
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
 
     def get_tab(self):
-        """
-        Returns the current tab number of this Whyteboard instance.
-        """
+        """ Returns the current tab number of this Whyteboard instance. """
         return self.GetParent().GetParent().tabs.GetSelection()
 
     def update_thumb(self):
-        """
-        Updates this tab's thumb
-        """
+        """ Updates this tab's thumb """
         self.GetParent().GetParent().thumbs.update(self.get_tab())
 
     def on_size(self, event):
-        """
-        Updates the scrollbars when the window is resized.
-        """
+        """ Updates the scrollbars when the window is resized. """
         size = self.GetClientSize()
         self.update_scrollbars(size)
         self.redraw_all()

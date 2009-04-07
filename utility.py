@@ -250,30 +250,29 @@ class Utility(object):
         self.thickness = temp[0][1]
         self.tool = temp[0][2]
         self.to_convert = temp[2]
-        #self.gui.control.change_tool(_id = self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
         self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
-            self.gui.board = wb = Whyteboard(self.gui.tabs)
+            #self.gui.board = wb = Whyteboard(self.gui.tabs)
             try:
                 name = temp[3][x]
             except KeyError:
                 name = "Sheet " + str(x + 1)
-
-            self.gui.tabs.AddPage(wb, name)
-            self.gui.tab_count += 1
-            self.gui.thumbs.new_thumb()
-            self.gui.notes.add_tab()
-            self.gui.tabs.SetSelection(x)
+            self.gui.on_new_tab(name=name)
+            #self.gui.tabs.AddPage(wb, name)
+            #self.gui.tab_count += 1
+            #self.gui.thumbs.new_thumb()
+            #self.gui.notes.add_tab()
+            #self.gui.tabs.SetSelection(x)
 
             for shape in temp[1][x]:
-                shape.board = wb  # restore board
+                shape.board = self.gui.board#wb  # restore board
                 shape.load()  # restore unpickleable settings
-                wb.add_shape(shape)
-            wb.redraw_all()
+                self.gui.board.add_shape(shape)
+            self.gui.board.redraw_all()
 
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
@@ -323,7 +322,6 @@ class Utility(object):
         # convert "[file path]" "[destination-folder]" -- quotes for Windows
         full_path = os.path.join(path + tmp_file + ".png")
         #cmd = '"%s" -density 294 "%s" -resample 108 -unsharp 0x.5 -trim +repage -bordercolor white -border 7 "%s"' % (self.im_location, _file, full_path)
-        #print cmd
 
         # ------------------------------------------------
         # better PDF quality, but takes longer to convert

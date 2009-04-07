@@ -42,18 +42,19 @@ from panels import ControlPanel, SidePanel, SheetsPopup
 
 #----------------------------------------------------------------------
 
-ID_NEW = wx.NewId()
-ID_EXPORT = wx.NewId()
-ID_HISTORY = wx.NewId()
-ID_RESIZE = wx.NewId()
-ID_PREV = wx.NewId()
-ID_NEXT = wx.NewId()
-ID_CLEAR_ALL = wx.NewId()      # remove all from current tab
-ID_CLEAR_SHEETS = wx.NewId()     # remove all drawings from all tabs, keep images
-ID_CLEAR_ALL_SHEETS = wx.NewId() # remove all from all tabs
-ID_PDF = wx.NewId()
-ID_PS = wx.NewId()
-ID_IMG = wx.NewId()
+ID_NEW = wx.NewId()               # new window
+ID_PASTE_NEW = wx.NewId()         # paste as new selection
+ID_EXPORT = wx.NewId()            # export sheet to image file
+ID_HISTORY = wx.NewId()           # history viewer
+ID_RESIZE = wx.NewId()            # resize dialog
+ID_PREV = wx.NewId()              # previous sheet
+ID_NEXT = wx.NewId()              # next sheet
+ID_CLEAR_ALL = wx.NewId()         # remove all from current tab
+ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
+ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove all from all tabs
+ID_PDF = wx.NewId()               # import->PDF
+ID_PS = wx.NewId()                # import->PS
+ID_IMG = wx.NewId()               # import->Image
 
 class GUI(wx.Frame):
     """
@@ -61,7 +62,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.36.3"
+    version = "0.36.4"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -77,6 +78,10 @@ class GUI(wx.Frame):
         self.file_drop = FileDropTarget(self)
         self.SetDropTarget(self.file_drop)
         self.CreateStatusBar()
+        if self.util.get_clipboard():
+            self.can_paste = True
+        else:
+            self.can_paste = False
         self.tb = None
         self.menu = None
         self.process = None
@@ -100,11 +105,6 @@ class GUI(wx.Frame):
         self.SetSizer(self.box)
         self.SetSizeWH(800, 600)
         self.Maximize(True)
-
-        if self.util.get_clipboard():
-            self.can_paste = True
-        else:
-            self.can_paste = False
 
         self.count = 4  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(65)
@@ -130,8 +130,11 @@ class GUI(wx.Frame):
 
         new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new Whyteboard instance")
         new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
-        _file.AppendItem(new)
 
+        pnew = wx.MenuItem(edit, ID_PASTE_NEW, "Paste to a &New Sheet\tCtrl+Shift-V", "Paste from your clipboard into a new sheet")
+        pnew.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_PASTE, wx.ART_MENU))
+
+        _file.AppendItem(new)
         _file.Append(wx.ID_NEW, "&New Sheet\tCtrl-T", "Add a new sheet")
         _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
         _file.Append(wx.ID_CLOSE, "&Remove Sheet\tCtrl+W", "Close the current sheet")
@@ -146,9 +149,10 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_UNDO, "&Undo\tCtrl+Z", "Undo the last operation")
         edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
         edit.AppendSeparator()
-        #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
+        edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
         edit.Append(wx.ID_COPY, "&Copy\tCtrl+C", "Copy the selection as a bitmap")
         edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
+        edit.AppendItem(pnew)
         edit.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
 
         sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
@@ -167,6 +171,7 @@ class GUI(wx.Frame):
         self.menu.Append(sheets, "&Sheets")
         self.menu.Append(_help, "&Help")
         self.SetMenuBar(self.menu)
+        self.menu.Enable(ID_PASTE_NEW, self.can_paste)
 
 
     def do_bindings(self):
@@ -187,16 +192,12 @@ class GUI(wx.Frame):
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        functs = ["new_win", "new_tab", "close_tab", "open", "save", "save_as",
-                 "export", "undo", "redo", "history", "copy", "paste", "resize",
-                 "prev", "next", "clear", "clear_all", "clear_sheets", "about",
-                 "exit", "clear_all_sheets"]
+        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "copy", "paste", "paste_new",
+                  "history", "resize", "prev", "next", "clear", "clear_all",  "clear_sheets", "about", "clear_all_sheets"]
 
-        IDs = [ID_NEW, wx.ID_NEW, wx.ID_CLOSE, wx.ID_OPEN, wx.ID_SAVE,
-              wx.ID_SAVEAS, ID_EXPORT, wx.ID_UNDO, wx.ID_REDO, ID_HISTORY,
-              wx.ID_COPY, wx.ID_PASTE, ID_RESIZE, ID_PREV, ID_NEXT, wx.ID_CLEAR,
-              ID_CLEAR_ALL, ID_CLEAR_SHEETS, wx.ID_ABOUT, wx.ID_EXIT,
-              ID_CLEAR_ALL_SHEETS]
+        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, wx.ID_COPY,
+               wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, wx.ID_ABOUT,
+               ID_CLEAR_ALL_SHEETS]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -344,7 +345,7 @@ class GUI(wx.Frame):
         subprocess.Popen(process)
 
 
-    def on_new_tab(self, event=None):
+    def on_new_tab(self, event=None, name=None):
         """
         Opens a new tab and selects it
         """
@@ -352,7 +353,10 @@ class GUI(wx.Frame):
         self.thumbs.new_thumb()
         self.notes.add_tab()
         self.tab_count += 1
-        self.tabs.AddPage(wb, "Sheet "+ str(self.tab_count))
+        if name:
+            self.tabs.AddPage(wb, name)
+        else:
+            self.tabs.AddPage(wb, "Sheet "+ str(self.tab_count))
         self.current_tab = self.tab_count - 1
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
 
@@ -405,7 +409,9 @@ class GUI(wx.Frame):
                     self.can_paste = False
                 self.count = 0
             event.Enable(self.can_paste)
+            self.menu.Enable(ID_PASTE_NEW, self.can_paste)
             return
+
         do = False
 
         if not _id == wx.ID_COPY:
@@ -440,16 +446,23 @@ class GUI(wx.Frame):
         self.UpdateWindowUI()  # force paste to enable
 
 
-    def on_paste(self, event):
-        """
-        Receives a bitmap object, if available from the clipboard, and creates
-        a new Image object. Its file path is not set, yet.
-        """
+    def on_paste(self, event=None):
+        """ Grabs the image from the clipboard and places it on the panel """
+        shape = self.get_paste()
+        shape.button_down(0, 0)
+        self.board.redraw_all()
+
+    def on_paste_new(self, event):
+        """ Pastes the image into a new tab """
+        self.on_new_tab()
+        self.on_paste()
+
+    def get_paste(self):
+        """ Returns an Image of the clipboard's bitmap """
         bmp = self.util.get_clipboard()
         if bmp:
-            shape = Image(self.board, bmp.GetBitmap(), None)
-            shape.button_down(0, 0)
-            self.board.redraw_all()
+            return Image(self.board, bmp.GetBitmap(), None)
+
 
     def convert_dialog(self, cmd):
         """
