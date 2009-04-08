@@ -505,10 +505,15 @@ class Thumbs(scrolled.ScrolledPanel):
         else:
             if len(self.thumbs):
                 _id = len(self.thumbs)
-            img = wx.ImageFromBitmap(wx.EmptyBitmapRGBA(150, 150, 255, 255,
-                                                                    255, 0))
-            img.ConvertColourToAlpha(255, 255, 255)
-            bmp = wx.BitmapFromImage(img)
+
+            bmp = wx.EmptyBitmap(150, 150)
+            memory = wx.MemoryDC()
+            memory.SelectObject(bmp)
+            memory.SetPen(wx.Pen((255, 255, 255), 1))
+            memory.SetBrush(wx.Brush((255, 255, 255)))
+            memory.Clear()
+            memory.FloodFill(0, 0, (255, 255, 255), wx.FLOOD_BORDER)
+            memory.SelectObject(wx.NullBitmap)
 
         text = wx.StaticText(self, label="Sheet " + str(_id + 1))
         btn = ThumbButton(self, _id, bmp)

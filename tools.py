@@ -133,8 +133,6 @@ class Rectangle(Tool):
     """
     The rectangle and its descended classes (ellipse/rounded rect) use an
     overlay as a rubber banding method of drawing itself over other shapes.
-
-    Currently hacked to bits
     """
     tooltip = "Draw a rectangle"
 
@@ -143,10 +141,9 @@ class Rectangle(Tool):
         self.rect = None
 
     def button_down(self, x, y):
-        self.x = x
-        self.y = y
-        self.width = x
-        self.height = y
+        self.x = self.width = x
+        self.y = self.height = y
+        self.board.overlay = wx.Overlay()
 
     def motion(self, x, y):
         self.width = x
@@ -158,42 +155,26 @@ class Rectangle(Tool):
             self.board.add_shape(self)
             self.board.redraw_all()
 
+        
     def draw(self, dc, replay=False, _type="Rectangle", pen=wx.SOLID):
         """
         Draws a shape polymorphically, using Python's introspection; can be
         called by its sub-classes.
         When called for a replay it renders itself; doesn't draw a temp outline.
-        """        args = self.get_args()
-
-        if not self.pen or not self.brush:
-            self.make_pen()
-        if replay:
-            self.make_pen()
+        """
+        args = self.get_args()
+        self.make_pen()                    
         if not replay:
-            #  invert the colour to draw as that colour is inverted
-            # (so we draw the right colour - invert of an invert)
-            col = find_inverse(wx.Colour(*self.pen.GetColour()))
-            dc.SetLogicalFunction(wx.XOR)
-            dc.SetBrush(self.brush)
-            dc.SetPen(wx.Pen(col, self.thickness, pen))
-
-            if self.rect:
-                method = getattr(dc, "Draw" + _type)(*self.rect)
-                method
-            dc.SetLogicalFunction(wx.XOR)
-            # args can be of variable length...
-            self.rect = [x for x in args]
-            method = getattr(dc, "Draw" + _type)(*self.rect)
-            method
-            return
-
-        # draw normal rect.
+            odc = wx.DCOverlay(self.board.overlay, dc)
+            odc.Clear()
+                    
         dc.SetPen(wx.Pen(self.colour, self.thickness, pen))
         dc.SetBrush(self.brush)
         dc.SetTextForeground(self.colour)  # forces text colour
         method = getattr(dc, "Draw" + _type)(*args)
-        method
-
+        method          
+        if not replay:    
+            del odc                                     
 
     def get_args(self):
         """ Shape's custom drawing arguments """
@@ -224,6 +205,7 @@ class Circle(Rectangle):
     def button_down(self, x, y):
         self.x = x
         self.y = y
+        self.board.overlay = wx.Overlay()
 
     def motion(self, x, y):
         self.radius = self.x - x
@@ -265,11 +247,11 @@ class RoundRect(Rectangle):
         super(RoundRect, self).draw(dc, replay, "RoundedRectangle")
 
     def preview(self, dc, width, height):
-        dc.DrawRoundedRectangle(5, 5, width - 15, height - 15, 45)
+        dc.DrawRoundedRectangle(5, 5, width - 10, height - 7, 8)
 
     def get_args(self):
         args = super(RoundRect, self).get_args()# [self.x, self.width]; x.sort()
-        args.append(90)  # edge angle
+        args.append(15)  # edge angle
         return args
 
     def hit_test(self, x, y):
@@ -289,6 +271,7 @@ class Line(Rectangle):
     def button_down(self, x, y):
         self.x = self.x2 = x
         self.y = self.y2 = y
+        self.board.overlay = wx.Overlay()
 
     def motion(self, x, y):
         self.x2 = x
@@ -336,7 +319,6 @@ class Eraser(Pen):
 
         img = wx.ImageFromBitmap(cursor)
         cursor = wx.CursorFromImage(img)
-
         Pen.__init__(self, board, (255, 255, 255), thickness + 1, cursor)
 
     def preview(self, dc, width, height):
@@ -384,10 +366,8 @@ class Text(Rectangle):
         Rectangle.__init__(self, board, colour, thickness)
         self.cursor = wx.CURSOR_CHAR
         self.font = None
-        self.text = ""
-        self.font_data = ""
+        self.text = self.font_data = ""
         self.extent = (0, 0)
-
 
     def motion(self, x, y):
         self.x = x
@@ -440,7 +420,6 @@ class Text(Rectangle):
         dummy = wx.Frame(None)
         dummy.SetFont(self.font)
         self.extent = dummy.GetTextExtent(self.text)
-
         dummy.Destroy()
 
 
@@ -664,7 +643,6 @@ class Zoom(Tool):
     """
     def __init__(self, board, image, path):
         Tool.__init__(self, board, (0, 0, 0), 1)
-
 
     def button_down(self, x, y):
         x = self.board.zoom

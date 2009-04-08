@@ -1,6 +1,6 @@
-Whyteboard 0.36.4 - a simple image, PDF and postscript file annotator
+Whyteboard 0.36.5 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 08 Apr 2009 05:21:38 BST
+Wed 08 Apr 2009 12:51:41 BST
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -21,12 +21,18 @@ see what error occurred and let me know at, <sproaty -at- gmail -dot- com>
 
 ---- KNOWN BUGS ----
 
-Currently...none?!?
-Windows and Linux versions seems equal, performance overhead from 0.36.2 fixed,
-many other bugs fixed; all seems good.
+Currently...none?!? Windows and Linux versions seems equal, massive performance
+overhead from 0.36.2 fixed, many other bugs fixed; all seems good.
+
 
 
 ---- VERSION HISTORY ----
+
+08 Apr 2009 - * Bugfix with drawing "outlined" shapes having inverted coloured
+                lines when drawing over other colours.
+              * Bugfix with opening new window with Windows EXE
+              * Bugfix: thumbnails not being drawn white initially on Windows
+              * Added icon into the EXE
 
 08 Apr 2009 - * Paste image from clipboard into a new sheet
               * Toggle full screen view

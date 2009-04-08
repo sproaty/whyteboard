@@ -30,7 +30,6 @@ import wx
 import wx.lib.newevent
 import os
 import sys
-import subprocess
 
 import icon
 from whyteboard import Whyteboard
@@ -63,7 +62,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.36.4"
+    version = "0.36.5"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -169,7 +168,6 @@ class GUI(wx.Frame):
         sheets.Append(ID_CLEAR_ALL_SHEETS, "Clear &All Sheets", "Clear all sheets")
 
         _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about Whyteboard")
-
         self.menu.Append(_file, "&File")
         self.menu.Append(edit, "&Edit")
         self.menu.Append(view, "&View")
@@ -190,7 +188,6 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_NEXT)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_PREV)
         self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
-        self.Bind(wx.EVT_CHAR, self.key_up)
 
         ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }  # file->import
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
@@ -234,7 +231,6 @@ class GUI(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=_id)
                 self.tb.EnableTool(_id, False)
             x += 1
-
         self.tb.Realize()
 
 
@@ -295,7 +291,6 @@ class GUI(wx.Frame):
                            "file?")
                     dialog = wx.MessageDialog(self, msg, style=wx.YES_NO |
                                                            wx.ICON_QUESTION)
-
                     if dialog.ShowModal() == wx.ID_YES:
                         self.do_open(name)
             else:
@@ -311,7 +306,6 @@ class GUI(wx.Frame):
         """
         if name.endswith("wtbd"):
             self.util.filename = name
-
         self.util.temp_file = name
         self.util.load_file()
 
@@ -337,7 +331,6 @@ class GUI(wx.Frame):
                 wx.MessageBox("Invalid filetype to export as.", "Invalid type")
             else:
                 self.util.export(filename)
-
         dlg.Destroy()
 
 
@@ -345,9 +338,8 @@ class GUI(wx.Frame):
         """
         Fires up a new Whyteboard window
         """
-        process = ["python", os.path.abspath(sys.argv[0])]
-        subprocess.Popen(process)
-
+        frame = GUI(None)
+        frame.Show(True)
 
     def on_new_tab(self, event=None, name=None):
         """

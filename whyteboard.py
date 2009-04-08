@@ -49,6 +49,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetBackgroundColour("White")
         self.ClearBackground()
         self.scroller = wx.lib.dragscroller.DragScroller(self)
+        self.overlay = wx.Overlay()
 
         self.gui = gui
         self.tab = tab
@@ -61,7 +62,6 @@ class Whyteboard(wx.ScrolledWindow):
         self.select_tool()
         self.buffer = wx.EmptyBitmap(*self.virtual_size)
 
-        self.Bind(wx.EVT_KEY_DOWN, self.key_up)
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
@@ -70,9 +70,6 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
-
-    def key_up(self, event):
-        event.Skip()
 
     def left_down(self, event):
         """
