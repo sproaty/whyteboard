@@ -49,12 +49,11 @@ class ControlPanel(wx.Panel):
         pane = self.cp.GetPane()  # every widget's parent
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
-
+        self.SetFocusIgnoringChildren()
 
         self.toggled = 1  # Pen, initallly
         self.preview = DrawingPreview(pane, self.gui)
         self.tools = {}
-        #wx.ToolTip.SetDelay(5000)
         toolsizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
 
         # Get list of class names as strings for each drawable tool
@@ -98,14 +97,10 @@ class ControlPanel(wx.Panel):
         box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(grid, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(self.colour, 0, wx.EXPAND | wx.ALL, spacing)
-        #box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(width, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.thickness, 0, wx.EXPAND | wx.ALL, spacing)
-        #box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
-        #self.SetSizer(box)
-        #box.Fit(self)
 
         csizer.Add(box, 1, wx.EXPAND)
         sizer.Add(self.cp, 1, wx.EXPAND)
@@ -117,6 +112,7 @@ class ControlPanel(wx.Panel):
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
+
 
     def toggle(self, evt):
         """
@@ -169,6 +165,7 @@ class ControlPanel(wx.Panel):
 
         if new != self.toggled:  # toggle old button
             self.tools[self.toggled].SetValue(False)
+            self.tools[new].SetValue(True)
         else:
             self.tools[self.toggled].SetValue(True)
 
@@ -246,7 +243,6 @@ class SidePanel(wx.Panel):
         wx.Panel.__init__(self, gui, style=wx.RAISED_BORDER)
         self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
@@ -263,6 +259,7 @@ class SidePanel(wx.Panel):
         self.SetSizer(sizer)
         self.cp.GetPane().SetSizer(csizer)
         self.cp.Expand()
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
 
 
     def toggle(self, evt):
@@ -493,7 +490,6 @@ class Thumbs(scrolled.ScrolledPanel):
         self.text = []
         self.new_thumb()  # inital thumb
         self.thumbs[0].current = True
-
 
 
     def new_thumb(self, _id=0):

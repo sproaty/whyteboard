@@ -28,7 +28,11 @@ overhead from 0.36.2 fixed, many other bugs fixed; all seems good.
 
 ---- VERSION HISTORY ----
 
-08 Apr 2009 - * Bugfix with drawing "outlined" shapes having inverted coloured
+xx Apr 2009 - * Select tools using keypad 1-9 (useful in full screen mode)
+              * Navigate through the tabs with left/up arrow keys for backwards
+                and right/down for forwards
+
+08 Apr 2009 - * Bugfix with drawing "outlined" shapes having inverted colours
                 lines when drawing over other colours.
               * Bugfix with opening new window with Windows EXE
               * Bugfix: thumbnails not being drawn white initially on Windows

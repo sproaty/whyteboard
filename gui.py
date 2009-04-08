@@ -459,7 +459,7 @@ class GUI(wx.Frame):
         if bmp:
             return Image(self.board, bmp.GetBitmap(), None)
 
-    def on_fullscreen(self, event):
+    def on_fullscreen(self, event=None):
         """ Toggles fullscreen """
         flag = wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION | wx.FULLSCREEN_NOSTATUSBAR
         self.ShowFullScreen(not self.IsFullScreen(), flag)
@@ -581,16 +581,39 @@ class GUI(wx.Frame):
 class WhyteboardApp(wx.App):
     def OnInit(self):
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
-        frame = GUI(None)
-        frame.Show(True)
+        self.frame = GUI(None)
+        self.frame.Show(True)
+        self.Bind(wx.EVT_CHAR, self.on_key)
         try:
             _file = sys.argv[1]
             if _file:
                 if os.path.exists(_file):
-                    frame.do_open(sys.argv[1])
+                    self.frame.do_open(sys.argv[1])
         except IndexError:
             pass
         return True
+
+    def on_key(self, event):
+        """ Change tool when a number is pressed """
+        frame = self.frame
+        x = len(frame.util.items)
+        key = event.GetKeyCode()
+
+        #  49 -- key 1. change_tool expects list element num + 1
+        if key >= 49 and key <= 49 + x:
+            frame.control.change_tool(_id=key - 48)
+
+        elif key in [wx.WXK_LEFT, wx.WXK_UP] and frame.current_tab > 0:
+            frame.tabs.SetSelection(frame.current_tab - 1)
+
+        elif (key in [wx.WXK_RIGHT, wx.WXK_DOWN] and frame.tab_count > 1 and
+             (frame.current_tab + 1 < frame.tab_count)):
+            frame.tabs.SetSelection(frame.current_tab + 1)
+
+        elif key == wx.WXK_ESCAPE:
+            if frame.IsFullScreen():
+                frame.on_fullscreen()
+        event.Skip()
 
 #----------------------------------------------------------------------
 

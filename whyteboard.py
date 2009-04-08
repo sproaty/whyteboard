@@ -39,7 +39,8 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        wx.ScrolledWindow.__init__(self, tab)
+        wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE
+                                                        | wx.CLIP_CHILDREN )
         self.virtual_size = (1000, 1000)
         self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.virtual_size)
