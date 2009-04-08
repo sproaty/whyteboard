@@ -1,4 +1,4 @@
-Whyteboard 0.36.3 - To do list
+Whyteboard 0.36.4 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Tue 07 Apr 2009 10:10:03 BST T
 
@@ -7,14 +7,10 @@ Tue 07 Apr 2009 10:10:03 BST T
 -- see: https://blueprints.launchpad.net/whyteboard
 - Improved file sharing
 - backwards/forwards compatibility
-- Rename tabs, undo tab close
+- undo tab close
 
 Eventually, long term:
 
  - network support w/ twisted
  - "select" tool to move drawn items around (in progress)
  - slider bar to "move" through a drawing's timeline in a replay
-
----- TO FIX ----
-
-- investigate into performance of using PrepareDC in draw rectangle

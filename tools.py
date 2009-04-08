@@ -26,6 +26,7 @@ with by the user (e.g. they can't draw an image directly)
 import wx
 import time
 
+from platform import system
 from copy import copy
 from dialogs import TextInput
 
@@ -169,12 +170,6 @@ class Rectangle(Tool):
         if replay:
             self.make_pen()
         if not replay:
-
-            # THIS MAY BE PERFORMANCE-HEAVY (but it's ok on my machine...)
-            cdc = wx.ClientDC(self.board)
-            self.board.PrepareDC(cdc)
-            dc = wx.BufferedDC(cdc, self.board.buffer)
-
             #  invert the colour to draw as that colour is inverted
             # (so we draw the right colour - invert of an invert)
             col = find_inverse(wx.Colour(*self.pen.GetColour()))
@@ -332,7 +327,10 @@ class Eraser(Pen):
         memory = wx.MemoryDC()
         memory.SelectObject(cursor)
         memory.SetPen(wx.Pen((255, 255, 255), 1))  # border
-        memory.SetBrush(wx.Brush((0, 0, 0)))
+        memory.SetBrush(wx.Brush((255, 255, 255)))
+        memory.FloodFill(0, 0, (255, 255, 255), wx.FLOOD_BORDER)
+        memory.SetPen(wx.Pen((0, 0, 0), 1))  # border
+        memory.SetBrush(wx.TRANSPARENT_BRUSH)
         memory.DrawRectangle(0, 0, thickness + 2, thickness + 2)
         memory.SelectObject(wx.NullBitmap)
 
@@ -360,14 +358,14 @@ class Eyedrop(Tool):
     def button_down(self, x, y):
         dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
         colour = dc.GetPixel(x, y)  # get colour
-        board = self.board.GetParent().GetParent()
+        board = self.board.gui
 
         board.control.colour.SetColour(colour)
         board.util.colour = colour
         board.control.preview.Refresh()
 
     def preview(self, dc, width, height):
-        dc.SetBrush(wx.Brush(self.board.GetParent().GetParent().util.colour))
+        dc.SetBrush(wx.Brush(self.board.gui.util.colour))
         dc.DrawRectangle(20, 20, 5, 5)
 
 
@@ -403,7 +401,7 @@ class Text(Rectangle):
         """
         self.x = x
         self.y = y
-        dlg = TextInput(self.board.GetParent().GetParent())  # GUI
+        dlg = TextInput(self.board.gui)
 
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
@@ -431,7 +429,7 @@ class Text(Rectangle):
         width, height = self.extent
 
         size = (width + self.x, height + self.y)
-        if not self.board.update_scrollbars(size) and redraw:
+        if self.board and not self.board.update_scrollbars(size) and redraw:
             self.board.redraw_all()  # force render if they don't update
 
 
@@ -442,6 +440,7 @@ class Text(Rectangle):
         dummy = wx.Frame(None)
         dummy.SetFont(self.font)
         self.extent = dummy.GetTextExtent(self.text)
+
         dummy.Destroy()
 
 
@@ -449,15 +448,37 @@ class Text(Rectangle):
         """
         Updates the text's font to the saved font data
         """
-        self.font = wx.Font(0, 0, 0, 0)
+        self.font = wx.FFont(0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
 
     def draw(self, dc, replay=False):
+        """
+        Has to draw each line individually on Windows.
+        """
         if not self.font:
             self.restore_font()
             self.update_scroll()
         dc.SetFont(self.font)
-        super(Text, self).draw(dc, replay, "Text")
+
+        if system() == "Windows":
+            #  bugfix as DrawText can only draw one line
+            text = self.text
+            y = self.y
+
+            for x, line in enumerate(self.text.split("\n")):
+                self.text = line  # for get_args()
+
+                if x == 0:
+                    pass  # draw first line at self.y
+                else:
+                    self.y += dc.GetTextExtent(line)[1] + 6
+
+                super(Text, self).draw(dc, True, "Text")
+            self.text = text
+            self.y = y
+        else:
+            super(Text, self).draw(dc, True, "Text")
+
 
     def get_args(self):
         return [self.text, self.x, self.y]
@@ -495,9 +516,9 @@ class Note(Text):
     tooltip = "Insert a note"
 
     def button_up(self, x, y,):
-        # don't add a blank note
+        """ Don't add a blank note """
         if super(Note, self).button_up(x, y):
-            self.board.tab.GetParent().notes.add_note(self)
+            self.board.gui.notes.add_note(self)
         else:
             self.board.redraw_all()
 
@@ -507,7 +528,24 @@ class Note(Text):
         """
         dummy = wx.Frame(None)
         dummy.SetFont(self.font)
-        extent = dummy.GetTextExtent(self.text)
+
+        if system() == "Windows":
+            height = 0
+            width = 0
+            for x, line in enumerate(self.text.split("\n")):
+                ex = dummy.GetTextExtent(line)
+                if x == 0:
+                    height += ex[1]
+                else:
+                    height += ex[1] + 6
+
+                if ex[0] > width:
+                    width = ex[0]
+
+            extent = (width, height)
+        else:
+            extent = dummy.GetTextExtent(self.text)
+
         x, y = extent[0] + 20, extent[1] + 20
         self.extent = (x, y)
         dummy.Destroy()
@@ -516,6 +554,8 @@ class Note(Text):
     def draw(self, dc, replay=False):
         if not self.font:
             self.restore_font()
+
+        self.find_extent()
 
         dc.SetBrush(wx.Brush((255, 223, 120)))
         dc.SetPen(wx.Pen((0, 0, 0), 1))
@@ -533,7 +573,7 @@ class Note(Text):
 
     def load(self):
         super(Note, self).load()
-        gui = self.board.GetParent().GetParent()
+        gui = self.board.gui
         gui.notes.add_note(self, gui.tab_count - 1)
 
 #----------------------------------------------------------------------
@@ -658,27 +698,13 @@ class Select(Tool):
                 self.shape = copy(shapes[count])
                 self.dragging = True
                 self.count = count
-                #del self.board.shapes[self.count]
                 break
 
     def motion(self, x, y):
         if self.dragging:
             shape = self.shape
-            #hotspot = self.dragStartPos - self.dragShape.pos
-            #self.dragImage = wx.DragImage(self.shape.image,
-            #                             wx.StockCursor(wx.CURSOR_HAND))
-            #self.dragImage.BeginDrag(self.prev, self.board, False)
-            #print shape.width - x
-            #print shape.y - y
-
-            #print shape.width
             shape.x = x
             shape.y = y
-            #shape.width = x
-            #shape.height = y
-            #self.dragImage.Move((x, y))
-            #self.dragImage.Show()
-            #self.prev = (x, y)
 
 
     def draw(self, dc, replay=False):
@@ -690,18 +716,9 @@ class Select(Tool):
         need to add pop(x) to remove current shape for proper undoing
         !!!!!
         """
-        #self.dragImage.heightide()
-        #self.dragImage.EndDrag()
         if self.dragging:
-            #self.board.add_shape(self.shape, self.count)
-            #print 'after'
-            #print self.board.shapes
-
-            #print '----'
             self.board.redraw_all(update_thumb=True)
-            #self.board.Refresh()
             self.dragging = False
-            #print self.shape.x
 
 #----------------------------------------------------------------------
 
@@ -719,7 +736,7 @@ class RectSelect(Rectangle):
     def button_up(self, x, y):
         """ Important: appends the shape, but not to the undo list """
         if x != self.x and y != self.y:
-            self.board.GetParent().GetParent().GetStatusBar().SetStatusText("You can now copy this region")
+            self.board.gui.GetStatusBar().SetStatusText("You can now copy this region")
             self.board.shapes.append(self)
             self.board.redraw_all()
 

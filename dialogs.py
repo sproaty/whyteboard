@@ -232,7 +232,6 @@ class TextInput(wx.Dialog):
         self.font = self.ctrl.GetFont()
 
         if note:
-            #self.text = ""
             self.note = note
             self.ctrl.SetValue(note.text)
             self.ctrl.SetForegroundColour(note.colour)
@@ -307,25 +306,16 @@ class TextInput(wx.Dialog):
         of the shape, not the actual shape.
         """
         if self.note:
-            #self.text = self.note.text
             shape = self.note
             board = shape.board
         else:
             board = self.gui.board
-            shape = copy(board.shape)
+            shape = board.shape
+        self.transfer_data(shape)
         board.redraw_all()  # stops overlapping text
 
         dc = wx.BufferedDC(None, board.buffer)
-        if isinstance(shape, tools.Note):
-            self.transfer_data(shape)
-            shape.find_extent()
-            dc.SetBrush(wx.Brush((255, 223, 120)))
-            dc.SetPen(wx.Pen((0, 0, 0), 1))
-            dc.DrawRectangle(shape.x - 10, shape.y - 10, *shape.extent)
-
-        dc.SetTextForeground(shape.colour)
-        dc.SetFont(self.ctrl.GetFont())
-        dc.DrawText(self.ctrl.GetValue(), shape.x, shape.y)
+        shape.draw(dc)
 
     def transfer_data(self, text_obj):
         """Transfers the dialog's data to an object."""

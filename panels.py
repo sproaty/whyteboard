@@ -32,36 +32,46 @@ class ControlPanel(wx.Panel):
     """
     This class implements a control panel for the GUI. It creates buttons for
     each tool that can be drawn upon the Whyteboard, a drop-down menu for the
-    line thickness and a ColourPicker for choosing the drawing colour. A preview
-    of what the tool will look like is also shown.
+    line thickness and a ColourPicker for choosing the drawing colour. A 
+    preview of what the tool will look like is also shown.
+    
+    It is contained within a collapsed pane, to give extra screen space when in
+    full screen mode
     """
     def __init__(self, gui):
         """
         Stores a reference to the drawing preview and the toggled drawing tool.
         """
         wx.Panel.__init__(self, gui)
-        self.gui = gui
+        self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
+                                     wx.CP_NO_TLW_RESIZE)
+        self.gui = gui                                     
+        pane = self.cp.GetPane()  # every widget's parent
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        csizer = wx.BoxSizer(wx.VERTICAL)
+                
+
         self.toggled = 1  # Pen, initallly
-        self.preview = DrawingPreview(self.gui)
+        self.preview = DrawingPreview(pane, self.gui)
         self.tools = {}
         #wx.ToolTip.SetDelay(5000)
-        sizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
+        toolsizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
 
         # Get list of class names as strings for each drawable tool
         items = [i.__name__ for i in gui.util.items]
 
         for x, name in enumerate(items):
-            b = wx.ToggleButton(self, x + 1, name)
+            b = wx.ToggleButton(pane, x + 1, name)
             b.SetToolTipString(gui.util.items[x].tooltip)
             b.Bind(wx.EVT_TOGGLEBUTTON, self.change_tool, id=x + 1)
-            sizer.Add(b, 0)
+            toolsizer.Add(b, 0)
             self.tools[x + 1] = b
 
         self.tools[self.toggled].SetValue(True)
-        width = wx.StaticText(self, label="Thickness:")
-        prev = wx.StaticText(self, label="Preview:")
+        width = wx.StaticText(pane, label="Thickness:")
+        prev = wx.StaticText(pane, label="Preview:")
 
-        self.colour = wx.ColourPickerCtrl(self)
+        self.colour = wx.ColourPickerCtrl(pane)
         self.colour.SetToolTipString("Select a custom colour")
 
         self.colour_list = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
@@ -70,21 +80,21 @@ class ControlPanel(wx.Panel):
         grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
         for colour in self.colour_list:
             bmp = self.make_bitmap(colour)
-            b = wx.BitmapButton(self, bitmap=bmp)
+            b = wx.BitmapButton(pane, bitmap=bmp)
             method = lambda evt, col = colour: self.change_colour(evt, col)
             b.Bind(wx.EVT_BUTTON, method)
             grid.Add(b, 0)
 
         choices = ''.join(str(i) + " " for i in range(1, 16) ).split()
 
-        self.thickness = wx.ComboBox(self, choices=choices, size=(25, 25),
+        self.thickness = wx.ComboBox(pane, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
         self.thickness.SetToolTipString("Sets the drawing thickness")
 
         spacing = 4
         box = wx.BoxSizer(wx.VERTICAL)
-        box.Add(sizer, 0, wx.ALL, spacing)
+        box.Add(toolsizer, 0, wx.ALL, spacing)
         box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(grid, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(self.colour, 0, wx.EXPAND | wx.ALL, spacing)
@@ -94,14 +104,28 @@ class ControlPanel(wx.Panel):
         #box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
-        self.SetSizer(box)
-        box.Fit(self)
+        #self.SetSizer(box)
+        #box.Fit(self)
+        
+        csizer.Add(box, 1, wx.EXPAND)
+        sizer.Add(self.cp, 1, wx.EXPAND)
 
+        self.SetSizer(sizer)
+        self.cp.GetPane().SetSizer(csizer)
+        self.cp.Expand()        
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
 
+    def toggle(self, evt):
+        """
+        Toggles the pane and its widgets
+        """
+        frame = self.GetTopLevelParent()
+        frame.Layout()
 
+        
     def scroll(self, event):
         """
         Scrolls the thickness drop-down box (for Windows)
@@ -181,12 +205,13 @@ class ControlPanel(wx.Panel):
 class DrawingPreview(wx.Window):
     """
     Shows a sample of what the current tool's drawing will look like.
+    Pane is the collapsible pane, its new parent.
     """
-    def __init__(self, gui):
+    def __init__(self, pane, gui):
         """
         Stores gui reference to access utility colour/thickness attributes.
         """
-        wx.Window.__init__(self, gui, style=wx.RAISED_BORDER)
+        wx.Window.__init__(self, pane, style=wx.RAISED_BORDER)
         self.gui = gui
         self.SetBackgroundColour(wx.WHITE)
         self.SetSize((45, 45))

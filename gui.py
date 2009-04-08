@@ -52,6 +52,7 @@ ID_NEXT = wx.NewId()              # next sheet
 ID_CLEAR_ALL = wx.NewId()         # remove all from current tab
 ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove all from all tabs
+ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
 ID_PDF = wx.NewId()               # import->PDF
 ID_PS = wx.NewId()                # import->PS
 ID_IMG = wx.NewId()               # import->Image
@@ -93,7 +94,7 @@ class GUI(wx.Frame):
 
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
-        self.board = Whyteboard(self.tabs)  # the active whiteboard tab
+        self.board = Whyteboard(self.tabs, self)  # the active whiteboard tab
         self.tabs.AddPage(self.board, "Sheet 1")
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
@@ -121,6 +122,7 @@ class GUI(wx.Frame):
         self.menu = wx.MenuBar()
         _file = wx.Menu()
         edit = wx.Menu()
+        view = wx.Menu()
         sheets = wx.Menu()
         _help = wx.Menu()
         _import = wx.Menu()
@@ -149,12 +151,14 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_UNDO, "&Undo\tCtrl+Z", "Undo the last operation")
         edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
         edit.AppendSeparator()
-        edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
+        #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
         edit.Append(wx.ID_COPY, "&Copy\tCtrl+C", "Copy the selection as a bitmap")
         edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
         edit.AppendItem(pnew)
-        edit.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
-
+        
+        view.Append(ID_FULLSCREEN, " &Full Screen\tF11", "View Whyteboard in full-screen mode", kind=wx.ITEM_CHECK)
+        view.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
+        
         sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
         sheets.Append(ID_PREV, "&Previous Sheet\tCtrl+Shift+Tab", "Go to the previous sheet")
         sheets.AppendSeparator()
@@ -168,6 +172,7 @@ class GUI(wx.Frame):
 
         self.menu.Append(_file, "&File")
         self.menu.Append(edit, "&Edit")
+        self.menu.Append(view, "&View")
         self.menu.Append(sheets, "&Sheets")
         self.menu.Append(_help, "&Help")
         self.SetMenuBar(self.menu)
@@ -184,19 +189,18 @@ class GUI(wx.Frame):
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_NEXT)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_PREV)
-
-
         self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
+        self.Bind(wx.EVT_KEY_DOWN, self.key_up)
 
-        ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }
+        ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }  # file->import
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
-
+        
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "copy", "paste", "paste_new",
-                  "history", "resize", "prev", "next", "clear", "clear_all",  "clear_sheets", "about", "clear_all_sheets"]
+                  "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "about", "clear_all_sheets"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, wx.ID_COPY,
-               wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, wx.ID_ABOUT,
+               wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, wx.ID_ABOUT,
                ID_CLEAR_ALL_SHEETS]
 
         for name, _id in zip(functs, IDs):
@@ -349,7 +353,7 @@ class GUI(wx.Frame):
         """
         Opens a new tab and selects it
         """
-        wb = Whyteboard(self.tabs)
+        wb = Whyteboard(self.tabs, self)
         self.thumbs.new_thumb()
         self.notes.add_tab()
         self.tab_count += 1
@@ -463,7 +467,16 @@ class GUI(wx.Frame):
         if bmp:
             return Image(self.board, bmp.GetBitmap(), None)
 
+    def on_fullscreen(self, event):
+        """ Toggles fullscreen """
+        flag = wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION | wx.FULLSCREEN_NOSTATUSBAR
+        self.ShowFullScreen(not self.IsFullScreen(), flag)
+        
+    def key_up(self, event):
+        print event.GetKeyCode()
+        event.Skip()
 
+        
     def convert_dialog(self, cmd):
         """
         Called when the convert process begins, executes the process call and

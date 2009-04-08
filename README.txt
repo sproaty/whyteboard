@@ -1,4 +1,4 @@
-Whyteboard 0.36.3 - a simple image, PDF and postscript file annotator
+Whyteboard 0.36.4 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Tue 07 Apr 2009 10:10:10 BST
 
@@ -21,13 +21,21 @@ see what error occurred and let me know at, <sproaty -at- gmail -dot- com>
 
 ---- KNOWN BUGS ----
 
-Possible: drawing outlined rectangles may be CPU intensive
-
+Currently...none?!?
+Windows and Linux versions seems equal, performance overhead from 0.36.2 fixed,
+many other bugs fixed; all seems good.
 
 
 ---- VERSION HISTORY ----
 
-0X Apr 2009 - * Paste selection as new sheet
+08 Apr 2009 - * Paste image from clipboard into a new sheet
+              * Toggle full screen view
+              * Tool panel is now collapsible to give (a little bit) more room
+                in full screen mode.
+              * Bugfix with eraser cursor in Windows
+              * Bugfix with Windows not drawing new lines from text input
+              * Misc. code improvements
+              * Performance increase from drawing shape 'fix' added in 0.36.2
 
 07 Apr 2009 - * Tooltips for each item on the toolbox
               * "New Window" menu item to launch a new Whyteboard instance.

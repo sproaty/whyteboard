@@ -35,7 +35,7 @@ class Whyteboard(wx.ScrolledWindow):
     """
     The drawing frame of the application.
     """
-    def __init__(self, tab):
+    def __init__(self, tab, gui):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
@@ -50,6 +50,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.ClearBackground()
         self.scroller = wx.lib.dragscroller.DragScroller(self)
 
+        self.gui = gui
         self.tab = tab
         self.shapes = []  # list of shapes for re-drawing/saving
         self.shape = None  # currently selected shape to draw with
@@ -89,7 +90,10 @@ class Whyteboard(wx.ScrolledWindow):
         """
         if self.drawing:
             x, y = self.convert_coords(event)
-            dc = wx.BufferedDC(None, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+            cdc = wx.ClientDC(self)
+            self.PrepareDC(cdc)
+            dc = wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)            
+            #dc = wx.BufferedDC(None, self.buffer, wx.BUFFER_VIRTUAL_AREA)
             #dc = wx.ClientDC(self)
             #dc = )
             self.shape.motion(x, y)
@@ -149,15 +153,14 @@ class Whyteboard(wx.ScrolledWindow):
         int, corresponding to new - 1 = Tool ID in Utility.items
         Can be called with no new ID to reset itself with the current tool
         """
-        parent = self.tab.GetParent()
         if not new:
-            new = parent.util.tool
+            new = self.gui.util.tool
         else:
-            parent.util.tool = new
+            self.gui.util.tool = new
 
-        items = parent.util.items
-        colour = parent.util.colour
-        thickness = parent.util.thickness
+        items = self.gui.util.items
+        colour = self.gui.util.colour
+        thickness = self.gui.util.thickness
         params = [self, colour, thickness]  # Object constructor parameters
         self.shape = None
         self.shape = items[new - 1](*params)  # create new Tool object
@@ -166,7 +169,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.SetCursor(self.shape.cursor)
         else:
             self.SetCursor(wx.StockCursor(self.shape.cursor) )
-        parent.control.preview.Refresh()
+        self.gui.control.preview.Refresh()
 
 
     def add_shape(self, shape, pos=None):
@@ -183,8 +186,8 @@ class Whyteboard(wx.ScrolledWindow):
         # undone
         if self.redo_list:
             self.redo_list = []
-        if self.tab.GetParent().util.saved:
-            self.tab.GetParent().util.saved = False
+        if self.gui.util.saved:
+            self.gui.util.saved = False
 
     def undo(self):
         """
@@ -212,7 +215,7 @@ class Whyteboard(wx.ScrolledWindow):
         item = self.redo_list.pop()
 
         if isinstance(item, Note):
-            self.GetParent().GetParent().notes.add_note(item)
+            self.gui.notes.add_note(item)
             self.shapes.append(item)
         elif item.__class__.__name__ == "list":  # cleared, remove one-by-one
             [self.shapes.remove(x) for x in item]
@@ -237,7 +240,7 @@ class Whyteboard(wx.ScrolledWindow):
                 number += 1
 
         # current tab tree element ID
-        notes = self.GetParent().GetParent().notes
+        notes = self.gui.notes
         tab = notes.tabs[self.get_tab()]
         item, cookie = notes.tree.GetFirstChild(tab)
 
@@ -250,9 +253,7 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def clear(self, keep_images=False):
-        """
-        Removes all shapes from the "to-draw" list.
-        """
+        """ Removes all shapes from the 'to-draw' list. """
         if not keep_images:
             self.undo_list.append(self.shapes)
             self.shapes = []
@@ -309,11 +310,11 @@ class Whyteboard(wx.ScrolledWindow):
 
     def get_tab(self):
         """ Returns the current tab number of this Whyteboard instance. """
-        return self.GetParent().GetParent().tabs.GetSelection()
+        return self.tab.GetSelection()
 
     def update_thumb(self):
         """ Updates this tab's thumb """
-        self.GetParent().GetParent().thumbs.update(self.get_tab())
+        self.gui.thumbs.update(self.get_tab())
 
     def on_size(self, event):
         """ Updates the scrollbars when the window is resized. """
@@ -360,5 +361,5 @@ class Whyteboard(wx.ScrolledWindow):
 
 if __name__ == '__main__':
     from gui import WhyteboardApp
-    app = WhyteboardApp()
+    app = WhyteboardApp(False)
     app.MainLoop()

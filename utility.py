@@ -155,11 +155,11 @@ class Utility(object):
                     self.filename = None
                 finally:
                     f.close()
-
+                    
                 for x in temp:
                     for shape in temp[x]:
                         shape.board = self.gui.tabs.GetPage(x)
-                        shape.load()
+                        shape.load()                    
             else:
                 wx.MessageBox("Error saving file data - no data to save")
                 self.saved = False
@@ -236,37 +236,25 @@ class Utility(object):
 
         self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
         self.gui.dialog.Show()
-
-        #  Remove all tabs, thumbnails and tree note items
-        for x in range(self.gui.tab_count -1, -1, -1):
-            self.gui.tabs.RemovePage(x)
-        self.gui.thumbs.remove_all()
-        self.gui.notes.remove_all()
-        self.gui.tab_count = 0
-        self.gui.board.Destroy()
+        self.remove_all_sheets()
 
         # change program settings and update the Preview window
         self.colour = temp[0][0]
         self.thickness = temp[0][1]
         self.tool = temp[0][2]
         self.to_convert = temp[2]
+        self.gui.control.change_tool(_id = self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
         self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
-            #self.gui.board = wb = Whyteboard(self.gui.tabs)
             try:
                 name = temp[3][x]
             except KeyError:
                 name = "Sheet " + str(x + 1)
             self.gui.on_new_tab(name=name)
-            #self.gui.tabs.AddPage(wb, name)
-            #self.gui.tab_count += 1
-            #self.gui.thumbs.new_thumb()
-            #self.gui.notes.add_tab()
-            #self.gui.tabs.SetSelection(x)
 
             for shape in temp[1][x]:
                 shape.board = self.gui.board#wb  # restore board
@@ -340,24 +328,17 @@ class Utility(object):
         else:
             # remove single tab with no drawings
             if self.gui.tab_count == 1 and not self.gui.board.shapes:
-                self.gui.tabs.DeletePage(0)
-                self.gui.thumbs.remove_all()
-                self.gui.notes.remove_all()
-                self.gui.tab_count = 0
+                self.remove_all_sheets()
 
             for x in range(0, count):
-                wb = Whyteboard(self.gui.tabs)
+                name = os.path.split(_file)[1] + " - " + str(x + 1)
+                self.gui.on_new_tab(name=name)
 
                 # store the temp file path for this file in the dictionary
                 temp_file = path + tmp_file + "-" + str(x) + ".png"
-                load_image(temp_file, wb)
+                load_image(temp_file, self.gui.board)
                 self.to_convert[index][x + 1] = temp_file
-                self.gui.tab_count += 1
-                name = os.path.split(_file)[1] + " - " + str(x + 1)
-                self.gui.tabs.AddPage(wb, name)
-
-                self.gui.thumbs.new_thumb()
-                self.gui.notes.add_tab()
+            self.gui.board.redraw_all()
 
         # Just in case it's a file with many pages
         self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
@@ -399,7 +380,17 @@ class Utility(object):
                     if y is not 0:
                         os.remove(self.to_convert[x][y])
 
+                        
+    def remove_all_sheets(self):
+        """  Remove all tabs, thumbnails and tree note items """
+        for x in range(self.gui.tab_count -1, -1, -1):
+            self.gui.tabs.RemovePage(x)
+        self.gui.thumbs.remove_all()
+        self.gui.notes.remove_all()
+        self.gui.tab_count = 0
+        self.gui.board.Destroy()    
 
+        
     def prompt_for_im(self):
         """
         Prompts a Windows user for ImageMagick's directory location on
