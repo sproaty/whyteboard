@@ -155,10 +155,10 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_COPY, "&Copy\tCtrl+C", "Copy the selection as a bitmap")
         edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
         edit.AppendItem(pnew)
-        
+
         view.Append(ID_FULLSCREEN, " &Full Screen\tF11", "View Whyteboard in full-screen mode", kind=wx.ITEM_CHECK)
         view.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
-        
+
         sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
         sheets.Append(ID_PREV, "&Previous Sheet\tCtrl+Shift+Tab", "Go to the previous sheet")
         sheets.AppendSeparator()
@@ -190,12 +190,12 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_NEXT)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_PREV)
         self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
-        self.Bind(wx.EVT_KEY_DOWN, self.key_up)
+        self.Bind(wx.EVT_CHAR, self.key_up)
 
         ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }  # file->import
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
-        
+
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "copy", "paste", "paste_new",
                   "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "about", "clear_all_sheets"]
 
@@ -471,12 +471,11 @@ class GUI(wx.Frame):
         """ Toggles fullscreen """
         flag = wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION | wx.FULLSCREEN_NOSTATUSBAR
         self.ShowFullScreen(not self.IsFullScreen(), flag)
-        
+
     def key_up(self, event):
-        print event.GetKeyCode()
         event.Skip()
 
-        
+
     def convert_dialog(self, cmd):
         """
         Called when the convert process begins, executes the process call and

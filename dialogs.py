@@ -42,7 +42,7 @@ class History(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         #_max = len(gui.board.shapes)+50
-        #self.slider = wx.Slider(self, minValue=1, maxValue=_max, size=(200, 50),
+        #self.slider = wx.Slider(self, minValue=1, maxValue=_max, size=(200,50),
         #            style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL )
         #self.slider.SetTickFreq(5, 1)
 
@@ -405,9 +405,11 @@ class Resize(wx.Dialog):
         csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
         self.hctrl = wx.TextCtrl(self, validator = IntValidator())
         self.wctrl = wx.TextCtrl(self, validator = IntValidator())
-        csizer.Add(wx.StaticText(self, label="Width:"), 0, wx.TOP | wx.ALIGN_RIGHT, 10)
+        csizer.Add(wx.StaticText(self, label="Width:"), 0, wx.TOP |
+                                                            wx.ALIGN_RIGHT, 10)
         csizer.Add(self.wctrl, 1, gap, 7)
-        csizer.Add(wx.StaticText(self, label="Height:"), 0, wx.TOP | wx.ALIGN_RIGHT, 7)
+        csizer.Add(wx.StaticText(self, label="Height:"), 0, wx.TOP |
+                                                             wx.ALIGN_RIGHT, 7)
         csizer.Add(self.hctrl, 1, gap, 7)
 
         self.hctrl.SetValue(str(height))

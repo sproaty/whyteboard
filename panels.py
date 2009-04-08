@@ -32,9 +32,9 @@ class ControlPanel(wx.Panel):
     """
     This class implements a control panel for the GUI. It creates buttons for
     each tool that can be drawn upon the Whyteboard, a drop-down menu for the
-    line thickness and a ColourPicker for choosing the drawing colour. A 
+    line thickness and a ColourPicker for choosing the drawing colour. A
     preview of what the tool will look like is also shown.
-    
+
     It is contained within a collapsed pane, to give extra screen space when in
     full screen mode
     """
@@ -45,11 +45,11 @@ class ControlPanel(wx.Panel):
         wx.Panel.__init__(self, gui)
         self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
-        self.gui = gui                                     
+        self.gui = gui
         pane = self.cp.GetPane()  # every widget's parent
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
-                
+
 
         self.toggled = 1  # Pen, initallly
         self.preview = DrawingPreview(pane, self.gui)
@@ -106,13 +106,13 @@ class ControlPanel(wx.Panel):
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
         #self.SetSizer(box)
         #box.Fit(self)
-        
+
         csizer.Add(box, 1, wx.EXPAND)
         sizer.Add(self.cp, 1, wx.EXPAND)
 
         self.SetSizer(sizer)
         self.cp.GetPane().SetSizer(csizer)
-        self.cp.Expand()        
+        self.cp.Expand()
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
@@ -125,7 +125,7 @@ class ControlPanel(wx.Panel):
         frame = self.GetTopLevelParent()
         frame.Layout()
 
-        
+
     def scroll(self, event):
         """
         Scrolls the thickness drop-down box (for Windows)
@@ -449,7 +449,8 @@ class SheetsPopup(wx.Menu):
 
     def rename(self, event):
         """Rename the selected sheet"""
-        dlg = wx.TextEntryDialog(self.parent, "Rename this sheet to:", "Rename sheet")
+        dlg = wx.TextEntryDialog(self.parent, "Rename this sheet to:",
+                                                        "Rename sheet")
         dlg.SetValue(self.parent.tabs.GetPageText(self.sheet))
 
         if dlg.ShowModal() == wx.ID_CANCEL:

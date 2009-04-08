@@ -59,7 +59,6 @@ import random
 from copy import copy
 from platform import system
 
-from whyteboard import Whyteboard
 from dialogs import ProgressDialog, FindIM
 import tools
 
@@ -126,12 +125,12 @@ class Utility(object):
 
             # load in every shape from every tab
             for x in range(0, self.gui.tab_count):
-                self.save_pasted_images(self.gui.tabs.GetPage(x).shapes)
+                save_pasted_images(self.gui.tabs.GetPage(x).shapes)
                 temp[x] = copy(self.gui.tabs.GetPage(x).shapes)
                 names.append(self.gui.tabs.GetPageText(x))
 
             if temp:
-                self.save_pasted_images(temp)
+                #save_pasted_images(temp)
                 for x in temp:
                     for shape in temp[x]:
                         shape.save()  # need to unlink unpickleable items;
@@ -155,44 +154,15 @@ class Utility(object):
                     self.filename = None
                 finally:
                     f.close()
-                    
+
                 for x in temp:
                     for shape in temp[x]:
                         shape.board = self.gui.tabs.GetPage(x)
-                        shape.load()                    
+                        shape.load()
             else:
                 wx.MessageBox("Error saving file data - no data to save")
                 self.saved = False
                 self.filename = None
-
-
-    def save_pasted_images(self, shapes):
-        """
-        When saving a Whyteboard file, any pasted Images (with path == None)
-        will be saved to a directory in the user's home directory, and the image
-        reference changed.
-        If the same image is pasted many times, it will be only stored once and
-        all images with that common image filepath will be updated.
-        """
-        data = {}
-        for shape in shapes:
-            if isinstance(shape, tools.Image):
-                img1 = shape.image.ConvertToImage()
-
-                if not shape.path:
-                    for path in data:
-                        if data[path] == img1.GetData():
-                            shape.path = path
-                            break
-
-                    #  the above iteration didn't find any common pastes
-                    if not shape.path:
-                        path = get_home_dir("pastes")
-                        tmp_file = path + make_filename() + ".jpg"
-                        shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
-                        shape.path = tmp_file
-
-                        data[shape.path] = img1.GetData()
 
 
     def load_file(self, filename=None):
@@ -380,7 +350,7 @@ class Utility(object):
                     if y is not 0:
                         os.remove(self.to_convert[x][y])
 
-                        
+
     def remove_all_sheets(self):
         """  Remove all tabs, thumbnails and tree note items """
         for x in range(self.gui.tab_count -1, -1, -1):
@@ -388,9 +358,9 @@ class Utility(object):
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
-        self.gui.board.Destroy()    
+        self.gui.board.Destroy()
 
-        
+
     def prompt_for_im(self):
         """
         Prompts a Windows user for ImageMagick's directory location on
@@ -479,6 +449,34 @@ class FileDropTarget(wx.FileDropTarget):
         self.gui.do_open(filenames[0])
 
 #----------------------------------------------------------------------
+
+def save_pasted_images(shapes):
+    """
+    When saving a Whyteboard file, any pasted Images (with path == None)
+    will be saved to a directory in the user's home directory, and the image
+    reference changed.
+    If the same image is pasted many times, it will be only stored once and
+    all images with that common image filepath will be updated.
+    """
+    data = {}
+    for shape in shapes:
+        if isinstance(shape, tools.Image):
+            img1 = shape.image.ConvertToImage()
+
+            if not shape.path:
+                for path in data:
+                    if data[path] == img1.GetData():
+                        shape.path = path
+                        break
+
+                #  the above iteration didn't find any common pastes
+                if not shape.path:
+                    path = get_home_dir("pastes")
+                    tmp_file = path + make_filename() + ".jpg"
+                    shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
+                    shape.path = tmp_file
+
+                    data[shape.path] = img1.GetData()
 
 def load_image(path, board):
     """

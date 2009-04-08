@@ -760,7 +760,7 @@ def find_inverse(colour):
 
 # items to draw with
 items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle,  RoundRect,
-        Eyedrop, Select, RectSelect]
+        Eyedrop, RectSelect]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

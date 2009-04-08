@@ -61,6 +61,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.select_tool()
         self.buffer = wx.EmptyBitmap(*self.virtual_size)
 
+        self.Bind(wx.EVT_KEY_DOWN, self.key_up)
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
@@ -69,6 +70,9 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
+
+    def key_up(self, event):
+        event.Skip()
 
     def left_down(self, event):
         """
@@ -92,14 +96,10 @@ class Whyteboard(wx.ScrolledWindow):
             x, y = self.convert_coords(event)
             cdc = wx.ClientDC(self)
             self.PrepareDC(cdc)
-            dc = wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)            
-            #dc = wx.BufferedDC(None, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-            #dc = wx.ClientDC(self)
-            #dc = )
+            dc = wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)
             self.shape.motion(x, y)
             self.shape.draw(dc)
             self.redraw_dirty(dc)
-            #del dc
 
     def left_up(self, event):
         """
