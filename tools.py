@@ -155,7 +155,7 @@ class Rectangle(Tool):
             self.board.add_shape(self)
             self.board.redraw_all()
 
-        
+
     def draw(self, dc, replay=False, _type="Rectangle", pen=wx.SOLID):
         """
         Draws a shape polymorphically, using Python's introspection; can be
@@ -163,18 +163,18 @@ class Rectangle(Tool):
         When called for a replay it renders itself; doesn't draw a temp outline.
         """
         args = self.get_args()
-        self.make_pen()                    
+        self.make_pen()
         if not replay:
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
-                    
+
         dc.SetPen(wx.Pen(self.colour, self.thickness, pen))
         dc.SetBrush(self.brush)
         dc.SetTextForeground(self.colour)  # forces text colour
         method = getattr(dc, "Draw" + _type)(*args)
-        method          
-        if not replay:    
-            del odc                                     
+        method
+        if not replay:
+            del odc
 
     def get_args(self):
         """ Shape's custom drawing arguments """
@@ -238,20 +238,20 @@ class Ellipse(Rectangle):
 
 #----------------------------------------------------------------------
 
-class RoundRect(Rectangle):
+class Squircle(Rectangle):
     """
     Easily extends from Rectangle.
     """
     tooltip = "Draw a rounded rectangle"
     def draw(self, dc, replay=False):
-        super(RoundRect, self).draw(dc, replay, "RoundedRectangle")
+        super(Squircle, self).draw(dc, replay, "RoundedRectangle")
 
     def preview(self, dc, width, height):
         dc.DrawRoundedRectangle(5, 5, width - 10, height - 7, 8)
 
     def get_args(self):
-        args = super(RoundRect, self).get_args()# [self.x, self.width]; x.sort()
-        args.append(15)  # edge angle
+        args = super(Squircle, self).get_args()# [self.x, self.width]; x.sort()
+        args.append(35)  # edge angle
         return args
 
     def hit_test(self, x, y):
@@ -737,8 +737,8 @@ def find_inverse(colour):
     return wx.Colour(r, g, b)
 
 # items to draw with
-items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle,  RoundRect,
-        Eyedrop, RectSelect]
+items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle,  Squircle,
+        Eyedrop, Select, RectSelect]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

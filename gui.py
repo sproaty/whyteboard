@@ -33,7 +33,7 @@ import sys
 
 import icon
 from whyteboard import Whyteboard
-from tools import Image
+from tools import Image, Note
 from utility import Utility, FileDropTarget
 from dialogs import About, History, ProgressDialog, Resize
 from panels import ControlPanel, SidePanel, SheetsPopup
@@ -44,6 +44,7 @@ from panels import ControlPanel, SidePanel, SheetsPopup
 ID_NEW = wx.NewId()               # new window
 ID_PASTE_NEW = wx.NewId()         # paste as new selection
 ID_EXPORT = wx.NewId()            # export sheet to image file
+ID_UNDO_SHEET = wx.NewId()        # undo close sheet
 ID_HISTORY = wx.NewId()           # history viewer
 ID_RESIZE = wx.NewId()            # resize dialog
 ID_PREV = wx.NewId()              # previous sheet
@@ -62,7 +63,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.36.5"
+    version = "0.36.6"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -90,6 +91,7 @@ class GUI(wx.Frame):
         self.make_menu()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.current_tab = 0
+        self.closed_tabs = []
 
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
@@ -135,6 +137,9 @@ class GUI(wx.Frame):
         pnew = wx.MenuItem(edit, ID_PASTE_NEW, "Paste to a &New Sheet\tCtrl+Shift-V", "Paste from your clipboard into a new sheet")
         pnew.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_PASTE, wx.ART_MENU))
 
+        undo_sheet = wx.MenuItem(edit, ID_UNDO_SHEET, "Undo Last Closed Sheet\tCtrl+Shift-T", "Undo the last closed sheet")
+        undo_sheet.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_UNDO, wx.ART_MENU))
+
         _file.AppendItem(new)
         _file.Append(wx.ID_NEW, "&New Sheet\tCtrl-T", "Add a new sheet")
         _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
@@ -160,6 +165,7 @@ class GUI(wx.Frame):
 
         sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
         sheets.Append(ID_PREV, "&Previous Sheet\tCtrl+Shift+Tab", "Go to the previous sheet")
+        sheets.AppendItem(undo_sheet)
         sheets.AppendSeparator()
         sheets.Append(wx.ID_CLEAR, "&Clear Sheets' Drawings", "Clear drawings on the current sheet (keep images)")
         sheets.Append(ID_CLEAR_ALL, "Clear &Sheet", "Clear the current sheet")
@@ -175,6 +181,7 @@ class GUI(wx.Frame):
         self.menu.Append(_help, "&Help")
         self.SetMenuBar(self.menu)
         self.menu.Enable(ID_PASTE_NEW, self.can_paste)
+        self.menu.Enable(ID_UNDO_SHEET, False)
 
 
     def do_bindings(self):
@@ -187,18 +194,19 @@ class GUI(wx.Frame):
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_NEXT)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_PREV)
+        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_UNDO_SHEET)
         self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
 
         ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }  # file->import
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "copy", "paste", "paste_new",
-                  "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "about", "clear_all_sheets"]
+        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "undo_tab", "copy", "paste",
+                  "paste_new", "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "about", "clear_all_sheets"]
 
-        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, wx.ID_COPY,
-               wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, wx.ID_ABOUT,
-               ID_CLEAR_ALL_SHEETS]
+        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
+               wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
+               ID_CLEAR_SHEETS, wx.ID_ABOUT, ID_CLEAR_ALL_SHEETS]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -341,11 +349,12 @@ class GUI(wx.Frame):
         frame = GUI(None)
         frame.Show(True)
 
-    def on_new_tab(self, event=None, name=None):
+    def on_new_tab(self, event=None, name=None, wb=None):
         """
         Opens a new tab and selects it
         """
-        wb = Whyteboard(self.tabs, self)
+        if not wb:
+            wb = Whyteboard(self.tabs, self)
         self.thumbs.new_thumb()
         self.notes.add_tab()
         self.tab_count += 1
@@ -376,6 +385,9 @@ class GUI(wx.Frame):
         Closes the current tab (if there are any to close).
         """
         if self.tab_count:
+            self.closed_tabs.append(self.board)
+            if len(self.closed_tabs) == 10:
+                del self.closed_tabs[9]
             self.notes.remove(self.current_tab)
             self.thumbs.remove(self.current_tab)
             self.tab_count -= 1
@@ -385,6 +397,17 @@ class GUI(wx.Frame):
                 if self.tabs.GetPageText(x).startswith("Sheet "):
                     self.tabs.SetPageText(x, "Sheet " + str(x + 1))
 
+
+    def on_undo_tab(self, event=None):
+        """
+        Undoes the last closed tab from the list.
+        """
+        if self.closed_tabs:
+            self.on_new_tab(wb=self.closed_tabs.pop())
+            self.board.redraw_all(True)
+            for note in self.board.shapes:
+                if isinstance(note, Note):
+                    self.notes.add_note(note)
 
     def update_menus(self, event):
         """
@@ -421,6 +444,8 @@ class GUI(wx.Frame):
                 do = True
             if (event.GetId() == ID_NEXT and self.tab_count > 1 and
              (self.current_tab + 1 < self.tab_count)):
+                do = True
+            if event.GetId() == ID_UNDO_SHEET and len(self.closed_tabs) >= 1:
                 do = True
         elif self.board:
             if self.board.check_copy():
@@ -463,9 +488,6 @@ class GUI(wx.Frame):
         """ Toggles fullscreen """
         flag = wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION | wx.FULLSCREEN_NOSTATUSBAR
         self.ShowFullScreen(not self.IsFullScreen(), flag)
-
-    def key_up(self, event):
-        event.Skip()
 
 
     def convert_dialog(self, cmd):

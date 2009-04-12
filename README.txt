@@ -1,4 +1,4 @@
-Whyteboard 0.36.5 - a simple image, PDF and postscript file annotator
+Whyteboard 0.36.6 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Wed 08 Apr 2009 12:51:41 BST
 
@@ -28,9 +28,10 @@ overhead from 0.36.2 fixed, many other bugs fixed; all seems good.
 
 ---- VERSION HISTORY ----
 
-xx Apr 2009 - * Select tools using keypad 1-9 (useful in full screen mode)
+xx Apr 2009 - * Select tools using keys/numpad 1-9 (useful in full screen mode)
               * Navigate through the tabs with left/up arrow keys for backwards
                 and right/down for forwards
+              * Undo closed tabs
 
 08 Apr 2009 - * Bugfix with drawing "outlined" shapes having inverted colours
                 lines when drawing over other colours.
