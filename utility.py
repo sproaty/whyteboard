@@ -57,7 +57,7 @@ import os
 import cPickle
 import random
 from copy import copy
-from platform import system
+
 
 from dialogs import ProgressDialog, FindIM
 import tools
@@ -158,7 +158,10 @@ class Utility(object):
                 for x in temp:
                     for shape in temp[x]:
                         shape.board = self.gui.tabs.GetPage(x)
-                        shape.load()
+                        if isinstance(shape, tools.Note):
+                            shape.load(False)
+                        else:
+                            shape.load()
             else:
                 wx.MessageBox("Error saving file data - no data to save")
                 self.saved = False
@@ -181,6 +184,7 @@ class Utility(object):
 
         elif _type in self.types[3:]:
             load_image(self.temp_file, self.gui.board)
+            self.gui.board.redraw_all()
 
         elif _type.endswith("wtbd"):
             self.load_wtbd(filename)
@@ -365,15 +369,15 @@ class Utility(object):
         """
         Prompts a Windows user for ImageMagick's directory location on
         initialisation
-        """
-        if system() == "Linux":
+        """          
+        if os.name == "posix":
             value = os.system("which convert")
             if value == 256:
                 wx.MessageBox("ImageMagick was not found. You will be unable " +
                               "to load PDF and PS files until it is installed.")
             else:
                 self.im_location = "convert"
-        elif system() == "Windows":
+        elif os.name == "nt":         
             path = get_home_dir()
             path = os.path.join(path, "user.pref")
 

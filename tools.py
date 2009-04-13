@@ -25,8 +25,8 @@ with by the user (e.g. they can't draw an image directly)
 
 import wx
 import time
+import os
 
-from platform import system
 from copy import copy
 from dialogs import TextInput
 
@@ -238,19 +238,19 @@ class Ellipse(Rectangle):
 
 #----------------------------------------------------------------------
 
-class Squircle(Rectangle):
+class RoundRect(Rectangle):
     """
     Easily extends from Rectangle.
     """
     tooltip = "Draw a rounded rectangle"
     def draw(self, dc, replay=False):
-        super(Squircle, self).draw(dc, replay, "RoundedRectangle")
+        super(RoundRect, self).draw(dc, replay, "RoundedRectangle")
 
     def preview(self, dc, width, height):
         dc.DrawRoundedRectangle(5, 5, width - 10, height - 7, 8)
 
     def get_args(self):
-        args = super(Squircle, self).get_args()# [self.x, self.width]; x.sort()
+        args = super(RoundRect, self).get_args()# [self.x, self.width]; x.sort()
         args.append(35)  # edge angle
         return args
 
@@ -439,7 +439,7 @@ class Text(Rectangle):
             self.update_scroll()
         dc.SetFont(self.font)
 
-        if system() == "Windows":
+        if os.name == "nt":
             #  bugfix as DrawText can only draw one line
             text = self.text
             y = self.y
@@ -508,7 +508,7 @@ class Note(Text):
         dummy = wx.Frame(None)
         dummy.SetFont(self.font)
 
-        if system() == "Windows":
+        if os.name == "nt":
             height = 0
             width = 0
             for x, line in enumerate(self.text.split("\n")):
@@ -550,10 +550,11 @@ class Note(Text):
         dc.SetTextForeground(self.colour)
         dc.DrawText("abcdef", 15, height / 2 - 10)
 
-    def load(self):
+    def load(self, add_note=True):
         super(Note, self).load()
         gui = self.board.gui
-        gui.notes.add_note(self, gui.tab_count - 1)
+        if add_note:
+            gui.notes.add_note(self, gui.tab_count - 1)
 
 #----------------------------------------------------------------------
 
@@ -737,8 +738,8 @@ def find_inverse(colour):
     return wx.Colour(r, g, b)
 
 # items to draw with
-items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle,  Squircle,
-        Eyedrop, Select, RectSelect]
+items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle, RoundRect,
+        Eyedrop, RectSelect]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

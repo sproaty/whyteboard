@@ -1,8 +1,11 @@
 Whyteboard 0.36.6 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 08 Apr 2009 12:51:41 BST
+April 13, 2009 02:20:05 PM 
 
 ---- TO RUN WHYTEBOARD ----
+
+If you have installed the Windows .exe file, simply run Whyteboard from the
+start menu.
 
 First, you need Python, wxPython, and (optionally) ImageMagick/GhostScript:
 
@@ -21,18 +24,19 @@ see what error occurred and let me know at, <sproaty -at- gmail -dot- com>
 
 ---- KNOWN BUGS ----
 
-Currently...none?!? Windows and Linux versions seems equal, massive performance
-overhead from 0.36.2 fixed, many other bugs fixed; all seems good.
+Currently none.
 
 
 
 ---- VERSION HISTORY ----
 
-xx Apr 2009 - * Select tools using keys/numpad 1-9 (useful in full screen mode)
-              * Navigate through the tabs with left/up arrow keys for backwards
-                and right/down for forwards
-              * Undo closed tabs
-
+13 Apr 2009 - * Undo closed tabs, last 10 tabs are stored
+              * Bugfix: closing a sheet would make all other sheet display the
+                closed sheets' image until drawn on 
+              * Bugfix: Saving a document which has Notes would result in 
+                duplicate notes being visible in the Notes tree view.              
+              * Windows exe filesize reduced: 14.2MB -> 4.78MB (!)
+              
 08 Apr 2009 - * Bugfix with drawing "outlined" shapes having inverted colours
                 lines when drawing over other colours.
               * Bugfix with opening new window with Windows EXE

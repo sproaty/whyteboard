@@ -84,7 +84,7 @@ class ControlPanel(wx.Panel):
             b.Bind(wx.EVT_BUTTON, method)
             grid.Add(b, 0)
 
-        choices = ''.join(str(i) + " " for i in range(1, 16) ).split()
+        choices = ''.join(str(i) + " " for i in range(1, 26) ).split()
 
         self.thickness = wx.ComboBox(pane, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)

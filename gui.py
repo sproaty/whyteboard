@@ -30,6 +30,7 @@ import wx
 import wx.lib.newevent
 import os
 import sys
+from copy import copy
 
 import icon
 from whyteboard import Whyteboard
@@ -374,7 +375,7 @@ class GUI(wx.Frame):
         self.current_tab = self.tabs.GetSelection()
         #self.thumbs.Scroll(-1, self.current_tab)
         self.control.change_tool()
-
+            
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
@@ -384,14 +385,17 @@ class GUI(wx.Frame):
         """
         Closes the current tab (if there are any to close).
         """
-        if self.tab_count:
-            self.closed_tabs.append(self.board)
+        if self.tab_count - 1:
             if len(self.closed_tabs) == 10:
-                del self.closed_tabs[9]
+                del self.closed_tabs[9]        
+            self.closed_tabs.append(copy(self.board))
             self.notes.remove(self.current_tab)
             self.thumbs.remove(self.current_tab)
-            self.tab_count -= 1
-            self.tabs.RemovePage(self.current_tab)  # fires on_change_tab
+            self.tab_count -= 1   
+            #del self.board                     
+            self.tabs.DeletePage(self.current_tab)  # fires on_change_tab                        
+            self.board.redraw_all()
+
 
             for x in range(self.current_tab, self.tab_count):
                 if self.tabs.GetPageText(x).startswith("Sheet "):
@@ -402,12 +406,16 @@ class GUI(wx.Frame):
         """
         Undoes the last closed tab from the list.
         """
-        if self.closed_tabs:
-            self.on_new_tab(wb=self.closed_tabs.pop())
-            self.board.redraw_all(True)
-            for note in self.board.shapes:
-                if isinstance(note, Note):
-                    self.notes.add_note(note)
+        shape = self.closed_tabs.pop()        
+        self.on_new_tab()
+        self.board.shapes = shape.shapes
+        
+        for shape in self.board.shapes:
+            shape.board = self.board
+            if isinstance(shape, Note):
+                self.notes.add_note(shape)                       
+        self.board.redraw_all(True)
+        
 
     def update_menus(self, event):
         """
@@ -605,7 +613,7 @@ class WhyteboardApp(wx.App):
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
         self.frame = GUI(None)
         self.frame.Show(True)
-        self.Bind(wx.EVT_CHAR, self.on_key)
+        #self.Bind(wx.EVT_CHAR, self.on_key)
         try:
             _file = sys.argv[1]
             if _file:
@@ -620,15 +628,16 @@ class WhyteboardApp(wx.App):
         frame = self.frame
         x = len(frame.util.items)
         key = event.GetKeyCode()
+        print key
 
         #  49 -- key 1. change_tool expects list element num + 1
         if key >= 49 and key <= 49 + x:
             frame.control.change_tool(_id=key - 48)
 
-        elif key in [wx.WXK_LEFT, wx.WXK_UP] and frame.current_tab > 0:
+        elif key == wx.WXK_UP and frame.current_tab > 0:
             frame.tabs.SetSelection(frame.current_tab - 1)
 
-        elif (key in [wx.WXK_RIGHT, wx.WXK_DOWN] and frame.tab_count > 1 and
+        elif (key == wx.WXK_DOWN and frame.tab_count > 1 and 
              (frame.current_tab + 1 < frame.tab_count)):
             frame.tabs.SetSelection(frame.current_tab + 1)
 
@@ -640,7 +649,7 @@ class WhyteboardApp(wx.App):
 #----------------------------------------------------------------------
 
 def main():
-    app = WhyteboardApp(True)
+    app = WhyteboardApp()
     app.MainLoop()
 
 if __name__ == '__main__':
