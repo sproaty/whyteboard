@@ -64,7 +64,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.36.6"
+    version = "0.36.7"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -92,7 +92,7 @@ class GUI(wx.Frame):
         self.make_menu()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.current_tab = 0
-        self.closed_tabs = []
+        self.closed_tabs = []  # [shapes - undo - redo - virtual_size] per tab
 
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
@@ -373,9 +373,9 @@ class GUI(wx.Frame):
         """
         self.board = self.tabs.GetCurrentPage()
         self.current_tab = self.tabs.GetSelection()
-        #self.thumbs.Scroll(-1, self.current_tab)
+        self.thumbs.Scroll(-1, self.current_tab)
         self.control.change_tool()
-            
+
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
@@ -387,35 +387,41 @@ class GUI(wx.Frame):
         """
         if self.tab_count - 1:
             if len(self.closed_tabs) == 10:
-                del self.closed_tabs[9]        
-            self.closed_tabs.append(copy(self.board))
+                del self.closed_tabs[9]
+
+            item = [self.board.shapes, self.board.undo, self.board.redo,
+                    self.board.virtual_size]
+
+            self.closed_tabs.append(item)
             self.notes.remove(self.current_tab)
             self.thumbs.remove(self.current_tab)
-            self.tab_count -= 1   
-            #del self.board                     
-            self.tabs.DeletePage(self.current_tab)  # fires on_change_tab                        
+            self.tab_count -= 1
+            self.tabs.RemovePage(self.current_tab)  # fires on_change_tab
             self.board.redraw_all()
-
 
             for x in range(self.current_tab, self.tab_count):
                 if self.tabs.GetPageText(x).startswith("Sheet "):
                     self.tabs.SetPageText(x, "Sheet " + str(x + 1))
 
 
+
     def on_undo_tab(self, event=None):
         """
         Undoes the last closed tab from the list.
         """
-        shape = self.closed_tabs.pop()        
+        shape = self.closed_tabs.pop()
         self.on_new_tab()
-        self.board.shapes = shape.shapes
-        
+        self.board.shapes = shape[0]
+        self.board.undo = shape[1]
+        self.board.redo = shape[2]
+        self.board.virtual_size = shape[3]
+
         for shape in self.board.shapes:
             shape.board = self.board
             if isinstance(shape, Note):
-                self.notes.add_note(shape)                       
+                self.notes.add_note(shape)
         self.board.redraw_all(True)
-        
+
 
     def update_menus(self, event):
         """
@@ -423,6 +429,8 @@ class GUI(wx.Frame):
         It is called every 65ms and uses a counter to update the GUI less often
         than the 65ms, as it's too performance intense
         """
+        if not self.board:
+            return
         _id = event.GetId()
 
         if _id == wx.ID_PASTE:
@@ -470,16 +478,15 @@ class GUI(wx.Frame):
         self.board.redraw_all()
         rect = wx.Rect(*shape.get_args())
         self.util.set_clipboard(rect)
-
         self.count = 4
-        self.UpdateWindowUI()  # force paste to enable
+        self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)
 
 
     def on_paste(self, event=None):
         """ Grabs the image from the clipboard and places it on the panel """
         shape = self.get_paste()
         shape.button_down(0, 0)
-        self.board.redraw_all()
+        self.board.redraw_all(True)
 
     def on_paste_new(self, event):
         """ Pastes the image into a new tab """
@@ -590,7 +597,6 @@ class GUI(wx.Frame):
         """Refresh all thumbnails."""
         self.thumbs.update_all()
 
-
     def on_resize(self, event=None):
         dlg = Resize(self)
         dlg.ShowModal()
@@ -637,7 +643,7 @@ class WhyteboardApp(wx.App):
         elif key == wx.WXK_UP and frame.current_tab > 0:
             frame.tabs.SetSelection(frame.current_tab - 1)
 
-        elif (key == wx.WXK_DOWN and frame.tab_count > 1 and 
+        elif (key == wx.WXK_DOWN and frame.tab_count > 1 and
              (frame.current_tab + 1 < frame.tab_count)):
             frame.tabs.SetSelection(frame.current_tab + 1)
 

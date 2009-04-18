@@ -90,6 +90,8 @@ class Utility(object):
         self.tool = 1  # Current tool that is being drawn with
         self.make_wildcard()
         self.items = tools.items
+        self.update_version = True
+        self.saved_version = ""
 
         self.im_location = None  # location of ImageMagick on windows
 
@@ -130,15 +132,18 @@ class Utility(object):
                 names.append(self.gui.tabs.GetPageText(x))
 
             if temp:
-                #save_pasted_images(temp)
                 for x in temp:
                     for shape in temp[x]:
                         shape.save()  # need to unlink unpickleable items;
 
+                version = self.gui.version
+                if not self.update_version:
+                    version = self.saved_version
+
                 # Now the unpickleable objects are gone, build the save file
                 tab = self.gui.tabs.GetSelection()
                 _file = { 0: [self.colour, self.thickness, self.tool, tab,
-                              self.gui.version],
+                              version],
                           1: temp,
                           2: self.to_convert,
                           3: names }
@@ -155,6 +160,7 @@ class Utility(object):
                 finally:
                     f.close()
 
+                # Fix bug in Windows where the current shapes get reset above
                 for x in temp:
                     for shape in temp[x]:
                         shape.board = self.gui.tabs.GetPage(x)
@@ -243,7 +249,20 @@ class Utility(object):
         try:
             version = temp[0][4]
         except IndexError:
-            version = "< 0.33"
+            version = "0.33"
+        self.saved_version = version
+
+        #  Don't save .wtbd file of future versions as current, older version
+        num = [int(x) for x in version.split(".")]
+        ver = [int(x) for x in self.gui.version.split(".")]
+        if len(num) == 2:
+            num.append(0)
+
+        if num[1] > ver[1]:
+            self.update_version = False
+        elif num[1] == ver[1]:
+            if num[2] > ver[2]:
+                self.update_version = False
 
         try:
             self.gui.tabs.SetSelection(temp[0][3])
@@ -369,7 +388,7 @@ class Utility(object):
         """
         Prompts a Windows user for ImageMagick's directory location on
         initialisation
-        """          
+        """
         if os.name == "posix":
             value = os.system("which convert")
             if value == 256:
@@ -377,7 +396,7 @@ class Utility(object):
                               "to load PDF and PS files until it is installed.")
             else:
                 self.im_location = "convert"
-        elif os.name == "nt":         
+        elif os.name == "nt":
             path = get_home_dir()
             path = os.path.join(path, "user.pref")
 

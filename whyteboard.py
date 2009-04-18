@@ -103,7 +103,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Called when the left mouse button is released.
         """
-        x, y = self.convert_coords(event)        
+        x, y = self.convert_coords(event)
 
         if self.drawing or isinstance(self.shape, Text):
             before = len(self.shapes)

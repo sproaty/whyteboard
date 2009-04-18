@@ -1,6 +1,6 @@
-Whyteboard 0.36.6 - a simple image, PDF and postscript file annotator
+Whyteboard 0.36.7 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-April 13, 2009 02:20:05 PM 
+April 13, 2009 02:20:05 PM
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -27,16 +27,25 @@ see what error occurred and let me know at, <sproaty -at- gmail -dot- com>
 Currently none.
 
 
-
 ---- VERSION HISTORY ----
+
+xx Apr 2009 - * Bugfix in undo closed sheet not working properly
+              * Memory use improved from undo closed sheet improved
+              * Bugfix: paste / paste as new sheet - not updating the thumbnail
+              * Backwards/forwards compability: from this version onwards,
+                Whyteboard will not change the version inside saved .wtbd files
+                that are created in a newer version of Whyteboard.
+                i.e. version 0.36.7 won't change the version inside a file saved
+                in 0.36.9 (before, it would). It will update the version from a
+                file saved in < 0.36.7 to 0.36.7
 
 13 Apr 2009 - * Undo closed tabs, last 10 tabs are stored
               * Bugfix: closing a sheet would make all other sheet display the
-                closed sheets' image until drawn on 
-              * Bugfix: Saving a document which has Notes would result in 
-                duplicate notes being visible in the Notes tree view.              
+                closed sheets' image until drawn on
+              * Bugfix: Saving a document which has Notes would result in
+                duplicate notes being visible in the Notes tree view.
               * Windows exe filesize reduced: 14.2MB -> 4.78MB (!)
-              
+
 08 Apr 2009 - * Bugfix with drawing "outlined" shapes having inverted colours
                 lines when drawing over other colours.
               * Bugfix with opening new window with Windows EXE

@@ -639,7 +639,7 @@ class ThumbButton(wx.BitmapButton):
         dc.SelectObject(_copy)
 
         gcdc = wx.GCDC(dc)
-        gcdc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 30)))  # light blue
+        gcdc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 65)))  # light blue
         gcdc.SetPen(wx.Pen((0, 0, 0), 1, wx.TRANSPARENT))
         gcdc.DrawRectangle(0, 0, 150, 150)
 

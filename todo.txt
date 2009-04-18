@@ -1,6 +1,6 @@
-Whyteboard 0.36.6 - To do list
+Whyteboard 0.36.7 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-April 13, 2009 02:20:05 PM 
+April 13, 2009 02:20:05 PM
 
 ---- NEW FEATURES ----
 
