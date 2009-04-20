@@ -1,6 +1,6 @@
 Whyteboard 0.36.7 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-April 13, 2009 02:20:05 PM
+Mon 20 Apr 2009 06:06:19 BST
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -29,7 +29,6 @@ Currently none.
 
 ---- VERSION HISTORY ----
 
-xx Apr 2009 - * Bugfix in undo closed sheet not working properly
               * Memory use improved from undo closed sheet improved
               * Bugfix: paste / paste as new sheet - not updating the thumbnail
               * Backwards/forwards compability: from this version onwards,

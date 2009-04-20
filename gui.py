@@ -384,19 +384,24 @@ class GUI(wx.Frame):
     def on_close_tab(self, event=None):
         """
         Closes the current tab (if there are any to close).
+        Adds the 3 lists from the Whyteboard to a list inside the undo list.
         """
         if self.tab_count - 1:
             if len(self.closed_tabs) == 10:
                 del self.closed_tabs[9]
 
-            item = [self.board.shapes, self.board.undo, self.board.redo,
-                    self.board.virtual_size]
+            board = self.board
+            item = [board.shapes, board.undo_list, board.redo_list,
+                    board.virtual_size]
 
             self.closed_tabs.append(item)
             self.notes.remove(self.current_tab)
             self.thumbs.remove(self.current_tab)
             self.tab_count -= 1
-            self.tabs.RemovePage(self.current_tab)  # fires on_change_tab
+            if os.name == "nt":
+                self.tabs.DeletePage(self.current_tab)  # fires on_change_tab
+            else:
+                self.tabs.RemovePage(self.current_tab)  # fires on_change_tab
             self.board.redraw_all()
 
             for x in range(self.current_tab, self.tab_count):
@@ -408,12 +413,13 @@ class GUI(wx.Frame):
     def on_undo_tab(self, event=None):
         """
         Undoes the last closed tab from the list.
+        Re-creates the board from the saved shapes/undo/redo lists
         """
         shape = self.closed_tabs.pop()
         self.on_new_tab()
         self.board.shapes = shape[0]
-        self.board.undo = shape[1]
-        self.board.redo = shape[2]
+        self.board.undo_list = shape[1]
+        self.board.redo_list = shape[2]
         self.board.virtual_size = shape[3]
 
         for shape in self.board.shapes:
