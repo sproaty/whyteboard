@@ -171,8 +171,8 @@ class Rectangle(Tool):
         dc.SetPen(wx.Pen(self.colour, self.thickness, pen))
         dc.SetBrush(self.brush)
         dc.SetTextForeground(self.colour)  # forces text colour
-        method = getattr(dc, "Draw" + _type)(*args)
-        method
+        method = getattr(dc, "Draw" + _type)
+        method(*args)
         if not replay:
             del odc
 

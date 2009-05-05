@@ -36,7 +36,7 @@ import icon
 from whyteboard import Whyteboard
 from tools import Image, Note
 from utility import Utility, FileDropTarget
-from dialogs import About, History, ProgressDialog, Resize
+from dialogs import  History, ProgressDialog, Resize, UpdateDialog
 from panels import ControlPanel, SidePanel, SheetsPopup
 
 
@@ -57,6 +57,7 @@ ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
 ID_PDF = wx.NewId()               # import->PDF
 ID_PS = wx.NewId()                # import->PS
 ID_IMG = wx.NewId()               # import->Image
+ID_UPDATE = wx.NewId()            # update self
 
 class GUI(wx.Frame):
     """
@@ -64,10 +65,10 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.36.7"
+    version = "0.37.0"
     title = "Whyteboard %s" % version
-    LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
-
+    LoadEvent, LOAD_DONE_EVENT, = wx.lib.newevent.NewEvent()
+    
     def __init__(self, parent):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
@@ -173,8 +174,11 @@ class GUI(wx.Frame):
         sheets.AppendSeparator()
         sheets.Append(ID_CLEAR_SHEETS, "Clear All Sheets' &Drawings", "Clear all sheets' drawings (keep images)")
         sheets.Append(ID_CLEAR_ALL_SHEETS, "Clear &All Sheets", "Clear all sheets")
-
-        _help.Append(wx.ID_ABOUT, "&About\tF1", "View information about Whyteboard")
+        
+        _help.Append(wx.ID_HELP, "&Contents\tF1", "View information about Whyteboard")
+        _help.AppendSeparator()
+        _help.Append(ID_UPDATE, "Check for &Updates", "Search for updates to Whyteboard")
+        _help.Append(wx.ID_ABOUT, "&About", "View information about Whyteboard")
         self.menu.Append(_file, "&File")
         self.menu.Append(edit, "&Edit")
         self.menu.Append(view, "&View")
@@ -202,12 +206,12 @@ class GUI(wx.Frame):
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "undo_tab", "copy", "paste",
-                  "paste_new", "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "about", "clear_all_sheets"]
+        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new", 
+                  "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "help", "update", "about"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
                wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
-               ID_CLEAR_SHEETS, wx.ID_ABOUT, ID_CLEAR_ALL_SHEETS]
+               ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, wx.ID_HELP, ID_UPDATE, wx.ID_ABOUT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -291,17 +295,7 @@ class GUI(wx.Frame):
             name = dlg.GetPath()
 
             if name.endswith("wtbd"):
-
-                if self.util.saved:
-                    self.do_open(name)
-                else:
-                    msg = ("You have not saved your file, and will lose all " +
-                           "unsaved data. Are you sure you want to open this " +
-                           "file?")
-                    dialog = wx.MessageDialog(self, msg, style=wx.YES_NO |
-                                                           wx.ICON_QUESTION)
-                    if dialog.ShowModal() == wx.ID_YES:
-                        self.do_open(name)
+                self.util.prompt_for_save(action="open", args=[name])    
             else:
                 self.do_open(name)
         else:
@@ -543,23 +537,8 @@ class GUI(wx.Frame):
 
 
     def on_exit(self, event=None):
-        """
-        Clean up any tmp files from PDF/PS conversion.
-
-        **NOTE**
-        Temporarily keeping temp. files to make loading .wtbd files faster
-        """
-        if not self.util.saved:
-            msg = "You have not saved your file. Are you sure you want to quit?"
-            dialog = wx.MessageDialog(self, msg, style=wx.YES_NO |
-                                                       wx.ICON_QUESTION)
-
-            if dialog.ShowModal() == wx.ID_YES:
-                #self.util.cleanup()
-                self.Destroy()
-        else:
-            self.Destroy()
-
+        """Ask to save, quit or cancel if the user hasn't saved."""
+        self.util.prompt_for_save()
 
     def tab_popup(self, event):
         """ Pops up the tab context menu. """
@@ -598,7 +577,7 @@ class GUI(wx.Frame):
         """ Clears all sheets ***"""
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear()
-
+                        
     def on_refresh(self):
         """Refresh all thumbnails."""
         self.thumbs.update_all()
@@ -607,16 +586,49 @@ class GUI(wx.Frame):
         dlg = Resize(self)
         dlg.ShowModal()
         dlg.Destroy()
-
-    def on_about(self, event=None):
-        dlg = About(self)
-        dlg.ShowModal()
-        dlg.Destroy()
-
+        
+    def on_update(self, event=None):
+        """ Checks for new versions of the program ***"""
+        dlg = UpdateDialog(self)
+        dlg.ShowModal()   
+            
     def on_history(self, event=None):
         dlg = History(self)
         dlg.ShowModal()
         dlg.Destroy()
+        
+    def on_help(self, event=None):
+        """
+        Shows the help file, if it exists, otherwise prompts the user to
+        download it.
+        """
+        _dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        _file = os.path.join(_dir, 'helpfiles', 'whyteboard.hhp')
+
+        if os.path.exists(_file):
+            self.help = wx.html.HtmlHelpController()
+            self.help.AddBook(_file)
+            self.help.DisplayContents()
+        else:
+            msg = ("Help file not found, you probably are running the stand- "+
+            "alone exe.\n\nYou can download from:\n\n"+
+            "http://code.google.com/p/whyteboard/")
+            cap = "Help not found"
+            dlg = wx.MessageDialog(self, msg, cap, wx.OK | wx.ICON_EXCLAMATION)
+            result = dlg.ShowModal()
+            dlg.Destroy()      
+  
+             
+    def on_about(self, event=None):
+        info = wx.AboutDialogInfo()
+        info.Name = "Whyteboard"
+        info.Version = self.version
+        info.Copyright = "(C) 2009 Steven Sproat"
+        info.Description = "A simle PDF annotator and image editor"
+        info.WebSite = ("http://www.launchpad.net/whyteboard", "Launchpad")
+        info.Developers = ["Steven Sproat"]
+        wx.AboutBox(info)        
+
 
 #----------------------------------------------------------------------
 
@@ -626,14 +638,29 @@ class WhyteboardApp(wx.App):
         self.frame = GUI(None)
         self.frame.Show(True)
         #self.Bind(wx.EVT_CHAR, self.on_key)
+        self.parse_args()
+        self.delete_temp_files()
+        return True  
+    
+    def parse_args(self):      
+        """Forward the first command-line arg to gui.do_open()"""
         try:
             _file = sys.argv[1]
-            if _file:
-                if os.path.exists(_file):
-                    self.frame.do_open(sys.argv[1])
+            if os.path.exists(_file):
+                self.frame.do_open(os.path.abspath(sys.argv[1]))
         except IndexError:
             pass
-        return True
+   
+    def delete_temp_files(self):
+        """Delete temporary files from an update."""
+        if self.frame.util.is_exe() and os.path.exists("wtbd-bckup.exe"):
+            os.remove("wtbd-bckup.exe")
+        else:
+            path = os.path.dirname(os.path.abspath(sys.argv[0]))
+            for f in os.listdir(path):
+                if f.find(".blahblah123blah") is not -1:               
+                    os.remove(os.path.join(path, f))                                       
+            
 
     def on_key(self, event):
         """ Change tool when a number is pressed """

@@ -54,6 +54,7 @@ but are restored with it upon loading the file.
 
 import wx
 import os
+import sys
 import cPickle
 import random
 from copy import copy
@@ -383,7 +384,55 @@ class Utility(object):
         self.gui.tab_count = 0
         self.gui.board.Destroy()
 
+        
+    def is_exe(self):
+        """
+        Determine if Whyteboard's being run from an exe
+        """
+        try:
+            x = sys.frozen
+            return True        
+        except AttributeError:
+            return False
+        
+            
+    def prompt_for_save(self, style=None, action=None, args=None):
+        """
+        Ask the user to save, quit or cancel (quitting) if they haven't saved.
+        Can be called through "Update", "Open (.wtbd)", or "Exit". If updating, 
+        don't show a cancel button, and explicitly restart if the user cancels
+        out of the "save file" dialog
+        """
+        if not style:
+            style = wx.YES_NO | wx.CANCEL                        
+        if not args:
+            args = []            
+        if not action:
+            method = self.gui.Destroy
+        elif action == "restart":     
+            method = os.execvp
+        elif action == "open":     
+            method = self.gui.do_open
+                        
+        if not self.saved:
+            m = ("Your document has been modified.\n" +
+            "Do you want to save your changes?")
+            dialog = wx.MessageDialog(self.gui, m, style=style | wx.ICON_QUESTION)
+            val = dialog.ShowModal()
 
+            if val == wx.ID_YES:
+                self.gui.on_save()
+                if self.saved or action:
+                    method(*args)
+
+            if val == wx.ID_NO:                                                                     
+                method(*args)
+            if val == wx.ID_CANCEL:
+                dialog.Close()
+        else:
+            method(*args)   
+                   
+            
     def prompt_for_im(self):
         """
         Prompts a Windows user for ImageMagick's directory location on
@@ -453,7 +502,7 @@ class Utility(object):
         wx.TheClipboard.SetData(bmp)
         wx.TheClipboard.Close()
 
-
+            
 #----------------------------------------------------------------------
 
 class FileDropTarget(wx.FileDropTarget):

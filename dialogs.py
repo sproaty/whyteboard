@@ -22,8 +22,14 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import wx
 import wx.html
+import urllib
+import tarfile
+import os
+import sys
 
 from copy import copy
+from distutils.dir_util import copy_tree, remove_tree
+from BeautifulSoup import BeautifulSoup
 
 import tools
 
@@ -208,6 +214,176 @@ class ProgressDialog(wx.Dialog):
             self.count = 0
 
 
+#----------------------------------------------------------------------
+
+
+class UpdateDialog(wx.Dialog):
+    """
+    Shows a Progres Gauge while an operation is taking place.
+    """
+    def __init__(self, gui):
+        """Defines a gauge and a timer which updates the gauge."""
+        wx.Dialog.__init__(self, gui, title="Updates", size=(350, 300))        
+        self.gui = gui
+        self.downloaded = 0
+        gap = wx.LEFT | wx.TOP | wx.RIGHT
+        
+        self.text = wx.StaticText(self, label="Connecting to server...")
+        self.text2 = wx.StaticText(self, label="")
+        font = self.text.GetClassDefaultAttributes().font
+        font.SetPointSize(11)
+        self.text.SetFont(font) 
+        self.text2.SetFont(font)
+        
+        self.btn = wx.Button(self, label="Update")
+        self.btn.Disable() 
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+        self.cancelButton.SetDefault()        
+        btnSizer = wx.StdDialogButtonSizer()
+        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 2)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.text, 0, gap, 10)
+        sizer.Add(self.text2, 0, wx.TOP | wx.LEFT, 48)
+        sizer.Add(self.btn, 0, wx.TOP | wx.ALIGN_CENTRE, 10)
+        sizer.Add((10, 10)) # Spacer.
+        sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
+        self.SetSizer(sizer)
+
+        self.btn.Bind(wx.EVT_BUTTON, self.update)  
+        wx.CallAfter(self.check)  # we want to show the dialog then fetch URL   
+
+
+    def check(self):  
+        """             
+        Opens a connection to Google Code's site and uses BeautifulSoup to
+        parse the website for the filename and file size. Extract the new
+        file's version from its filename, and compare against current version 
+        """
+        f = urllib.urlopen("http://code.google.com/p/whyteboard/downloads/")
+        html = f.read()
+        f.close()        
+        soup = BeautifulSoup(html)
+        
+        _type = ".tar.gz"
+        if os.name == "nt":
+            if self.gui.util.is_exe():
+                _type = ".exe"                
+                    
+        for i, td in enumerate(soup.findAll("td", {"class": "vt id col_0"})):
+            _file = td.findNext('a').renderContents().strip()  
+            
+            if _file.endswith(_type):
+                if _type == ".exe" and _file.find("installer") is not -1:
+                    break
+                start = _file.find("-") + 1
+                stop = _file.find(_type)
+                version = _file[start : stop]
+                
+                all = soup.findAll("td", {"class": "vt col_3"})
+                size = all[i].findNext('a').renderContents().strip()            
+                
+                if version != self.gui.version:  
+                    s = (" There is a new version available, "+version +"\n"+
+                         " File: " +_file +"\n"+
+                         " Size: " + size)                
+                    self.text.SetLabel(s)
+                    self.btn.Enable(True)
+                    self._file = td.findNext('a')['href']
+                    self._type = _type
+                    self.version = version
+                else:
+                    self.text.SetLabel("You are running the latest version.")        
+
+
+    def update(self, event=None):
+        """
+        Updates the program by downloading the correct file and extracting it.
+        On Linux, the Tar file is extracted into the current directory, and on
+        Windows the .exe is renamed, the new one renamed to replace it and on
+        both platforms the program is then restarted (after asking the user to
+        save or not)
+        """
+        path = os.path.split(os.path.abspath(sys.argv[0]))
+        args = []        
+        _file = os.path.join(path[0], 'tmp'+ self._type)        
+        tmp = urllib.urlretrieve(self._file, _file, self.myReportHook)
+        
+        if self.gui.util.is_exe():
+            # rename current exe, rename temp to current
+            if os.name == "nt":
+                os.rename(path[1], "wtbd-bckup.exe")                             
+                os.rename("tmp.exe", "whyteboard.exe")                      
+                args = [sys.argv[0], [sys.argv[0]]]                                   
+        else:
+            if os.name == "posix":
+                os.system("tar -xf "+ tmp[0] +" --strip-components=1")     
+                os.remove("tmp.tar.gz")  
+            else:
+                self.extract_tar(os.path.abspath(tmp[0]))                
+           
+            _list = ['python', sys.argv[0]]  # for os.execvp          
+            if self.gui.util.filename:                 
+                _list.append(self.gui.util.filename)   
+                  
+        self.gui.util.prompt_for_save(wx.YES_NO, "restart", ['python', _list])
+        
+        
+    def extract_tar(self, _file):
+        """
+        Extract a .tar.gz source file on Windows, without needing to use the
+        'tar' command, and with no other downloads!
+        """
+        path = os.path.dirname(os.path.abspath(sys.argv[0]))
+        tar = tarfile.open(_file)       
+        #tar.extractall(path)
+        tar.close() 
+        # remove 2 folders that will be updated, may not exist   
+        src = os.path.join(path, "whyteboard-"+ self.version)
+        
+        widgs = os.path.join(path, "fakewidgets")
+        helps = os.path.join(path, "helpfiles")
+        #if os.path.exists(widgs):
+        #    rmtree(widgs)        
+        #if os.path.exists(helps):
+        #    rmtree(helps)        
+               
+        # rename all files - ignore dirs  
+        for f in os.listdir(path):
+            location = os.path.join(path, f)
+            if not os.path.isdir(location):  
+                _type = os.path.splitext(f)              
+ 
+                if _type[1] in [".py", ".txt"]:   
+                    new_file = (os.path.join(path, _type[0]) 
+                                             + ".blahblah123blah")                                                                    
+                    #os.rename(location, new_file)
+                                
+        # move extracted file to current dir, remove tar, remove extracted dir
+        #copy_tree(src, path)
+        #os.remove(_file)
+        #remove_tree(src) 
+               
+             
+    def myReportHook(self, count, block, total):
+        """
+        Updates a text label with progress on a download
+        """
+        self.downloaded += block             
+        done = self.downloaded / 1024
+                          
+        _type2 = "KB"
+        total /= 1024
+        rem = ""
+        if total > 1024:
+            rem = "."+ str(total % 1024)
+            total /= 1024            
+            _type2 = "MB"
+                    
+        self.text2.SetLabel("Downloaded "+str(done) + "KB of "+ str(total) +                               
+                                          rem + _type2)              
+
+            
 #----------------------------------------------------------------------
 
 
@@ -499,60 +675,6 @@ class IntValidator(wx.PyValidator):
             event.Skip()
             return
         return
-
-#----------------------------------------------------------------------
-
-class About(wx.Dialog):
-    """
-    Shows an HTML 'about' box for the program.
-    """
-    def __init__(self, parent):
-        """
-        Displays the HTML box with various constraints.
-        """
-        wx.Dialog.__init__(self, parent, title='About Whyteboard',
-                           size=(860, 450))
-
-        text = '''
-<html><body bgcolor="#6699CC">
- <table bgcolor="#F0F0F0" width="100%" border="1">
-  <tr><td align="center"><h1>Whyteboard '''+ parent.version +'''</h1></td></tr>
- </table>
-
-<p><a href="http://code.google.com/p/whyteboard/wiki/UsingWhyteboard">View The
-Whyteboard Manual</a>.</p>
-
-<p>Whyteboard is a simple image annotation program, facilitating the
-annotation of PDF and PostScript documents, and most image formats.</p>
-
-<p>It offers a tabbed interface with live updating thumbnails for each "sheet".
-<br />You may replay your drawing history, and undo and redo actions.</p>
-
-<p>Whyteboard is based on a demonstration application for wxPython; SuperDoodle,
-by Robin Dunn, &copy; 1997-2006.</p>
-<p>Modified by Steven Sproat, &copy; 2009.<p>
-</body></html>'''
-
-        html = wx.html.HtmlWindow(self, -1)
-        html.SetPage(text)
-        button = wx.Button(self, wx.ID_OK, "Okay")
-
-        lc = wx.LayoutConstraints()
-        lc.top.SameAs(self, wx.Top, 5)
-        lc.left.SameAs(self, wx.Left, 5)
-        lc.bottom.SameAs(button, wx.Top, 5)
-        lc.right.SameAs(self, wx.Right, 5)
-        html.SetConstraints(lc)
-
-        lc = wx.LayoutConstraints()
-        lc.bottom.SameAs(self, wx.Bottom, 5)
-        lc.centreX.SameAs(self, wx.CentreX)
-        lc.width.AsIs()
-        lc.height.AsIs()
-        button.SetConstraints(lc)
-
-        self.Layout()
-        self.CentreOnParent(wx.BOTH)
 
 #----------------------------------------------------------------------
 

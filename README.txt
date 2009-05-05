@@ -1,4 +1,4 @@
-Whyteboard 0.36.7 - a simple image, PDF and postscript file annotator
+Whyteboard 0.37.0 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Mon 20 Apr 2009 06:06:19 BST
 
@@ -29,7 +29,24 @@ Currently none.
 
 ---- VERSION HISTORY ----
 
-              * Memory use improved from undo closed sheet improved
+05 May 2009 - * 'Check for Updates'- Whyteboard can update itself
+                  - will download an .exe / .tar.gz as appropriate
+                  - on Windows, running via source will download the tar, which
+                    is cool because Windows doesn't support .tar.gz by default
+                  - shows progress of downloaded file
+                  - program restarts with new version loaded, also re-loads the
+                    current .wtbd file
+                  
+              * HTML Help system/manual built into the application
+              * 'About Box' standardised
+              * Exit dialog more like other apps: "sure you want to save?"
+                (yes/no/cancel), instead of "sure you want to quit?" (yes/no)
+                -- also asks when opening a new .wtbd file with an unsaved .wtbd
+                   file open
+                -- and after downloading the update, before the program restarts
+                   it will prompt for save: yes/no
+
+20 Apr 2009 - * Memory use improved from undo closed sheet improved
               * Bugfix: paste / paste as new sheet - not updating the thumbnail
               * Backwards/forwards compability: from this version onwards,
                 Whyteboard will not change the version inside saved .wtbd files
@@ -228,3 +245,4 @@ Currently none.
 02 Feb 2009 - Added a toolbar, each whyteboard tab has its own undo/redo history
 
 31 Jan 2009 - Closing the program removes temporary PNG files from PDF convert
+
