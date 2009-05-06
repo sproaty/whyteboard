@@ -57,8 +57,9 @@ import os
 import sys
 import cPickle
 import random
+import urllib
+import tarfile
 from copy import copy
-
 
 from dialogs import ProgressDialog, FindIM
 import tools
@@ -89,18 +90,14 @@ class Utility(object):
         self.colour = "Black"
         self.thickness = 1
         self.tool = 1  # Current tool that is being drawn with
-        self.make_wildcard()
         self.items = tools.items
         self.update_version = True
         self.saved_version = ""
-
+        self.backup_ext = ".blahblah123blah"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
-
-
-    def make_wildcard(self):
-        """
-        Make wxPython wildcard filter. Add a new item - new type supported!
-        """
+        self.path = os.path.split(os.path.abspath(sys.argv[0]))
+       
+        # Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "gif", "tiff",
                        "bmp", "pcx"]
         label = ["All files (*.*)", "Whyteboard file (*.wtbd)", "Image Files",
@@ -113,7 +110,6 @@ class Utility(object):
         # format: label|*.type1;*.type2|label|*.type3;*.type4|label|*...
         wc_list = map(lambda x, y, : x + "|" + y, label, wc_types)
         self.wildcard = '|'.join(wc_list)
-
 
 
     def save_file(self):
@@ -383,20 +379,9 @@ class Utility(object):
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
         self.gui.board.Destroy()
-
-        
-    def is_exe(self):
-        """
-        Determine if Whyteboard's being run from an exe
-        """
-        try:
-            x = sys.frozen
-            return True        
-        except AttributeError:
-            return False
         
             
-    def prompt_for_save(self, style=None, action=None, args=None):
+    def prompt_for_save(self, method, style=None, args=None):
         """
         Ask the user to save, quit or cancel (quitting) if they haven't saved.
         Can be called through "Update", "Open (.wtbd)", or "Exit". If updating, 
@@ -407,23 +392,18 @@ class Utility(object):
             style = wx.YES_NO | wx.CANCEL                        
         if not args:
             args = []            
-        if not action:
-            method = self.gui.Destroy
-        elif action == "restart":     
-            method = os.execvp
-        elif action == "open":     
-            method = self.gui.do_open
                         
         if not self.saved:
-            m = ("Your document has been modified.\n" +
-            "Do you want to save your changes?")
-            dialog = wx.MessageDialog(self.gui, m, style=style | wx.ICON_QUESTION)
+            msg = ("Your document has been modified.\nDo you want to save "
+                   "your changes?")
+            dialog = wx.MessageDialog(self.gui, msg, "Save File?", style |
+                                      wx.ICON_QUESTION)
             val = dialog.ShowModal()
 
             if val == wx.ID_YES:
                 self.gui.on_save()
-                if self.saved or action:
-                    method(*args)
+                if self.saved or method == os.execvp:
+                    method(*args)  # force reestart 
 
             if val == wx.ID_NO:                                                                     
                 method(*args)
@@ -476,11 +456,35 @@ class Utility(object):
         self.im_location = _file
         return True
 
+    def download_help_files(self):
+        """Downloads the help files to the user's directory and shows them"""  
+        _file = os.path.join(self.path[0], "whyteboard-help.tar.gz") 
+        url = "http://whyteboard.googlecode.com/files/helpfiles.tar.gz"        
+        tmp = None
+        try:        
+            tmp = urllib.urlretrieve(url, _file)
+        except IOError:
+            wx.MessageBox("Could not connect to server.", "Error")
+            raise IOError 
+        
+        if os.name == "posix":
+            os.system("tar -xf "+ tmp[0])  
+        else:
+            tar = tarfile.open(tmp[0])       
+            tar.extractall(path)
+            tar.close() 
+        os.remove(tmp[0])  
 
+    def is_exe(self):
+        """Determine if Whyteboard's being run from an exe"""
+        try:
+            x = sys.frozen
+            return True        
+        except AttributeError:
+            return False
+                                   
     def get_clipboard(self):
-        """
-        Checks the clipboard for any valid image data to paste
-        """
+        """Checks the clipboard for any valid image data to paste"""
         bmp = wx.BitmapDataObject()
         wx.TheClipboard.Open()
         success = wx.TheClipboard.GetData(bmp)
@@ -490,10 +494,7 @@ class Utility(object):
         return False
 
     def set_clipboard(self, rect):
-        """
-        Sets the clipboard with a bitmap image data of a selection
-        rectangle = (x, y, width, height)
-        """
+        """Sets the clipboard with a bitmap image data of a selection"""
         temp = self.gui.board.buffer.GetSubBitmap(rect)
         bmp = wx.BitmapDataObject()
         bmp.SetBitmap(temp)

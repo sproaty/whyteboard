@@ -26,9 +26,9 @@ import urllib
 import tarfile
 import os
 import sys
+import distutils.dir_util
 
 from copy import copy
-from distutils.dir_util import copy_tree, remove_tree
 from BeautifulSoup import BeautifulSoup
 
 import tools
@@ -251,7 +251,7 @@ class UpdateDialog(wx.Dialog):
         self.SetSizer(sizer)
 
         self.btn.Bind(wx.EVT_BUTTON, self.update)  
-        wx.CallAfter(self.check)  # we want to show the dialog then fetch URL   
+        wx.CallAfter(self.check)  # we want to show the dialog then fetch URL  
 
 
     def check(self):  
@@ -304,7 +304,7 @@ class UpdateDialog(wx.Dialog):
         both platforms the program is then restarted (after asking the user to
         save or not)
         """
-        path = os.path.split(os.path.abspath(sys.argv[0]))
+        path = self.gui.util.path
         args = []        
         _file = os.path.join(path[0], 'tmp'+ self._type)        
         tmp = urllib.urlretrieve(self._file, _file, self.myReportHook)
@@ -317,16 +317,16 @@ class UpdateDialog(wx.Dialog):
                 args = [sys.argv[0], [sys.argv[0]]]                                   
         else:
             if os.name == "posix":
-                os.system("tar -xf "+ tmp[0] +" --strip-components=1")     
-                os.remove("tmp.tar.gz")  
+                pass#os.system("tar -xf "+ tmp[0] +" --strip-components=1")     
             else:
-                self.extract_tar(os.path.abspath(tmp[0]))                
-           
+                self.extract_tar(os.path.abspath(tmp[0]))
+                                
+            os.remove(tmp[0])           
             _list = ['python', sys.argv[0]]  # for os.execvp          
             if self.gui.util.filename:                 
                 _list.append(self.gui.util.filename)   
                   
-        self.gui.util.prompt_for_save(wx.YES_NO, "restart", ['python', _list])
+        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, ['python', _list])
         
         
     def extract_tar(self, _file):
@@ -334,7 +334,7 @@ class UpdateDialog(wx.Dialog):
         Extract a .tar.gz source file on Windows, without needing to use the
         'tar' command, and with no other downloads!
         """
-        path = os.path.dirname(os.path.abspath(sys.argv[0]))
+        path = self.gui.util.path[0]
         tar = tarfile.open(_file)       
         #tar.extractall(path)
         tar.close() 
@@ -344,9 +344,9 @@ class UpdateDialog(wx.Dialog):
         widgs = os.path.join(path, "fakewidgets")
         helps = os.path.join(path, "helpfiles")
         #if os.path.exists(widgs):
-        #    rmtree(widgs)        
+        #    distutils.dir_util.remove_tree(widgs)        
         #if os.path.exists(helps):
-        #    rmtree(helps)        
+        #    distutils.dir_util.remove_tree(helps)        
                
         # rename all files - ignore dirs  
         for f in os.listdir(path):
@@ -356,13 +356,12 @@ class UpdateDialog(wx.Dialog):
  
                 if _type[1] in [".py", ".txt"]:   
                     new_file = (os.path.join(path, _type[0]) 
-                                             + ".blahblah123blah")                                                                    
+                                 + self.gui.util.backup_ext)                                                                    
                     #os.rename(location, new_file)
                                 
         # move extracted file to current dir, remove tar, remove extracted dir
-        #copy_tree(src, path)
-        #os.remove(_file)
-        #remove_tree(src) 
+        #distutils.dir_util.copy_tree(src, path)
+        #distutils.dir_util.remove_tree(src) 
                
              
     def myReportHook(self, count, block, total):

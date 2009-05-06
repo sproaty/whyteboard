@@ -30,14 +30,17 @@ Currently none.
 ---- VERSION HISTORY ----
 
 05 May 2009 - * 'Check for Updates'- Whyteboard can update itself
-                  - will download an .exe / .tar.gz as appropriate
-                  - on Windows, running via source will download the tar, which
+                -- will download an .exe / .tar.gz as appropriate
+                -- on Windows, running via source will download the tar, which
                     is cool because Windows doesn't support .tar.gz by default
-                  - shows progress of downloaded file
-                  - program restarts with new version loaded, also re-loads the
+                -- shows progress of downloaded file
+                -- program restarts with new version loaded, also re-loads the
                     current .wtbd file
                   
               * HTML Help system/manual built into the application
+                -- well, via a folder containing HTML help files
+                -- if they are not present, they can be downloaded (optional)
+              
               * 'About Box' standardised
               * Exit dialog more like other apps: "sure you want to save?"
                 (yes/no/cancel), instead of "sure you want to quit?" (yes/no)

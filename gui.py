@@ -67,7 +67,7 @@ class GUI(wx.Frame):
     """
     version = "0.37.0"
     title = "Whyteboard %s" % version
-    LoadEvent, LOAD_DONE_EVENT, = wx.lib.newevent.NewEvent()
+    LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
     
     def __init__(self, parent):
         """
@@ -295,7 +295,7 @@ class GUI(wx.Frame):
             name = dlg.GetPath()
 
             if name.endswith("wtbd"):
-                self.util.prompt_for_save(action="open", args=[name])    
+                self.util.prompt_for_save(self.gui.do_open, args=[name])    
             else:
                 self.do_open(name)
         else:
@@ -538,7 +538,7 @@ class GUI(wx.Frame):
 
     def on_exit(self, event=None):
         """Ask to save, quit or cancel if the user hasn't saved."""
-        self.util.prompt_for_save()
+        self.util.prompt_for_save(self.Destroy)
 
     def tab_popup(self, event):
         """ Pops up the tab context menu. """
@@ -602,22 +602,26 @@ class GUI(wx.Frame):
         Shows the help file, if it exists, otherwise prompts the user to
         download it.
         """
-        _dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        _file = os.path.join(_dir, 'helpfiles', 'whyteboard.hhp')
+        path = self.util.path[0]
+        _file = os.path.join(path, 'whyteboard-help', 'whyteboard.hhp')
 
         if os.path.exists(_file):
             self.help = wx.html.HtmlHelpController()
             self.help.AddBook(_file)
             self.help.DisplayContents()
-        else:
-            msg = ("Help file not found, you probably are running the stand- "+
-            "alone exe.\n\nYou can download from:\n\n"+
-            "http://code.google.com/p/whyteboard/")
-            cap = "Help not found"
-            dlg = wx.MessageDialog(self, msg, cap, wx.OK | wx.ICON_EXCLAMATION)
+        else:                       
+            msg = ("Help files not found, do you want to download them?")
+            dlg = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)
             result = dlg.ShowModal()
-            dlg.Destroy()      
-  
+            if result == wx.ID_YES:
+                try:
+                    self.util.download_help_files()                
+                    wx.MessageBox("Folder whyteboard-help created")  
+                except IOError:           
+                    pass
+                else:
+                    self.on_help() 
+
              
     def on_about(self, event=None):
         info = wx.AboutDialogInfo()
@@ -652,13 +656,17 @@ class WhyteboardApp(wx.App):
             pass
    
     def delete_temp_files(self):
-        """Delete temporary files from an update."""
+        """
+        Delete temporary files from an update. Remove a backup exe, otherwise
+        iterate over the current directory (where the backup files will be) and
+        remove any that matches the randon file extension
+        """
         if self.frame.util.is_exe() and os.path.exists("wtbd-bckup.exe"):
             os.remove("wtbd-bckup.exe")
         else:
-            path = os.path.dirname(os.path.abspath(sys.argv[0]))
+            path = self.frame.gui.util.path[0]
             for f in os.listdir(path):
-                if f.find(".blahblah123blah") is not -1:               
+                if f.find(self.frame.util.backup_ext) is not -1:               
                     os.remove(os.path.join(path, f))                                       
             
 
