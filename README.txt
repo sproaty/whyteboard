@@ -1,6 +1,6 @@
-Whyteboard 0.37.0 - a simple image, PDF and postscript file annotator
+Whyteboard 0.37 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Mon 20 Apr 2009 06:06:19 BST
+Wed 06 May 2009 17:42:59 BST 
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -29,7 +29,7 @@ Currently none.
 
 ---- VERSION HISTORY ----
 
-05 May 2009 - * 'Check for Updates'- Whyteboard can update itself
+06 May 2009 - * 'Check for Updates'- Whyteboard can update itself
                 -- will download an .exe / .tar.gz as appropriate
                 -- on Windows, running via source will download the tar, which
                     is cool because Windows doesn't support .tar.gz by default

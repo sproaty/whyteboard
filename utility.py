@@ -59,6 +59,8 @@ import cPickle
 import random
 import urllib
 import tarfile
+import distutils.dir_util
+
 from copy import copy
 
 from dialogs import ProgressDialog, FindIM
@@ -100,8 +102,8 @@ class Utility(object):
         # Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "gif", "tiff",
                        "bmp", "pcx"]
-        label = ["All files (*.*)", "Whyteboard file (*.wtbd)", "Image Files",
-                 "Page Description Languages"]
+        label = ["All files (*.*)", "Whyteboard files (*.wtbd)", "Image Files",
+                 "PDF/PS/SVG"]
 
         result1 = ';'.join('*.' + i for i in self.types[2:-2])
         result2 = ';'.join('*.' + i for i in self.types[0:2])
@@ -397,13 +399,14 @@ class Utility(object):
             msg = ("Your document has been modified.\nDo you want to save "
                    "your changes?")
             dialog = wx.MessageDialog(self.gui, msg, "Save File?", style |
-                                      wx.ICON_QUESTION)
+                                      wx.ICON_EXCLAMATION)
             val = dialog.ShowModal()
 
             if val == wx.ID_YES:
                 self.gui.on_save()
                 if self.saved or method == os.execvp:
-                    method(*args)  # force reestart 
+                    method(*args)  # force restart, otherwise 'cancel' 
+                                   # returns to application
 
             if val == wx.ID_NO:                                                                     
                 method(*args)
@@ -456,6 +459,7 @@ class Utility(object):
         self.im_location = _file
         return True
 
+
     def download_help_files(self):
         """Downloads the help files to the user's directory and shows them"""  
         _file = os.path.join(self.path[0], "whyteboard-help.tar.gz") 
@@ -470,10 +474,46 @@ class Utility(object):
         if os.name == "posix":
             os.system("tar -xf "+ tmp[0])  
         else:
+            print tmp[0], self.path[0]
             tar = tarfile.open(tmp[0])       
-            tar.extractall(path)
+            tar.extractall(self.path[0])
             tar.close() 
         os.remove(tmp[0])  
+
+
+    def extract_tar(self, _file, version):
+        """
+        Extract a .tar.gz source file on Windows, without needing to use the
+        'tar' command, and with no other downloads!
+        """
+        path = self.path[0]
+        tar = tarfile.open(_file)       
+        tar.extractall(path)
+        tar.close() 
+        # remove 2 folders that will be updated, may not exist   
+        src = os.path.join(path, "whyteboard-"+ version)
+        
+        widgs = os.path.join(path, "fakewidgets")
+        helps = os.path.join(path, "helpfiles")
+        if os.path.exists(widgs):
+            distutils.dir_util.remove_tree(widgs)        
+        if os.path.exists(helps):
+            distutils.dir_util.remove_tree(helps)        
+               
+        # rename all relevant files - ignore any dirs  
+        for f in os.listdir(path):
+            location = os.path.join(path, f)
+            if not os.path.isdir(location):  
+                _type = os.path.splitext(f)              
+ 
+                if _type[1] in [".py", ".txt"]:   
+                    new_file = os.path.join(path, _type[0]) + self.backup_ext                                                                    
+                    os.rename(location, new_file)
+                                
+        # move extracted file to current dir, remove tar, remove extracted dir
+        distutils.dir_util.copy_tree(src, path)
+        distutils.dir_util.remove_tree(src) 
+        
 
     def is_exe(self):
         """Determine if Whyteboard's being run from an exe"""

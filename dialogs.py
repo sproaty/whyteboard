@@ -23,10 +23,8 @@ This module contains classes extended from wx.Dialog used by the GUI.
 import wx
 import wx.html
 import urllib
-import tarfile
 import os
 import sys
-import distutils.dir_util
 
 from copy import copy
 from BeautifulSoup import BeautifulSoup
@@ -260,29 +258,34 @@ class UpdateDialog(wx.Dialog):
         parse the website for the filename and file size. Extract the new
         file's version from its filename, and compare against current version 
         """
-        f = urllib.urlopen("http://code.google.com/p/whyteboard/downloads/")
+        try:
+            f = urllib.urlopen("http://code.google.com/p/whyteboard/downloads/list")
+        except IOError:
+            self.text.SetLabel("Could not connect to server.")
+            return            
         html = f.read()
         f.close()        
         soup = BeautifulSoup(html)
-        
+        found = False
         _type = ".tar.gz"
         if os.name == "nt":
             if self.gui.util.is_exe():
                 _type = ".exe"                
                     
         for i, td in enumerate(soup.findAll("td", {"class": "vt id col_0"})):
-            _file = td.findNext('a').renderContents().strip()  
-            
-            if _file.endswith(_type):
-                if _type == ".exe" and _file.find("installer") is not -1:
-                    break
+            _file = td.findNext('a').renderContents().strip()
+                
+            if _file.endswith(_type):              
+                if _file.find("installer") != -1:                     
+                    continue  # ignore it                 
+                                
+                found = True
                 start = _file.find("-") + 1
                 stop = _file.find(_type)
-                version = _file[start : stop]
-                
+                version = _file[start : stop]                                  
                 all = soup.findAll("td", {"class": "vt col_3"})
                 size = all[i].findNext('a').renderContents().strip()            
-                
+             
                 if version != self.gui.version:  
                     s = (" There is a new version available, "+version +"\n"+
                          " File: " +_file +"\n"+
@@ -294,7 +297,8 @@ class UpdateDialog(wx.Dialog):
                     self.version = version
                 else:
                     self.text.SetLabel("You are running the latest version.")        
-
+        if not found:
+            self.text.SetLabel("Error getting file list from the server.")
 
     def update(self, event=None):
         """
@@ -305,10 +309,16 @@ class UpdateDialog(wx.Dialog):
         save or not)
         """
         path = self.gui.util.path
-        args = []        
-        _file = os.path.join(path[0], 'tmp'+ self._type)        
-        tmp = urllib.urlretrieve(self._file, _file, self.myReportHook)
-        
+        args = []  # args to reload running program, may include filename     
+        tmp = None
+        tmp_file = os.path.join(path[0], 'tmp'+ self._type)    
+        try:
+            tmp = urllib.urlretrieve(self._file, tmp_file, self.myReportHook)
+        except IOError:
+            self.text.SetLabel("Could not connect to server.")
+            self.btn.SetLabel("Retry")
+            return              
+                
         if self.gui.util.is_exe():
             # rename current exe, rename temp to current
             if os.name == "nt":
@@ -317,57 +327,21 @@ class UpdateDialog(wx.Dialog):
                 args = [sys.argv[0], [sys.argv[0]]]                                   
         else:
             if os.name == "posix":
-                pass#os.system("tar -xf "+ tmp[0] +" --strip-components=1")     
+                os.system("tar -xf "+ tmp[0] +" --strip-components=1")     
             else:
-                self.extract_tar(os.path.abspath(tmp[0]))
-                                
-            os.remove(tmp[0])           
-            _list = ['python', sys.argv[0]]  # for os.execvp          
-            if self.gui.util.filename:                 
-                _list.append(self.gui.util.filename)   
-                  
-        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, ['python', _list])
+                p = os.path.abspath(tmp[0])
+                self.gui.util.extract_tar(p, self.version)                                
+            os.remove(tmp[0])                       
+            args = ['python', ['python', sys.argv[0]]]  # for os.execvp  
+                    
+        if self.gui.util.filename:   
+            name = "\""+self.gui.util.filename+"\""  # gotta escape for Windows              
+            args[1].append(name)  # restart, load .wtbd                
+        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)      
         
-        
-    def extract_tar(self, _file):
-        """
-        Extract a .tar.gz source file on Windows, without needing to use the
-        'tar' command, and with no other downloads!
-        """
-        path = self.gui.util.path[0]
-        tar = tarfile.open(_file)       
-        #tar.extractall(path)
-        tar.close() 
-        # remove 2 folders that will be updated, may not exist   
-        src = os.path.join(path, "whyteboard-"+ self.version)
-        
-        widgs = os.path.join(path, "fakewidgets")
-        helps = os.path.join(path, "helpfiles")
-        #if os.path.exists(widgs):
-        #    distutils.dir_util.remove_tree(widgs)        
-        #if os.path.exists(helps):
-        #    distutils.dir_util.remove_tree(helps)        
-               
-        # rename all files - ignore dirs  
-        for f in os.listdir(path):
-            location = os.path.join(path, f)
-            if not os.path.isdir(location):  
-                _type = os.path.splitext(f)              
- 
-                if _type[1] in [".py", ".txt"]:   
-                    new_file = (os.path.join(path, _type[0]) 
-                                 + self.gui.util.backup_ext)                                                                    
-                    #os.rename(location, new_file)
-                                
-        # move extracted file to current dir, remove tar, remove extracted dir
-        #distutils.dir_util.copy_tree(src, path)
-        #distutils.dir_util.remove_tree(src) 
-               
-             
+                        
     def myReportHook(self, count, block, total):
-        """
-        Updates a text label with progress on a download
-        """
+        """Updates a text label with progress on a download"""
         self.downloaded += block             
         done = self.downloaded / 1024
                           

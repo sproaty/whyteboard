@@ -162,7 +162,7 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
         edit.AppendItem(pnew)
 
-        view.Append(ID_FULLSCREEN, " &Full Screen\tF11", "View Whyteboard in full-screen mode", kind=wx.ITEM_CHECK)
+        view.Append(ID_FULLSCREEN, " &Full Screen\t91", "View Whyteboard in full-screen mode", kind=wx.ITEM_CHECK)
         view.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
 
         sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
@@ -177,7 +177,7 @@ class GUI(wx.Frame):
         
         _help.Append(wx.ID_HELP, "&Contents\tF1", "View information about Whyteboard")
         _help.AppendSeparator()
-        _help.Append(ID_UPDATE, "Check for &Updates", "Search for updates to Whyteboard")
+        _help.Append(ID_UPDATE, "Check for &Updates\tF12", "Search for updates to Whyteboard")
         _help.Append(wx.ID_ABOUT, "&About", "View information about Whyteboard")
         self.menu.Append(_file, "&File")
         self.menu.Append(edit, "&Edit")
@@ -290,12 +290,13 @@ class GUI(wx.Frame):
             wc = wc[ wc.find("P"):]  # page descriptions
 
         dlg = wx.FileDialog(self, "Open file...", style=wx.OPEN, wildcard=wc)
+        dlg.SetFilterIndex(1)
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()
 
             if name.endswith("wtbd"):
-                self.util.prompt_for_save(self.gui.do_open, args=[name])    
+                self.util.prompt_for_save(self.do_open, args=[name])    
             else:
                 self.do_open(name)
         else:
@@ -664,7 +665,7 @@ class WhyteboardApp(wx.App):
         if self.frame.util.is_exe() and os.path.exists("wtbd-bckup.exe"):
             os.remove("wtbd-bckup.exe")
         else:
-            path = self.frame.gui.util.path[0]
+            path = self.frame.util.path[0]
             for f in os.listdir(path):
                 if f.find(self.frame.util.backup_ext) is not -1:               
                     os.remove(os.path.join(path, f))                                       
