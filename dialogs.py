@@ -22,6 +22,7 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import wx
 import wx.html
+
 import urllib
 import os
 import sys
@@ -369,50 +370,58 @@ class TextInput(wx.Dialog):
         """
         Standard constructor - sets text to supplied text variable, if present.
         """
-        wx.Dialog.__init__(self, gui, title="Enter text", pos=(600, 600),
+        wx.Dialog.__init__(self, gui, title="Enter text",
                             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
-        self.gui = gui
-        self.note = None
-        self.ctrl = wx.TextCtrl(self, style=wx.TE_RICH2 | wx.TE_MULTILINE,
-                                                    size=(300, 120))
+        
+        self.ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(300, 120))
+        self.okButton = wx.Button(self, wx.ID_OK, "&OK")
+        self.okButton.SetDefault()
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")        
+        self.colourBtn = wx.ColourPickerCtrl(self, style=wx.CLRP_SHOW_LABEL) 
+        fontBtn = wx.Button(self, label="Select Font")
+                        
         extent = self.ctrl.GetFullTextExtent("Hy")
         lineHeight = extent[1] + extent[3]
         self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
-        self.font = self.ctrl.GetFont()
+        
+        if not gui.util.font:
+            gui.util.font = self.ctrl.GetFont()
 
+        self.gui = gui
+        self.note = None
+        self.colour = gui.util.colour
+        gap = wx.LEFT | wx.TOP | wx.RIGHT
+        font = gui.util.font        
+        text = ""            
+        
         if note:
             self.note = note
-            self.ctrl.SetValue(note.text)
-            self.ctrl.SetForegroundColour(note.colour)
-            self.font.SetNativeFontInfoFromString(note.font_data)
-            self.ctrl.SetFont(self.font)
-        else:
-            self.ctrl.SetForegroundColour(gui.util.colour)
+            self.colour = note.colour 
+            text = note.text
+            font.SetNativeFontInfoFromString(note.font_data)
+           
+        self.set_text_colour(text)
+        self.ctrl.SetFont(font)  
+        self.colourBtn.SetColour(self.colour)
 
-        fontBtn = wx.Button(self, label="Select Font")
-        gap = wx.LEFT | wx.TOP | wx.RIGHT
-
-        self.okButton = wx.Button(self, wx.ID_OK, "&OK")
-        self.okButton.SetDefault()
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
-
+        _sizer = wx.BoxSizer(wx.HORIZONTAL)
+        _sizer.Add(fontBtn, 0, wx.RIGHT, 5)
+        _sizer.Add(self.colourBtn, 0)        
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
         btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 7)
-        sizer.Add(fontBtn, 0, gap | wx.ALIGN_RIGHT, 5)
+        sizer.Add(_sizer, 0, gap | wx.ALIGN_RIGHT, 5)
         sizer.Add((10, 10))  # Spacer.
         btnSizer.Realize()
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
-
-        self.SetAutoLayout(True)
         self.SetSizer(sizer)
-        sizer.Fit(self)
 
         self.set_focus()
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
+        self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)        
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
         self.Bind(wx.EVT_BUTTON, self.on_close, self.cancelButton)
 
@@ -423,22 +432,33 @@ class TextInput(wx.Dialog):
         the text input box, at the user's selected point.
         """
         data = wx.FontData()
-        data.EnableEffects(True)
-        data.SetInitialFont(self.font)
+        data.SetInitialFont(self.gui.util.font)
         dlg = wx.FontDialog(self, data)
 
         if dlg.ShowModal() == wx.ID_OK:
             data = dlg.GetFontData()
-            self.font = data.GetChosenFont()
-
-            self.ctrl.SetFont(self.font)
-            # Update dialog for the new height of the text
-            self.GetSizer().Fit(self)
-            self.update_canvas()
-
+            self.gui.util.font = data.GetChosenFont()
+            self.ctrl.SetFont(self.gui.util.font)   
+            self.set_text_colour()
+            self.update_canvas() # Update dialog with new text height
         dlg.Destroy()
         self.set_focus()
 
+        
+    def on_colour(self, event):
+        """Change text colour to the chosen one"""
+        self.colour = event.GetColour()
+        self.set_text_colour()
+        self.update_canvas()
+        self.set_focus()
+    
+    def set_text_colour(self, text=None):
+        """Updates (or forces...) the text colour"""
+        if not text:
+            text = self.ctrl.GetValue()                             
+        self.ctrl.SetValue("")
+        self.ctrl.SetForegroundColour(self.colour)
+        self.ctrl.SetValue(text)        
 
     def set_focus(self):
         """
@@ -462,14 +482,14 @@ class TextInput(wx.Dialog):
             shape = board.shape
         self.transfer_data(shape)
         board.redraw_all()  # stops overlapping text
-
         dc = wx.BufferedDC(None, board.buffer)
         shape.draw(dc)
 
     def transfer_data(self, text_obj):
         """Transfers the dialog's data to an object."""
         text_obj.text = self.ctrl.GetValue()
-        text_obj.font = self.font
+        text_obj.font = self.ctrl.GetFont()
+        text_obj.colour = self.colour
 
     def on_close(self, event):
         """Leaves dialog.ShowModal() == wx.ID_CANCEL to handle closing"""

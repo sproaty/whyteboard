@@ -65,7 +65,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.37.0"
+    version = "0.37.1"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
     
@@ -610,6 +610,7 @@ class GUI(wx.Frame):
             self.help = wx.html.HtmlHelpController()
             self.help.AddBook(_file)
             self.help.DisplayContents()
+            self.help.Display("Whyteboard")
         else:                       
             msg = ("Help files not found, do you want to download them?")
             dlg = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)

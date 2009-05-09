@@ -23,7 +23,7 @@ loading a standard image.
 
 The saved file structure is:
 
-  dictionary { 0: [colour, thickness, tool, tab, version],   - program settings
+  dictionary { 0: [colour, thickness, tool, tab, version, font],   - program settings
                1: shapes { 0: [shape1, shape2, .. shapeN],  1 / shapes
                            1: [shape1, shape2, .. shapeN],  2 / shapes
                            ..
@@ -91,8 +91,9 @@ class Utility(object):
         self.saved = True
         self.colour = "Black"
         self.thickness = 1
-        self.tool = 1  # Current tool that is being drawn with
-        self.items = tools.items
+        self.font = None  # default font for text input
+        self.tool = 1  # Current tool ID that is being drawn with
+        self.items = tools.items # shortcut
         self.update_version = True
         self.saved_version = ""
         self.backup_ext = ".blahblah123blah"  # backup file extension
@@ -123,6 +124,7 @@ class Utility(object):
         if self.filename:
             temp = {}
             names =  []
+            tree_ids = []  # every note's tree ID
 
             # load in every shape from every tab
             for x in range(0, self.gui.tab_count):
@@ -133,6 +135,9 @@ class Utility(object):
             if temp:
                 for x in temp:
                     for shape in temp[x]:
+                        if isinstance(shape, tools.Note):
+                            tree_ids.append(shape.tree_id)
+                            shape.tree_id = None                     
                         shape.save()  # need to unlink unpickleable items;
 
                 version = self.gui.version
@@ -142,7 +147,7 @@ class Utility(object):
                 # Now the unpickleable objects are gone, build the save file
                 tab = self.gui.tabs.GetSelection()
                 _file = { 0: [self.colour, self.thickness, self.tool, tab,
-                              version],
+                              version, self.font.GetNativeFontInfoDesc()],
                           1: temp,
                           2: self.to_convert,
                           3: names }
@@ -160,11 +165,14 @@ class Utility(object):
                     f.close()
 
                 # Fix bug in Windows where the current shapes get reset above
+                count = 0
                 for x in temp:
                     for shape in temp[x]:
                         shape.board = self.gui.tabs.GetPage(x)
                         if isinstance(shape, tools.Note):
                             shape.load(False)
+                            shape.tree_id = tree_ids[count]
+                            count += 1
                         else:
                             shape.load()
             else:
@@ -250,7 +258,14 @@ class Utility(object):
         except IndexError:
             version = "0.33"
         self.saved_version = version
-
+        
+        try:
+            font = wx.FFont(0, 0)            
+            font.SetNativeFontInfoFromString(temp[0][5])
+            self.font = font
+        except IndexError:
+            pass
+        
         #  Don't save .wtbd file of future versions as current, older version
         num = [int(x) for x in version.split(".")]
         ver = [int(x) for x in self.gui.version.split(".")]

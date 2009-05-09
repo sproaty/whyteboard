@@ -27,7 +27,7 @@ its own undo/redo.
 import wx
 import wx.lib.dragscroller
 
-from tools import Image, Text, Note, RectSelect
+from tools import Image, Text, Note, RectSelect, Select
 
 #----------------------------------------------------------------------
 
@@ -66,6 +66,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
+        self.Bind(wx.EVT_LEFT_DCLICK, self.left_double)
         self.Bind(wx.EVT_MIDDLE_DOWN, self.middle_down)
         self.Bind(wx.EVT_MIDDLE_UP, self.middle_up)
         self.Bind(wx.EVT_MOTION, self.left_motion)
@@ -116,7 +117,15 @@ class Whyteboard(wx.ScrolledWindow):
                 self.update_thumb()
             self.drawing = False
 
+    def left_double(self, event):
+        """
+        Double click, call hit test 2 with Select tool.
+        """
+        x, y = self.convert_coords(event)
 
+        if isinstance(self.shape, Select):
+            self.shape.double_click(x, y)
+            
     def redraw_dirty(self, dc):
         """
         Figure out what part of the window to refresh.

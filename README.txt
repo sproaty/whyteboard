@@ -29,6 +29,13 @@ Currently none.
 
 ---- VERSION HISTORY ----
 
+1x May 2009 - * Colour button in text input dialog, instead of always drawing 
+                with the user's selected colour
+              * Text input dialogs remembers the last font used, and is 
+                selected by default when creating more text
+                -- this is also saved into the .wtbd save file
+              * Misc code improvements
+
 06 May 2009 - * 'Check for Updates'- Whyteboard can update itself
                 -- will download an .exe / .tar.gz as appropriate
                 -- on Windows, running via source will download the tar, which

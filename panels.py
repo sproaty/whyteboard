@@ -318,8 +318,8 @@ class Notes(wx.Panel):
             _id = self.tabs[self.gui.tabs.GetSelection()]
         else:
             _id = self.tabs[_id]
-
-        self.tree.AppendItem(_id, text, data=wx.TreeItemData(note))
+        
+        note.tree_id = self.tree.AppendItem(_id, text, data=wx.TreeItemData(note))
         self.tree.Expand(_id)
 
 
@@ -359,28 +359,31 @@ class Notes(wx.Panel):
         if isinstance(item, int):
             self.gui.tabs.SetSelection(item)
         else:
-            text = item.text
-            font = item.font
-            font_data = item.font_data
-            dlg = TextInput(self.gui, item)
-
-            if dlg.ShowModal() == wx.ID_CANCEL:
-                dlg.Destroy()
-                item.text = text
-                item.font = font
-                item.font_data = font_data
-                item.find_extent()
-                self.gui.board.redraw_all()
-            else:
-                dlg.transfer_data(item)  # grab font and text data
-                item.font_data = item.font.GetNativeFontInfoDesc()
-
-                if not item.text:
-                    item.text = text  # don't want a blank item
-                else:
-                    self.tree.SetItemText(event.GetItem(),
-                                      item.text.replace("\n", " ")[:15])
-                item.update_scroll()
+            item.edit()
+#===============================================================================
+#            text = item.text
+#            font = item.font
+#            font_data = item.font_data
+#            dlg = TextInput(self.gui, item)
+# 
+#            if dlg.ShowModal() == wx.ID_CANCEL:
+#                dlg.Destroy()
+#                item.text = text
+#                item.font = font
+#                item.font_data = font_data
+#                item.find_extent()
+#                self.gui.board.redraw_all()
+#            else:
+#                dlg.transfer_data(item)  # grab font and text data
+#                item.font_data = item.font.GetNativeFontInfoDesc()
+# 
+#                if not item.text:
+#                    item.text = text  # don't want a blank item
+#                else:
+#                    self.tree.SetItemText(event.GetItem(),
+#                                      item.text.replace("\n", " ")[:15])
+#                item.update_scroll()
+#===============================================================================
 
 
     def pop_up(self, event):

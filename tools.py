@@ -32,7 +32,6 @@ from dialogs import TextInput
 
 #----------------------------------------------------------------------
 
-
 class Tool(object):
     """ Abstract class representing a tool: Drawing board/colour/thickness """
     tooltip = ""
@@ -47,7 +46,6 @@ class Tool(object):
         self.x = 0
         self.y = 0
         self.make_pen()
-
 
     def button_down(self, x, y):
         """ Left mouse button event """
@@ -119,42 +117,28 @@ class Pen(Tool):
         dc.SetPen(self.pen)
         dc.DrawLineList(self.points)
 
-
     def preview(self, dc, width, height):
-        """ Points below make a curly line to show an example Pen drawing   """
+        """Points below make a curly line to show an example Pen drawing"""
         points = ((52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9), (47, 9), (46, 9), (46, 8), (45, 8), (44, 8), (43, 8), (42, 8), (41, 8), (40, 8), (39, 8), (38, 8), (37, 8), (36, 8), (35, 8), (34, 8), (33, 8), (32, 8), (31, 8), (30, 8), (29, 8), (28, 8), (27, 8), (27, 10), (26, 10), (26, 11), (26, 12), (26, 13), (26, 14), (26, 15), (26, 16), (28, 18), (30, 19), (31, 21), (34, 22), (36, 24), (37, 26), (38, 27), (40, 28), (40, 29), (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33), (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37), (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37))
 
         dc.DrawSpline(points)
 
 #----------------------------------------------------------------------
 
-
-class Rectangle(Tool):
+class OverlayShape(Tool):
     """
-    The rectangle and its descended classes (ellipse/rounded rect) use an
-    overlay as a rubber banding method of drawing itself over other shapes.
+    Contains methods for drawing an overlayed shape
     """
-    tooltip = "Draw a rectangle"
-
-    def __init__(self, board, colour, thickness):
-        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
-        self.rect = None
-
     def button_down(self, x, y):
-        self.x = self.width = x
-        self.y = self.height = y
+        self.x = x
+        self.y = y
         self.board.overlay = wx.Overlay()
-
-    def motion(self, x, y):
-        self.width = x
-        self.height = y
 
     def button_up(self, x, y):
         """ Only adds the shape if it was actually dragged out """
         if x != self.x and y != self.y:
             self.board.add_shape(self)
             self.board.redraw_all()
-
 
     def draw(self, dc, replay=False, _type="Rectangle", pen=wx.SOLID):
         """
@@ -175,13 +159,37 @@ class Rectangle(Tool):
         method(*args)
         if not replay:
             del odc
+            
+    def get_args(self):
+        pass
+
+#----------------------------------------------------------------------
+
+class Rectangle(OverlayShape):
+    """
+    The rectangle and its descended classes (ellipse/rounded rect) use an
+    overlay as a rubber banding method of drawing itself over other shapes.
+    """
+    tooltip = "Draw a rectangle"
+
+    def __init__(self, board, colour, thickness):
+        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
+        self.rect = None
+
+    def button_down(self, x, y):
+        super(Rectangle, self).button_down(x, y)
+        self.width = x
+        self.height = y
+
+    def motion(self, x, y):
+        self.width = x
+        self.height = y
 
     def get_args(self):
         """ Shape's custom drawing arguments """
         x = [self.x, self.width]; x.sort()
         y = [self.y, self.height]; y.sort()
         return [x[0], y[0], x[1] - x[0], y[1] - y[0]]
-
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
 
@@ -192,19 +200,19 @@ class Rectangle(Tool):
 #----------------------------------------------------------------------
 
 
-class Circle(Rectangle):
+class Circle(OverlayShape):
     """
     Draws a circle. Extended from a Rectangle to save on repeated code.
     """
     tooltip = "Draw a circle"
 
     def __init__(self, board, colour, thickness):
-        Rectangle.__init__(self, board, colour, thickness)
+        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
         self.radius = 1
 
-    def button_down(self, x, y):
-        self.x = x
-        self.y = y
+    #def button_down(self, x, y):
+    #    self.x = x
+    #    self.y = y
         self.board.overlay = wx.Overlay()
 
     def motion(self, x, y):
@@ -260,18 +268,19 @@ class RoundRect(Rectangle):
 #----------------------------------------------------------------------
 
 
-class Line(Rectangle):
+class Line(OverlayShape):
     """
     Draws a line. Extended from a Rectangle for outline code.
     """
     tooltip = "Draw a straight line"
     def __init__(self, board, colour, thickness):
-        Rectangle.__init__(self, board, colour, thickness)
+        OverlayShape.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
 
     def button_down(self, x, y):
-        self.x = self.x2 = x
-        self.y = self.y2 = y
-        self.board.overlay = wx.Overlay()
+        super(Line, self).button_down(x, y)
+        self.x2 = x
+        self.y2 = y
+        #self.board.overlay = wx.Overlay()
 
     def motion(self, x, y):
         self.x2 = x
@@ -341,7 +350,6 @@ class Eyedrop(Tool):
         dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
         colour = dc.GetPixel(x, y)  # get colour
         board = self.board.gui
-
         board.control.colour.SetColour(colour)
         board.util.colour = colour
         board.control.preview.Refresh()
@@ -354,7 +362,7 @@ class Eyedrop(Tool):
 #----------------------------------------------------------------------
 
 
-class Text(Rectangle):
+class Text(OverlayShape):
     """
     Allows the input of text. When a save is pickled, the wx.Font and a string
     storing its values is stored. This string is then used to reconstruct the
@@ -363,15 +371,11 @@ class Text(Rectangle):
     tooltip = "Input text"
 
     def __init__(self, board, colour, thickness):
-        Rectangle.__init__(self, board, colour, thickness)
-        self.cursor = wx.CURSOR_CHAR
+        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CHAR)
+        #self.cursor = wx.CURSOR_CHAR
         self.font = None
         self.text = self.font_data = ""
         self.extent = (0, 0)
-
-    def motion(self, x, y):
-        self.x = x
-        self.y = y
 
     def button_up(self, x, y):
         """
@@ -388,7 +392,7 @@ class Text(Rectangle):
             self.board.redraw_all()
             self.board.select_tool()
             return False
-
+        
         dlg.transfer_data(self)  # grab font and text data
         self.font_data = self.font.GetNativeFontInfoDesc()
 
@@ -396,8 +400,7 @@ class Text(Rectangle):
             self.board.add_shape(self)
             self.update_scroll()
             return True
-        else:
-            return False
+        return False
 
 
     def update_scroll(self, redraw=True):
@@ -414,9 +417,7 @@ class Text(Rectangle):
 
 
     def find_extent(self):
-        """
-        Finds the width/height extent of the inputted string
-        """
+        """Finds the width/height extent of the object's text"""
         dummy = wx.Frame(None)
         dummy.SetFont(self.font)
         self.extent = dummy.GetTextExtent(self.text)
@@ -424,16 +425,12 @@ class Text(Rectangle):
 
 
     def restore_font(self):
-        """
-        Updates the text's font to the saved font data
-        """
+        """Updates the text's font to the saved font data"""
         self.font = wx.FFont(0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
 
     def draw(self, dc, replay=False):
-        """
-        Has to draw each line individually on Windows.
-        """
+        """Has to draw each line individually on Windows."""
         if not self.font:
             self.restore_font()
             self.update_scroll()
@@ -445,7 +442,7 @@ class Text(Rectangle):
             y = self.y
 
             for x, line in enumerate(self.text.split("\n")):
-                self.text = line  # for get_args()
+                self.text = line  # for get_args() in Rectangle.draw()
 
                 if x == 0:
                     pass  # draw first line at self.y
@@ -459,6 +456,41 @@ class Text(Rectangle):
             super(Text, self).draw(dc, True, "Text")
 
 
+    def edit(self, event=None):
+        """Pops up the TextInput box to edit itself"""
+        text = copy(self.text)  # restore to these if cancelled/blank
+        font = copy(self.font)
+        font_data = copy(self.font_data)
+        colour = self.colour
+        
+        dlg = TextInput(self.board.gui, self)    
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            dlg.Destroy()
+            self.text = text  # restore attributes
+            self.font = font
+            self.colour = colour
+            self.font_data = font_data
+            self.find_extent()  # update changed heights
+            self.board.redraw_all()  # restore
+        else:
+            dlg.transfer_data(self)  # grab font and text data
+            self.font_data = self.font.GetNativeFontInfoDesc()            
+            
+            if not self.text:
+                self.text = text  # don't want a blank item
+                return False
+            self.update_scroll()
+            return True
+            
+
+    def hit_test(self, x, y):
+        width = self.x + self.extent[0]
+        height = self.y + self.extent[1]
+
+        if x > self.x and x < width and y > self.y and y < height:
+            return True
+        return False
+        
     def get_args(self):
         return [self.text, self.x, self.y]
 
@@ -473,16 +505,8 @@ class Text(Rectangle):
     def load(self):
         self.restore_font()
         self.update_scroll(False)
-
-    def hit_test(self, x, y):
-        width = self.x + self.extent[0]
-        height = self.y + self.extent[1]
-
-        if x > self.x and x < width and y > self.y and y < height:
-            return True
-        else:
-            return False
-
+        
+        
 #----------------------------------------------------------------------
 
 class Note(Text):
@@ -500,11 +524,16 @@ class Note(Text):
             self.board.gui.notes.add_note(self)
         else:
             self.board.redraw_all()
-
+            
+    def edit(self):
+        """Edit a non-blank Note by changing the tree item's text"""
+        if super(Note, self).edit():
+            tree = self.board.gui.notes.tree
+            text = self.text.replace("\n", " ")[:15]
+            tree.SetItemText(self.tree_id, text)       
+        
     def find_extent(self):
-        """
-        Overrides to add extra spacing to the extent for the rectangle.
-        """
+        """Overrides to add extra spacing to the extent for the rectangle."""
         dummy = wx.Frame(None)
         dummy.SetFont(self.font)
 
@@ -531,16 +560,16 @@ class Note(Text):
 
 
     def draw(self, dc, replay=False):
+        """Draws a light backgrounded rectangle behind the text"""
         if not self.font:
             self.restore_font()
 
         self.find_extent()
-
         dc.SetBrush(wx.Brush((255, 223, 120)))
         dc.SetPen(wx.Pen((0, 0, 0), 1))
         dc.DrawRectangle(self.x - 10, self.y - 10, *self.extent)
         dc.SetFont(self.font)
-        super(Note, self).draw(dc, replay,)
+        super(Note, self).draw(dc, replay)
 
 
     def preview(self, dc, width, height):
@@ -551,13 +580,13 @@ class Note(Text):
         dc.DrawText("abcdef", 15, height / 2 - 10)
 
     def load(self, add_note=True):
+        """Recreates the note in the tree"""
         super(Note, self).load()
         gui = self.board.gui
         if add_note:
             gui.notes.add_note(self, gui.tab_count - 1)
 
 #----------------------------------------------------------------------
-
 
 class Fill(Tool):
     """
@@ -584,15 +613,12 @@ class Fill(Tool):
         dc.SetBrush(wx.Brush(self.colour))
         dc.DrawRectangle(10, 10, width - 20, height - 20)
 
-
 #----------------------------------------------------------------------
-
 
 class Image(Tool):
     """
     When being pickled, the image reference will be removed.
     """
-
     def __init__(self, board, image, path):
         Tool.__init__(self, board, (0, 0, 0), 1)
         self.image = image
@@ -650,7 +676,6 @@ class Zoom(Tool):
         new = (x[0] + 0.3, x[1] + 0.3)
         self.board.zoom = new
 
-
 #----------------------------------------------------------------------
 
 class Select(Tool):
@@ -664,7 +689,6 @@ class Select(Tool):
         self.shape = None
         self.dragging = False
 
-
     def button_down(self, x, y):
         """
         Sees if a shape is underneath the mouse coords, and allows the shape to
@@ -673,11 +697,19 @@ class Select(Tool):
         shapes = self.board.shapes
         shapes.reverse()
         for count, shape in enumerate(shapes):
-            if shape.hit_test(x, y):
-                self.shape = copy(shapes[count])
+            if shape.hit_test(x, y):  
+                if isinstance(shape, Text):            
+                    self.shape = shapes[count]
+                else:
+                    self.shape = copy(shapes[count])
                 self.dragging = True
                 self.count = count
                 break
+    
+    def double_click(self, x, y):
+        if isinstance(self.shape, Text):
+            self.dragging = False
+            self.shape.edit()
 
     def motion(self, x, y):
         if self.dragging:
@@ -685,10 +717,9 @@ class Select(Tool):
             shape.x = x
             shape.y = y
 
-
     def draw(self, dc, replay=False):
         if self.dragging:
-            self.shape.draw(dc)
+            self.shape.draw(dc)            
 
     def button_up(self, x, y):
         """
@@ -719,7 +750,6 @@ class RectSelect(Rectangle):
             self.board.shapes.append(self)
             self.board.redraw_all()
 
-
     def preview(self, dc, width, height):
         dc.SetPen(wx.BLACK_DASHED_PEN)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
@@ -739,7 +769,7 @@ def find_inverse(colour):
 
 # items to draw with
 items = [Pen, Rectangle, Line, Eraser, Text, Note, Ellipse, Circle, RoundRect,
-        Eyedrop, RectSelect]
+        Eyedrop, RectSelect, Select]
 
 if __name__ == '__main__':
     from gui import WhyteboardApp
