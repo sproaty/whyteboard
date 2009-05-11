@@ -27,7 +27,7 @@ its own undo/redo.
 import wx
 import wx.lib.dragscroller
 
-from tools import Image, Text, Note, RectSelect, Select
+from tools import Image, Text, Note, RectSelect, Select, OverlayShape
 
 #----------------------------------------------------------------------
 
@@ -42,6 +42,7 @@ class Whyteboard(wx.ScrolledWindow):
         wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE
                                                         | wx.CLIP_CHILDREN )
         self.virtual_size = (1000, 1000)
+        self.area= (600, 480)
         self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(3, 3)
@@ -56,12 +57,13 @@ class Whyteboard(wx.ScrolledWindow):
         self.tab = tab
         self.shapes = []  # list of shapes for re-drawing/saving
         self.shape = None  # currently selected shape to draw with
+        self.selected = None  # selected shape with Select tool
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
         self.zoom = (1.0, 1.0)
         self.select_tool()
-        self.buffer = wx.EmptyBitmap(*self.virtual_size)
+        self.buffer = wx.EmptyBitmap(*self.area)
 
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
@@ -76,14 +78,14 @@ class Whyteboard(wx.ScrolledWindow):
     def left_down(self, event):
         """
         Called when the left mouse button is pressed
-        Either begins drawing, starts the drawing motion or ends drawing.
+        Starts drawing.
         """
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
 
         if not isinstance(self.shape, Text):
             self.drawing = True
-            if self.check_copy():  # remove previous select rectangles
+            if self.check_copy():  # remove selection rectangle
                 self.shapes.pop()
                 self.redraw_all()
 
@@ -115,12 +117,11 @@ class Whyteboard(wx.ScrolledWindow):
             if after - before is not 0:
                 self.select_tool()
                 self.update_thumb()
+                self.deselect()
             self.drawing = False
 
     def left_double(self, event):
-        """
-        Double click, call hit test 2 with Select tool.
-        """
+        """Double click for the Select tool."""
         x, y = self.convert_coords(event)
 
         if isinstance(self.shape, Select):
@@ -313,8 +314,23 @@ class Whyteboard(wx.ScrolledWindow):
 
     def on_paint(self, event=None):
         """ Called when the window is exposed. """
-        wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-
+        dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+        #dc.SetBrush(wx.GREY_BRUSH)
+        #width = self.GetVirtualSize()[0] - self.area[0]
+        #height = self.GetVirtualSize()[1] - self.area[1]
+        #dc.DrawRectangle(0, self.area[1], self.GetVirtualSize()[1], height)
+        
+    def deselect(self):
+        for x in self.shapes:
+            if isinstance(x, OverlayShape):
+                x.selected = False
+        self.selected = None
+        
+    def get_dc(self):
+        cdc = wx.ClientDC(self)
+        self.PrepareDC(cdc)
+        return wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)        
+                
     def get_tab(self):
         """ Returns the current tab number of this Whyteboard instance. """
         return self.tab.GetSelection()

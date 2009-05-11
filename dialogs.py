@@ -390,15 +390,17 @@ class TextInput(wx.Dialog):
         self.gui = gui
         self.note = None
         self.colour = gui.util.colour
-        gap = wx.LEFT | wx.TOP | wx.RIGHT
-        font = gui.util.font        
+        gap = wx.LEFT | wx.TOP | wx.RIGHT               
         text = ""            
         
         if note:
             self.note = note
             self.colour = note.colour 
             text = note.text
+            font = wx.FFont(0, 0)
             font.SetNativeFontInfoFromString(note.font_data)
+        else:
+            font = gui.util.font 
            
         self.set_text_colour(text)
         self.ctrl.SetFont(font)  
@@ -432,7 +434,7 @@ class TextInput(wx.Dialog):
         the text input box, at the user's selected point.
         """
         data = wx.FontData()
-        data.SetInitialFont(self.gui.util.font)
+        data.SetInitialFont(self.ctrl.GetFont())
         dlg = wx.FontDialog(self, data)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -481,9 +483,12 @@ class TextInput(wx.Dialog):
             board = self.gui.board
             shape = board.shape
         self.transfer_data(shape)
-        board.redraw_all()  # stops overlapping text
-        dc = wx.BufferedDC(None, board.buffer)
+        dc = self.gui.board.get_dc()
         shape.draw(dc)
+        self.gui.board.redraw_dirty(dc)        
+        #board.redraw_all()  # stops overlapping text
+        #dc = wx.BufferedDC(None, board.buffer)
+        #shape.draw(dc)
 
     def transfer_data(self, text_obj):
         """Transfers the dialog's data to an object."""
@@ -569,7 +574,7 @@ class Resize(wx.Dialog):
 
         self.gui = gui
         gap = wx.LEFT | wx.TOP | wx.RIGHT
-        width, height = self.gui.board.virtual_size
+        width, height = self.gui.board.buffer.GetSize()
 
         csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
         self.hctrl = wx.TextCtrl(self, validator = IntValidator())
@@ -610,10 +615,13 @@ class Resize(wx.Dialog):
         """
         value = (int(self.wctrl.GetValue()), int(self.hctrl.GetValue()))
         board = self.gui.board
+        board.buffer = wx.EmptyBitmap(*value)
         board.SetVirtualSize(value)
-        board.SetSize(value)
-        board.SetBackgroundColour("Grey")
-        board.ClearBackground()
+        board.redraw_all()        
+        #board.SetVirtualSize(value)
+        #board.SetSize(value)
+        #board.SetBackgroundColour("Grey")
+        #board.ClearBackground()
         self.Close()
 
 #----------------------------------------------------------------------

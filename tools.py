@@ -100,10 +100,12 @@ class Pen(Tool):
     def button_down(self, x, y):
         self.x = x  # original mouse coords
         self.y = y
+        self.motion(x, y)
 
     def button_up(self, x, y):
         if self.points:
             self.board.add_shape(self)
+            self.board.redraw_all()
 
     def motion(self, x, y):
         self.points.append( [self.x, self.y, x, y] )
@@ -120,16 +122,14 @@ class Pen(Tool):
     def preview(self, dc, width, height):
         """Points below make a curly line to show an example Pen drawing"""
         points = ((52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9), (47, 9), (46, 9), (46, 8), (45, 8), (44, 8), (43, 8), (42, 8), (41, 8), (40, 8), (39, 8), (38, 8), (37, 8), (36, 8), (35, 8), (34, 8), (33, 8), (32, 8), (31, 8), (30, 8), (29, 8), (28, 8), (27, 8), (27, 10), (26, 10), (26, 11), (26, 12), (26, 13), (26, 14), (26, 15), (26, 16), (28, 18), (30, 19), (31, 21), (34, 22), (36, 24), (37, 26), (38, 27), (40, 28), (40, 29), (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33), (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37), (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37))
-
         dc.DrawSpline(points)
 
 #----------------------------------------------------------------------
 
 class OverlayShape(Tool):
-    """
-    Contains methods for drawing an overlayed shape
-    """
+    """Contains methods for drawing an overlayed shape"""
     def button_down(self, x, y):
+        self.selected = False
         self.x = x
         self.y = y
         self.board.overlay = wx.Overlay()
@@ -157,12 +157,20 @@ class OverlayShape(Tool):
         dc.SetTextForeground(self.colour)  # forces text colour
         method = getattr(dc, "Draw" + _type)
         method(*args)
+        if self.selected:
+            self.draw_selected(dc)            
         if not replay:
             del odc
             
+    def draw_selected(self, dc):
+        pass
+                    
     def get_args(self):
         pass
-
+    
+    def load(self):
+        self.selected = False
+                    
 #----------------------------------------------------------------------
 
 class Rectangle(OverlayShape):
@@ -196,6 +204,20 @@ class Rectangle(OverlayShape):
     def hit_test(self, x, y):
         rect = wx.Rect(*self.get_args())
         return rect.InsideXY(x, y)
+    
+    def draw_selected(self, dc):
+        dc.SetBrush(wx.BLACK_BRUSH)
+        dc.SetPen(wx.Pen(wx.BLACK, 2, wx.SOLID))
+        x, y, width, height = self.get_args() 
+        d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 5, 5)
+        
+        d(dc, x, y)        
+        d(dc, x + width, y)
+        d(dc, x, y + height)
+        d(dc, x + width, y + height)
+        
+    #def d(self, dc, x, y):
+    #            
 
 #----------------------------------------------------------------------
 
@@ -258,7 +280,7 @@ class RoundRect(Rectangle):
         dc.DrawRoundedRectangle(5, 5, width - 10, height - 7, 8)
 
     def get_args(self):
-        args = super(RoundRect, self).get_args()# [self.x, self.width]; x.sort()
+        args = super(RoundRect, self).get_args()
         args.append(35)  # edge angle
         return args
 
@@ -280,7 +302,6 @@ class Line(OverlayShape):
         super(Line, self).button_down(x, y)
         self.x2 = x
         self.y2 = y
-        #self.board.overlay = wx.Overlay()
 
     def motion(self, x, y):
         self.x2 = x
@@ -372,7 +393,6 @@ class Text(OverlayShape):
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CHAR)
-        #self.cursor = wx.CURSOR_CHAR
         self.font = None
         self.text = self.font_data = ""
         self.extent = (0, 0)
@@ -449,11 +469,11 @@ class Text(OverlayShape):
                 else:
                     self.y += dc.GetTextExtent(line)[1] + 6
 
-                super(Text, self).draw(dc, True, "Text")
+                super(Text, self).draw(dc, replay, "Text")
             self.text = text
             self.y = y
         else:
-            super(Text, self).draw(dc, True, "Text")
+            super(Text, self).draw(dc, replay, "Text")
 
 
     def edit(self, event=None):
@@ -503,6 +523,7 @@ class Text(OverlayShape):
         self.font = None
 
     def load(self):
+        super(Text, self).load()
         self.restore_font()
         self.update_scroll(False)
         
@@ -559,7 +580,7 @@ class Note(Text):
         dummy.Destroy()
 
 
-    def draw(self, dc, replay=False):
+    def draw(self, dc, replay=True):
         """Draws a light backgrounded rectangle behind the text"""
         if not self.font:
             self.restore_font()
@@ -615,7 +636,7 @@ class Fill(Tool):
 
 #----------------------------------------------------------------------
 
-class Image(Tool):
+class Image(OverlayShape):
     """
     When being pickled, the image reference will be removed.
     """
@@ -623,6 +644,7 @@ class Image(Tool):
         Tool.__init__(self, board, (0, 0, 0), 1)
         self.image = image
         self.path = path  # used to restore image on load
+        self.selected = False
 
     def button_down(self, x, y):
         self.x = x
@@ -636,13 +658,17 @@ class Image(Tool):
         self.board.redraw_dirty(dc)
 
     def draw(self, dc, replay=False):
-        dc.DrawBitmap(self.image, self.x, self.y)
+        super(Image, self).draw(dc, replay, "Bitmap")
+                      
+    def get_args(self):
+        return [self.image, self.x, self.y]
 
     def save(self):
         super(Image, self).save()
         self.image = None
 
     def load(self):
+        self.selected = False
         self.image = wx.Bitmap(self.path)
         size = (self.image.GetWidth(), self.image.GetHeight())
         self.board.update_scrollbars(size)
@@ -655,9 +681,9 @@ class Image(Tool):
         rect_y2 = rect_y + height
 
         if x > rect_x and x < rect_x2 and y > rect_y and y < rect_y2:
-            img = self.image.ConvertToImage()
-            img = img.Rotate90()
-            self.image = wx.BitmapFromImage(img)
+            #img = self.image.ConvertToImage()
+            #img = img.Rotate90()
+            #self.image = wx.BitmapFromImage(img)
             return True
         else:
             return False
@@ -694,18 +720,25 @@ class Select(Tool):
         Sees if a shape is underneath the mouse coords, and allows the shape to
         be re-dragged to place
         """
+        self.board.deselect()
+        self.board.overlay = wx.Overlay()
         shapes = self.board.shapes
         shapes.reverse()
         for count, shape in enumerate(shapes):
             if shape.hit_test(x, y):  
-                if isinstance(shape, Text):            
-                    self.shape = shapes[count]
-                else:
-                    self.shape = copy(shapes[count])
+                #if isinstance(shape, Text):            
+                self.shape = shapes[count]
+                self.board.selected = self.shape
+                #else:
+                #    self.shape = copy(shapes[count])
+                self.shape.selected = True
                 self.dragging = True
                 self.count = count
+                cdc = wx.ClientDC(self.board)
+                self.board.PrepareDC(cdc)
+                dc = wx.BufferedDC(cdc, self.board.buffer, wx.BUFFER_VIRTUAL_AREA)                
                 break
-    
+        
     def double_click(self, x, y):
         if isinstance(self.shape, Text):
             self.dragging = False
@@ -719,14 +752,19 @@ class Select(Tool):
 
     def draw(self, dc, replay=False):
         if self.dragging:
-            self.shape.draw(dc)            
+            self.shape.draw(dc, False)   
 
+            
     def button_up(self, x, y):
         """
         need to add pop(x) to remove current shape for proper undoing
         !!!!!
         """
         if self.dragging:
+            if isinstance(self.shape, Image):
+                size = (x + self.shape.image.GetWidth(), y + self.shape.image.GetHeight())
+                self.board.update_scrollbars(size)
+            self.board.overlay.Reset()
             self.board.redraw_all(update_thumb=True)
             self.dragging = False
 

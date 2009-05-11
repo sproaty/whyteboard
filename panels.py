@@ -156,18 +156,16 @@ class ControlPanel(wx.Panel):
         Toggles the tool buttons on/off and calls select_tool on the drawing
         panel.
         """
+        new = self.gui.util.tool
         if event:
             new = int(event.GetId() )  # get widget ID
         elif _id:
-            new = _id
-        else:
-            new = self.gui.util.tool
-
+            new = _id        
+            
+        self.tools[self.toggled].SetValue(True)
         if new != self.toggled:  # toggle old button
             self.tools[self.toggled].SetValue(False)
-            self.tools[new].SetValue(True)
-        else:
-            self.tools[self.toggled].SetValue(True)
+            self.tools[new].SetValue(True)           
 
         self.toggled = new
         if self.gui.board:
@@ -181,21 +179,26 @@ class ControlPanel(wx.Panel):
         """
         if event and not colour:
             colour = event.GetColour()  # from the colour button
-
         self.gui.util.colour = colour
-        self.colour.SetColour(colour)
-        self.gui.board.select_tool()
-        self.preview.Refresh()
-
+        self.colour.SetColour(colour)            
+        if self.gui.board.selected:
+            self.gui.board.selected.colour = colour
+            self.gui.board.redraw_all(True)
+        self.update()
+        
     def change_thickness(self, event=None):
-        """
-        Changes thickness and updates the preview window.
-        """
-        self.gui.util.thickness = self.thickness.GetSelection()
+        """Changes thickness and updates the preview window."""
+        thickness = self.thickness.GetSelection()
+        self.gui.util.thickness = thickness 
+        if self.gui.board.selected:
+            self.gui.board.selected.thickness = thickness
+            self.gui.board.redraw_all(True)
+        self.update()
+
+    def update(self):
         self.gui.board.select_tool()
-        self.preview.Refresh()
-
-
+        self.preview.Refresh()     
+            
 #----------------------------------------------------------------------
 
 
@@ -296,9 +299,7 @@ class Notes(wx.Panel):
 
 
     def add_tab(self):
-        """
-        Adds a new tab as a child to the root element
-        """
+        """Adds a new tab as a child to the root element"""
         _id = len(self.tabs)
         if not _id:
             _id = 0
@@ -324,9 +325,7 @@ class Notes(wx.Panel):
 
 
     def remove(self, note):
-        """
-        Removes a tab and its children.
-        """
+        """Removes a tab and its children."""
         item = self.tabs[note]
         self.tree.DeleteChildren(item)
         self.tree.Delete(item)
@@ -339,9 +338,7 @@ class Notes(wx.Panel):
 
 
     def remove_all(self):
-        """
-        Removes all tabs.
-        """
+        """Removes all tabs."""
         self.tree.DeleteChildren(self.root)
         self.tabs = []
 
@@ -355,41 +352,13 @@ class Notes(wx.Panel):
 
         if item is None:
             return  # clicked on the root node
-
         if isinstance(item, int):
             self.gui.tabs.SetSelection(item)
         else:
             item.edit()
-#===============================================================================
-#            text = item.text
-#            font = item.font
-#            font_data = item.font_data
-#            dlg = TextInput(self.gui, item)
-# 
-#            if dlg.ShowModal() == wx.ID_CANCEL:
-#                dlg.Destroy()
-#                item.text = text
-#                item.font = font
-#                item.font_data = font_data
-#                item.find_extent()
-#                self.gui.board.redraw_all()
-#            else:
-#                dlg.transfer_data(item)  # grab font and text data
-#                item.font_data = item.font.GetNativeFontInfoDesc()
-# 
-#                if not item.text:
-#                    item.text = text  # don't want a blank item
-#                else:
-#                    self.tree.SetItemText(event.GetItem(),
-#                                      item.text.replace("\n", " ")[:15])
-#                item.update_scroll()
-#===============================================================================
-
 
     def pop_up(self, event):
-        """
-        Brings up the context menu on right click
-        """
+        """Brings up the context menu on right click"""
         self.PopupMenu(NotesPopup(self, event))
 
 #----------------------------------------------------------------------

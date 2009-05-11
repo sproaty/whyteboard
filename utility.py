@@ -146,8 +146,11 @@ class Utility(object):
 
                 # Now the unpickleable objects are gone, build the save file
                 tab = self.gui.tabs.GetSelection()
+                font = None
+                if self.font:
+                    font = self.font.GetNativeFontInfoDesc() 
                 _file = { 0: [self.colour, self.thickness, self.tool, tab,
-                              version, self.font.GetNativeFontInfoDesc()],
+                              version, font],
                           1: temp,
                           2: self.to_convert,
                           3: names }
@@ -562,18 +565,13 @@ class Utility(object):
 #----------------------------------------------------------------------
 
 class FileDropTarget(wx.FileDropTarget):
-    """
-    Implements drop target functionality to receive files
-    """
+    """Implements drop target functionality to receive files"""
     def __init__(self, gui):
         wx.FileDropTarget.__init__(self)
         self.gui = gui
 
-
     def OnDropFiles(self, x, y, filenames):
-        """
-        Passes the first file to the load file method to handle
-        """
+        """Passes the first file to the load file method to handle"""
         self.gui.do_open(filenames[0])
 
 #----------------------------------------------------------------------

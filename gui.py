@@ -157,7 +157,7 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_UNDO, "&Undo\tCtrl+Z", "Undo the last operation")
         edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
         edit.AppendSeparator()
-        #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
+        edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
         edit.Append(wx.ID_COPY, "&Copy\tCtrl+C", "Copy the selection as a bitmap")
         edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
         edit.AppendItem(pnew)
@@ -610,7 +610,6 @@ class GUI(wx.Frame):
             self.help = wx.html.HtmlHelpController()
             self.help.AddBook(_file)
             self.help.DisplayContents()
-            self.help.Display("Whyteboard")
         else:                       
             msg = ("Help files not found, do you want to download them?")
             dlg = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)

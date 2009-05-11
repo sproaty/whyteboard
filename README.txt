@@ -1,4 +1,4 @@
-Whyteboard 0.37 - a simple image, PDF and postscript file annotator
+Whyteboard 0.37.1 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Wed 06 May 2009 17:42:59 BST 
 
@@ -29,12 +29,22 @@ Currently none.
 
 ---- VERSION HISTORY ----
 
-1x May 2009 - * Colour button in text input dialog, instead of always drawing 
+1x May 2009 - * Select tool: can select shapes to alter their colour/thickness,
+                edit text and notes, move shapes and resize them. Selected 
+                shapes are drawn with an outline "handle" at their corners
+                Images and text can also be repositioned
+              * Improved undo/redo to support editing, moving and resizing
+                of objects as described above. Text edits can also be undone
+              * Colour button in text input dialog, instead of always drawing 
                 with the user's selected colour
               * Text input dialogs remembers the last font used, and is 
                 selected by default when creating more text
-                -- this is also saved into the .wtbd save file
-              * Misc code improvements
+                -- the chosen font is also saved into the .wtbd save file
+              * The Pen tool will now draw in response to a single mouse click;
+                before the mouse needed to be moved to draw
+              * Misc existing code improvements and performance increases
+              * Help files updates to reflect new changes and clarify any
+                issues before
 
 06 May 2009 - * 'Check for Updates'- Whyteboard can update itself
                 -- will download an .exe / .tar.gz as appropriate
