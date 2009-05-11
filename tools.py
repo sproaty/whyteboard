@@ -105,8 +105,8 @@ class Pen(Tool):
     def button_up(self, x, y):
         if self.points:
             self.board.add_shape(self)
-            self.board.redraw_all()
-
+            self.board.draw(self) 
+        
     def motion(self, x, y):
         self.points.append( [self.x, self.y, x, y] )
         self.time.append(time.time() )
@@ -138,7 +138,7 @@ class OverlayShape(Tool):
         """ Only adds the shape if it was actually dragged out """
         if x != self.x and y != self.y:
             self.board.add_shape(self)
-            self.board.redraw_all()
+            self.board.draw(self)
 
     def draw(self, dc, replay=False, _type="Rectangle", pen=wx.SOLID):
         """
@@ -207,17 +207,14 @@ class Rectangle(OverlayShape):
     
     def draw_selected(self, dc):
         dc.SetBrush(wx.BLACK_BRUSH)
-        dc.SetPen(wx.Pen(wx.BLACK, 2, wx.SOLID))
+        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
         x, y, width, height = self.get_args() 
         d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 5, 5)
         
         d(dc, x, y)        
         d(dc, x + width, y)
         d(dc, x, y + height)
-        d(dc, x + width, y + height)
-        
-    #def d(self, dc, x, y):
-    #            
+        d(dc, x + width, y + height)         
 
 #----------------------------------------------------------------------
 
@@ -311,7 +308,7 @@ class Line(OverlayShape):
         """ Don't add a 'blank' line """
         if self.x2 != self.x or self.y2 != self.y:
             self.board.add_shape(self)
-            self.board.redraw_all()
+            self.board.draw(self)
 
     def draw(self, dc, replay=False):
         super(Line, self).draw(dc, replay, "Line")
@@ -725,12 +722,9 @@ class Select(Tool):
         shapes = self.board.shapes
         shapes.reverse()
         for count, shape in enumerate(shapes):
-            if shape.hit_test(x, y):  
-                #if isinstance(shape, Text):            
+            if shape.hit_test(x, y):              
                 self.shape = shapes[count]
                 self.board.selected = self.shape
-                #else:
-                #    self.shape = copy(shapes[count])
                 self.shape.selected = True
                 self.dragging = True
                 self.count = count
@@ -786,7 +780,7 @@ class RectSelect(Rectangle):
         if x != self.x and y != self.y:
             self.board.gui.GetStatusBar().SetStatusText("You can now copy this region")
             self.board.shapes.append(self)
-            self.board.redraw_all()
+            #self.board.draw(self)
 
     def preview(self, dc, width, height):
         dc.SetPen(wx.BLACK_DASHED_PEN)

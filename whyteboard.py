@@ -42,7 +42,7 @@ class Whyteboard(wx.ScrolledWindow):
         wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE
                                                         | wx.CLIP_CHILDREN )
         self.virtual_size = (1000, 1000)
-        self.area= (600, 480)
+        self.area= (1000, 1000)
         self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(3, 3)
@@ -95,9 +95,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         if self.drawing:
             x, y = self.convert_coords(event)
-            cdc = wx.ClientDC(self)
-            self.PrepareDC(cdc)
-            dc = wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+            dc = self.get_dc()
             self.shape.motion(x, y)
             self.shape.draw(dc)
             self.redraw_dirty(dc)
@@ -329,8 +327,13 @@ class Whyteboard(wx.ScrolledWindow):
     def get_dc(self):
         cdc = wx.ClientDC(self)
         self.PrepareDC(cdc)
-        return wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)        
-                
+        return wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)    
+        
+    def draw(self, shape):
+        dc = self.get_dc()
+        shape.draw(dc)
+        self.redraw_dirty(dc) 
+                   
     def get_tab(self):
         """ Returns the current tab number of this Whyteboard instance. """
         return self.tab.GetSelection()

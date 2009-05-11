@@ -463,32 +463,22 @@ class TextInput(wx.Dialog):
         self.ctrl.SetValue(text)        
 
     def set_focus(self):
-        """
-        Sets the focus to the text and places the cursor at the end of the text
-        """
-        selection = self.ctrl.GetSelection()
+        """Gives the text focus, places the cursor at the end of the text"""
         self.ctrl.SetFocus()
-        self.ctrl.SetSelection(*selection)
-
+        self.ctrl.SetInsertionPointEnd()
 
     def update_canvas(self, event=None):
-        """
-        Updates the canvas with the inputted text. We want to work with a copy
-        of the shape, not the actual shape.
-        """
+        """Updates the canvas with the inputted text"""
         if self.note:
             shape = self.note
             board = shape.board
         else:
             board = self.gui.board
             shape = board.shape
-        self.transfer_data(shape)
-        dc = self.gui.board.get_dc()
+        self.transfer_data(shape)               
+        board.redraw_all()  # stops overlapping text
+        dc = wx.BufferedDC(None, board.buffer)
         shape.draw(dc)
-        self.gui.board.redraw_dirty(dc)        
-        #board.redraw_all()  # stops overlapping text
-        #dc = wx.BufferedDC(None, board.buffer)
-        #shape.draw(dc)
 
     def transfer_data(self, text_obj):
         """Transfers the dialog's data to an object."""
