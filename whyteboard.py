@@ -200,9 +200,11 @@ class Whyteboard(wx.ScrolledWindow):
         Undoes an action, and adds it to the redo list. Re-add any cleared shape
         one-by-one because each shape is then undoable
         """
+        if not self.undo_list:
+            return  # stops possible errors from keyboard shortcut being held
         shape = self.undo_list.pop()
         self.redo_list.append(shape)
-
+        
         if isinstance(shape, Note):
             self.undo_note(shape)
             self.shapes.remove(shape)
@@ -218,6 +220,8 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Redoes an action, and adds it to the undo list.
         """
+        if not self.redo_list:
+            return  # as above, kills any possible console/log spam       
         item = self.redo_list.pop()
 
         if isinstance(item, Note):
@@ -323,6 +327,7 @@ class Whyteboard(wx.ScrolledWindow):
             if isinstance(x, OverlayShape):
                 x.selected = False
         self.selected = None
+        
         
     def get_dc(self):
         cdc = wx.ClientDC(self)

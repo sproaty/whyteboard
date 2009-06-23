@@ -115,17 +115,13 @@ class ControlPanel(wx.Panel):
 
 
     def toggle(self, evt):
-        """
-        Toggles the pane and its widgets
-        """
+        """Toggles the pane and its widgets"""
         frame = self.GetTopLevelParent()
         frame.Layout()
 
 
     def scroll(self, event):
-        """
-        Scrolls the thickness drop-down box (for Windows)
-        """
+        """Scrolls the thickness drop-down box (for Windows)"""
         box = self.thickness
         val = box.GetSelection()
         if event.GetWheelRotation() > 0:  # mousewheel down
@@ -140,9 +136,7 @@ class ControlPanel(wx.Panel):
 
 
     def make_bitmap(self, colour):
-        """
-        Draws a small coloured bitmap for a colour grid button
-        """
+        """Draws a small coloured bitmap for a colour grid button"""
         bmp = wx.EmptyBitmap(15, 15)
         dc = wx.MemoryDC()
         dc.SelectObject(bmp)
@@ -182,8 +176,9 @@ class ControlPanel(wx.Panel):
         self.gui.util.colour = colour
         self.colour.SetColour(colour)            
         if self.gui.board.selected:
-            self.gui.board.selected.colour = colour
-            self.gui.board.redraw_all(True)
+            selected = self.gui.board.selected
+            selected.colour = colour
+            self.gui.board.draw(selected)  # no need to redraw all
         self.update()
         
     def change_thickness(self, event=None):
@@ -191,11 +186,15 @@ class ControlPanel(wx.Panel):
         thickness = self.thickness.GetSelection()
         self.gui.util.thickness = thickness 
         if self.gui.board.selected:
-            self.gui.board.selected.thickness = thickness
-            self.gui.board.redraw_all(True)
+            item = copy(self.gui.board.selected)
+            item.thickness = thickness
+            #self.gui.board.shapes.remove(self.gui.board.selected)
+            self.gui.board.add_shape(item) 
+            self.gui.board.redraw_all(True)  # causes a bug if drawn as above
         self.update()
 
     def update(self):
+        """Small method to save repeating code"""
         self.gui.board.select_tool()
         self.preview.Refresh()     
             
@@ -266,9 +265,7 @@ class SidePanel(wx.Panel):
 
 
     def toggle(self, evt):
-        """
-        Toggles the pane and its widgets
-        """
+        """Toggles the pane and its widgets"""
         frame = self.GetTopLevelParent()
         frame.Layout()
 

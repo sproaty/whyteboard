@@ -55,13 +55,17 @@ but are restored with it upon loading the file.
 import wx
 import os
 import sys
-import cPickle
 import random
 import urllib
 import tarfile
 import distutils.dir_util
-
 from copy import copy
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
 
 from dialogs import ProgressDialog, FindIM
 import tools
@@ -157,10 +161,10 @@ class Utility(object):
 
                 f = open(self.filename, 'w')
                 try:
-                    cPickle.dump(_file, f)
+                    pickle.dump(_file, f)
                     t = os.path.split(self.filename)[1] + ' - ' + self.gui.title
                     self.gui.SetTitle(t)
-                except cPickle.PickleError:
+                except pickle.PickleError:
                     wx.MessageBox("Error saving file data")
                     self.saved = False
                     self.filename = None
@@ -214,10 +218,10 @@ class Utility(object):
         tab
         """
         temp = {}
-        f = open(self.filename, 'r')
+        f = open(self.filename)
         try:
-            temp = cPickle.load(f)
-        except (cPickle.UnpicklingError, ValueError, ImportError):
+            temp = pickle.load(f)
+        except (pickle.UnpicklingError, ValueError, ImportError):
             wx.MessageBox("%s has corrupt Whyteboard data. No action taken."
                         % self.filename)
             return
@@ -479,7 +483,9 @@ class Utility(object):
 
 
     def download_help_files(self):
-        """Downloads the help files to the user's directory and shows them"""  
+        """
+        Downloads the help files to the user's directory and shows them
+        """  
         _file = os.path.join(self.path[0], "whyteboard-help.tar.gz") 
         url = "http://whyteboard.googlecode.com/files/helpfiles.tar.gz"        
         tmp = None
@@ -492,7 +498,6 @@ class Utility(object):
         if os.name == "posix":
             os.system("tar -xf "+ tmp[0])  
         else:
-            print tmp[0], self.path[0]
             tar = tarfile.open(tmp[0])       
             tar.extractall(self.path[0])
             tar.close() 

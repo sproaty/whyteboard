@@ -377,7 +377,7 @@ class TextInput(wx.Dialog):
         self.okButton = wx.Button(self, wx.ID_OK, "&OK")
         self.okButton.SetDefault()
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")        
-        self.colourBtn = wx.ColourPickerCtrl(self, style=wx.CLRP_SHOW_LABEL) 
+        self.colourBtn = wx.ColourPickerCtrl(self) 
         fontBtn = wx.Button(self, label="Select Font")
                         
         extent = self.ctrl.GetFullTextExtent("Hy")
@@ -478,7 +478,7 @@ class TextInput(wx.Dialog):
         self.transfer_data(shape)               
         board.redraw_all()  # stops overlapping text
         dc = wx.BufferedDC(None, board.buffer)
-        shape.draw(dc)
+        shape.draw(dc, True)
 
     def transfer_data(self, text_obj):
         """Transfers the dialog's data to an object."""

@@ -19,3 +19,4 @@ Example:
 import core
 import html
 import sized
+import lib.scrolledpanel

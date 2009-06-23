@@ -44,7 +44,7 @@ from panels import ControlPanel, SidePanel, SheetsPopup
 
 ID_NEW = wx.NewId()               # new window
 ID_PASTE_NEW = wx.NewId()         # paste as new selection
-ID_EXPORT = wx.NewId()            # export sheet to image file
+#ID_EXPORT = wx.NewId()            # export sheet to image file
 ID_UNDO_SHEET = wx.NewId()        # undo close sheet
 ID_HISTORY = wx.NewId()           # history viewer
 ID_RESIZE = wx.NewId()            # resize dialog
@@ -57,6 +57,8 @@ ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
 ID_PDF = wx.NewId()               # import->PDF
 ID_PS = wx.NewId()                # import->PS
 ID_IMG = wx.NewId()               # import->Image
+ID_EXP_IMG = wx.NewId()           # export->Image
+ID_EXP_PDF = wx.NewId()           # export->PDF
 ID_UPDATE = wx.NewId()            # update self
 
 class GUI(wx.Frame):
@@ -65,7 +67,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.37.1"
+    version = "0.38.0"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
     
@@ -98,10 +100,10 @@ class GUI(wx.Frame):
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
         self.board = Whyteboard(self.tabs, self)  # the active whiteboard tab
-        self.tabs.AddPage(self.board, "Sheet 1")
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
-        self.notes = self.panel.notes
+        self.notes = self.panel.notes        
+        self.tabs.AddPage(self.board, "Sheet 1")
         self.box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         self.box.Add(self.control, 0, wx.EXPAND)
         self.box.Add(self.tabs, 2, wx.EXPAND)
@@ -129,10 +131,13 @@ class GUI(wx.Frame):
         sheets = wx.Menu()
         _help = wx.Menu()
         _import = wx.Menu()
-        _import.Append(ID_PDF, 'PDF')
-        _import.Append(ID_PS, 'PostScript')
-        _import.Append(ID_IMG, 'Image')
-
+        _import.Append(ID_PDF, '&PDF')
+        _import.Append(ID_PS, 'Post&Script')
+        _import.Append(ID_IMG, '&Image')
+        _export = wx.Menu()
+        _export.Append(ID_EXP_PDF, '&PDF')
+        _export.Append(ID_EXP_IMG, 'Current Sheet as &Image')
+        
         new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new Whyteboard instance")
         new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
 
@@ -150,7 +155,8 @@ class GUI(wx.Frame):
         _file.Append(wx.ID_SAVE, "&Save\tCtrl+S", "Save the Whyteboard data")
         _file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl+Shift+S", "Save the Whyteboard data in a new file")
         _file.AppendMenu(+1, '&Import File', _import)
-        _file.Append(ID_EXPORT, "&Export Sheet\tCtrl+E", "Export the current sheet to an image file")
+        _file.AppendMenu(+1, '&Export File', _export)
+        #_file.Append(ID_EXPORT, "&Export Sheet\tCtrl+E", "Export the current sheet to an image file")
         _file.AppendSeparator()
         _file.Append(wx.ID_EXIT, "&Quit\tAlt+F4", "Quit Whyteboard")
 
@@ -209,7 +215,7 @@ class GUI(wx.Frame):
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new", 
                   "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "help", "update", "about"]
 
-        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
+        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXP_IMG, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
                wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
                ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, wx.ID_HELP, ID_UPDATE, wx.ID_ABOUT]
 
@@ -314,12 +320,15 @@ class GUI(wx.Frame):
         self.util.load_file()
 
 
-    def on_export(self, event=None):
+    def on_export(self, event=None, pdf=None):
         """
-        Exports the current sheet as an image.
+        Exports the current sheet as an image, or all as a PDF.
         """
-        wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|"+
-               "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
+        wc =  ("PDF (*.pdf)") 
+        if not pdf:
+            wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|"+
+                   "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
+               
         dlg = wx.FileDialog(self, "Export data to...", style=wx.SAVE |
                              wx.OVERWRITE_PROMPT, wildcard=wc)
         if dlg.ShowModal() == wx.ID_OK:
@@ -613,8 +622,7 @@ class GUI(wx.Frame):
         else:                       
             msg = ("Help files not found, do you want to download them?")
             dlg = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)
-            result = dlg.ShowModal()
-            if result == wx.ID_YES:
+            if dlg.ShowModal() == wx.ID_YES:
                 try:
                     self.util.download_help_files()                
                     wx.MessageBox("Folder whyteboard-help created")  
@@ -676,7 +684,6 @@ class WhyteboardApp(wx.App):
         frame = self.frame
         x = len(frame.util.items)
         key = event.GetKeyCode()
-        print key
 
         #  49 -- key 1. change_tool expects list element num + 1
         if key >= 49 and key <= 49 + x:

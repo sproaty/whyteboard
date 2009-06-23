@@ -1,102 +1,171 @@
+#!/usr/bin/python
+
+# Copyright (c) 2009 by Steven Sproat
+#
+# GNU General Public Licence (GPL)
+#
+# Whyteboard is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+# Whyteboard is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+# You should have received a copy of the GNU General Public License along with
+# Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA  02111-1307  USA
+
 """
 Unit tests for the functionality parts of Whyteboard. Simulates wxPython
-with mock classes. Doesn't test the GUI.
+with mock classes. Doesn't test the GUI itself (i.e. parts of wx), but parts of 
+the GUI event handling code (example: undo/redo closing tabs)
 """
-import unittest
-from copy import copy
+
+import random
 
 import fakewidgets
 import whyteboard
 import tools
+import gui
 
-def setup_wb():
+
+def make_shapes(board):
     """
-    Creates a Whyteboard instance and sets up appropriate mock parent hierarchy
-    returns the instance of the Whyteboard
+    Generates random shapes. Needs a Whyteboard instance to add the shapes to
     """
-    gui = fakewidgets.core.Window(None)  # mocking the GUI
-
-    bk = fakewidgets.core.Notebook(gui)
-    wb = whyteboard.Whyteboard(bk)
-    return wb
-
-#----------------------------------------------------------------------
-
+    params = [board, "Black", 1]
+    items = board.gui.util.items
+         
+    for x in range(20):
+        item = items[random.randrange(0, len(items))]     
+        board.add_shape(item(*params))    
+        
 class SimpleApp(fakewidgets.core.PySimpleApp):
-
-    def OnInit(self):
-        wb = setup_wb()
-        wb.Show()
-        return 1
-
-#----------------------------------------------------------------------
-
-class TestWhyteboard(unittest.TestCase):
     """
-    Tests the Whyteboard frame and its functionality.
+    Mock the wx.App that instanciates the application, and ceate a *mock* GUI 
+    instance and set up appropriate mock panels/notebook.
+    Then, creates an *actual* Whyteboard instance with the fake GUI
     """
-
-    def setUp(self):
-        """
-        Adds a few shapes to the list
-        """
-        app = SimpleApp(True)
-        self.board = setup_wb()
-        pen = tools.Pen(self.board, (0, 0, 0), 1, 1)
-        self.board.add_shape(pen)
-        self.board.add_shape(copy(pen))
-
-    def testAddShape(self):
-        """Test adding shapes"""
-        self.board.add_shape(tools.Image(self.board, (0, 0, 0), 1))
-        self.assertEqual(len(self.board.shapes), 3)
-
-
-    def testUndo(self):
-        pass#self.board.undo()  # pop image
-        #print self.board.shapes
-        #self.assertEqual(len(self.board.redo_list), 1)
-        #self.assertEqual(len(self.board.shapes), 2)
-
-    def testRedo(self):
-        """
-        Redo last action
-        """
-        pass#self.board.redo()
-        #self.assertEqual(len(self.board.shapes), 2)
-        #self.assertEqual(len(self.board.redo_list), 0)
-        #self.assertEqual(len(self.board.undo_list), 1)
-
-    def testClear(self):
-        """
-        Clear all items
-        """
-        pass#self.board.clear()
-        #self.assertEqual(len(self.board.shapes), 0)
-        #print self.board.undo_list
-        #self.assertEqual(len(self.board.undo_list), 2)
-
-    def testUndoClear(self):
-        pass
-
-    def testRedoClear(self):
-        pass
+    def __init__(self):
+        g = gui.GUI(None)  # mock the GUI, referenced by all                
+        self.board = whyteboard.Whyteboard(g.tabs, g)
+        self.board.Show()       
 
 #----------------------------------------------------------------------
 
-class TestApp(unittest.TestCase):
+class TestWhyteboard:
+    """
+    Tests the Whyteboard panel and its functionality:
+        Undo/redo
+        Adding new shapes
+        Clearing shapes / undoing/redoing the clearing
+    """
+    def setup_class(self):
+        """
+        Create a random list of fake Tool objects, excluding Erasers
+        The actual values of the shapes don't matter, as they're all
+        instanciated to default values of 0
+        """
+        self.board = SimpleApp().board
+        make_shapes(self.board)
+        self.shapes = list(self.board.shapes)  # value to test changes against
 
-    def setUp(self):
-        self.app = SimpleApp(True)
+    def add(self, pos=None):
+        """
+        Add a shape to the list, optionally positional
+        """
+        shape = tools.Rectangle(self.board, (0, 0, 0), 1)
+        if pos:
+            self.board.add_shape(shape, pos)
+        else:
+            self.board.add_shape(shape)
+        assert not self.board.redo_list
+        assert not self.board.gui.util.saved      
 
-    def test_create(self):
-        pass
 
-    def test_on_init(self):
-        retval = self.app.OnInit()
-        assert retval == 1, retval
+    def test_AddShape(self):
+        self.add()
+        
+    def test_AddPositionalShape(self):
+        self.add(4)
+        
+    def test_CheckCopy(self):
+        """Returns false when a RectSelect isn't the top shape on the list"""
+        self.board.shapes = []
+        assert not self.board.check_copy()
+        self.board.add_shape(tools.RectSelect(self.board, (0, 0, 0), 1)) 
+        assert self.board.check_copy()
+        
+    def test_SelectTool(self):
+        """
+        This depends on the Tool list order not changing, unlikely from a UI
+        perspective; note: select_tool() called in Whyteboard.__init__
+        """       
+        assert isinstance(self.board.shape, tools.Pen)
+        self.board.select_tool(1)  # passing in Pen explicitly
+        assert isinstance(self.board.shape, tools.Pen)
+        self.board.select_tool(2)  
+        assert isinstance(self.board.shape, tools.Rectangle)          
+        self.board.select_tool()  
+        assert isinstance(self.board.shape, tools.Rectangle)
+        
+    def test_UndoThenRedo(self):
+        """Test undoing/redoing together"""
+        [self.board.undo() for x in range(4)]
+        assert len(self.board.shapes) == len(self.shapes) - 4
+        [self.board.redo() for x in range(4)]
+        assert len(self.board.shapes) == len(self.shapes)        
 
-#----------------------------------------------------------------------
+    def test_Clear(self):
+        self.board.clear()
+        assert not self.board.shapes
+        assert self.board.undo_list        
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_ClearKeepImages(self):
+        """
+        Try clearing, asking to keep images without any images existing in the 
+        list, then add an image and check again
+        """
+        self.board.clear(True)
+        assert not self.board.shapes
+        self.board.shapes = self.shapes  # restore shapes     
+                
+        self.board.add_shape(tools.Image(self.board, (0, 0, 0), 1)) 
+        self.board.clear(True)
+        assert self.board.shapes
+        assert self.board.undo_list
+        
+    def test_UndoAndRedoClear(self):
+        """
+        Clear then undo = state restored. Redo; clear is re-applied = no shapes
+        """
+        self.board.clear()
+        self.board.undo()
+        assert len(self.board.shapes) == len(self.shapes)
+        self.board.redo()
+        assert len(self.board.shapes) == 0, "Shapes should be empty"
+
+
+class TestGuiFunctionality:
+
+    def setup_class(self):
+        """
+        Add a few mock tabs, each with random shapes
+        """
+        self.board = SimpleApp().board
+        self.gui = self.board.gui
+        for x in range(9):
+            self.gui.on_new_tab()
+            
+            make_shapes(self.board)
+        assert len(self.gui.tabs.pages) == 10  
+            
+    def test_CloseTab(self):
+        x = len(self.gui.tabs.pages)
+        #self.gui.on_close_tab()
+        #self.gui.on_change_tab()
+        #assert len(self.gui.tabs.pages) == x - 1  
+        #print self.gui.current_tab   
+        #self.gui.on_close_tab()
+        #assert len(self.gui.tabs.pages) == x - 1   
