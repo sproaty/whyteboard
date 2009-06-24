@@ -25,7 +25,6 @@ the GUI event handling code (example: undo/redo closing tabs)
 import random
 
 import fakewidgets
-import whyteboard
 import tools
 import gui
 
@@ -43,13 +42,11 @@ def make_shapes(board):
         
 class SimpleApp(fakewidgets.core.PySimpleApp):
     """
-    Mock the wx.App that instanciates the application, and ceate a *mock* GUI 
-    instance and set up appropriate mock panels/notebook.
-    Then, creates an *actual* Whyteboard instance with the fake GUI
+    Create a GUI instance and create a new 
     """
     def __init__(self):
         g = gui.GUI(None)  # mock the GUI, referenced by all                
-        self.board = whyteboard.Whyteboard(g.tabs, g)
+        self.board = g.board
         self.board.Show()       
 
 #----------------------------------------------------------------------
@@ -61,7 +58,7 @@ class TestWhyteboard:
         Adding new shapes
         Clearing shapes / undoing/redoing the clearing
     """
-    def setup_class(self):
+    def setup(self):
         """
         Create a random list of fake Tool objects, excluding Erasers
         The actual values of the shapes don't matter, as they're all
@@ -84,20 +81,20 @@ class TestWhyteboard:
         assert not self.board.gui.util.saved      
 
 
-    def test_AddShape(self):
+    def test_add_shape(self):
         self.add()
         
-    def test_AddPositionalShape(self):
+    def test_add_positional_shape(self):
         self.add(4)
         
-    def test_CheckCopy(self):
+    def test_check_copy(self):
         """Returns false when a RectSelect isn't the top shape on the list"""
         self.board.shapes = []
         assert not self.board.check_copy()
         self.board.add_shape(tools.RectSelect(self.board, (0, 0, 0), 1)) 
         assert self.board.check_copy()
         
-    def test_SelectTool(self):
+    def test_select_tool(self):
         """
         This depends on the Tool list order not changing, unlikely from a UI
         perspective; note: select_tool() called in Whyteboard.__init__
@@ -110,19 +107,19 @@ class TestWhyteboard:
         self.board.select_tool()  
         assert isinstance(self.board.shape, tools.Rectangle)
         
-    def test_UndoThenRedo(self):
+    def test_undo_then_redo(self):
         """Test undoing/redoing together"""
         [self.board.undo() for x in range(4)]
         assert len(self.board.shapes) == len(self.shapes) - 4
         [self.board.redo() for x in range(4)]
         assert len(self.board.shapes) == len(self.shapes)        
 
-    def test_Clear(self):
+    def test_clear(self):
         self.board.clear()
         assert not self.board.shapes
         assert self.board.undo_list        
 
-    def test_ClearKeepImages(self):
+    def test_clear_keep_images(self):
         """
         Try clearing, asking to keep images without any images existing in the 
         list, then add an image and check again
@@ -136,7 +133,7 @@ class TestWhyteboard:
         assert self.board.shapes
         assert self.board.undo_list
         
-    def test_UndoAndRedoClear(self):
+    def test_undo_and_redo_clear(self):
         """
         Clear then undo = state restored. Redo; clear is re-applied = no shapes
         """
@@ -149,7 +146,7 @@ class TestWhyteboard:
 
 class TestGuiFunctionality:
 
-    def setup_class(self):
+    def setup(self):
         """
         Add a few mock tabs, each with random shapes
         """
@@ -161,7 +158,7 @@ class TestGuiFunctionality:
             make_shapes(self.board)
         assert len(self.gui.tabs.pages) == 10  
             
-    def test_CloseTab(self):
+    def test_close_tab(self):
         x = len(self.gui.tabs.pages)
         #self.gui.on_close_tab()
         #self.gui.on_change_tab()
