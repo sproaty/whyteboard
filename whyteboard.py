@@ -42,7 +42,7 @@ class Whyteboard(wx.ScrolledWindow):
         wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE
                                                         | wx.CLIP_CHILDREN )
         self.virtual_size = (1000, 1000)
-        self.area= (1000, 1000)
+        self.area = (1000, 1000)
         self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.virtual_size)
         self.SetScrollRate(3, 3)
@@ -316,7 +316,7 @@ class Whyteboard(wx.ScrolledWindow):
 
     def on_paint(self, event=None):
         """ Called when the window is exposed. """
-        dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+        wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
         
     def deselect(self):
         for x in self.shapes:

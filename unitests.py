@@ -166,3 +166,18 @@ class TestGuiFunctionality:
         #print self.gui.current_tab   
         #self.gui.on_close_tab()
         #assert len(self.gui.tabs.pages) == x - 1   
+        
+        
+class TestShapes:
+    def setup(self):
+        self.board = SimpleApp().board
+        self.gui = self.board.gui   
+    
+    def test_circle_hit(self):
+        circ = tools.Circle(self.board, (0, 0, 0), 1)    
+        circ.radius = 15
+        circ.x = 50
+        circ.y = 50
+        
+        assert circ.hit_test(50, 50)
+        assert not circ.hit_test(500, 500)     

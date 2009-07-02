@@ -27,7 +27,6 @@ import wx
 import time
 import os
 
-from copy import copy
 from dialogs import TextInput
 
 #----------------------------------------------------------------------
@@ -198,17 +197,21 @@ class Rectangle(OverlayShape):
         self.height = y - self.y
 
     def get_args(self):
-        """ Shape's custom drawing arguments """
-        x = [self.x, self.width]; x.sort()
-        y = [self.y, self.height]; y.sort()
-        #return [x[0], y[0], x[1] - x[0], y[1] - y[0]]
-        return [self.x, self.y, self.width, self.height]
-        
+        return [self.x, self.y, self.width, self.height]        
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
 
     def hit_test(self, x, y):
-        rect = wx.Rect(*self.get_args())
+        """
+        Do some rectangle conversions instead of having to deal with loads of 
+        long-winded if statements
+        """
+        a = [self.x, self.width + self.x]
+        b = [self.y, self.height + self.y]
+        a.sort()
+        b.sort()
+        args = [a[0], b[0], a[1] - a[0], b[1] - b[0]]
+        rect = wx.Rect(*args)
         return rect.InsideXY(x, y)
     
     def draw_selected(self, dc):
@@ -239,7 +242,7 @@ class Circle(OverlayShape):
         self.radius = self.x - x
 
     def draw(self, dc, replay=False):
-        super(Circle, self).draw(dc, replay, "Circle")
+        super(Circle, self).draw(dc, replay, "Circle")       
 
     def get_args(self):
         return [self.x, self.y, self.radius]
@@ -248,8 +251,24 @@ class Circle(OverlayShape):
         dc.DrawCircle(width/2, height/2, 15)
 
     def hit_test(self, x, y):
-        pass
-
+        val = ((x - self.x) * (x - self.x)) + ((y - self.y) * (y - self.y))
+        if val <= (self.radius * self.radius) + self.thickness:
+            return True
+        return False
+            
+    def draw_selected(self, dc):
+        dc.SetBrush(wx.BLACK_BRUSH)
+        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
+        x, y, radius = self.get_args() 
+        d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 5, 5)
+        if radius < 0:
+            radius = -radius
+        
+        d(dc, x - radius, y + radius)        
+        d(dc, x - radius, y - radius)
+        d(dc, x + radius, y + radius)
+        d(dc, x + radius, y - radius)  
+        
 #----------------------------------------------------------------------
 
 
@@ -322,9 +341,9 @@ class Line(OverlayShape):
     def preview(self, dc, width, height):
         dc.DrawLine(10, height / 2, width - 10, height / 2)
 
-    def hit_test(self, x, y):
-        rect = wx.Rect(*self.get_args())
-        return rect.InsideXY(x, y)
+    #def hit_test(self, x, y):
+    #    rect = wx.Rect(*self.get_args())
+    #    return rect.InsideXY(x, y)
 
 #---------------------------------------------------------------------
 
@@ -547,7 +566,10 @@ class Note(Text):
     tab can be viewed on the side panel.
     """
     tooltip = "Insert a note"
-
+    def __init__(self, board, colour, thickness):
+        Text.__init__(self, board, colour, thickness)
+        self.tree_id = None
+        
     def button_up(self, x, y,):
         """ Don't add a blank note """
         if super(Note, self).button_up(x, y):
@@ -727,12 +749,13 @@ class Select(Tool):
     """
     Select an item to move it around/edit text
     """
-    tooltip = "Select a shape to move it"
-    count = 0
+    tooltip = "Select a shape to move and resize it"
+    
     def __init__(self, board, image, path):
         Tool.__init__(self, board, (0, 0, 0), 1, wx.CURSOR_ARROW)
         self.shape = None
         self.dragging = False
+        self.count = 0
 
     def button_down(self, x, y):
         """
@@ -748,21 +771,20 @@ class Select(Tool):
                 self.shape = shapes[count]
 
                 self.board.selected = shape
-                shape.selected = True
+                self.shape.selected = True
                 self.dragging = True
                 self.count = count
                 break
         
     def double_click(self, x, y):
-        if isinstance(self.shape, Text):
+        if isinstance(self.board.selected, Text):
             self.dragging = False
-            self.shape.edit()
+            self.board.selected.edit()
 
     def motion(self, x, y):
         if self.dragging:
             self.shape.x = x
             self.shape.y = y
-
 
     def draw(self, dc, replay=False):
         if self.dragging:
@@ -770,10 +792,6 @@ class Select(Tool):
             
             
     def button_up(self, x, y):
-        """
-        need to add pop(x) to remove current shape for proper undoing
-        !!!!!
-        """
         if self.dragging:
             if isinstance(self.shape, Image):
                 size = (x + self.shape.image.GetWidth(), y + self.shape.image.GetHeight())
@@ -781,9 +799,10 @@ class Select(Tool):
                 self.dragging = False
 
         if not self.shape:
-            self.board.deselect()              
+            self.board.deselect()  # reset selection to nothing            
         self.board.overlay.Reset()
         self.board.redraw_all(update_thumb=True)
+        self.board.select_tool()
        
 
 #----------------------------------------------------------------------

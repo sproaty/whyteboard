@@ -30,7 +30,6 @@ import wx
 import wx.lib.newevent
 import os
 import sys
-from copy import copy
 
 import icon
 from whyteboard import Whyteboard

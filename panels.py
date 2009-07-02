@@ -186,10 +186,7 @@ class ControlPanel(wx.Panel):
         thickness = self.thickness.GetSelection()
         self.gui.util.thickness = thickness 
         if self.gui.board.selected:
-            item = copy(self.gui.board.selected)
-            item.thickness = thickness
-            #self.gui.board.shapes.remove(self.gui.board.selected)
-            self.gui.board.add_shape(item) 
+            self.gui.board.selected.thickness = thickness
             self.gui.board.redraw_all(True)  # causes a bug if drawn as above
         self.update()
 

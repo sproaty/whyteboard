@@ -66,7 +66,6 @@ try:
 except ImportError:
     import pickle
 
-
 from dialogs import ProgressDialog, FindIM
 import tools
 
@@ -105,7 +104,7 @@ class Utility(object):
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
        
         # Make wxPython wildcard filter. Add a new item - new type supported!
-        self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "gif", "tiff",
+        self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
                        "bmp", "pcx"]
         label = ["All files (*.*)", "Whyteboard files (*.wtbd)", "Image Files",
                  "PDF/PS/SVG"]
