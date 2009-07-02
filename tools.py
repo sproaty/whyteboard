@@ -752,12 +752,16 @@ class Select(Tool):
         for count, shape in enumerate(shapes):
             if shape.hit_test(x, y):              
                 self.shape = shapes[count]
+                #print self.shape.x
                 self.board.selected = self.shape
                 shape.selected = True
                 self.dragging = True
                 self.count = count
                 
-                self.dragDelta = (shape.x - x, shape.y - y)
+                self.func = shape.get_args
+                                
+                #self.old = (shape.x, shape.y)
+                #self.dragDelta = (shape.x - x, shape.y - y)
                 #self.method = shape.get_args
                 #_x = [x, shape.x]; _x.sort()
                 #_y = [y, shape.y]; _y.sort()                
@@ -773,28 +777,60 @@ class Select(Tool):
 
     def motion(self, x, y):
         if self.dragging:
-            #pass
             shape = self.shape  
             if isinstance(shape, Text):
                 shape.x = x
                 shape.y = y
-            else:
-              
+            else:    
+                
                 _x = [x, shape.x]
                 _y = [y, shape.y]
                 _x.sort()
                 _y.sort()
                 width = _x[1]-_x[0]
-                height = _y[1]-_y[0] 
-                shape.x = _x[1]
-                shape.y = _y[1]
-            #shape.width = width
-            #shape.height = height             
-            #shape.width = (shape.x - shape.width) + x 
-            #shape.height = (shape.y - shape.height) + y
-                              
-            #shape.x = x + self.dragDelta[0]
-            #shape.y = y + self.dragDelta[1]
+                height = _y[1]-_y[0]
+        
+                shape.x, shape.y = _x[0], _y[0]
+                shape.width, shape.height = width,height                
+                #shape.x = x
+                #shape.y = y
+                
+                #def get_args():
+                    #print 'eyyyyyyyyy!'
+                    #print shape.width
+                    #x = [shape.x, shape.width]
+                    #y = [shape.y, shape.height]
+                    #return [x[0], y[0], x[1] - x[0], y[1] - y[0]]                    
+                 #   return [shape.x, shape.y, shape.width, shape.height]
+                #self.shape.get_args = get_args
+
+                #w, h = (shape.width, shape.height)
+                
+
+                #self.shape.x = x
+                #self.shape.y = y                
+                #shape.width = x + self.old[0]
+                #shape.height = y + self.old[1]
+                #shape.widt h + x
+                #shape.height += shape.y
+                #print self.dragDelta[0]
+                #shape.x = x + self.dragDelta[0]
+                #shape.y = y + self.dragDelta[1]
+                #_x = [x, shape.x]
+                #_y = [y, shape.y]
+                #_x.sort()
+                #_y.sort()
+                #width = _x[1]-_x[0]
+                #height = _y[1]-_y[0] 
+                #shape.x = _x[1]
+                #shape.y = _y[1]
+                #shape.width = width
+                #shape.height = height             
+                #shape.width = (shape.x - shape.width) + x 
+                #shape.height = (shape.y - shape.height) + y
+                                  
+                #shape.x = x + self.dragDelta[0]
+                #shape.y = y + self.dragDelta[1]
 
             #print shape.x, shape.y
 
@@ -815,6 +851,7 @@ class Select(Tool):
                 size = (x + self.shape.image.GetWidth(), y + self.shape.image.GetHeight())
                 self.board.update_scrollbars(size)
                 self.dragging = False
+            #self.shape.get_args = self.func
         if not self.shape:
             self.board.deselect()              
         self.board.overlay.Reset()
