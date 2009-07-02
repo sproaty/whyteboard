@@ -32,7 +32,8 @@ Currently none.
 1x May 2009 - * Select tool: can select shapes to alter their colour/thickness,
                 edit text and notes, move shapes and resize them. Selected 
                 shapes are drawn with an outline "handle" at their corners
-                Images and text can also be repositioned
+                -- Images and text can also be repositioned
+                -- can double click text/notes to edit them
               * Improved undo/redo to support editing, moving and resizing
                 of objects as described above. Text edits can also be undone
               * Colour button in text input dialog, instead of always drawing 

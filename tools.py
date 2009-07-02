@@ -185,7 +185,6 @@ class Rectangle(OverlayShape):
 
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness)
-        self.rect = None
         self.width = 0
         self.height = 0
 
@@ -195,14 +194,15 @@ class Rectangle(OverlayShape):
         self.height = y
 
     def motion(self, x, y):
-        self.width = x
-        self.height = y
+        self.width =  x - self.x
+        self.height = y - self.y
 
     def get_args(self):
         """ Shape's custom drawing arguments """
         x = [self.x, self.width]; x.sort()
         y = [self.y, self.height]; y.sort()
-        return [x[0], y[0], x[1] - x[0], y[1] - y[0]]
+        #return [x[0], y[0], x[1] - x[0], y[1] - y[0]]
+        return [self.x, self.y, self.width, self.height]
         
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
@@ -234,11 +234,6 @@ class Circle(OverlayShape):
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness)
         self.radius = 1
-
-    #def button_down(self, x, y):
-    #    self.x = x
-    #    self.y = y
-        self.board.overlay = wx.Overlay()
 
     def motion(self, x, y):
         self.radius = self.x - x
@@ -399,7 +394,8 @@ class Text(OverlayShape):
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness, wx.CURSOR_CHAR)
         self.font = None
-        self.text = self.font_data = ""
+        self.text = ""
+        self.font_data = ""
         self.extent = (0, 0)
 
     def button_up(self, x, y):
@@ -449,11 +445,10 @@ class Text(OverlayShape):
         dummy.Destroy()
 
     def draw_selected(self, dc):
-        dc.SetBrush(wx.BLACK_BRUSH)
-        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
-        #x, y, width, height = self.get_args() 
         d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 2, 2)
         
+        dc.SetBrush(wx.BLACK_BRUSH)
+        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))        
         d(dc, self.x , self.y)        
         d(dc, self.x + self.extent[0], self.y)
         d(dc, self.x, self.y + self.extent[1])
@@ -608,11 +603,10 @@ class Note(Text):
 
     def draw_selected(self, dc):
         """Need to offset the 'handles' differently to text"""
-        dc.SetBrush(wx.BLACK_BRUSH)
-        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
-        #x, y, width, height = self.get_args() 
         d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 2, 2)
         
+        dc.SetBrush(wx.BLACK_BRUSH)
+        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))        
         d(dc, self.x - 11, self.y - 10)        
         d(dc, self.x + self.extent[0] - 6, self.y - 10)
         d(dc, self.x - 11, self.y + self.extent[1] - 10)
@@ -752,22 +746,11 @@ class Select(Tool):
         for count, shape in enumerate(shapes):
             if shape.hit_test(x, y):              
                 self.shape = shapes[count]
-                #print self.shape.x
-                self.board.selected = self.shape
+
+                self.board.selected = shape
                 shape.selected = True
                 self.dragging = True
                 self.count = count
-                
-                self.func = shape.get_args
-                                
-                #self.old = (shape.x, shape.y)
-                #self.dragDelta = (shape.x - x, shape.y - y)
-                #self.method = shape.get_args
-                #_x = [x, shape.x]; _x.sort()
-                #_y = [y, shape.y]; _y.sort()                
-                #m = lambda: [_x[0],_y[0], _x[1]-_x[0],_y[1]-_y[0]]
-                #self.shape.get_args = m
-                #print self.dragDelta
                 break
         
     def double_click(self, x, y):
@@ -777,69 +760,14 @@ class Select(Tool):
 
     def motion(self, x, y):
         if self.dragging:
-            shape = self.shape  
-            if isinstance(shape, Text):
-                shape.x = x
-                shape.y = y
-            else:    
-                
-                _x = [x, shape.x]
-                _y = [y, shape.y]
-                _x.sort()
-                _y.sort()
-                width = _x[1]-_x[0]
-                height = _y[1]-_y[0]
-        
-                shape.x, shape.y = _x[0], _y[0]
-                shape.width, shape.height = width,height                
-                #shape.x = x
-                #shape.y = y
-                
-                #def get_args():
-                    #print 'eyyyyyyyyy!'
-                    #print shape.width
-                    #x = [shape.x, shape.width]
-                    #y = [shape.y, shape.height]
-                    #return [x[0], y[0], x[1] - x[0], y[1] - y[0]]                    
-                 #   return [shape.x, shape.y, shape.width, shape.height]
-                #self.shape.get_args = get_args
-
-                #w, h = (shape.width, shape.height)
-                
-
-                #self.shape.x = x
-                #self.shape.y = y                
-                #shape.width = x + self.old[0]
-                #shape.height = y + self.old[1]
-                #shape.widt h + x
-                #shape.height += shape.y
-                #print self.dragDelta[0]
-                #shape.x = x + self.dragDelta[0]
-                #shape.y = y + self.dragDelta[1]
-                #_x = [x, shape.x]
-                #_y = [y, shape.y]
-                #_x.sort()
-                #_y.sort()
-                #width = _x[1]-_x[0]
-                #height = _y[1]-_y[0] 
-                #shape.x = _x[1]
-                #shape.y = _y[1]
-                #shape.width = width
-                #shape.height = height             
-                #shape.width = (shape.x - shape.width) + x 
-                #shape.height = (shape.y - shape.height) + y
-                                  
-                #shape.x = x + self.dragDelta[0]
-                #shape.y = y + self.dragDelta[1]
-
-            #print shape.x, shape.y
+            self.shape.x = x
+            self.shape.y = y
 
 
     def draw(self, dc, replay=False):
         if self.dragging:
             self.shape.draw(dc, False)   
             
-
             
     def button_up(self, x, y):
         """
@@ -851,7 +779,7 @@ class Select(Tool):
                 size = (x + self.shape.image.GetWidth(), y + self.shape.image.GetHeight())
                 self.board.update_scrollbars(size)
                 self.dragging = False
-            #self.shape.get_args = self.func
+
         if not self.shape:
             self.board.deselect()              
         self.board.overlay.Reset()

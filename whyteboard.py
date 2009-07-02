@@ -317,10 +317,6 @@ class Whyteboard(wx.ScrolledWindow):
     def on_paint(self, event=None):
         """ Called when the window is exposed. """
         dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-        #dc.SetBrush(wx.GREY_BRUSH)
-        #width = self.GetVirtualSize()[0] - self.area[0]
-        #height = self.GetVirtualSize()[1] - self.area[1]
-        #dc.DrawRectangle(0, self.area[1], self.GetVirtualSize()[1], height)
         
     def deselect(self):
         for x in self.shapes:
