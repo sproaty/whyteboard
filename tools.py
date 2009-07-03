@@ -53,7 +53,7 @@ class Tool(object):
     def button_up(self, x, y):
         """ Left button up. """
         pass
-
+    
     def motion(self, x, y):
         """ Mouse in motion (usually while drawing) """
         pass
@@ -166,7 +166,11 @@ class OverlayShape(Tool):
             
     def draw_selected(self, dc):
         pass
-                    
+
+    def offset(self, x, y):
+        """Used to move the shape, keeping the cursor in the same place"""
+        return (x - self.x, y - self.y)
+                        
     def get_args(self):
         pass
     
@@ -189,8 +193,6 @@ class Rectangle(OverlayShape):
 
     def button_down(self, x, y):
         super(Rectangle, self).button_down(x, y)
-        self.width = x
-        self.height = y
 
     def motion(self, x, y):
         self.width =  x - self.x
@@ -201,18 +203,25 @@ class Rectangle(OverlayShape):
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
 
-    def hit_test(self, x, y):
+    def sort_args(self):
         """
         Do some rectangle conversions instead of having to deal with loads of 
-        long-winded if statements
-        """
+        long-winded if statements.
+        """        
         a = [self.x, self.width + self.x]
         b = [self.y, self.height + self.y]
         a.sort()
         b.sort()
-        args = [a[0], b[0], a[1] - a[0], b[1] - b[0]]
-        rect = wx.Rect(*args)
+        return [a[0], b[0], a[1] - a[0], b[1] - b[0]]        
+
+    def hit_test(self, x, y):
+        rect = wx.Rect(*self.sort_args())
         return rect.InsideXY(x, y)
+    
+    def offset(self, x, y):
+        top, left = self.x, self.y#self.sort_args()[0], self.sort_args()[1]
+        return (x - top, y - left)
+        
     
     def draw_selected(self, dc):
         dc.SetBrush(wx.BLACK_BRUSH)
@@ -224,6 +233,7 @@ class Rectangle(OverlayShape):
         d(dc, x + width, y)
         d(dc, x, y + height)
         d(dc, x + width, y + height)         
+        
 
 #----------------------------------------------------------------------
 
@@ -298,11 +308,8 @@ class RoundRect(Rectangle):
 
     def get_args(self):
         args = super(RoundRect, self).get_args()
-        args.append(35)  # edge angle
+        args.append(35)
         return args
-
-    def hit_test(self, x, y):
-        pass
 
 #----------------------------------------------------------------------
 
@@ -441,8 +448,8 @@ class Text(OverlayShape):
             self.update_scroll()
             return True
         return False
-
-
+    
+    
     def update_scroll(self, redraw=True):
         """
         Updates the scrollbars of a Whyteboard if the entered text plus its
@@ -462,7 +469,7 @@ class Text(OverlayShape):
         dummy.SetFont(self.font)
         self.extent = dummy.GetTextExtent(self.text)
         dummy.Destroy()
-
+    
     def draw_selected(self, dc):
         d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 2, 2)
         
@@ -762,7 +769,7 @@ class Select(Tool):
         Sees if a shape is underneath the mouse coords, and allows the shape to
         be re-dragged to place
         """
-        self.board.deselect()
+        #self.board.deselect()
         self.board.overlay = wx.Overlay()
         shapes = self.board.shapes
         shapes.reverse()
@@ -774,6 +781,9 @@ class Select(Tool):
                 self.shape.selected = True
                 self.dragging = True
                 self.count = count
+                self.offset = self.shape.offset(x, y)
+                self.x = shape.x
+                self.y = shape.y
                 break
         
     def double_click(self, x, y):
@@ -783,8 +793,8 @@ class Select(Tool):
 
     def motion(self, x, y):
         if self.dragging:
-            self.shape.x = x
-            self.shape.y = y
+            self.shape.x = x - self.offset[0]
+            self.shape.y = y - self.offset[1]
 
     def draw(self, dc, replay=False):
         if self.dragging:

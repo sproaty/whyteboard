@@ -102,6 +102,8 @@ class TestWhyteboard:
         assert isinstance(self.board.shape, tools.Pen)
         self.board.select_tool(1)  # passing in Pen explicitly
         assert isinstance(self.board.shape, tools.Pen)
+        self.board.select_tool() 
+        assert isinstance(self.board.shape, tools.Pen)        
         self.board.select_tool(2)  
         assert isinstance(self.board.shape, tools.Rectangle)          
         self.board.select_tool()  
@@ -159,6 +161,7 @@ class TestGuiFunctionality:
         assert len(self.gui.tabs.pages) == 10  
             
     def test_close_tab(self):
+        """Currently lacking a faked tab thing that's good enough"""
         x = len(self.gui.tabs.pages)
         #self.gui.on_close_tab()
         #self.gui.on_change_tab()
@@ -169,6 +172,10 @@ class TestGuiFunctionality:
         
         
 class TestShapes:
+    """
+    We want to test shape's functionality, if they respond to their hit tests
+    correctly and boundaries.
+    """
     def setup(self):
         self.board = SimpleApp().board
         self.gui = self.board.gui   
@@ -180,4 +187,33 @@ class TestShapes:
         circ.y = 50
         
         assert circ.hit_test(50, 50)
-        assert not circ.hit_test(500, 500)     
+        assert circ.hit_test(38, 45)
+        assert circ.hit_test(36, 45)  # very edge  
+        assert not circ.hit_test(34, 50)  
+        
+    def test_rect_hit(self):
+        r1 =  tools.Rectangle(self.board, (0, 0, 0), 1)
+        r2 =  tools.Rectangle(self.board, (0, 0, 0), 1) 
+        r3 =  tools.Rectangle(self.board, (0, 0, 0), 1) 
+        r4 =  tools.Rectangle(self.board, (0, 0, 0), 1) 
+        x, y = 150, 150
+        r1.x, r2.x, r3.x, r4.x = x, x, x, x
+        r1.y, r2.y, r3.y, r4.y = y, y, y, y
+        
+        r1.width, r1.height = 50, 50
+        assert r1.hit_test(155, 155)
+        assert not r1.hit_test(145, 155) 
+        
+        r2.width, r2.height = -50, -50
+        assert r2.hit_test(120, 130)
+        assert not r2.hit_test(155, 155) 
+               
+        r3.width, r3.height = 50, -50
+        assert r3.hit_test(165, 130)
+        assert not r3.hit_test(140, 155) 
+                       
+        r4.width, r4.height = -50, 50  
+        assert r4.hit_test(120, 180)    
+        assert not r4.hit_test(120, 130)
+        assert not r4.hit_test(155, 155) 
+               

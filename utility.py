@@ -264,10 +264,12 @@ class Utility(object):
         except IndexError:
             version = "0.33"
         self.saved_version = version
-        
-        try:
-            font = wx.FFont(0, 0)            
-            font.SetNativeFontInfoFromString(temp[0][5])
+        font =  None
+         
+        try:             
+            if temp[0][5]:  
+                font = wx.FFont(0, 0)       
+                font.SetNativeFontInfoFromString(temp[0][5])
             self.font = font
         except IndexError:
             pass
@@ -417,8 +419,11 @@ class Utility(object):
             args = []            
                         
         if not self.saved:
-            msg = ("Your document has been modified.\nDo you want to save "
-                   "your changes?")
+            name = "Untitled"  
+            if self.filename:          
+                name = os.path.basename(self.filename)
+            msg = ('"%s" has been modified.\nDo you want to save '
+                   'your changes?' % name)
             dialog = wx.MessageDialog(self.gui, msg, "Save File?", style |
                                       wx.ICON_EXCLAMATION)
             val = dialog.ShowModal()
@@ -622,7 +627,7 @@ def make_filename():
     """
     Create a random filename using letters, numbers and other characters
     """
-    alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@$% " +
+    alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@$%_ " +
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     _list = []
     for x in random.sample(alphabet, random.randint(8, 20)):

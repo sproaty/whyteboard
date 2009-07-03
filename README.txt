@@ -44,8 +44,8 @@ Currently none.
               * The Pen tool will now draw in response to a single mouse click;
                 before the mouse needed to be moved to draw
               * Misc existing code improvements and performance increases
-              * Unit test improvements to help with adding new features and 
-                tracking down bugs
+              * More/better unit testing to help with adding new features, 
+                tracking down potential bugs and increased code confidence
               * Help files updates to reflect new changes and clarify any
                 issues before
 

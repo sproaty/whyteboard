@@ -485,7 +485,7 @@ class GUI(wx.Frame):
         """
         shape = self.board.shapes.pop()
         self.board.redraw_all()
-        rect = wx.Rect(*shape.get_args())
+        rect = wx.Rect(*shape.sort_args())
         self.util.set_clipboard(rect)
         self.count = 4
         self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)

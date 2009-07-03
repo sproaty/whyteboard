@@ -115,7 +115,7 @@ class Whyteboard(wx.ScrolledWindow):
             if after - before is not 0:
                 self.select_tool()
                 self.update_thumb()
-                self.deselect()
+                #self.deselect()
             self.drawing = False
 
     def left_double(self, event):
@@ -192,6 +192,8 @@ class Whyteboard(wx.ScrolledWindow):
         # undone
         if self.redo_list:
             self.redo_list = []
+        if self.selected:
+            self.deselect()
         if self.gui.util.saved:
             self.gui.util.saved = False
 
@@ -322,6 +324,7 @@ class Whyteboard(wx.ScrolledWindow):
         for x in self.shapes:
             if isinstance(x, OverlayShape):
                 x.selected = False
+        self.draw(self.selected)
         self.selected = None
         
         
@@ -331,6 +334,7 @@ class Whyteboard(wx.ScrolledWindow):
         return wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)    
         
     def draw(self, shape):
+        """Redraws a single shape"""
         dc = self.get_dc()
         shape.draw(dc)
         self.redraw_dirty(dc) 
