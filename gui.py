@@ -313,7 +313,7 @@ class GUI(wx.Frame):
         Updates the appropriate variables in the utility file class and loads
         the selected file.
         """
-        if name.endswith("wtbd"):
+        if name.endswith(".wtbd"):
             self.util.filename = name
         self.util.temp_file = name
         self.util.load_file()
@@ -333,7 +333,6 @@ class GUI(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
             _name = os.path.splitext(filename)[1].replace(".", "")
-
             types = {0: "png", 1: "jpg", 2: "bmp", 3: "tiff"}
 
             if not os.path.splitext(filename)[1]:
@@ -347,16 +346,12 @@ class GUI(wx.Frame):
 
 
     def on_new_win(self, event=None):
-        """
-        Fires up a new Whyteboard window
-        """
+        """Fires up a new Whyteboard window"""
         frame = GUI(None)
         frame.Show(True)
 
     def on_new_tab(self, event=None, name=None, wb=None):
-        """
-        Opens a new tab and selects it
-        """
+        """Opens a new tab, selects it, creates a new thumbnail and tree item"""
         if not wb:
             wb = Whyteboard(self.tabs, self)
         self.thumbs.new_thumb()
@@ -371,9 +366,7 @@ class GUI(wx.Frame):
 
 
     def on_change_tab(self, event=None):
-        """
-        Sets the GUI's board attribute to be the selected Whyteboard.
-        """
+        """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
         self.current_tab = self.tabs.GetSelection()
         self.thumbs.Scroll(-1, self.current_tab)
@@ -445,12 +438,10 @@ class GUI(wx.Frame):
         if _id == wx.ID_PASTE:
             self.count += 1
             if self.count == 5:
-                check = self.util.get_clipboard()
-
-                if check:
+                self.can_paste = False
+                                
+                if self.util.get_clipboard():
                     self.can_paste = True
-                else:
-                    self.can_paste = False
                 self.count = 0
             event.Enable(self.can_paste)
             self.menu.Enable(ID_PASTE_NEW, self.can_paste)

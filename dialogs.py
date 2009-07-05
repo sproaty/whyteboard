@@ -477,8 +477,7 @@ class TextInput(wx.Dialog):
             shape = board.shape
         self.transfer_data(shape)               
         board.redraw_all()  # stops overlapping text
-        dc = wx.BufferedDC(None, board.buffer)
-        shape.draw(dc, True)
+        self.gui.board.draw(shape, True)
 
     def transfer_data(self, text_obj):
         """Transfers the dialog's data to an object."""

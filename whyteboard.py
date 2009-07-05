@@ -27,7 +27,7 @@ its own undo/redo.
 import wx
 import wx.lib.dragscroller
 
-from tools import Image, Text, Note, RectSelect, Select, OverlayShape
+from tools import Image, Text, Note, BitmapSelect, Select, OverlayShape
 
 #----------------------------------------------------------------------
 
@@ -296,7 +296,7 @@ class Whyteboard(wx.ScrolledWindow):
         if self.shapes:
             shape = self.shapes[len(self.shapes)-1]
 
-            if isinstance(shape, RectSelect):
+            if isinstance(shape, BitmapSelect):
                 return shape
         return False
 
@@ -324,8 +324,9 @@ class Whyteboard(wx.ScrolledWindow):
         for x in self.shapes:
             if isinstance(x, OverlayShape):
                 x.selected = False
-        self.draw(self.selected)
-        self.selected = None
+        if self.selected:
+            self.draw(self.selected)
+            self.selected = None
         
         
     def get_dc(self):
@@ -333,10 +334,13 @@ class Whyteboard(wx.ScrolledWindow):
         self.PrepareDC(cdc)
         return wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)    
         
-    def draw(self, shape):
+    def draw(self, shape, replay=False):
         """Redraws a single shape"""
         dc = self.get_dc()
-        shape.draw(dc)
+        if replay:
+            shape.draw(dc, replay)
+        else:
+            shape.draw(dc)
         self.redraw_dirty(dc) 
                    
     def get_tab(self):

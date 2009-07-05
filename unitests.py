@@ -88,10 +88,10 @@ class TestWhyteboard:
         self.add(4)
         
     def test_check_copy(self):
-        """Returns false when a RectSelect isn't the top shape on the list"""
+        """Returns false when a BitmapSelect isn't the top shape on the list"""
         self.board.shapes = []
         assert not self.board.check_copy()
-        self.board.add_shape(tools.RectSelect(self.board, (0, 0, 0), 1)) 
+        self.board.add_shape(tools.BitmapSelect(self.board, (0, 0, 0), 1)) 
         assert self.board.check_copy()
         
     def test_select_tool(self):
@@ -105,9 +105,9 @@ class TestWhyteboard:
         self.board.select_tool() 
         assert isinstance(self.board.shape, tools.Pen)        
         self.board.select_tool(2)  
-        assert isinstance(self.board.shape, tools.Rectangle)          
+        assert isinstance(self.board.shape, tools.Eraser)          
         self.board.select_tool()  
-        assert isinstance(self.board.shape, tools.Rectangle)
+        assert isinstance(self.board.shape, tools.Eraser)
         
     def test_undo_then_redo(self):
         """Test undoing/redoing together"""

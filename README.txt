@@ -29,7 +29,7 @@ Currently none.
 
 ---- VERSION HISTORY ----
 
-1x May 2009 - * Select tool: can select shapes to alter their colour/thickness,
+xx Jul 2009 - * Select tool: can select shapes to alter their colour/thickness,
                 edit text and notes, move shapes and resize them. Selected 
                 shapes are drawn with an outline "handle" at their corners
                 -- Images and text can also be repositioned

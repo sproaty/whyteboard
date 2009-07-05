@@ -163,6 +163,9 @@ class DC(object):
     def __init__(self, *args, **kwds):
         self.__dict__.update(kwds)
         self.calls = []
+        
+    def GetMultiLineTextExtent(self, *args, **kwds):
+        return (0, 0)
 
     def __getattr__(self, attr):
         """Just fake any other methods"""
@@ -176,6 +179,9 @@ class PaintDC(DC):
     pass
 
 class MemoryDC(DC):
+    pass
+
+class WindowDC(DC):
     pass
 
 class ClientDC(DC):

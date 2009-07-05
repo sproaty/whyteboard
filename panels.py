@@ -43,17 +43,17 @@ class ControlPanel(wx.Panel):
         Stores a reference to the drawing preview and the toggled drawing tool.
         """
         wx.Panel.__init__(self, gui)
+        
         self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
-        self.gui = gui
         pane = self.cp.GetPane()  # every widget's parent
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        csizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetFocusIgnoringChildren()
-
+        self.gui = gui
         self.toggled = 1  # Pen, initallly
         self.preview = DrawingPreview(pane, self.gui)
-        self.tools = {}
+        self.tools = {}        
+        
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        csizer = wx.BoxSizer(wx.VERTICAL)
         toolsizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
 
         # Get list of class names as strings for each drawable tool
@@ -63,13 +63,12 @@ class ControlPanel(wx.Panel):
             b = wx.ToggleButton(pane, x + 1, name)
             b.SetToolTipString(gui.util.items[x].tooltip)
             b.Bind(wx.EVT_TOGGLEBUTTON, self.change_tool, id=x + 1)
-            toolsizer.Add(b, 0)
+            toolsizer.Add(b, 0, wx.EXPAND)
             self.tools[x + 1] = b
-
+            
         self.tools[self.toggled].SetValue(True)
         width = wx.StaticText(pane, label="Thickness:")
         prev = wx.StaticText(pane, label="Preview:")
-
         self.colour = wx.ColourPickerCtrl(pane)
         self.colour.SetToolTipString("Select a custom colour")
 
@@ -101,9 +100,9 @@ class ControlPanel(wx.Panel):
         box.Add(self.thickness, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
-
         csizer.Add(box, 1, wx.EXPAND)
         sizer.Add(self.cp, 1, wx.EXPAND)
+        
 
         self.SetSizer(sizer)
         self.cp.GetPane().SetSizer(csizer)
