@@ -26,7 +26,6 @@ with by the user (e.g. they can't draw an image directly)
 import wx
 import time
 import os
-import sys
 
 from dialogs import TextInput
 
@@ -158,7 +157,7 @@ class OverlayShape(Tool):
         dc.SetPen(self.pen)
         dc.SetBrush(self.brush)             
         method(*self.get_args())
-        #print self.selected
+
         if self.selected:
             self.draw_selected(dc)            
         if not replay:

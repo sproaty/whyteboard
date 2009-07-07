@@ -421,7 +421,7 @@ class TextInput(wx.Dialog):
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
         self.SetSizer(sizer)
 
-        #self.set_focus()
+        self.set_focus()
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
         self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)        
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)

@@ -239,7 +239,7 @@ class Utility(object):
         self.gui.control.change_tool(_id = self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
-        self.gui.SetTitle(os.path.split(self.filename)[1] +' - '+self.gui.title)
+        self.gui.SetTitle(os.path.split(filename)[1] + ' - ' + self.gui.title)
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
@@ -413,9 +413,7 @@ class Utility(object):
         don't show a cancel button, and explicitly restart if the user cancels
         out of the "save file" dialog (
         Method(*args) specifies the action to perform if user selects yes or no
-        """
-        #if not style:
-        #    style =                         
+        """                       
         if not args:
             args = []            
                         
@@ -599,11 +597,8 @@ def save_pasted_images(shapes):
         if isinstance(shape, tools.Image):
             img1 = shape.image.ConvertToImage()
 
-            if not shape.path:
-                print 'testing: %s' % shape
-                
+            if not shape.path:               
                 for path in data:
-                    #print 'path: %s' % path
                     if path == img1.GetData():
                         shape.path = path
                         break
@@ -616,7 +611,6 @@ def save_pasted_images(shapes):
                     shape.path = tmp_file
 
                     data[shape.path] = img1.GetData()
-                    print img1.GetData()
 
 def load_image(path, board):
     """

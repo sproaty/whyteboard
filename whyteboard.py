@@ -58,7 +58,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.shapes = []  # list of shapes for re-drawing/saving
         self.shape = None  # currently selected shape to draw with
         self.selected = None  # selected shape with Select tool
-        self.text  = None# current Text object for redraw all        
+        self.text  = None  # current Text object for redraw all        
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
