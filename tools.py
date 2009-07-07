@@ -35,7 +35,7 @@ class Tool(object):
     """ Abstract class representing a tool: Drawing board/colour/thickness """
     tooltip = ""
 
-    def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):        
+    def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
         self.board = board
         self.colour = colour
         self.thickness = thickness
@@ -53,7 +53,7 @@ class Tool(object):
     def button_up(self, x, y):
         """ Left button up. """
         pass
-    
+
     def motion(self, x, y):
         """ Mouse in motion (usually while drawing) """
         pass
@@ -104,8 +104,8 @@ class Pen(Tool):
     def button_up(self, x, y):
         if self.points:
             self.board.add_shape(self)
-            self.board.draw_shape(self) 
-        
+            self.board.draw_shape(self)
+
     def motion(self, x, y):
         self.points.append( [self.x, self.y, x, y] )
         self.time.append(time.time() )
@@ -129,8 +129,8 @@ class OverlayShape(Tool):
     """Contains methods for drawing an overlayed shape"""
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_CROSS):
         Tool.__init__(self, board, colour, thickness, cursor)
-        self.selected = False        
-            
+        self.selected = False
+
     def button_down(self, x, y):
         self.x = x
         self.y = y
@@ -147,35 +147,35 @@ class OverlayShape(Tool):
         Draws a shape polymorphically, using Python's introspection; can be
         called by its sub-classes.
         When called for a replay it renders itself; doesn't draw a temp outline.
-        """   
+        """
         if not replay:
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
-            
-        self.make_pen(dc)  # Note needs a DC to draw its outline here 
-        method = getattr(dc, "Draw" + _type)        
+
+        self.make_pen(dc)  # Note needs a DC to draw its outline here
+        method = getattr(dc, "Draw" + _type)
         dc.SetPen(self.pen)
-        dc.SetBrush(self.brush)             
+        dc.SetBrush(self.brush)
         method(*self.get_args())
 
         if self.selected:
-            self.draw_selected(dc)            
+            self.draw_selected(dc)
         if not replay:
             del odc
-            
+
     def draw_selected(self, dc):
         pass
 
     def offset(self, x, y):
         """Used to move the shape, keeping the cursor in the same place"""
         return (x - self.x, y - self.y)
-                        
+
     def get_args(self):
         pass
-    
+
     def load(self):
         self.selected = False
-                    
+
 #----------------------------------------------------------------------
 
 class Rectangle(OverlayShape):
@@ -195,34 +195,34 @@ class Rectangle(OverlayShape):
         self.height = y - self.y
 
     def get_args(self):
-        return [self.x, self.y, self.width, self.height]       
+        return [self.x, self.y, self.width, self.height]
 
     def sort_args(self):
         """
-        Do some rectangle conversions instead of having to deal with loads of 
+        Do some rectangle conversions instead of having to deal with loads of
         long-winded if statements.
-        """        
+        """
         x, y, width, height = self.x, self.y, self.width, self.height
-        return [min(x, width + x), min(y, height + y), abs(width), abs(height)]       
+        return [min(x, width + x), min(y, height + y), abs(width), abs(height)]
 
     def hit_test(self, x, y):
         rect = wx.Rect(*self.sort_args())
         return rect.InsideXY(x, y)
- 
+
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
-                   
+
     def draw_selected(self, dc):
         dc.SetBrush(wx.BLACK_BRUSH)
         dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
-        d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 5, 5)        
-        x, y, width, height = self.get_args() 
-        
-        d(dc, x, y)        
+        d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 5, 5)
+        x, y, width, height = self.get_args()
+
+        d(dc, x, y)
         d(dc, x + width, y)
         d(dc, x, y + height)
-        d(dc, x + width, y + height)         
-        
+        d(dc, x + width, y + height)
+
 
 #----------------------------------------------------------------------
 
@@ -241,7 +241,7 @@ class Circle(OverlayShape):
         self.radius = self.x - x
 
     def draw(self, dc, replay=False):
-        super(Circle, self).draw(dc, replay, "Circle")       
+        super(Circle, self).draw(dc, replay, "Circle")
 
     def get_args(self):
         return [self.x, self.y, self.radius]
@@ -254,19 +254,19 @@ class Circle(OverlayShape):
         if val <= (self.radius * self.radius) + self.thickness:
             return True
         return False
-            
+
     def draw_selected(self, dc):
         dc.SetBrush(wx.BLACK_BRUSH)
         dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
-        d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 5, 5)        
-        x, y, radius = self.get_args() 
+        d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 5, 5)
+        x, y, radius = self.get_args()
         radius = abs(radius)
-        
-        d(dc, x - radius, y + radius)        
+
+        d(dc, x - radius, y + radius)
         d(dc, x - radius, y - radius)
         d(dc, x + radius, y + radius)
-        d(dc, x + radius, y - radius)  
-        
+        d(dc, x + radius, y - radius)
+
 #----------------------------------------------------------------------
 
 
@@ -298,17 +298,17 @@ class RoundedRect(Rectangle):
         args = super(RoundedRect, self).get_args()
         args.append(35)
         return args
-    
+
     def draw_selected(self, dc):
         dc.SetBrush(wx.BLACK_BRUSH)
         dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
-        x, y, width, height, blargh = self.get_args() 
+        x, y, width, height, blargh = self.get_args()
         d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 5, 5)
-        
-        d(dc, x, y)        
+
+        d(dc, x, y)
         d(dc, x + width, y)
         d(dc, x, y + height)
-        d(dc, x + width, y + height)   
+        d(dc, x + width, y + height)
 #----------------------------------------------------------------------
 
 
@@ -377,13 +377,13 @@ class Eraser(Pen):
 
         img = wx.ImageFromBitmap(cursor)
         cursor = wx.CursorFromImage(img)
-        return cursor        
+        return cursor
 
     def preview(self, dc, width, height):
         thickness = self.thickness + 1
         dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
         dc.DrawRectangle(15, 7, 5 + thickness, 5 + thickness)
-        
+
     def save(self):
         super(Eraser, self).save()
         self.cursor = None
@@ -431,9 +431,9 @@ class Text(OverlayShape):
         self.extent = (0, 0)
 
     def button_down(self, x, y):
-        super(Text, self).button_down(x, y) 
+        super(Text, self).button_down(x, y)
         self.board.text = self
-               
+
     def button_up(self, x, y):
         """
         Shows the text input dialog, creates a new Shape object if the cancel
@@ -448,9 +448,9 @@ class Text(OverlayShape):
             dlg.Destroy()
             self.board.text = None
             self.board.redraw_all()
-            self.board.select_tool()            
+            self.board.select_tool()
             return False
-        
+
         dlg.transfer_data(self)  # grab font and text data
         self.font_data = self.font.GetNativeFontInfoDesc()
 
@@ -460,8 +460,8 @@ class Text(OverlayShape):
             return True
         self.board.text = None
         return False
-    
-    
+
+
     def update_scroll(self, redraw=True):
         """
         Updates the scrollbars of a Whyteboard if the entered text plus its
@@ -481,16 +481,16 @@ class Text(OverlayShape):
         x = dc.GetMultiLineTextExtent(self.text, self.font)
         self.extent = x[0], x[1]
 
-    
+
     def draw_selected(self, dc):
         d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 2, 2)
 
         dc.SetBrush(wx.BLACK_BRUSH)
-        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))        
-        d(dc, self.x , self.y)        
+        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
+        d(dc, self.x , self.y)
         d(dc, self.x + self.extent[0], self.y)
         d(dc, self.x, self.y + self.extent[1])
-        d(dc, self.x + self.extent[0], self.y + self.extent[1])   
+        d(dc, self.x + self.extent[0], self.y + self.extent[1])
 
 
     def restore_font(self):
@@ -504,7 +504,7 @@ class Text(OverlayShape):
             self.update_scroll()
         dc.SetFont(self.font)
         dc.SetTextForeground(self.colour)
-        super(Text, self).draw(dc, replay, "Label")             
+        super(Text, self).draw(dc, replay, "Label")
 
 
     def edit(self, event=None):
@@ -513,8 +513,8 @@ class Text(OverlayShape):
         font = self.font
         font_data = self.font_data
         colour = self.colour
-        
-        dlg = TextInput(self.board.gui, self)    
+
+        dlg = TextInput(self.board.gui, self)
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
             self.text = text  # restore attributes
@@ -525,14 +525,14 @@ class Text(OverlayShape):
             self.board.redraw_all()  # restore
         else:
             dlg.transfer_data(self)  # grab font and text data
-            self.font_data = self.font.GetNativeFontInfoDesc()            
-            
+            self.font_data = self.font.GetNativeFontInfoDesc()
+
             if not self.text:
                 self.text = text  # don't want a blank item
                 return False
             self.update_scroll()
             return True
-            
+
 
     def hit_test(self, x, y):
         width = self.x + self.extent[0]
@@ -541,7 +541,7 @@ class Text(OverlayShape):
         if x > self.x and x < width and y > self.y and y < height:
             return True
         return False
-        
+
     def get_args(self):
         w = self.x + self.extent[0]
         h = self.y + self.extent[1]
@@ -559,8 +559,8 @@ class Text(OverlayShape):
         super(Text, self).load()
         self.restore_font()
         self.update_scroll(False)
-        
-        
+
+
 #----------------------------------------------------------------------
 
 class Note(Text):
@@ -574,53 +574,53 @@ class Note(Text):
     def __init__(self, board, colour, thickness):
         Text.__init__(self, board, colour, thickness)
         self.tree_id = None
-        
+
     def button_up(self, x, y,):
         """ Don't add a blank note """
         if super(Note, self).button_up(x, y):
             self.board.gui.notes.add_note(self)
         else:
             self.board.redraw_all()
-            
+
     def edit(self):
         """Edit a non-blank Note by changing the tree item's text"""
         if super(Note, self).edit():
             tree = self.board.gui.notes.tree
             text = self.text.replace("\n", " ")[:15]
-            tree.SetItemText(self.tree_id, text)       
-        
+            tree.SetItemText(self.tree_id, text)
+
     def find_extent(self):
         """Overrides to add extra spacing to the extent for the rectangle."""
         super(Note, self).find_extent()
         self.extent = (self.extent[0] + 20, self.extent[1] + 20)
-        
+
     def make_pen(self, dc=None):
-        """We first must draw the Note outline"""        
+        """We first must draw the Note outline"""
         if dc:
             self.find_extent()
             dc.SetBrush(wx.Brush((255, 223, 120)))
             dc.SetPen(wx.Pen((0, 0, 0), 1))
-            dc.DrawRectangle(self.x - 10, self.y - 10, *self.extent)          
-        super(Note, self).make_pen() 
+            dc.DrawRectangle(self.x - 10, self.y - 10, *self.extent)
+        super(Note, self).make_pen()
 
 
     def draw_selected(self, dc):
         """Need to offset the 'handles' differently to text"""
         d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 2, 2)
-        
+
         dc.SetBrush(wx.BLACK_BRUSH)
-        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))        
-        d(dc, self.x - 11, self.y - 10)        
+        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
+        d(dc, self.x - 11, self.y - 10)
         d(dc, self.x + self.extent[0] - 6, self.y - 10)
         d(dc, self.x - 11, self.y + self.extent[1] - 10)
-        d(dc, self.x + self.extent[0] - 6, self.y + self.extent[1] - 10)  
-        
-        
+        d(dc, self.x + self.extent[0] - 6, self.y + self.extent[1] - 10)
+
+
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush((255, 223, 120)))
         dc.SetPen(wx.Pen((0, 0, 0), 1))
         dc.FloodFill(0, 0, (255, 255, 255))
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)      
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
         super(Note, self).preview(dc, width, height)
 
     def load(self, add_note=True):
@@ -654,7 +654,7 @@ class Image(OverlayShape):
 
     def draw(self, dc, replay=False):
         super(Image, self).draw(dc, replay, "Bitmap")
-                      
+
     def get_args(self):
         return [self.image, self.x, self.y]
 
@@ -664,7 +664,7 @@ class Image(OverlayShape):
 
     def load(self):
         super(Image, self).load()
-        if os.path.exists(self.path):            
+        if os.path.exists(self.path):
             self.image = wx.Bitmap(self.path)
             size = (self.image.GetWidth(), self.image.GetHeight())
             self.board.update_scrollbars(size)
@@ -695,23 +695,24 @@ class Select(Tool):
     Select an item to move it around/edit text
     """
     tooltip = "Select a shape to move and resize it"
-    
+
     def __init__(self, board, image, path):
         Tool.__init__(self, board, (0, 0, 0), 1, wx.CURSOR_ARROW)
         self.shape = None
         self.dragging = False
         self.count = 0
+        self.offset = (0, 0)
 
     def button_down(self, x, y):
         """
         Sees if a shape is underneath the mouse coords, and allows the shape to
         be re-dragged to place
-        """        
+        """
         self.board.overlay = wx.Overlay()
         shapes = self.board.shapes
         shapes.reverse()
         for count, shape in enumerate(shapes):
-            if shape.hit_test(x, y):              
+            if shape.hit_test(x, y):
                 self.shape = shapes[count]
                 self.dragging = True
                 self.count = count
@@ -721,14 +722,14 @@ class Select(Tool):
                 if self.board.selected:
                     self.board.deselect()
                 self.board.selected = shape
-                self.shape.selected = True                
+                self.shape.selected = True
                 break
         else:
             self.board.deselect()
 
     def double_click(self, x, y):
         if isinstance(self.board.selected, Text):
-            self.dragging = False            
+            self.dragging = False
             self.board.selected.edit()
 
     def motion(self, x, y):
@@ -737,23 +738,23 @@ class Select(Tool):
             #self.shape.height = y - self.y
             self.shape.x = x - self.offset[0]
             self.shape.y = y - self.offset[1]
-            
+
     def draw(self, dc, replay=False):
         if self.dragging:
-            self.shape.draw(dc, False)   
+            self.shape.draw(dc, False)
 
-            
+
     def button_up(self, x, y):
         if self.dragging:
             if isinstance(self.shape, Image):
                 size = (x + self.shape.image.GetWidth(), y + self.shape.image.GetHeight())
                 self.board.update_scrollbars(size)
                 self.dragging = False
-           
+
         self.board.overlay.Reset()
         self.board.redraw_all(update_thumb=True)
         self.board.select_tool()
-       
+
 
 #----------------------------------------------------------------------
 
@@ -764,11 +765,11 @@ class BitmapSelect(Rectangle):
     tooltip = "Select a rectangle region to copy as a bitmap"
     def __init__(self, board, image, path):
         Rectangle.__init__(self, board, (0, 0, 0), 2)
-        
+
     def make_pen(self, dc=None):
-        super(BitmapSelect, self).make_pen()        
+        super(BitmapSelect, self).make_pen()
         self.pen = wx.Pen(self.colour, self.thickness, wx.SHORT_DASH)
-        
+
     def draw(self, dc, replay=False):
         super(BitmapSelect, self).draw(dc, replay, "Rectangle")
 

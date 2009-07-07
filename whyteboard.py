@@ -58,7 +58,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.shapes = []  # list of shapes for re-drawing/saving
         self.shape = None  # currently selected shape to draw with
         self.selected = None  # selected shape with Select tool
-        self.text  = None  # current Text object for redraw all        
+        self.text  = None  # current Text object for redraw all
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
@@ -83,7 +83,7 @@ class Whyteboard(wx.ScrolledWindow):
 
         if not isinstance(self.shape, Text):
             self.drawing = True
-            if self.check_copy(): 
+            if self.check_copy():
                 self.shapes.pop()
                 self.redraw_all()
 
@@ -116,7 +116,7 @@ class Whyteboard(wx.ScrolledWindow):
         x, y = self.convert_coords(event)
         if isinstance(self.shape, Select):
             self.shape.double_click(x, y)
-            
+
     def redraw_dirty(self, dc):
         """
         Figure out what part of the window to refresh.
@@ -135,7 +135,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Redraws all shapes that have been drawn. self.text is used to show text
         characters as they're being typed, as new Text/Note objects have not
-        been added to self.shapes at this point. 
+        been added to self.shapes at this point.
         """
         dc = wx.BufferedDC(None, self.buffer)
         dc.Clear()
@@ -205,7 +205,7 @@ class Whyteboard(wx.ScrolledWindow):
             return  # stops possible errors from keyboard shortcut being held
         shape = self.undo_list.pop()
         self.redo_list.append(shape)
-        
+
         if isinstance(shape, Note):
             self.undo_note(shape)
             self.shapes.remove(shape)
@@ -222,7 +222,7 @@ class Whyteboard(wx.ScrolledWindow):
         Redoes an action, and adds it to the undo list.
         """
         if not self.redo_list:
-            return  # as above, kills any possible console/log spam       
+            return  # as above, kills any possible console/log spam
         item = self.redo_list.pop()
 
         if isinstance(item, Note):
@@ -318,21 +318,21 @@ class Whyteboard(wx.ScrolledWindow):
     def on_paint(self, event=None):
         """ Called when the window is exposed. """
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-        
+
     def deselect(self):
         for x in self.shapes:
             if isinstance(x, OverlayShape):
                 x.selected = False
-        if self.selected:       
+        if self.selected:
             self.draw_shape(self.selected)
             self.selected = None
-        
-        
+
+
     def get_dc(self):
         cdc = wx.ClientDC(self)
         self.PrepareDC(cdc)
-        return wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)    
-        
+        return wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+
     def draw_shape(self, shape, replay=False):
         """Redraws a single shape"""
         dc = self.get_dc()
@@ -340,8 +340,8 @@ class Whyteboard(wx.ScrolledWindow):
             shape.draw(dc, replay)
         else:
             shape.draw(dc)
-        self.redraw_dirty(dc) 
-                   
+        self.redraw_dirty(dc)
+
     def get_tab(self):
         """ Returns the current tab number of this Whyteboard instance. """
         return self.tab.GetSelection()

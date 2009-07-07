@@ -69,7 +69,7 @@ class GUI(wx.Frame):
     version = "0.38.0"
     title = "Whyteboard %s" % version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
-    
+
     def __init__(self, parent):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
@@ -101,7 +101,7 @@ class GUI(wx.Frame):
         self.board = Whyteboard(self.tabs, self)  # the active whiteboard tab
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
-        self.notes = self.panel.notes        
+        self.notes = self.panel.notes
         self.tabs.AddPage(self.board, "Sheet 1")
         self.box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         self.box.Add(self.control, 0, wx.EXPAND)
@@ -137,7 +137,7 @@ class GUI(wx.Frame):
         _export = wx.Menu()
         _export.Append(ID_EXP_PDF, '&PDF')
         _export.Append(ID_EXP_IMG, 'Current Sheet as &Image')
-        
+
         new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new Whyteboard instance")
         new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
 
@@ -180,7 +180,7 @@ class GUI(wx.Frame):
         sheets.AppendSeparator()
         sheets.Append(ID_CLEAR_SHEETS, "Clear All Sheets' &Drawings", "Clear all sheets' drawings (keep images)")
         sheets.Append(ID_CLEAR_ALL_SHEETS, "Clear &All Sheets", "Clear all sheets")
-        
+
         _help.Append(wx.ID_HELP, "&Contents\tF1", "View information about Whyteboard")
         _help.AppendSeparator()
         _help.Append(ID_UPDATE, "Check for &Updates\tF12", "Search for updates to Whyteboard")
@@ -212,7 +212,7 @@ class GUI(wx.Frame):
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new", 
+        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new",
                   "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "help", "update", "about"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXP_IMG, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
@@ -302,7 +302,7 @@ class GUI(wx.Frame):
             name = dlg.GetPath()
 
             if name.endswith(".wtbd"):
-                self.util.prompt_for_save(self.do_open, args=[name])    
+                self.util.prompt_for_save(self.do_open, args=[name])
             else:
                 self.do_open(name)
         else:
@@ -315,7 +315,7 @@ class GUI(wx.Frame):
         the selected file.
         """
         if name.endswith(".wtbd"):
-            self.util.load_wtbd(name)            
+            self.util.load_wtbd(name)
         else:
             self.util.temp_file = name
             self.util.load_file()
@@ -323,11 +323,11 @@ class GUI(wx.Frame):
 
     def on_export(self, event=None, pdf=None):
         """Exports the current sheet as an image, or all as a PDF."""
-        wc =  ("PDF (*.pdf)") 
+        wc =  ("PDF (*.pdf)")
         if not pdf:
             wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|"+
                    "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
-               
+
         dlg = wx.FileDialog(self, "Export data to...", style=wx.SAVE |
                              wx.OVERWRITE_PROMPT, wildcard=wc)
         if dlg.ShowModal() == wx.ID_OK:
@@ -373,8 +373,8 @@ class GUI(wx.Frame):
         self.current_tab = self.tabs.GetSelection()
         self.update_panels(True)
         self.thumbs.Scroll(-1, self.current_tab)
-        self.control.change_tool()                       
-        
+        self.control.change_tool()
+
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
@@ -388,7 +388,7 @@ class GUI(wx.Frame):
                 font.SetWeight(wx.FONTWEIGHT_BOLD)
             else:
                 font.SetWeight(wx.FONTWEIGHT_NORMAL)
-            self.thumbs.text[tab].SetFont(font)         
+            self.thumbs.text[tab].SetFont(font)
 
 
     def on_close_tab(self, event=None):
@@ -453,7 +453,7 @@ class GUI(wx.Frame):
             self.count += 1
             if self.count == 5:
                 self.can_paste = False
-                                
+
                 if self.util.get_clipboard():
                     self.can_paste = True
                 self.count = 0
@@ -513,7 +513,7 @@ class GUI(wx.Frame):
 
     def on_fullscreen(self, event=None):
         """ Toggles fullscreen """
-        flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION | 
+        flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION |
                wx.FULLSCREEN_NOSTATUSBAR)
         self.ShowFullScreen(not self.IsFullScreen(), flag)
 
@@ -590,7 +590,7 @@ class GUI(wx.Frame):
         """ Clears all sheets ***"""
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear()
-                        
+
     def on_refresh(self):
         """Refresh all thumbnails."""
         self.thumbs.update_all()
@@ -599,17 +599,17 @@ class GUI(wx.Frame):
         dlg = Resize(self)
         dlg.ShowModal()
         dlg.Destroy()
-        
+
     def on_update(self, event=None):
         """ Checks for new versions of the program ***"""
         dlg = UpdateDialog(self)
-        dlg.ShowModal()   
-            
+        dlg.ShowModal()
+
     def on_history(self, event=None):
         dlg = History(self)
         dlg.ShowModal()
         dlg.Destroy()
-        
+
     def on_help(self, event=None):
         """
         Shows the help file, if it exists, otherwise prompts the user to
@@ -622,19 +622,19 @@ class GUI(wx.Frame):
             self.help = wx.html.HtmlHelpController()
             self.help.AddBook(_file)
             self.help.DisplayContents()
-        else:                       
+        else:
             msg = ("Help files not found, do you want to download them?")
-            dlg = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)
-            if dlg.ShowModal() == wx.ID_YES:
+            d = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)
+            if d.ShowModal() == wx.ID_YES:
                 try:
-                    self.util.download_help_files()                
-                    wx.MessageBox("Folder whyteboard-help created")  
-                except IOError:           
+                    self.util.download_help_files()
+                    wx.MessageBox("Folder whyteboard-help created")
+                except IOError:
                     pass
                 else:
-                    self.on_help() 
+                    self.on_help()
 
-             
+
     def on_about(self, event=None):
         info = wx.AboutDialogInfo()
         info.Name = "Whyteboard"
@@ -643,7 +643,7 @@ class GUI(wx.Frame):
         info.Description = "A simle PDF annotator and image editor"
         info.WebSite = ("http://www.launchpad.net/whyteboard", "Launchpad")
         info.Developers = ["Steven Sproat"]
-        wx.AboutBox(info)        
+        wx.AboutBox(info)
 
 
 #----------------------------------------------------------------------
@@ -656,9 +656,9 @@ class WhyteboardApp(wx.App):
         #self.Bind(wx.EVT_CHAR, self.on_key)
         self.parse_args()
         self.delete_temp_files()
-        return True  
-    
-    def parse_args(self):      
+        return True
+
+    def parse_args(self):
         """Forward the first command-line arg to gui.do_open()"""
         try:
             _file = sys.argv[1]
@@ -666,7 +666,7 @@ class WhyteboardApp(wx.App):
                 self.frame.do_open(os.path.abspath(sys.argv[1]))
         except IndexError:
             pass
-   
+
     def delete_temp_files(self):
         """
         Delete temporary files from an update. Remove a backup exe, otherwise
@@ -678,9 +678,9 @@ class WhyteboardApp(wx.App):
         else:
             path = self.frame.util.path[0]
             for f in os.listdir(path):
-                if f.find(self.frame.util.backup_ext) is not -1:               
-                    os.remove(os.path.join(path, f))                                       
-            
+                if f.find(self.frame.util.backup_ext) is not -1:
+                    os.remove(os.path.join(path, f))
+
 
     def on_key(self, event):
         """ Change tool when a number is pressed """

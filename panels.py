@@ -24,8 +24,6 @@ import wx
 from wx.lib import scrolledpanel as scrolled
 from copy import copy
 
-from dialogs import TextInput
-
 #----------------------------------------------------------------------
 
 class ControlPanel(wx.Panel):
@@ -43,15 +41,15 @@ class ControlPanel(wx.Panel):
         Stores a reference to the drawing preview and the toggled drawing tool.
         """
         wx.Panel.__init__(self, gui)
-        
+
         self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
         pane = self.cp.GetPane()  # every widget's parent
         self.gui = gui
         self.toggled = 1  # Pen, initallly
         self.preview = DrawingPreview(pane, self.gui)
-        self.tools = {}        
-        
+        self.tools = {}
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
         toolsizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
@@ -65,7 +63,7 @@ class ControlPanel(wx.Panel):
             b.Bind(wx.EVT_TOGGLEBUTTON, self.change_tool, id=x + 1)
             toolsizer.Add(b, 0, wx.EXPAND)
             self.tools[x + 1] = b
-            
+
         self.tools[self.toggled].SetValue(True)
         width = wx.StaticText(pane, label="Thickness:")
         prev = wx.StaticText(pane, label="Preview:")
@@ -102,7 +100,7 @@ class ControlPanel(wx.Panel):
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
         csizer.Add(box, 1, wx.EXPAND)
         sizer.Add(self.cp, 1, wx.EXPAND)
-        
+
 
         self.SetSizer(sizer)
         self.cp.GetPane().SetSizer(csizer)
@@ -153,12 +151,12 @@ class ControlPanel(wx.Panel):
         if event:
             new = int(event.GetId() )  # get widget ID
         elif _id:
-            new = _id        
-            
+            new = _id
+
         self.tools[self.toggled].SetValue(True)
         if new != self.toggled:  # toggle old button
             self.tools[self.toggled].SetValue(False)
-            self.tools[new].SetValue(True)           
+            self.tools[new].SetValue(True)
 
         self.toggled = new
         if self.gui.board:
@@ -173,17 +171,17 @@ class ControlPanel(wx.Panel):
         if event and not colour:
             colour = event.GetColour()  # from the colour button
         self.gui.util.colour = colour
-        self.colour.SetColour(colour)            
+        self.colour.SetColour(colour)
         if self.gui.board.selected:
             selected = self.gui.board.selected
             selected.colour = colour
             self.gui.board.draw_shape(selected)  # no need to redraw all
         self.update()
-        
+
     def change_thickness(self, event=None):
         """Changes thickness and updates the preview window."""
         thickness = self.thickness.GetSelection()
-        self.gui.util.thickness = thickness 
+        self.gui.util.thickness = thickness
         if self.gui.board.selected:
             self.gui.board.selected.thickness = thickness
             self.gui.board.redraw_all(True)  # causes a bug if drawn as above
@@ -192,8 +190,8 @@ class ControlPanel(wx.Panel):
     def update(self):
         """Small method to save repeating code"""
         self.gui.board.select_tool()
-        self.preview.Refresh()     
-            
+        self.preview.Refresh()
+
 #----------------------------------------------------------------------
 
 
@@ -312,8 +310,8 @@ class Notes(wx.Panel):
             _id = self.tabs[self.gui.tabs.GetSelection()]
         else:
             _id = self.tabs[_id]
-        
-        note.tree_id = self.tree.AppendItem(_id, text, data=wx.TreeItemData(note))
+        data = wx.TreeItemData(note)
+        note.tree_id = self.tree.AppendItem(_id, text, data=data)
         self.tree.Expand(_id)
 
 

@@ -222,22 +222,22 @@ class UpdateDialog(wx.Dialog):
     """
     def __init__(self, gui):
         """Defines a gauge and a timer which updates the gauge."""
-        wx.Dialog.__init__(self, gui, title="Updates", size=(350, 300))        
+        wx.Dialog.__init__(self, gui, title="Updates", size=(350, 300))
         self.gui = gui
         self.downloaded = 0
         gap = wx.LEFT | wx.TOP | wx.RIGHT
-        
+
         self.text = wx.StaticText(self, label="Connecting to server...")
         self.text2 = wx.StaticText(self, label="")
         font = self.text.GetClassDefaultAttributes().font
         font.SetPointSize(11)
-        self.text.SetFont(font) 
+        self.text.SetFont(font)
         self.text2.SetFont(font)
-        
+
         self.btn = wx.Button(self, label="Update")
-        self.btn.Disable() 
+        self.btn.Disable()
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
-        self.cancelButton.SetDefault()        
+        self.cancelButton.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 2)
 
@@ -249,55 +249,55 @@ class UpdateDialog(wx.Dialog):
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
         self.SetSizer(sizer)
 
-        self.btn.Bind(wx.EVT_BUTTON, self.update)  
-        wx.CallAfter(self.check)  # we want to show the dialog then fetch URL  
+        self.btn.Bind(wx.EVT_BUTTON, self.update)
+        wx.CallAfter(self.check)  # we want to show the dialog then fetch URL
 
 
-    def check(self):  
-        """             
+    def check(self):
+        """
         Opens a connection to Google Code's site and uses BeautifulSoup to
         parse the website for the filename and file size. Extract the new
-        file's version from its filename, and compare against current version 
+        file's version from its filename, and compare against current version
         """
         try:
             f = urllib.urlopen("http://code.google.com/p/whyteboard/downloads/list")
         except IOError:
             self.text.SetLabel("Could not connect to server.")
-            return            
+            return
         html = f.read()
-        f.close()        
+        f.close()
         soup = BeautifulSoup(html)
         found = False
         _type = ".tar.gz"
         if os.name == "nt":
             if self.gui.util.is_exe():
-                _type = ".exe"                
-                    
+                _type = ".exe"
+
         for i, td in enumerate(soup.findAll("td", {"class": "vt id col_0"})):
             _file = td.findNext('a').renderContents().strip()
-                
-            if _file.endswith(_type):              
-                if _file.find("installer") != -1:                     
-                    continue  # ignore it                 
-                                
+
+            if _file.endswith(_type):
+                if _file.find("installer") != -1:
+                    continue  # ignore it
+
                 found = True
                 start = _file.find("-") + 1
                 stop = _file.find(_type)
-                version = _file[start : stop]                                  
+                version = _file[start : stop]
                 all = soup.findAll("td", {"class": "vt col_3"})
-                size = all[i].findNext('a').renderContents().strip()            
-             
-                if version != self.gui.version:  
+                size = all[i].findNext('a').renderContents().strip()
+
+                if version != self.gui.version:
                     s = (" There is a new version available, "+version +"\n"+
                          " File: " +_file +"\n"+
-                         " Size: " + size)                
+                         " Size: " + size)
                     self.text.SetLabel(s)
                     self.btn.Enable(True)
                     self._file = td.findNext('a')['href']
                     self._type = _type
                     self.version = version
                 else:
-                    self.text.SetLabel("You are running the latest version.")        
+                    self.text.SetLabel("You are running the latest version.")
         if not found:
             self.text.SetLabel("Error getting file list from the server.")
 
@@ -310,54 +310,54 @@ class UpdateDialog(wx.Dialog):
         save or not)
         """
         path = self.gui.util.path
-        args = []  # args to reload running program, may include filename     
+        args = []  # args to reload running program, may include filename
         tmp = None
-        tmp_file = os.path.join(path[0], 'tmp'+ self._type)    
+        tmp_file = os.path.join(path[0], 'tmp'+ self._type)
         try:
             tmp = urllib.urlretrieve(self._file, tmp_file, self.reporter)
         except IOError:
             self.text.SetLabel("Could not connect to server.")
             self.btn.SetLabel("Retry")
-            return              
-                
+            return
+
         if self.gui.util.is_exe():
             # rename current exe, rename temp to current
             if os.name == "nt":
-                os.rename(path[1], "wtbd-bckup.exe")                             
-                os.rename("tmp.exe", "whyteboard.exe")                      
-                args = [sys.argv[0], [sys.argv[0]]]                                   
+                os.rename(path[1], "wtbd-bckup.exe")
+                os.rename("tmp.exe", "whyteboard.exe")
+                args = [sys.argv[0], [sys.argv[0]]]
         else:
             if os.name == "posix":
-                os.system("tar -xf "+ tmp[0] +" --strip-components=1")     
+                os.system("tar -xf "+ tmp[0] +" --strip-components=1")
             else:
                 p = os.path.abspath(tmp[0])
-                self.gui.util.extract_tar(p, self.version)                                
-            os.remove(tmp[0])                       
-            args = ['python', ['python', sys.argv[0]]]  # for os.execvp  
-                    
-        if self.gui.util.filename:   
-            name = "\""+self.gui.util.filename+"\""  # gotta escape for Windows              
-            args[1].append(name)  # restart, load .wtbd                
-        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)      
-        
-                        
+                self.gui.util.extract_tar(p, self.version)
+            os.remove(tmp[0])
+            args = ['python', ['python', sys.argv[0]]]  # for os.execvp
+
+        if self.gui.util.filename:
+            name = "\""+self.gui.util.filename+"\""  # gotta escape for Windows
+            args[1].append(name)  # restart, load .wtbd
+        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)
+
+
     def reporter(self, count, block, total):
         """Updates a text label with progress on a download"""
-        self.downloaded += block             
+        self.downloaded += block
         done = self.downloaded / 1024
-                          
+
         _type2 = "KB"
         total /= 1024
         rem = ""
         if total > 1024:
             rem = "."+ str(total % 1024)
-            total /= 1024            
+            total /= 1024
             _type2 = "MB"
-                    
-        self.text2.SetLabel("Downloaded "+str(done) + "KB of "+ str(total) +                               
-                                          rem + _type2)              
 
-            
+        self.text2.SetLabel("Downloaded "+str(done) + "KB of "+ str(total) +
+                                          rem + _type2)
+
+
 #----------------------------------------------------------------------
 
 
@@ -372,43 +372,43 @@ class TextInput(wx.Dialog):
         """
         wx.Dialog.__init__(self, gui, title="Enter text",
                             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
-        
+
         self.ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(300, 120))
         self.okButton = wx.Button(self, wx.ID_OK, "&OK")
         self.okButton.SetDefault()
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")        
-        self.colourBtn = wx.ColourPickerCtrl(self) 
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+        self.colourBtn = wx.ColourPickerCtrl(self)
         fontBtn = wx.Button(self, label="Select Font")
-                        
+
         extent = self.ctrl.GetFullTextExtent("Hy")
         lineHeight = extent[1] + extent[3]
         self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
-        
+
         if not gui.util.font:
             gui.util.font = self.ctrl.GetFont()
 
         self.gui = gui
         self.note = None
         self.colour = gui.util.colour
-        gap = wx.LEFT | wx.TOP | wx.RIGHT               
-        text = ""            
-        
+        gap = wx.LEFT | wx.TOP | wx.RIGHT
+        text = ""
+
         if note:
             self.note = note
-            self.colour = note.colour 
+            self.colour = note.colour
             text = note.text
             font = wx.FFont(0, 0)
             font.SetNativeFontInfoFromString(note.font_data)
         else:
-            font = gui.util.font 
-           
+            font = gui.util.font
+
         self.set_text_colour(text)
-        self.ctrl.SetFont(font)  
+        self.ctrl.SetFont(font)
         self.colourBtn.SetColour(self.colour)
 
         _sizer = wx.BoxSizer(wx.HORIZONTAL)
         _sizer.Add(fontBtn, 0, wx.RIGHT, 5)
-        _sizer.Add(self.colourBtn, 0)        
+        _sizer.Add(self.colourBtn, 0)
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
         btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
@@ -423,7 +423,7 @@ class TextInput(wx.Dialog):
 
         self.set_focus()
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
-        self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)        
+        self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
         self.Bind(wx.EVT_BUTTON, self.on_close, self.cancelButton)
 
@@ -440,27 +440,27 @@ class TextInput(wx.Dialog):
         if dlg.ShowModal() == wx.ID_OK:
             data = dlg.GetFontData()
             self.gui.util.font = data.GetChosenFont()
-            self.ctrl.SetFont(self.gui.util.font)   
+            self.ctrl.SetFont(self.gui.util.font)
             self.set_text_colour()
             self.update_canvas() # Update dialog with new text height
         dlg.Destroy()
         self.set_focus()
 
-        
+
     def on_colour(self, event):
         """Change text colour to the chosen one"""
         self.colour = event.GetColour()
         self.set_text_colour()
         self.update_canvas()
         self.set_focus()
-    
+
     def set_text_colour(self, text=None):
         """Updates (or forces...) the text colour"""
         if not text:
-            text = self.ctrl.GetValue()                             
+            text = self.ctrl.GetValue()
         self.ctrl.SetValue("")
         self.ctrl.SetForegroundColour(self.colour)
-        self.ctrl.SetValue(text)        
+        self.ctrl.SetValue(text)
 
     def set_focus(self):
         """Gives the text focus, places the cursor at the end of the text"""
@@ -475,8 +475,8 @@ class TextInput(wx.Dialog):
         else:
             board = self.gui.board
             shape = board.shape
-        self.transfer_data(shape)  
-        shape.find_extent()           
+        self.transfer_data(shape)
+        shape.find_extent()
         board.redraw_all()  # stops overlapping text
 
     def transfer_data(self, text_obj):
@@ -606,7 +606,7 @@ class Resize(wx.Dialog):
         board = self.gui.board
         board.buffer = wx.EmptyBitmap(*value)
         board.SetVirtualSize(value)
-        board.redraw_all()        
+        board.redraw_all()
         #board.SetVirtualSize(value)
         #board.SetSize(value)
         #board.SetBackgroundColour("Grey")

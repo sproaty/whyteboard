@@ -23,7 +23,7 @@ loading a standard image.
 
 The saved file structure is:
 
-  dictionary { 0: [colour, thickness, tool, tab, version, font],   - program settings
+  dictionary { 0: [colour, thickness, tool, tab, version, font], - app settings
                1: shapes { 0: [shape1, shape2, .. shapeN],  1 / shapes
                            1: [shape1, shape2, .. shapeN],  2 / shapes
                            ..
@@ -102,7 +102,7 @@ class Utility(object):
         self.backup_ext = ".blahblah123blah"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
-       
+
         # Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
                        "bmp", "pcx"]
@@ -140,9 +140,9 @@ class Utility(object):
                     for shape in temp[x]:
                         if isinstance(shape, tools.Note):
                             tree_ids.append(shape.tree_id)
-                            shape.tree_id = None     
+                            shape.tree_id = None
                         if isinstance(shape, tools.BitmapSelect):
-                            temp[x].remove(shape)                
+                            temp[x].remove(shape)
                         shape.save()  # need to unlink unpickleable items;
 
                 version = self.gui.version
@@ -153,7 +153,7 @@ class Utility(object):
                 tab = self.gui.tabs.GetSelection()
                 font = None
                 if self.font:
-                    font = self.font.GetNativeFontInfoDesc() 
+                    font = self.font.GetNativeFontInfoDesc()
                 _file = { 0: [self.colour, self.thickness, self.tool, tab,
                               version, font],
                           1: temp,
@@ -265,15 +265,15 @@ class Utility(object):
             version = "0.33"
         self.saved_version = version
         font =  None
-         
-        try:             
-            if temp[0][5]:  
-                font = wx.FFont(0, 0)       
+
+        try:
+            if temp[0][5]:
+                font = wx.FFont(0, 0)
                 font.SetNativeFontInfoFromString(temp[0][5])
             self.font = font
         except IndexError:
             pass
-        
+
         #  Don't save .wtbd file of future versions as current, older version
         num = [int(x) for x in version.split(".")]
         ver = [int(x) for x in self.gui.version.split(".")]
@@ -404,22 +404,22 @@ class Utility(object):
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
         self.gui.board.Destroy()
-        
-            
+
+
     def prompt_for_save(self, method, style=wx.YES_NO | wx.CANCEL, args=None):
         """
         Ask the user to save, quit or cancel (quitting) if they haven't saved.
-        Can be called through "Update", "Open (.wtbd)", or "Exit". If updating, 
+        Can be called through "Update", "Open (.wtbd)", or "Exit". If updating,
         don't show a cancel button, and explicitly restart if the user cancels
         out of the "save file" dialog (
         Method(*args) specifies the action to perform if user selects yes or no
-        """                       
+        """
         if not args:
-            args = []            
-                        
+            args = []
+
         if not self.saved:
-            name = "Untitled"  
-            if self.filename:          
+            name = "Untitled"
+            if self.filename:
                 name = os.path.basename(self.filename)
             msg = ('"%s" has been modified.\nDo you want to save '
                    'your changes?' % name)
@@ -430,17 +430,17 @@ class Utility(object):
             if val == wx.ID_YES:
                 self.gui.on_save()
                 if self.saved or method == os.execvp:
-                    method(*args)  # force restart, otherwise 'cancel' 
+                    method(*args)  # force restart, otherwise 'cancel'
                                    # returns to application
 
-            if val == wx.ID_NO:                                                                     
+            if val == wx.ID_NO:
                 method(*args)
             if val == wx.ID_CANCEL:
                 dialog.Close()
         else:
-            method(*args)   
-                   
-            
+            method(*args)
+
+
     def prompt_for_im(self):
         """
         Prompts a Windows user for ImageMagick's directory location on
@@ -488,23 +488,23 @@ class Utility(object):
     def download_help_files(self):
         """
         Downloads the help files to the user's directory and shows them
-        """  
-        _file = os.path.join(self.path[0], "whyteboard-help.tar.gz") 
-        url = "http://whyteboard.googlecode.com/files/helpfiles.tar.gz"        
+        """
+        _file = os.path.join(self.path[0], "whyteboard-help.tar.gz")
+        url = "http://whyteboard.googlecode.com/files/helpfiles.tar.gz"
         tmp = None
-        try:        
+        try:
             tmp = urllib.urlretrieve(url, _file)
         except IOError:
             wx.MessageBox("Could not connect to server.", "Error")
-            raise IOError 
-        
+            raise IOError
+
         if os.name == "posix":
-            os.system("tar -xf "+ tmp[0])  
+            os.system("tar -xf "+ tmp[0])
         else:
-            tar = tarfile.open(tmp[0])       
+            tar = tarfile.open(tmp[0])
             tar.extractall(self.path[0])
-            tar.close() 
-        os.remove(tmp[0])  
+            tar.close()
+        os.remove(tmp[0])
 
 
     def extract_tar(self, _file, version):
@@ -513,42 +513,42 @@ class Utility(object):
         'tar' command, and with no other downloads!
         """
         path = self.path[0]
-        tar = tarfile.open(_file)       
+        tar = tarfile.open(_file)
         tar.extractall(path)
-        tar.close() 
-        # remove 2 folders that will be updated, may not exist   
+        tar.close()
+        # remove 2 folders that will be updated, may not exist
         src = os.path.join(path, "whyteboard-"+ version)
-        
+
         widgs = os.path.join(path, "fakewidgets")
         helps = os.path.join(path, "helpfiles")
         if os.path.exists(widgs):
-            distutils.dir_util.remove_tree(widgs)        
+            distutils.dir_util.remove_tree(widgs)
         if os.path.exists(helps):
-            distutils.dir_util.remove_tree(helps)        
-               
-        # rename all relevant files - ignore any dirs  
+            distutils.dir_util.remove_tree(helps)
+
+        # rename all relevant files - ignore any dirs
         for f in os.listdir(path):
             location = os.path.join(path, f)
-            if not os.path.isdir(location):  
-                _type = os.path.splitext(f)              
- 
-                if _type[1] in [".py", ".txt"]:   
-                    new_file = os.path.join(path, _type[0]) + self.backup_ext                                                                    
+            if not os.path.isdir(location):
+                _type = os.path.splitext(f)
+
+                if _type[1] in [".py", ".txt"]:
+                    new_file = os.path.join(path, _type[0]) + self.backup_ext
                     os.rename(location, new_file)
-                                
+
         # move extracted file to current dir, remove tar, remove extracted dir
         distutils.dir_util.copy_tree(src, path)
-        distutils.dir_util.remove_tree(src) 
-        
+        distutils.dir_util.remove_tree(src)
+
 
     def is_exe(self):
         """Determine if Whyteboard's being run from an exe"""
         try:
             x = sys.frozen
-            return True        
+            return True
         except AttributeError:
             return False
-                                   
+
     def get_clipboard(self):
         """Checks the clipboard for any valid image data to paste"""
         bmp = wx.BitmapDataObject()
@@ -569,7 +569,7 @@ class Utility(object):
         wx.TheClipboard.SetData(bmp)
         wx.TheClipboard.Close()
 
-            
+
 #----------------------------------------------------------------------
 
 class FileDropTarget(wx.FileDropTarget):
@@ -597,7 +597,7 @@ def save_pasted_images(shapes):
         if isinstance(shape, tools.Image):
             img1 = shape.image.ConvertToImage()
 
-            if not shape.path:               
+            if not shape.path:
                 for path in data:
                     if path == img1.GetData():
                         shape.path = path
@@ -617,7 +617,7 @@ def load_image(path, board):
     Loads an image into the given Whyteboard tab. bitmap is the path to an
     image file to create a bitmap from.
     """
-    image = wx.Bitmap(path)   
+    image = wx.Bitmap(path)
     shape = tools.Image(board, image, path)
     shape.button_down(0, 0)  # renders, updates scrollbars
 
