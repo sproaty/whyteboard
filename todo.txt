@@ -1,4 +1,4 @@
-Whyteboard 0.37.1 - To do list
+Whyteboard 0.38 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Mon 20 Apr 2009 06:06:12 BST
 
@@ -6,11 +6,10 @@ Mon 20 Apr 2009 06:06:12 BST
 
 -- see: https://blueprints.launchpad.net/whyteboard
 - Improved file sharing
-- backwards/forwards compatibility
 
 
 Eventually, long term:
 
- - network support w/ twisted
- - "select" tool to move drawn items around (in progress)
- - slider bar to "move" through a drawing's timeline in a replay
+ - Network support w/ Twisted (a Python library)
+ - Slider bar to "move" back/forwards through a drawing's timeline in a replay,
+   as well as being able to jump to the start/end 

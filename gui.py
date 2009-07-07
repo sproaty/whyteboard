@@ -115,6 +115,7 @@ class GUI(wx.Frame):
         wx.UpdateUIEvent.SetUpdateInterval(65)
         wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         self.do_bindings()
+        self.update_panels(True)  # bold first items
         self.UpdateWindowUI()
 
 
@@ -167,7 +168,7 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
         edit.AppendItem(pnew)
 
-        view.Append(ID_FULLSCREEN, " &Full Screen\t91", "View Whyteboard in full-screen mode", kind=wx.ITEM_CHECK)
+        view.Append(ID_FULLSCREEN, " &Full Screen\tF11", "View Whyteboard in full-screen mode", kind=wx.ITEM_CHECK)
         view.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
 
         sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
@@ -290,9 +291,9 @@ class GUI(wx.Frame):
         """
         wc = self.util.wildcard
         if text == "img":
-            wc = wc[ wc.find("I") : wc.find("P") ]  # image to page
+            wc = wc[ wc.find("Image") : wc.find("|PDF") ]  # image to page
         elif text:
-            wc = wc[ wc.find("P"):]  # page descriptions
+            wc = wc[ wc.find("PDF") :]  # page descriptions
 
         dlg = wx.FileDialog(self, "Open file...", style=wx.OPEN, wildcard=wc)
         dlg.SetFilterIndex(1)
@@ -300,7 +301,7 @@ class GUI(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()
 
-            if name.endswith("wtbd"):
+            if name.endswith(".wtbd"):
                 self.util.prompt_for_save(self.do_open, args=[name])    
             else:
                 self.do_open(name)
@@ -314,15 +315,14 @@ class GUI(wx.Frame):
         the selected file.
         """
         if name.endswith(".wtbd"):
-            self.util.filename = name
-        self.util.temp_file = name
-        self.util.load_file()
+            self.util.load_wtbd(name)            
+        else:
+            self.util.temp_file = name
+            self.util.load_file()
 
 
     def on_export(self, event=None, pdf=None):
-        """
-        Exports the current sheet as an image, or all as a PDF.
-        """
+        """Exports the current sheet as an image, or all as a PDF."""
         wc =  ("PDF (*.pdf)") 
         if not pdf:
             wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|"+
@@ -361,6 +361,7 @@ class GUI(wx.Frame):
             self.tabs.AddPage(wb, name)
         else:
             self.tabs.AddPage(wb, "Sheet "+ str(self.tab_count))
+        self.update_panels(False)
         self.current_tab = self.tab_count - 1
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
 
@@ -368,13 +369,26 @@ class GUI(wx.Frame):
     def on_change_tab(self, event=None):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
+        self.update_panels(False)
         self.current_tab = self.tabs.GetSelection()
+        self.update_panels(True)
         self.thumbs.Scroll(-1, self.current_tab)
-        self.control.change_tool()
-
+        self.control.change_tool()                       
+        
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
+
+    def update_panels(self, select):
+        """Updates thumbnails and notes to indicate current tab"""
+        tab = self.current_tab
+        if self.thumbs.text:
+            font = self.thumbs.text[tab].GetClassDefaultAttributes().font
+            if select:
+                font.SetWeight(wx.FONTWEIGHT_BOLD)
+            else:
+                font.SetWeight(wx.FONTWEIGHT_NORMAL)
+            self.thumbs.text[tab].SetFont(font)         
 
 
     def on_close_tab(self, event=None):
@@ -471,9 +485,7 @@ class GUI(wx.Frame):
 
 
     def on_copy(self, event):
-        """
-        If a rectangle selection is made, copy the selection as a bitmap.
-        """
+        """ If a rectangle selection is made, copy the selection as a bitmap"""
         shape = self.board.shapes.pop()
         self.board.redraw_all()
         rect = wx.Rect(*shape.sort_args())
@@ -501,7 +513,8 @@ class GUI(wx.Frame):
 
     def on_fullscreen(self, event=None):
         """ Toggles fullscreen """
-        flag = wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION | wx.FULLSCREEN_NOSTATUSBAR
+        flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION | 
+               wx.FULLSCREEN_NOSTATUSBAR)
         self.ShowFullScreen(not self.IsFullScreen(), flag)
 
 

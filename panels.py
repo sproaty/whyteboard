@@ -177,7 +177,7 @@ class ControlPanel(wx.Panel):
         if self.gui.board.selected:
             selected = self.gui.board.selected
             selected.colour = colour
-            self.gui.board.draw(selected)  # no need to redraw all
+            self.gui.board.draw_shape(selected)  # no need to redraw all
         self.update()
         
     def change_thickness(self, event=None):

@@ -20,11 +20,13 @@ Run whyteboard.py or gui.py to launch the application, no installation needed!
 
 If nothing happens, try launching one of the scripts from the console:
 $ python whyteboard.py
-see what error occurred and let me know at, <sproaty -at- gmail -dot- com>
+see what error occurred and let me know at, <sproaty -at- gmail -dot- com>,
+or report a bug at Lunchpad at the link below
 
 ---- KNOWN BUGS ----
 
-Currently none.
+Currently none for this version; see up to date reports at:
+https://bugs.launchpad.net/whyteboard
 
 
 ---- VERSION HISTORY ----
@@ -36,18 +38,21 @@ xx Jul 2009 - * Select tool: can select shapes to alter their colour/thickness,
                 -- can double click text/notes to edit them
               * Improved undo/redo to support editing, moving and resizing
                 of objects as described above. Text edits can also be undone
-              * Colour button in text input dialog, instead of always drawing 
-                with the user's selected colour
+              * Button to change colour in text input dialog, instead of always 
+                drawing with the user's selected colour
               * Text input dialogs remembers the last font used, and is 
-                selected by default when creating more text
+                selected by default when creating new Text/Notes
                 -- the chosen font is also saved into the .wtbd save file
+              * Thumbnail label shows the current tab in bold
               * The Pen tool will now draw in response to a single mouse click;
                 before the mouse needed to be moved to draw
+              * Help files updates to reflect new changes and clarify any
+                issues before
+              * Multiple small bug fixes                  
               * Misc existing code improvements and performance increases
               * More/better unit testing to help with adding new features, 
                 tracking down potential bugs and increased code confidence
-              * Help files updates to reflect new changes and clarify any
-                issues before
+
 
 06 May 2009 - * 'Check for Updates'- Whyteboard can update itself
                 -- will download an .exe / .tar.gz as appropriate

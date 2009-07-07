@@ -58,6 +58,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.shapes = []  # list of shapes for re-drawing/saving
         self.shape = None  # currently selected shape to draw with
         self.selected = None  # selected shape with Select tool
+        self.text  = None# current Text object for redraw all        
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
@@ -76,29 +77,22 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def left_down(self, event):
-        """
-        Called when the left mouse button is pressed
-        Starts drawing.
-        """
+        """Starts drawing, removes bitmap selection"""
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
 
         if not isinstance(self.shape, Text):
             self.drawing = True
-            if self.check_copy():  # remove selection rectangle
+            if self.check_copy(): 
                 self.shapes.pop()
                 self.redraw_all()
 
     def left_motion(self, event):
-        """
-        Called when the mouse is in motion.
-        """
+        """Updates the shape"""
         if self.drawing:
             x, y = self.convert_coords(event)
-            dc = self.get_dc()
             self.shape.motion(x, y)
-            self.shape.draw(dc)
-            self.redraw_dirty(dc)
+            self.draw_shape(self.shape)
 
     def left_up(self, event):
         """
@@ -112,16 +106,14 @@ class Whyteboard(wx.ScrolledWindow):
             after = len(self.shapes)
 
             # update GUI menus, as the new shape was added
-            if after - before is not 0:
+            if after - before:
                 self.select_tool()
                 self.update_thumb()
-                #self.deselect()
             self.drawing = False
 
     def left_double(self, event):
-        """Double click for the Select tool."""
+        """Double click for the Select tool - edit text"""
         x, y = self.convert_coords(event)
-
         if isinstance(self.shape, Select):
             self.shape.double_click(x, y)
             
@@ -141,13 +133,17 @@ class Whyteboard(wx.ScrolledWindow):
 
     def redraw_all(self, update_thumb=False):
         """
-        Redraws all shapes that have been drawn already.
+        Redraws all shapes that have been drawn. self.text is used to show text
+        characters as they're being typed, as new Text/Note objects have not
+        been added to self.shapes at this point. 
         """
         dc = wx.BufferedDC(None, self.buffer)
         dc.Clear()
 
         for s in self.shapes:
             s.draw(dc, True)
+        if self.text:
+            self.text.draw(dc, True)
         self.Refresh()
         if update_thumb:
             self.update_thumb()
@@ -194,6 +190,9 @@ class Whyteboard(wx.ScrolledWindow):
             self.redo_list = []
         if self.selected:
             self.deselect()
+            self.redraw_all()
+        if self.text:
+            self.text = None
         if self.gui.util.saved:
             self.gui.util.saved = False
 
@@ -324,8 +323,8 @@ class Whyteboard(wx.ScrolledWindow):
         for x in self.shapes:
             if isinstance(x, OverlayShape):
                 x.selected = False
-        if self.selected:
-            self.draw(self.selected)
+        if self.selected:       
+            self.draw_shape(self.selected)
             self.selected = None
         
         
@@ -334,7 +333,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.PrepareDC(cdc)
         return wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)    
         
-    def draw(self, shape, replay=False):
+    def draw_shape(self, shape, replay=False):
         """Redraws a single shape"""
         dc = self.get_dc()
         if replay:

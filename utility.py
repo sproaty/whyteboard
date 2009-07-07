@@ -140,7 +140,9 @@ class Utility(object):
                     for shape in temp[x]:
                         if isinstance(shape, tools.Note):
                             tree_ids.append(shape.tree_id)
-                            shape.tree_id = None                     
+                            shape.tree_id = None     
+                        if isinstance(shape, tools.BitmapSelect):
+                            temp[x].remove(shape)                
                         shape.save()  # need to unlink unpickleable items;
 
                 version = self.gui.version
@@ -204,9 +206,6 @@ class Utility(object):
         elif _type in self.types[3:]:
             load_image(self.temp_file, self.gui.board)
             self.gui.board.redraw_all()
-
-        elif _type.endswith("wtbd"):
-            self.load_wtbd(filename)
         else:
             wx.MessageBox("Whyteboard doesn't support the filetype .%s" % _type)
 
@@ -217,16 +216,17 @@ class Utility(object):
         tab
         """
         temp = {}
-        f = open(self.filename)
+        f = open(filename)
         try:
             temp = pickle.load(f)
-        except (pickle.UnpicklingError, ValueError, ImportError):
-            wx.MessageBox("%s has corrupt Whyteboard data. No action taken."
-                        % self.filename)
+        except (pickle.UnpicklingError, ValueError, TypeError, EOFError):
+            wx.MessageBox('"%s" has corrupt Whyteboard data. No action taken.'
+                        % os.path.basename(filename))
             return
         finally:
             f.close()
 
+        self.filename = filename
         self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
         self.gui.dialog.Show()
         self.remove_all_sheets()
@@ -239,7 +239,7 @@ class Utility(object):
         self.gui.control.change_tool(_id = self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
-        self.gui.SetTitle(os.path.split(filename)[1] +' - '+ self.gui.title)
+        self.gui.SetTitle(os.path.split(self.filename)[1] +' - '+self.gui.title)
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
@@ -406,15 +406,16 @@ class Utility(object):
         self.gui.board.Destroy()
         
             
-    def prompt_for_save(self, method, style=None, args=None):
+    def prompt_for_save(self, method, style=wx.YES_NO | wx.CANCEL, args=None):
         """
         Ask the user to save, quit or cancel (quitting) if they haven't saved.
         Can be called through "Update", "Open (.wtbd)", or "Exit". If updating, 
         don't show a cancel button, and explicitly restart if the user cancels
-        out of the "save file" dialog
+        out of the "save file" dialog (
+        Method(*args) specifies the action to perform if user selects yes or no
         """
-        if not style:
-            style = wx.YES_NO | wx.CANCEL                        
+        #if not style:
+        #    style =                         
         if not args:
             args = []            
                         
@@ -599,8 +600,11 @@ def save_pasted_images(shapes):
             img1 = shape.image.ConvertToImage()
 
             if not shape.path:
+                print 'testing: %s' % shape
+                
                 for path in data:
-                    if data[path] == img1.GetData():
+                    #print 'path: %s' % path
+                    if path == img1.GetData():
                         shape.path = path
                         break
 
@@ -612,13 +616,14 @@ def save_pasted_images(shapes):
                     shape.path = tmp_file
 
                     data[shape.path] = img1.GetData()
+                    print img1.GetData()
 
 def load_image(path, board):
     """
     Loads an image into the given Whyteboard tab. bitmap is the path to an
     image file to create a bitmap from.
     """
-    image = wx.Bitmap(path)
+    image = wx.Bitmap(path)   
     shape = tools.Image(board, image, path)
     shape.button_down(0, 0)  # renders, updates scrollbars
 

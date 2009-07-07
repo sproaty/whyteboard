@@ -243,7 +243,7 @@ class UpdateDialog(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.text, 0, gap, 10)
-        sizer.Add(self.text2, 0, wx.TOP | wx.LEFT, 48)
+        sizer.Add(self.text2, 0, wx.TOP | wx.LEFT, 10)
         sizer.Add(self.btn, 0, wx.TOP | wx.ALIGN_CENTRE, 10)
         sizer.Add((10, 10)) # Spacer.
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
@@ -314,7 +314,7 @@ class UpdateDialog(wx.Dialog):
         tmp = None
         tmp_file = os.path.join(path[0], 'tmp'+ self._type)    
         try:
-            tmp = urllib.urlretrieve(self._file, tmp_file, self.myReportHook)
+            tmp = urllib.urlretrieve(self._file, tmp_file, self.reporter)
         except IOError:
             self.text.SetLabel("Could not connect to server.")
             self.btn.SetLabel("Retry")
@@ -341,7 +341,7 @@ class UpdateDialog(wx.Dialog):
         self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)      
         
                         
-    def myReportHook(self, count, block, total):
+    def reporter(self, count, block, total):
         """Updates a text label with progress on a download"""
         self.downloaded += block             
         done = self.downloaded / 1024
@@ -421,7 +421,7 @@ class TextInput(wx.Dialog):
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
         self.SetSizer(sizer)
 
-        self.set_focus()
+        #self.set_focus()
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
         self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)        
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
@@ -475,9 +475,9 @@ class TextInput(wx.Dialog):
         else:
             board = self.gui.board
             shape = board.shape
-        self.transfer_data(shape)               
+        self.transfer_data(shape)  
+        shape.find_extent()           
         board.redraw_all()  # stops overlapping text
-        self.gui.board.draw(shape, True)
 
     def transfer_data(self, text_obj):
         """Transfers the dialog's data to an object."""
