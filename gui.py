@@ -95,7 +95,6 @@ class GUI(wx.Frame):
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.current_tab = 0
         self.closed_tabs = []  # [shapes - undo - redo - virtual_size] per tab
-        self.copy = None  # BitmapSelect
 
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
@@ -165,7 +164,7 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
         edit.AppendSeparator()
         edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
-        edit.Append(wx.ID_COPY, "&Copy\tCtrl+C", "Copy the selection as a bitmap")
+        edit.Append(wx.ID_COPY, "&Copy\tCtrl+C", "Copy a Bitmap Selection region")
         edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
         edit.AppendItem(pnew)
 
@@ -235,8 +234,8 @@ class GUI(wx.Frame):
                wx.ID_UNDO, wx.ID_REDO]
         arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_COPY,
                 wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO]
-        tips = ["New Sheet", "Open a File", "Save Drawing", "Copy Selection",
-                "Paste Image", "Undo the Last Action",
+        tips = ["New Sheet", "Open a File", "Save Drawing", "Copy a Bitmap " +
+                "Selection", "Paste Image", "Undo the Last Action",
                 "Redo the Last Undone Action"]
 
         # add tools, add a separator and bind paste/undo/redo for UI updating
@@ -450,7 +449,7 @@ class GUI(wx.Frame):
             return
         _id = event.GetId()
 
-        if _id == wx.ID_PASTE:
+        if _id == wx.ID_PASTE:  # check this less frequently
             self.count += 1
             if self.count == 5:
                 self.can_paste = False
@@ -463,23 +462,22 @@ class GUI(wx.Frame):
             return
 
         do = False
-
         if not _id == wx.ID_COPY:
             # update the GUI to the inverse of the bool value if the button
             # should be enabled
-            if event.GetId() == wx.ID_REDO and self.board.redo_list:
+            if _id == wx.ID_REDO and self.board.redo_list:
                 do = True
-            if event.GetId() == wx.ID_UNDO and self.board.undo_list:
+            elif _id == wx.ID_UNDO and self.board.undo_list:
                 do = True
-            if event.GetId() == ID_PREV and self.current_tab > 0:
+            elif _id == ID_PREV and self.current_tab > 0:
                 do = True
-            if (event.GetId() == ID_NEXT and self.tab_count > 1 and
+            elif (_id == ID_NEXT and self.tab_count > 1 and
              (self.current_tab + 1 < self.tab_count)):
                 do = True
-            if event.GetId() == ID_UNDO_SHEET and len(self.closed_tabs) >= 1:
+            elif _id == ID_UNDO_SHEET and len(self.closed_tabs) >= 1:
                 do = True
         elif self.board:
-            if self.copy:
+            if self.board.copy:
                 do = True
 
         event.Enable(do)
@@ -488,8 +486,8 @@ class GUI(wx.Frame):
     def on_copy(self, event):
         """ If a rectangle selection is made, copy the selection as a bitmap"""
         #shape = self.board.shapes.pop()
-        rect = wx.Rect(*self.copy.sort_args())
-        self.copy = None
+        rect = wx.Rect(*self.board.copy.sort_args())
+        self.board.copy = None
         self.board.redraw_all()
 
         self.util.set_clipboard(rect)

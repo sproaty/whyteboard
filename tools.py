@@ -47,15 +47,12 @@ class Tool(object):
         self.make_pen()
 
     def button_down(self, x, y):
-        """ Left mouse button event """
         pass
 
     def button_up(self, x, y):
-        """ Left button up. """
         pass
 
     def motion(self, x, y):
-        """ Mouse in motion (usually while drawing) """
         pass
 
     def draw(self, dc, replay=True):
@@ -63,16 +60,16 @@ class Tool(object):
         pass
 
     def hit_test(self, x, y):
-        """ Returns true/false if a mouseclick in "inside" the shape """
+        """ Returns True/False if a mouseclick in "inside" the shape """
         pass
 
     def make_pen(self, dc=None):
-        """ Creates a pen from the object after loading in a save file """
+        """ Creates a pen, usually after loading in a save file """
         self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
         self.brush = wx.TRANSPARENT_BRUSH
 
     def preview(self, dc, width, height):
-        """ Tools' preview for the left-hand panel """
+        """ Tools' preview in the left-hand panel """
         pass
 
     def save(self):
@@ -119,8 +116,17 @@ class Pen(Tool):
 
     def preview(self, dc, width, height):
         """Points below make a curly line to show an example Pen drawing"""
-        points = ((52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9), (47, 9), (46, 9), (46, 8), (45, 8), (44, 8), (43, 8), (42, 8), (41, 8), (40, 8), (39, 8), (38, 8), (37, 8), (36, 8), (35, 8), (34, 8), (33, 8), (32, 8), (31, 8), (30, 8), (29, 8), (28, 8), (27, 8), (27, 10), (26, 10), (26, 11), (26, 12), (26, 13), (26, 14), (26, 15), (26, 16), (28, 18), (30, 19), (31, 21), (34, 22), (36, 24), (37, 26), (38, 27), (40, 28), (40, 29), (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33), (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37), (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37))
-        dc.DrawSpline(points)
+        dc.DrawSpline([(52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9),
+                 (47, 9), (46, 9), (46, 8), (45, 8), (44, 8), (43, 8), (42, 8),
+                 (41, 8), (40, 8), (39, 8), (38, 8), (37, 8), (36, 8), (35, 8),
+                 (34, 8), (33, 8), (32, 8), (31, 8), (30, 8), (29, 8), (28, 8),
+                 (27, 8), (27, 10), (26, 10), (26, 11), (26, 12), (26, 13),
+                 (26, 14), (26, 15), (26, 16), (28, 18), (30, 19), (31, 21),
+                 (34, 22), (36, 24), (37, 26), (38, 27), (40, 28), (40, 29),
+                 (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33),
+                 (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37),
+                 (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37)])
+
 
 #----------------------------------------------------------------------
 
@@ -142,19 +148,18 @@ class OverlayShape(Tool):
 
     def draw(self, dc, replay=False, _type="Rectangle"):
         """
-        Draws a shape polymorphically, using Python's introspection; can be
-        called by its sub-classes.
-        When called for a replay it renders itself; doesn't draw a temp outline.
+        Draws a shape polymorphically, using Python's introspection; is called
+        by any sub-class that needs to be overlayed.
+        When called with replay=True it doesn't draw a temp outline
         """
         if not replay:
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
 
         self.make_pen(dc)  # Note needs a DC to draw its outline here
-        method = getattr(dc, "Draw" + _type)
         dc.SetPen(self.pen)
         dc.SetBrush(self.brush)
-        method(*self.get_args())
+        getattr(dc, "Draw" + _type)(*self.get_args())
 
         if self.selected:
             self.draw_selected(dc)
@@ -173,10 +178,11 @@ class OverlayShape(Tool):
         d(dc, x + width, y + height)
 
     def offset(self, x, y):
-        """Used to move the shape, keeping the cursor in the same place"""
+        """Used when moving the shape, to keep the cursor in the same place"""
         return (x - self.x, y - self.y)
 
     def get_args(self):
+        """The drawing arguments that this class passes to draw()"""
         pass
 
     def load(self):
@@ -322,7 +328,6 @@ class Line(OverlayShape):
         """ Don't add a 'blank' line """
         if self.x2 != self.x or self.y2 != self.y:
             self.board.add_shape(self)
-            #self.board.draw_shape(self)
 
     def draw(self, dc, replay=False):
         super(Line, self).draw(dc, replay, "Line")
@@ -333,9 +338,25 @@ class Line(OverlayShape):
     def preview(self, dc, width, height):
         dc.DrawLine(10, height / 2, width - 10, height / 2)
 
-    #def hit_test(self, x, y):
-    #    rect = wx.Rect(*self.get_args())
-    #    return rect.InsideXY(x, y)
+    def draw_selected(self, dc):
+        dc.SetBrush(wx.BLACK_BRUSH)
+        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
+        d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 5, 5)
+
+        d(dc, self.x, self.y)
+        d(dc, self.x2, self.y2)
+
+#    def hit_test(self, x, y):
+#        #[1, x, y;
+#        # 1, x1, y1;
+#        # 1, x2, y2]
+#        print ((1 * self.x * self.y2)
+#              - (1 * self.y * self.x2)
+#              - (x * 1 * self.y2)
+#              + (x * self.y * 1)
+#              + (y * 1 * self.x2)
+#              - (y * self.x * 1))# == 0
+
 
 #---------------------------------------------------------------------
 
@@ -483,6 +504,7 @@ class Text(OverlayShape):
         self.font.SetNativeFontInfoFromString(self.font_data)
 
     def draw(self, dc, replay=False):
+        print 'text'
         if not self.font:
             self.restore_font()
             self.update_scroll()
@@ -707,7 +729,7 @@ class Select(Tool):
                     self.board.deselect()
                 self.board.selected = shape
                 self.shape.selected = True
-                break
+                break  # breaking is vital to selecting the correct shape
         else:
             self.board.deselect()
 
@@ -743,7 +765,8 @@ class Select(Tool):
 
 class BitmapSelect(Rectangle):
     """
-    Rectangle selection tool, used to select a region to copy/paste
+    Rectangle selection tool, used to select a region to copy/paste. When it
+    is drawn it is stored in a
     """
     tooltip = "Select a rectangle region to copy as a bitmap"
     def __init__(self, board, image, path):
@@ -757,7 +780,7 @@ class BitmapSelect(Rectangle):
         """ Important: appends the shape, but not to the undo list """
         if x != self.x and y != self.y:
             self.board.gui.GetStatusBar().SetStatusText("You can now copy this region")
-            self.board.gui.copy = self
+            self.board.copy = self
             self.board.redraw_all()
 
     def preview(self, dc, width, height):

@@ -87,13 +87,6 @@ class TestWhyteboard:
     def test_add_positional_shape(self):
         self.add(4)
 
-    def test_check_copy(self):
-        """Returns false when a BitmapSelect isn't the top shape on the list"""
-        self.board.shapes = []
-        assert not self.board.check_copy()
-        self.board.add_shape(tools.BitmapSelect(self.board, (0, 0, 0), 1))
-        assert self.board.check_copy()
-
     def test_select_tool(self):
         """
         This depends on the Tool list order not changing, unlikely from a UI

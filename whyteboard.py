@@ -27,7 +27,7 @@ its own undo/redo.
 import wx
 import wx.lib.dragscroller
 
-from tools import Image, Text, Note, BitmapSelect, Select, OverlayShape
+from tools import Image, Text, Note, Select, OverlayShape
 
 #----------------------------------------------------------------------
 
@@ -59,10 +59,10 @@ class Whyteboard(wx.ScrolledWindow):
         self.shape = None  # currently selected shape to draw with
         self.selected = None  # selected shape with Select tool
         self.text  = None  # current Text object for redraw all
+        self.copy = None  # BitmapSelect instance
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
-        self.zoom = (1.0, 1.0)
         self.select_tool()
         self.buffer = wx.EmptyBitmap(*self.area)
 
@@ -80,23 +80,19 @@ class Whyteboard(wx.ScrolledWindow):
         """Starts drawing, removes bitmap selection"""
         x, y = self.convert_coords(event)
         self.shape.button_down(x, y)
-
-        if not isinstance(self.shape, Text):
-            self.drawing = True
-            if self.check_copy():
-                self.shapes.pop()
-                self.redraw_all()
+        self.drawing = True
 
     def left_motion(self, event):
         """Updates the shape. Indicate shape may be moved using Select tool"""
         x, y = self.convert_coords(event)
 
-        if self.drawing:
+        #  Crashes without the Text check
+        if self.drawing and not isinstance(self.shape, Text):
             self.shape.motion(x, y)
             self.draw_shape(self.shape)
         elif isinstance(self.shape, Select):
 
-            for count, shape in enumerate(reversed(self.shapes)):
+            for shape in (reversed(self.shapes)):
                 if shape.hit_test(x, y):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
                     break
@@ -109,13 +105,11 @@ class Whyteboard(wx.ScrolledWindow):
         """
         x, y = self.convert_coords(event)
 
-        if self.drawing or isinstance(self.shape, Text):
+        if self.drawing:
             before = len(self.shapes)
             self.shape.button_up(x, y)
-            after = len(self.shapes)
 
-            # update GUI menus, as the new shape was added
-            if after - before:
+            if len(self.shapes) - before:
                 self.select_tool()
                 self.update_thumb()
             self.drawing = False
@@ -153,8 +147,8 @@ class Whyteboard(wx.ScrolledWindow):
             s.draw(dc, True)
         if self.text:
             self.text.draw(dc, True)
-        if self.gui.copy:
-            self.gui.copy.draw(dc, True)
+        if self.copy:
+            self.copy.draw(dc, True)
         self.Refresh()
         if update_thumb:
             self.update_thumb()
@@ -206,8 +200,8 @@ class Whyteboard(wx.ScrolledWindow):
             self.redraw_all()
         if self.text:
             self.text = None
-        if self.gui.copy:
-            self.gui.copy = None
+        if self.copy:
+            self.copy = None
             self.redraw_all()
         if self.gui.util.saved:
             self.gui.util.saved = False
@@ -225,11 +219,6 @@ class Whyteboard(wx.ScrolledWindow):
         if isinstance(shape, Note):
             self.undo_note(shape)
             self.shapes.remove(shape)
-        if isinstance(shape, BitmapSelect):  #
-            #self.shapes.pop()
-            print 'yes'
-            self.shapes.remove(shape)
-            #self.redo_list.pop()
         elif shape.__class__.__name__ == "list":  # cleared, add one-by-one
             [self.shapes.append(x) for x in shape]
         else:
@@ -306,19 +295,6 @@ class Whyteboard(wx.ScrolledWindow):
             self.shapes = images
 
         self.redraw_all(update_thumb=True)
-
-
-    def check_copy(self):
-        """
-        Checks to see if a rectangle selection is made to enable/disable the
-        copy button. Returns the selection shape, if so.
-        """
-        if self.shapes:
-            shape = self.shapes[len(self.shapes)-1]
-
-            if isinstance(shape, BitmapSelect):
-                return shape
-        return False
 
 
     def convert_coords(self, event):

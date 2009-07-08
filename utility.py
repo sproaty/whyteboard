@@ -141,8 +141,6 @@ class Utility(object):
                         if isinstance(shape, tools.Note):
                             tree_ids.append(shape.tree_id)
                             shape.tree_id = None
-                        if isinstance(shape, tools.BitmapSelect):
-                            temp[x].remove(shape)  # don't want to save this
                         shape.save()  # need to unlink unpickleable items;
 
                 version = self.gui.version

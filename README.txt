@@ -1,6 +1,6 @@
 Whyteboard 0.37.1 - a simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 06 May 2009 17:42:59 BST 
+Wed 06 May 2009 17:42:59 BST
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -32,25 +32,29 @@ https://bugs.launchpad.net/whyteboard
 ---- VERSION HISTORY ----
 
 xx Jul 2009 - * Select tool: can select shapes to alter their colour/thickness,
-                edit text and notes, move shapes and resize them. Selected 
+                edit text and notes, move shapes and resize them. Selected
                 shapes are drawn with an outline "handle" at their corners
                 -- Images and text can also be repositioned
                 -- can double click text/notes to edit them
+                -- moveable shapes are shown by the cursor changing to a hand
               * Improved undo/redo to support editing, moving and resizing
                 of objects as described above. Text edits can also be undone
-              * Button to change colour in text input dialog, instead of always 
-                drawing with the user's selected colour
-              * Text input dialogs remembers the last font used, and is 
+              * Button to change colour in text input dialog, instead of always
+                drawing with the user's chosen palette colour
+              * Text input dialogs remembers the last font used, which is
                 selected by default when creating new Text/Notes
                 -- the chosen font is also saved into the .wtbd save file
-              * Thumbnail label shows the current tab in bold
-              * The Pen tool will now draw in response to a single mouse click;
+              * Thumbnail label shows the selected thumb label in bold
+              * The Pen tool now draws in response to a single mouse click;
                 before the mouse needed to be moved to draw
-              * Help files updates to reflect new changes and clarify any
+              * Resize canvas
+              * Each sheet can have its own BitmapSelect at anytime. Undoing and
+                redoing will not remove the selection - drawing a new shape will
+              * Help files updated to reflect new changes and clarify any
                 issues before
-              * Multiple small bug fixes                  
+              * Multiple small bug fixes (over 10)
               * Misc existing code improvements and performance increases
-              * More/better unit testing to help with adding new features, 
+              * More/better unit testing to help with adding new features,
                 tracking down potential bugs and increased code confidence
 
 
@@ -61,11 +65,11 @@ xx Jul 2009 - * Select tool: can select shapes to alter their colour/thickness,
                 -- shows progress of downloaded file
                 -- program restarts with new version loaded, also re-loads the
                     current .wtbd file
-                  
+
               * HTML Help system/manual built into the application
                 -- well, via a folder containing HTML help files
                 -- if they are not present, they can be downloaded (optional)
-              
+
               * 'About Box' standardised
               * Exit dialog more like other apps: "sure you want to save?"
                 (yes/no/cancel), instead of "sure you want to quit?" (yes/no)
