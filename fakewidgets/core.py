@@ -214,6 +214,9 @@ class Window(object):
     def Enable(self):
         self.Enabled=True
 
+    def GetClassDefaultAttributes(self):
+        return VisualAttributes()
+
     def Disable(self):
         self.Enabled=False
 
@@ -552,6 +555,11 @@ class StaticText(Control):
 #################
 # Other widgets
 #################
+
+class VisualAttributes(object):
+    def __init__(self, *args, **kwds):
+        self.font = Font()
+    
 
 class StatusBar(Window):
     def __init__(self, *args, **kwds):

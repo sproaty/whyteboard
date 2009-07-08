@@ -88,11 +88,20 @@ class Whyteboard(wx.ScrolledWindow):
                 self.redraw_all()
 
     def left_motion(self, event):
-        """Updates the shape"""
+        """Updates the shape. Indicate shape may be moved using Select tool"""
+        x, y = self.convert_coords(event)
+
         if self.drawing:
-            x, y = self.convert_coords(event)
             self.shape.motion(x, y)
             self.draw_shape(self.shape)
+        elif isinstance(self.shape, Select):
+
+            for count, shape in enumerate(reversed(self.shapes)):
+                if shape.hit_test(x, y):
+                    self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
+                    break
+            else:
+                self.change_cursor()
 
     def left_up(self, event):
         """
@@ -144,6 +153,8 @@ class Whyteboard(wx.ScrolledWindow):
             s.draw(dc, True)
         if self.text:
             self.text.draw(dc, True)
+        if self.gui.copy:
+            self.gui.copy.draw(dc, True)
         self.Refresh()
         if update_thumb:
             self.update_thumb()
@@ -166,12 +177,14 @@ class Whyteboard(wx.ScrolledWindow):
         params = [self, colour, thickness]  # Object constructor parameters
         self.shape = None
         self.shape = items[new - 1](*params)  # create new Tool object
+        self.change_cursor()
+        self.gui.control.preview.Refresh()
 
+    def change_cursor(self):
         if isinstance(self.shape.cursor, wx.Cursor):
             self.SetCursor(self.shape.cursor)
         else:
             self.SetCursor(wx.StockCursor(self.shape.cursor) )
-        self.gui.control.preview.Refresh()
 
 
     def add_shape(self, shape, pos=None):
@@ -193,6 +206,9 @@ class Whyteboard(wx.ScrolledWindow):
             self.redraw_all()
         if self.text:
             self.text = None
+        if self.gui.copy:
+            self.gui.copy = None
+            self.redraw_all()
         if self.gui.util.saved:
             self.gui.util.saved = False
 
@@ -209,6 +225,11 @@ class Whyteboard(wx.ScrolledWindow):
         if isinstance(shape, Note):
             self.undo_note(shape)
             self.shapes.remove(shape)
+        if isinstance(shape, BitmapSelect):  #
+            #self.shapes.pop()
+            print 'yes'
+            self.shapes.remove(shape)
+            #self.redo_list.pop()
         elif shape.__class__.__name__ == "list":  # cleared, add one-by-one
             [self.shapes.append(x) for x in shape]
         else:
@@ -313,7 +334,7 @@ class Whyteboard(wx.ScrolledWindow):
     def middle_up(self, event):
         """ Stop dragging the scroller. """
         self.scroller.Stop()
-        self.SetCursor(wx.StockCursor(self.shape.cursor) )
+        self.change_cursor()
 
     def on_paint(self, event=None):
         """ Called when the window is exposed. """

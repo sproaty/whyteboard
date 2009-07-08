@@ -104,7 +104,7 @@ class Utility(object):
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
 
         # Make wxPython wildcard filter. Add a new item - new type supported!
-        self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
+        self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "gif", "tiff",
                        "bmp", "pcx"]
         label = ["All files (*.*)", "Whyteboard files (*.wtbd)", "Image Files",
                  "PDF/PS/SVG"]
@@ -142,7 +142,7 @@ class Utility(object):
                             tree_ids.append(shape.tree_id)
                             shape.tree_id = None
                         if isinstance(shape, tools.BitmapSelect):
-                            temp[x].remove(shape)
+                            temp[x].remove(shape)  # don't want to save this
                         shape.save()  # need to unlink unpickleable items;
 
                 version = self.gui.version

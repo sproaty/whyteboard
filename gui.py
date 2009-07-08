@@ -95,6 +95,7 @@ class GUI(wx.Frame):
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.current_tab = 0
         self.closed_tabs = []  # [shapes - undo - redo - virtual_size] per tab
+        self.copy = None  # BitmapSelect
 
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
@@ -372,7 +373,7 @@ class GUI(wx.Frame):
         self.update_panels(False)
         self.current_tab = self.tabs.GetSelection()
         self.update_panels(True)
-        self.thumbs.Scroll(-1, self.current_tab)
+        #self.thumbs.Scroll(-1, self.current_tab)
         self.control.change_tool()
 
         if self.notes.tabs:
@@ -478,7 +479,7 @@ class GUI(wx.Frame):
             if event.GetId() == ID_UNDO_SHEET and len(self.closed_tabs) >= 1:
                 do = True
         elif self.board:
-            if self.board.check_copy():
+            if self.copy:
                 do = True
 
         event.Enable(do)
@@ -486,9 +487,11 @@ class GUI(wx.Frame):
 
     def on_copy(self, event):
         """ If a rectangle selection is made, copy the selection as a bitmap"""
-        shape = self.board.shapes.pop()
+        #shape = self.board.shapes.pop()
+        rect = wx.Rect(*self.copy.sort_args())
+        self.copy = None
         self.board.redraw_all()
-        rect = wx.Rect(*shape.sort_args())
+
         self.util.set_clipboard(rect)
         self.count = 4
         self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)

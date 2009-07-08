@@ -275,7 +275,7 @@ class Notes(wx.Panel):
     def __init__(self, parent, gui):
         wx.Panel.__init__(self, parent, size=(170, -1), style=wx.RAISED_BORDER)
         self.gui = gui
-        self.tree = wx.TreeCtrl(self, size=(170, -1), style=wx.TR_HAS_BUTTONS)
+        self.tree = wx.TreeCtrl(self, style=wx.TR_HAS_BUTTONS)
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
         self.notes = []
@@ -283,7 +283,7 @@ class Notes(wx.Panel):
         self.tree.Expand(self.root)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.tree, 1, wx.EXPAND)
+        self.sizer.Add(self.tree, 1, wx.EXPAND)  # fills out vertical space
         self.SetSizer(self.sizer)
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
