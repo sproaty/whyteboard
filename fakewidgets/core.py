@@ -621,8 +621,6 @@ class Notebook(Window):
         return self.pages[n]
         
     def GetCurrentPage(self):
-        #print self.selection  
-        #print self.pages  
         return self.pages[self.selection]
                 
     def GetPageText(self):

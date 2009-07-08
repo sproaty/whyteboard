@@ -1,9 +1,6 @@
 from .. import core
 
 class ScrolledPanel(core.ScrolledWindow):
-
-    #def __init__(self):
-    #    print 'bleh'
         
     def Scroll(self, width, height):
         pass

@@ -362,6 +362,7 @@ class GUI(wx.Frame):
         else:
             self.tabs.AddPage(wb, "Sheet "+ str(self.tab_count))
         self.update_panels(False)
+        print self.tab_count
         self.current_tab = self.tab_count - 1
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
 
@@ -370,6 +371,7 @@ class GUI(wx.Frame):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
         self.update_panels(False)
+        
         self.current_tab = self.tabs.GetSelection()
         self.update_panels(True)
         #self.thumbs.Scroll(-1, self.current_tab)
@@ -485,7 +487,6 @@ class GUI(wx.Frame):
 
     def on_copy(self, event):
         """ If a rectangle selection is made, copy the selection as a bitmap"""
-        #shape = self.board.shapes.pop()
         rect = wx.Rect(*self.board.copy.sort_args())
         self.board.copy = None
         self.board.redraw_all()
