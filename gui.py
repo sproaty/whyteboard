@@ -138,7 +138,7 @@ class GUI(wx.Frame):
         _export.Append(ID_EXP_PDF, '&PDF')
         _export.Append(ID_EXP_IMG, 'Current Sheet as &Image')
 
-        new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new Whyteboard instance")
+        new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new  Whyteboard instance")
         new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
 
         pnew = wx.MenuItem(edit, ID_PASTE_NEW, "Paste to a &New Sheet\tCtrl+Shift-V", "Paste from your clipboard into a new sheet")
@@ -362,7 +362,6 @@ class GUI(wx.Frame):
         else:
             self.tabs.AddPage(wb, "Sheet "+ str(self.tab_count))
         self.update_panels(False)
-        print self.tab_count
         self.current_tab = self.tab_count - 1
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
 
@@ -371,7 +370,7 @@ class GUI(wx.Frame):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
         self.update_panels(False)
-        
+
         self.current_tab = self.tabs.GetSelection()
         self.update_panels(True)
         #self.thumbs.Scroll(-1, self.current_tab)

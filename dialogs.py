@@ -21,14 +21,12 @@ This module contains classes extended from wx.Dialog used by the GUI.
 """
 
 import wx
-import wx.html
-
-import urllib
 import os
 import sys
 
 from copy import copy
-from BeautifulSoup import BeautifulSoup
+#from BeautifulSoup import BeautifulSoup
+#from urllib import urlopen, urlretrieve
 
 import tools
 
@@ -260,7 +258,7 @@ class UpdateDialog(wx.Dialog):
         file's version from its filename, and compare against current version
         """
         try:
-            f = urllib.urlopen("http://code.google.com/p/whyteboard/downloads/list")
+            f = urlopen("http://code.google.com/p/whyteboard/downloads/list")
         except IOError:
             self.text.SetLabel("Could not connect to server.")
             return
@@ -284,8 +282,8 @@ class UpdateDialog(wx.Dialog):
                 start = _file.find("-") + 1
                 stop = _file.find(_type)
                 version = _file[start : stop]
-                all = soup.findAll("td", {"class": "vt col_3"})
-                size = all[i].findNext('a').renderContents().strip()
+                _all = soup.findAll("td", {"class": "vt col_3"})
+                size = _all[i].findNext('a').renderContents().strip()
 
                 if version != self.gui.version:
                     s = (" There is a new version available, "+version +"\n"+
@@ -314,7 +312,7 @@ class UpdateDialog(wx.Dialog):
         tmp = None
         tmp_file = os.path.join(path[0], 'tmp'+ self._type)
         try:
-            tmp = urllib.urlretrieve(self._file, tmp_file, self.reporter)
+            tmp = urlretrieve(self._file, tmp_file, self.reporter)
         except IOError:
             self.text.SetLabel("Could not connect to server.")
             self.btn.SetLabel("Retry")

@@ -321,7 +321,7 @@ class Whyteboard(wx.ScrolledWindow):
             if isinstance(x, OverlayShape):
                 x.selected = False
         if self.selected:
-            self.draw_shape(self.selected)
+            self.draw_shape(self.selected, True)
             self.selected = None
 
 

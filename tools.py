@@ -24,8 +24,8 @@ with by the user (e.g. they can't draw an image directly)
 """
 
 import wx
-import time
 import os
+import time
 
 from dialogs import TextInput
 
@@ -151,12 +151,14 @@ class OverlayShape(Tool):
         Draws a shape polymorphically, using Python's introspection; is called
         by any sub-class that needs to be overlayed.
         When called with replay=True it doesn't draw a temp outline
+        Avoids excess calls to make_pen - better performance
         """
         if not replay:
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
-
-        self.make_pen(dc)  # Note needs a DC to draw its outline here
+        
+        if not self.pen or self.selected or isinstance(self, Note):
+            self.make_pen(dc)  # Note needs a DC to draw its outline here
         dc.SetPen(self.pen)
         dc.SetBrush(self.brush)
         getattr(dc, "Draw" + _type)(*self.get_args())
@@ -169,10 +171,10 @@ class OverlayShape(Tool):
     def get_args(self):
         """The drawing arguments that this class passes to draw()"""
         pass
-    
+
     def get_handles(self):
         """Returns the handle positions: top-lef, top-rig, btm-lef, btm-rig"""
-        pass       
+        pass
 
     def draw_selected(self, dc):
         """Draws each handle an object has"""
@@ -201,26 +203,36 @@ class Rectangle(OverlayShape):
         OverlayShape.__init__(self, board, colour, thickness)
         self.width = 0
         self.height = 0
+        self.rect = None
 
     def motion(self, x, y):
         self.width =  x - self.x
         self.height = y - self.y
- 
+
+    def button_up(self, x, y):
+        super(Rectangle, self).button_up(x, y)
+        self.sort_args()
+
     def get_args(self):
         return [self.x, self.y, self.width, self.height]
-       
-    def get_handles(self):        
+
+    def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
         x, y, w, h = self.get_args()[:4]  # RoundedRect has 5 args
-        return d(x, y), d(x + w, y), d(x, y + h), d(x + w, y + h)         
+        return d(x, y), d(x + w, y), d(x, y + h), d(x + w, y + h)
 
-    def sort_args(self):
+    def sort_args(self, force=False):
         """Do some rectangle conversions instead of many if statements."""
         x, y, width, height = self.get_args()[:4]
-        return [min(x, width + x), min(y, height + y), abs(width), abs(height)]
+        args = [min(x, width + x), min(y, height + y), abs(width), abs(height)]
+        if not self.rect or force:
+            self.rect = wx.Rect(*args)
 
     def hit_test(self, x, y):
-        return wx.Rect(*self.sort_args()).InsideXY(x, y)
+        if not hasattr(self, "rect"):
+            self.rect = None
+            self.sort_args()
+        return self.rect.InsideXY(x, y)
 
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
@@ -246,18 +258,18 @@ class Circle(OverlayShape):
 
     def get_args(self):
         return [self.x, self.y, self.radius]
-    
-    def get_handles(self):        
+
+    def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
         x, y, r = self.get_args()
         return d(x- r, y + r), d(x - r, y - r), d(x + r, y + r), d(x + r, y - r)
-    
+
     def hit_test(self, x, y):
         val = ((x - self.x) * (x - self.x)) + ((y - self.y) * (y - self.y))
         if val <= (self.radius * self.radius) + self.thickness:
             return True
         return False
-       
+
     def preview(self, dc, width, height):
         dc.DrawCircle(width/2, height/2, 15)
 
@@ -274,6 +286,15 @@ class Ellipse(Rectangle):
 
     def preview(self, dc, width, height):
         dc.DrawEllipse(5, 5, width - 12, height - 12)
+
+    def hit_test(self, x, y):
+        """http://www.conandalton.net/2009/01/how-to-draw-ellipse.html"""
+        dx = (x - self.x) / self.width
+        dy = (y - self.y) / self.height 
+        if dx * dx + dy * dy < 1.0:
+            return True
+        return False
+
 
 #----------------------------------------------------------------------
 
@@ -310,7 +331,6 @@ class Line(OverlayShape):
         super(Line, self).button_down(x, y)
         self.x2 = x
         self.y2 = y
-        self.selected = True
 
     def motion(self, x, y):
         self.x2 = x
@@ -326,25 +346,24 @@ class Line(OverlayShape):
 
     def get_args(self):
         return [self.x, self.y, self.x2, self.y2]
-    
-    def get_handles(self):        
+
+    def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
         return d(self.x, self.y), d(self.x2, self.y2)
-    
+
     def preview(self, dc, width, height):
         dc.DrawLine(10, height / 2, width - 10, height / 2)
 
-#    def hit_test(self, x, y):
-#        #[1, x, y;
-#        # 1, x1, y1;
-#        # 1, x2, y2]
-#        print ((1 * self.x * self.y2)
-#              - (1 * self.y * self.x2)
-#              - (x * 1 * self.y2)
-#              + (x * self.y * 1)
-#              + (y * 1 * self.x2)
-#              - (y * self.x * 1))# == 0
-
+    def hit_test(self, x, y):
+        #x, y = 2, 13
+        #self.x=0
+        #self.y=3
+        #self.x2=5
+        #self.y2=28
+        print "x: %s, y: %s, x1: %s, y1: %s, x2: %s, y2: %s" % (x, y, self.x, 
+                                                     self.y, self.x2, self.y2)
+        print ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) * 
+                                                                (x - self.x))
 
 #---------------------------------------------------------------------
 
@@ -502,12 +521,12 @@ class Text(OverlayShape):
         dc.SetFont(self.font)
         dc.SetTextForeground(self.colour)
         super(Text, self).draw(dc, replay, "Label")
-        
+
     def restore_font(self):
         """Updates the text's font to the saved font data"""
         self.font = wx.FFont(0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
-                
+
     def find_extent(self):
         """Finds the width/height of the object's text"""
         dc = wx.WindowDC(self.board.gui)
@@ -518,12 +537,12 @@ class Text(OverlayShape):
         x, y, w, h = self.x, self.y, self.extent[0], self.extent[1]
         d = lambda x, y: (x - 2, y - 2)
         return d(x, y), d(x + w, y), d(x, y + h), d(x + w, y + h)
-     
+
     def get_args(self):
         w = self.x + self.extent[0]
         h = self.y + self.extent[1]
         return [self.text, wx.Rect(self.x, self.y, w, h)]
-            
+
     def hit_test(self, x, y):
         width = self.x + self.extent[0]
         height = self.y + self.extent[1]
@@ -532,7 +551,7 @@ class Text(OverlayShape):
             return True
         return False
 
-    
+
     def preview(self, dc, width, height):
         dc.SetTextForeground(self.colour)
         dc.DrawText("abcdef", 15, height / 2 - 10)
@@ -592,9 +611,9 @@ class Note(Text):
     def get_handles(self):
         x, y, w, h = self.x, self.y, self.extent[0], self.extent[1]
         d = lambda x, y: (x - 2, y - 2)
-        return (d(x - 11, y - 10), d(x + w - 11, y - 10), d(x - 11, y + h - 10), 
+        return (d(x - 11, y - 10), d(x + w - 11, y - 10), d(x - 11, y + h - 10),
                d(x + w - 11, y + h - 10))
-    
+
 #    def draw_selected(self, dc):
 #        """Need to offset the 'handles' differently to text"""
 #        d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 2, 2)
@@ -648,13 +667,13 @@ class Image(OverlayShape):
 
     def get_args(self):
         return [self.image, self.x, self.y]
-    
-    def get_handles(self):        
+
+    def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
         img = self.image
         x, y, w, h = self.x, self.y, img.GetWidth(), img.GetHeight()
-        return d(x, y), d(x + w, y), d(x, y + h), d(x + w, y + h)    
-    
+        return d(x, y), d(x + w, y), d(x, y + h), d(x + w, y + h)
+
     def save(self):
         super(Image, self).save()
         self.image = None
@@ -704,7 +723,7 @@ class Select(Tool):
         """
         Sees if a shape is underneath the mouse coords, and allows the shape to
         be re-dragged to place
-        """        
+        """
         shapes = self.board.shapes
         shapes.reverse()
         for count, shape in enumerate(shapes):
@@ -720,6 +739,7 @@ class Select(Tool):
                     self.board.deselect()
                 self.board.selected = shape
                 self.shape.selected = True
+                self.board.redraw_all()  # show
                 break  # breaking is vital to selecting the correct shape
         else:
             self.board.deselect()
@@ -748,6 +768,8 @@ class Select(Tool):
                 size = (x + image.GetWidth(), y + image.GetHeight())
                 self.board.update_scrollbars(size)
                 self.dragging = False
+            elif isinstance(self.shape, Rectangle):
+                self.shape.sort_args(True)
 
         self.board.redraw_all(update_thumb=True)
         self.board.select_tool()
@@ -774,7 +796,7 @@ class BitmapSelect(Rectangle):
         self.board.copy = None
         self.board.redraw_all()
         self.board.copy = self
-               
+
     def button_up(self, x, y):
         """ Doesn't affect the shape list """
         if not (x != self.x and y != self.y):
