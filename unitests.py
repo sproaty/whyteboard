@@ -68,24 +68,15 @@ class TestWhyteboard:
         make_shapes(self.board)
         self.shapes = list(self.board.shapes)  # value to test changes against
 
-    def add(self, pos=None):
+    def test_add(self):
         """
         Add a shape to the list, optionally positional
         """
         shape = tools.Rectangle(self.board, (0, 0, 0), 1)
-        if pos:
-            self.board.add_shape(shape, pos)
-        else:
-            self.board.add_shape(shape)
+        self.board.add_shape(shape)
         assert not self.board.redo_list
         assert not self.board.gui.util.saved
 
-
-    def test_add_shape(self):
-        self.add()
-
-    def test_add_positional_shape(self):
-        self.add(4)
 
     def test_select_tool(self):
         """

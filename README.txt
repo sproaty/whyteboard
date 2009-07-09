@@ -47,7 +47,7 @@ xx Jul 2009 - * Select tool: can select shapes to alter their colour/thickness,
               * Thumbnail label shows the selected thumb label in bold
               * The Pen tool now draws in response to a single mouse click;
                 before the mouse needed to be moved to draw
-              * Resize canvas
+              * Resize canvas - each sheet can have its own canvas size
               * Each sheet can have its own BitmapSelect at anytime. Undoing and
                 redoing will not remove the selection - drawing a new shape will
               * Help files updated to reflect new changes and clarify any

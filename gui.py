@@ -138,7 +138,7 @@ class GUI(wx.Frame):
         _export.Append(ID_EXP_PDF, '&PDF')
         _export.Append(ID_EXP_IMG, 'Current Sheet as &Image')
 
-        new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new  Whyteboard instance")
+        new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new Whyteboard instance")
         new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
 
         pnew = wx.MenuItem(edit, ID_PASTE_NEW, "Paste to a &New Sheet\tCtrl+Shift-V", "Paste from your clipboard into a new sheet")
@@ -406,7 +406,7 @@ class GUI(wx.Frame):
                     board.virtual_size]
 
             self.closed_tabs.append(item)
-            self.notes.remove(self.current_tab)
+            self.notes.remove_tab(self.current_tab)
             self.thumbs.remove(self.current_tab)
             self.tab_count -= 1
             if os.name == "nt":
@@ -486,10 +486,10 @@ class GUI(wx.Frame):
 
     def on_copy(self, event):
         """ If a rectangle selection is made, copy the selection as a bitmap"""
-        rect = wx.Rect(*self.board.copy.sort_args())
+        self.board.copy.sort_args()
+        rect = self.board.copy.rect
         self.board.copy = None
         self.board.redraw_all()
-
         self.util.set_clipboard(rect)
         self.count = 4
         self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)

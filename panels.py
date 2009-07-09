@@ -174,6 +174,7 @@ class ControlPanel(wx.Panel):
         self.colour.SetColour(colour)
         if self.gui.board.selected:
             selected = self.gui.board.selected
+            self.gui.board.add_undo()
             selected.colour = colour
             self.gui.board.draw_shape(selected, True)  # no need to redraw all
         self.update()
@@ -182,7 +183,8 @@ class ControlPanel(wx.Panel):
         """Changes thickness and updates the preview window."""
         thickness = self.thickness.GetSelection()
         self.gui.util.thickness = thickness
-        if self.gui.board.selected:
+        if self.gui.board.selected:            
+            self.gui.board.add_undo()
             self.gui.board.selected.thickness = thickness
             self.gui.board.redraw_all(True)  # causes a bug if drawn as above
         self.update()
@@ -309,13 +311,12 @@ class Notes(wx.Panel):
         if not _id:
             _id = self.tabs[self.gui.tabs.GetSelection()]
         else:
-            _id = self.tabs[_id]
+            elf.tabs[_id]
         data = wx.TreeItemData(note)
         note.tree_id = self.tree.AppendItem(_id, text, data=data)
         self.tree.Expand(_id)
-
-
-    def remove(self, note):
+            
+    def remove_tab(self, note):
         """Removes a tab and its children."""
         item = self.tabs[note]
         self.tree.DeleteChildren(item)
@@ -327,7 +328,7 @@ class Notes(wx.Panel):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
             self.tree.SetItemText(self.tabs[x], "Sheet " + str(x + 1))
 
-
+            
     def remove_all(self):
         """Removes all tabs."""
         self.tree.DeleteChildren(self.root)

@@ -288,10 +288,10 @@ class Ellipse(Rectangle):
         dc.DrawEllipse(5, 5, width - 12, height - 12)
 
     def hit_test(self, x, y):
-        """http://www.conandalton.net/2009/01/how-to-draw-ellipse.html"""
+        """ http://www.conandalton.net/2009/01/how-to-draw-ellipse.html """
         dx = (x - self.x) / self.width
         dy = (y - self.y) / self.height 
-        if dx * dx + dy * dy < 1.0:
+        if dx * dx + dy * dy < 1:
             return True
         return False
 
@@ -355,15 +355,16 @@ class Line(OverlayShape):
         dc.DrawLine(10, height / 2, width - 10, height / 2)
 
     def hit_test(self, x, y):
+        pass
         #x, y = 2, 13
         #self.x=0
         #self.y=3
         #self.x2=5
         #self.y2=28
-        print "x: %s, y: %s, x1: %s, y1: %s, x2: %s, y2: %s" % (x, y, self.x, 
-                                                     self.y, self.x2, self.y2)
-        print ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) * 
-                                                                (x - self.x))
+        #print "x: %s, y: %s, x1: %s, y1: %s, x2: %s, y2: %s" % (x, y, self.x, 
+        #                                             self.y, self.x2, self.y2)
+        #print ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) * 
+        #                                                        (x - self.x))
 
 #---------------------------------------------------------------------
 
@@ -480,7 +481,8 @@ class Text(OverlayShape):
         font = self.font
         font_data = self.font_data
         colour = self.colour
-
+        self.board.add_undo()
+        
         dlg = TextInput(self.board.gui, self)
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
@@ -489,8 +491,10 @@ class Text(OverlayShape):
             self.colour = colour
             self.font_data = font_data
             self.find_extent()
+            self.board.undo_list.pop()  # undo "undo point" :)
             self.board.redraw_all()  # get rid of any text
         else:
+            
             dlg.transfer_data(self)  # grab font and text data
             self.font_data = self.font.GetNativeFontInfoDesc()
 
@@ -498,6 +502,7 @@ class Text(OverlayShape):
                 self.text = text  # don't want a blank item
                 return False
             self.update_scroll()
+            
             return True
 
 
@@ -611,21 +616,9 @@ class Note(Text):
     def get_handles(self):
         x, y, w, h = self.x, self.y, self.extent[0], self.extent[1]
         d = lambda x, y: (x - 2, y - 2)
-        return (d(x - 11, y - 10), d(x + w - 11, y - 10), d(x - 11, y + h - 10),
-               d(x + w - 11, y + h - 10))
-
-#    def draw_selected(self, dc):
-#        """Need to offset the 'handles' differently to text"""
-#        d = lambda dc, x, y: dc.DrawRectangle(x - 2, y - 2, 2, 2)
-#
-#        dc.SetBrush(wx.BLACK_BRUSH)
-#        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
-#        d(dc, self.x - 11, self.y - 10)
-#        d(dc, self.x + self.extent[0] - 6, self.y - 10)
-#        d(dc, self.x - 11, self.y + self.extent[1] - 10)
-#        d(dc, self.x + self.extent[0] - 6, self.y + self.extent[1] - 10)
-
-
+        return (d(x - 10, y - 10), d(x + w - 10, y - 10), d(x - 10, y + h - 10),
+               d(x + w - 10, y + h - 10))
+    
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush((255, 223, 120)))
         dc.SetPen(wx.Pen((0, 0, 0), 1))
@@ -708,7 +701,8 @@ class Image(OverlayShape):
 
 class Select(Tool):
     """
-    Select an item to move it around/edit text
+    Select an item to move it around/resize/change colour/thickness/edit text
+    Only create an undo point when an item is selected and been moved/resized
     """
     tooltip = "Select a shape to move and resize it"
 
@@ -716,6 +710,7 @@ class Select(Tool):
         Tool.__init__(self, board, (0, 0, 0), 1, wx.CURSOR_ARROW)
         self.shape = None
         self.dragging = False
+        self.undone = False
         self.count = 0
         self.offset = (0, 0)
 
@@ -723,6 +718,7 @@ class Select(Tool):
         """
         Sees if a shape is underneath the mouse coords, and allows the shape to
         be re-dragged to place
+        
         """
         shapes = self.board.shapes
         shapes.reverse()
@@ -738,7 +734,7 @@ class Select(Tool):
                 if self.board.selected:
                     self.board.deselect()
                 self.board.selected = shape
-                self.shape.selected = True
+                shape.selected = True
                 self.board.redraw_all()  # show
                 break  # breaking is vital to selecting the correct shape
         else:
@@ -749,8 +745,11 @@ class Select(Tool):
             self.dragging = False
             self.board.selected.edit()
 
-    def motion(self, x, y):
+    def motion(self, x, y):        
         if self.dragging:
+            if not self.undone:
+                self.board.add_undo()
+                self.undone = True
             #self.shape.width = x - self.x  --- resizing
             #self.shape.height = y - self.y
             self.shape.x = x - self.offset[0]
@@ -767,9 +766,8 @@ class Select(Tool):
                 image = self.shape.image
                 size = (x + image.GetWidth(), y + image.GetHeight())
                 self.board.update_scrollbars(size)
-                self.dragging = False
             elif isinstance(self.shape, Rectangle):
-                self.shape.sort_args(True)
+                self.shape.sort_args(True)  # force update for hit test
 
         self.board.redraw_all(update_thumb=True)
         self.board.select_tool()
@@ -791,7 +789,6 @@ class BitmapSelect(Rectangle):
         self.pen = wx.Pen(self.colour, self.thickness, wx.SHORT_DASH)
 
     def button_down(self, x, y):
-        """ Doesn't affect the shape list """
         super(BitmapSelect, self).button_down(x, y)
         self.board.copy = None
         self.board.redraw_all()

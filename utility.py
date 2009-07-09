@@ -25,7 +25,7 @@ The saved file structure is:
 
   dictionary { 0: [colour, thickness, tool, tab, version, font], - app settings
                1: shapes { 0: [shape1, shape2, .. shapeN],  1 / shapes
-                           1: [shape1, shape2, .. shapeN],  2 / shapes
+                           1: [shape1, shape2, .. shapeN],
                            ..
                            N: [shape1, shape2, .. shapeN]
                          }
@@ -90,7 +90,6 @@ class Utility(object):
         self.to_convert = {}   # list of files
         self.filename = None   # ACTIVE .wtbd file
         self.temp_file = None  # selected file (.wtdb/png/pdf - doesn't matter)
-        #self.saved_shapes = {}  # used for undo/redo checking save state
         self.saved = True
         self.colour = "Black"
         self.thickness = 1
@@ -132,7 +131,7 @@ class Utility(object):
             # load in every shape from every tab
             for x in range(0, self.gui.tab_count):
                 save_pasted_images(self.gui.tabs.GetPage(x).shapes)
-                temp[x] = copy(self.gui.tabs.GetPage(x).shapes)
+                temp[x] = list(self.gui.tabs.GetPage(x).shapes)
                 names.append(self.gui.tabs.GetPageText(x))
 
             if temp:

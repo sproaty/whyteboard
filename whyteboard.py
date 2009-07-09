@@ -26,6 +26,7 @@ its own undo/redo.
 
 import wx
 import wx.lib.dragscroller
+import copy
 
 from tools import Image, Text, Note, Select, OverlayShape
 
@@ -181,20 +182,11 @@ class Whyteboard(wx.ScrolledWindow):
             self.SetCursor(wx.StockCursor(self.shape.cursor) )
 
 
-    def add_shape(self, shape, pos=None):
-        """
-        Adds a shape to the "to-draw" list.
-        """
-        if not pos:
-            self.shapes.append(shape)
-        else:
-            self.shapes.insert(pos, shape)
-        self.undo_list.append(shape)
+    def add_shape(self, shape):
+        """ Adds a shape to the "to-draw" list. """
+        self.add_undo()       
+        self.shapes.append(shape)        
 
-        # clear redo list, as adding a new shape is not re-doable until it is
-        # undone
-        if self.redo_list:
-            self.redo_list = []
         if self.selected:
             self.deselect()
             self.redraw_all()
@@ -203,80 +195,61 @@ class Whyteboard(wx.ScrolledWindow):
         if self.copy:
             self.copy = None
             self.redraw_all()
+                    
+
+    def add_undo(self):
+        """ Creates an undo point """
+        l = [copy.copy(x) for x in self.shapes]
+        self.undo_list.append(l)         
+        if self.redo_list:
+            self.redo_list = []
         if self.gui.util.saved:
             self.gui.util.saved = False
-
+            
     def undo(self):
         """
         Undoes an action, and adds it to the redo list. Re-add any cleared shape
         one-by-one because each shape is then undoable
         """
         if not self.undo_list:
-            return  # stops possible errors from keyboard shortcut being held
-        shape = self.undo_list.pop()
-        self.redo_list.append(shape)
+            return
+        shapes = self.undo_list.pop()
+        self.redo_list.append(list(self.shapes))
+        self.gui.notes.tree.DeleteChildren(self.gui.notes.tabs[self.gui.tabs.GetSelection()])
+                                                                          
+        for x in shapes:
+            if isinstance(x, Note):
+                self.gui.notes.add_note(x)
+                #self.undo_note(x)
+                #break
 
-        if isinstance(shape, Note):
-            self.undo_note(shape)
-            self.shapes.remove(shape)
-        elif shape.__class__.__name__ == "list":  # cleared, add one-by-one
-            [self.shapes.append(x) for x in shape]
-        else:
-            self.shapes.remove(shape)
-
+        self.shapes = shapes
+        self.deselect()
         self.redraw_all(True)
 
 
     def redo(self):
-        """
-        Redoes an action, and adds it to the undo list.
-        """
+        """ Redoes an action, and adds it to the undo list. """
         if not self.redo_list:
-            return  # as above, kills any possible console/log spam
-        item = self.redo_list.pop()
-
-        if isinstance(item, Note):
-            self.gui.notes.add_note(item)
-            self.shapes.append(item)
-        elif item.__class__.__name__ == "list":  # cleared, remove one-by-one
-            [self.shapes.remove(x) for x in item]
-        else:
-            self.shapes.append(item)
-
-        self.undo_list.append(item)
+            return
+        shapes = self.redo_list.pop()
+        self.undo_list.append(list(self.shapes))
+        self.gui.notes.tree.DeleteChildren(self.gui.notes.tabs[self.gui.tabs.GetSelection()])
+        
+        for x in shapes:
+            if isinstance(x, Note):
+                self.gui.notes.add_note(x)
+                #break
+        self.shapes = shapes
+        self.deselect()
         self.redraw_all(True)
-
-
-    def undo_note(self, note):
-        """
-        Finds out the passed Note object's element number in the note tree.
-        Finds out this Whyteboard's tree ID and iterates over that tree node
-        to delete the note item.
-        """
-        number = 0
-        for item in self.shapes:
-            if isinstance(item, Note):
-                if note == item:
-                    break
-                number += 1
-
-        # current tab tree element ID
-        notes = self.gui.notes
-        tab = notes.tabs[self.get_tab()]
-        item, cookie = notes.tree.GetFirstChild(tab)
-
-        x = 0
-        while item:
-            if x == number:
-                notes.tree.Delete(item)
-            x += 1
-            item, cookie = notes.tree.GetNextChild(tab, cookie)
 
 
     def clear(self, keep_images=False):
         """ Removes all shapes from the 'to-draw' list. """
+        self.add_undo()
         if not keep_images:
-            self.undo_list.append(self.shapes)
+            #self.undo_list.append(self.shapes)            
             self.shapes = []
         else:
             to_remove = []
@@ -310,7 +283,7 @@ class Whyteboard(wx.ScrolledWindow):
     def middle_up(self, event):
         """ Stop dragging the scroller. """
         self.scroller.Stop()
-        self.change_cursor()
+        self.change_cursor()  # bugfix with custom cursor
 
     def on_paint(self, event=None):
         """ Called when the window is exposed. """
@@ -323,7 +296,6 @@ class Whyteboard(wx.ScrolledWindow):
         if self.selected:
             self.draw_shape(self.selected, True)
             self.selected = None
-
 
     def get_dc(self):
         cdc = wx.ClientDC(self)
