@@ -24,7 +24,7 @@ loading a standard image.
 The saved file structure is:
 
   dictionary { 0: [colour, thickness, tool, tab, version, font], - app settings
-               1: shapes { 0: [shape1, shape2, .. shapeN],  1 / shapes
+               1: shapes { 0: [shape1, shape2, .. shapeN],
                            1: [shape1, shape2, .. shapeN],
                            ..
                            N: [shape1, shape2, .. shapeN]
@@ -56,9 +56,9 @@ import wx
 import os
 import sys
 import random
-#import urllib
-#import tarfile
-#import distutils.dir_util
+import urllib
+import tarfile
+import distutils.dir_util
 from copy import copy
 
 try:

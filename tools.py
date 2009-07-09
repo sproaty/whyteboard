@@ -156,7 +156,7 @@ class OverlayShape(Tool):
         if not replay:
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
-        
+
         if not self.pen or self.selected or isinstance(self, Note):
             self.make_pen(dc)  # Note needs a DC to draw its outline here
         dc.SetPen(self.pen)
@@ -290,7 +290,7 @@ class Ellipse(Rectangle):
     def hit_test(self, x, y):
         """ http://www.conandalton.net/2009/01/how-to-draw-ellipse.html """
         dx = (x - self.x) / self.width
-        dy = (y - self.y) / self.height 
+        dy = (y - self.y) / self.height
         if dx * dx + dy * dy < 1:
             return True
         return False
@@ -361,9 +361,9 @@ class Line(OverlayShape):
         #self.y=3
         #self.x2=5
         #self.y2=28
-        #print "x: %s, y: %s, x1: %s, y1: %s, x2: %s, y2: %s" % (x, y, self.x, 
+        #print "x: %s, y: %s, x1: %s, y1: %s, x2: %s, y2: %s" % (x, y, self.x,
         #                                             self.y, self.x2, self.y2)
-        #print ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) * 
+        #print ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) *
         #                                                        (x - self.x))
 
 #---------------------------------------------------------------------
@@ -482,7 +482,7 @@ class Text(OverlayShape):
         font_data = self.font_data
         colour = self.colour
         self.board.add_undo()
-        
+
         dlg = TextInput(self.board.gui, self)
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
@@ -494,7 +494,7 @@ class Text(OverlayShape):
             self.board.undo_list.pop()  # undo "undo point" :)
             self.board.redraw_all()  # get rid of any text
         else:
-            
+
             dlg.transfer_data(self)  # grab font and text data
             self.font_data = self.font.GetNativeFontInfoDesc()
 
@@ -502,7 +502,7 @@ class Text(OverlayShape):
                 self.text = text  # don't want a blank item
                 return False
             self.update_scroll()
-            
+
             return True
 
 
@@ -618,7 +618,7 @@ class Note(Text):
         d = lambda x, y: (x - 2, y - 2)
         return (d(x - 10, y - 10), d(x + w - 10, y - 10), d(x - 10, y + h - 10),
                d(x + w - 10, y + h - 10))
-    
+
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush((255, 223, 120)))
         dc.SetPen(wx.Pen((0, 0, 0), 1))
@@ -718,7 +718,7 @@ class Select(Tool):
         """
         Sees if a shape is underneath the mouse coords, and allows the shape to
         be re-dragged to place
-        
+
         """
         shapes = self.board.shapes
         shapes.reverse()
@@ -745,7 +745,7 @@ class Select(Tool):
             self.dragging = False
             self.board.selected.edit()
 
-    def motion(self, x, y):        
+    def motion(self, x, y):
         if self.dragging:
             if not self.undone:
                 self.board.add_undo()

@@ -184,8 +184,8 @@ class Whyteboard(wx.ScrolledWindow):
 
     def add_shape(self, shape):
         """ Adds a shape to the "to-draw" list. """
-        self.add_undo()       
-        self.shapes.append(shape)        
+        self.add_undo()
+        self.shapes.append(shape)
 
         if self.selected:
             self.deselect()
@@ -195,17 +195,17 @@ class Whyteboard(wx.ScrolledWindow):
         if self.copy:
             self.copy = None
             self.redraw_all()
-                    
+
 
     def add_undo(self):
         """ Creates an undo point """
         l = [copy.copy(x) for x in self.shapes]
-        self.undo_list.append(l)         
+        self.undo_list.append(l)
         if self.redo_list:
             self.redo_list = []
         if self.gui.util.saved:
             self.gui.util.saved = False
-            
+
     def undo(self):
         """
         Undoes an action, and adds it to the redo list. Re-add any cleared shape
@@ -216,7 +216,7 @@ class Whyteboard(wx.ScrolledWindow):
         shapes = self.undo_list.pop()
         self.redo_list.append(list(self.shapes))
         self.gui.notes.tree.DeleteChildren(self.gui.notes.tabs[self.gui.tabs.GetSelection()])
-                                                                          
+
         for x in shapes:
             if isinstance(x, Note):
                 self.gui.notes.add_note(x)
@@ -235,7 +235,7 @@ class Whyteboard(wx.ScrolledWindow):
         shapes = self.redo_list.pop()
         self.undo_list.append(list(self.shapes))
         self.gui.notes.tree.DeleteChildren(self.gui.notes.tabs[self.gui.tabs.GetSelection()])
-        
+
         for x in shapes:
             if isinstance(x, Note):
                 self.gui.notes.add_note(x)
@@ -248,25 +248,13 @@ class Whyteboard(wx.ScrolledWindow):
     def clear(self, keep_images=False):
         """ Removes all shapes from the 'to-draw' list. """
         self.add_undo()
-        if not keep_images:
-            #self.undo_list.append(self.shapes)            
-            self.shapes = []
-        else:
-            to_remove = []
-            images = []
-
-            # build up a list of shapes to undo. If keeping images, stick them
-            # into a separate list, and set the shapes to that (which will be
-            # blank if clear all was selected).
+        images = []
+        if keep_images:
             for x in self.shapes:
                 if isinstance(x, Image):
                     images.append(x)
-                else:
-                    to_remove.append(x)
 
-            self.undo_list.append(to_remove)
-            self.shapes = images
-
+        self.shapes = images
         self.redraw_all(update_thumb=True)
 
 

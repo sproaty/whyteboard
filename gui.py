@@ -654,7 +654,6 @@ class WhyteboardApp(wx.App):
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
         self.frame = GUI(None)
         self.frame.Show(True)
-        #self.Bind(wx.EVT_CHAR, self.on_key)
         self.parse_args()
         self.delete_temp_files()
         return True
@@ -681,29 +680,6 @@ class WhyteboardApp(wx.App):
             for f in os.listdir(path):
                 if f.find(self.frame.util.backup_ext) is not -1:
                     os.remove(os.path.join(path, f))
-
-
-    def on_key(self, event):
-        """ Change tool when a number is pressed """
-        frame = self.frame
-        x = len(frame.util.items)
-        key = event.GetKeyCode()
-
-        #  49 -- key 1. change_tool expects list element num + 1
-        if key >= 49 and key <= 49 + x:
-            frame.control.change_tool(_id=key - 48)
-
-        elif key == wx.WXK_UP and frame.current_tab > 0:
-            frame.tabs.SetSelection(frame.current_tab - 1)
-
-        elif (key == wx.WXK_DOWN and frame.tab_count > 1 and
-             (frame.current_tab + 1 < frame.tab_count)):
-            frame.tabs.SetSelection(frame.current_tab + 1)
-
-        elif key == wx.WXK_ESCAPE:
-            if frame.IsFullScreen():
-                frame.on_fullscreen()
-        event.Skip()
 
 #----------------------------------------------------------------------
 
