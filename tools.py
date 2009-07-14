@@ -247,15 +247,23 @@ class Rectangle(OverlayShape):
         bottom_left = points[2]
         bottom_right = points[3]
 
-        rect1 = wx.Rect(top_left[0], top_left[1], 5, 5)
+        rect = wx.Rect(top_left[0], top_left[1], 5, 5)
         #print top_left, x, y
-        if rect1.InsideXY(x, y):
+        if rect.InsideXY(x, y):
             return TOP_LEFT
 
-        rect2 = wx.Rect(top_right[0], top_right[1], 5, 5)
-        if rect2.InsideXY(x, y):
+        rect = wx.Rect(top_right[0], top_right[1], 5, 5)
+        if rect.InsideXY(x, y):
             return TOP_RIGHT
-
+        
+        rect = wx.Rect(bottom_left[0], bottom_left[1], 5, 5)
+        if rect.InsideXY(x, y):
+            return BOTTOM_LEFT
+        
+        rect = wx.Rect(bottom_right[0], bottom_right[1], 5, 5)
+        if rect.InsideXY(x, y):
+            return BOTTOM_RIGHT
+                
         return False  # nothing hit
 
     def preview(self, dc, width, height):

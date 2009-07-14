@@ -94,6 +94,9 @@ class Whyteboard(wx.ScrolledWindow):
         elif isinstance(self.shape, Select):
 
             for shape in (reversed(self.shapes)):
+                if shape.handle_hit_test(x, y):
+                    self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
+                    break                    
                 if shape.hit_test(x, y):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
                     break
