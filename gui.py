@@ -370,8 +370,10 @@ class GUI(wx.Frame):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
         self.update_panels(False)
-
         self.current_tab = self.tabs.GetSelection()
+        if event:
+            self.current_tab = event.GetSelection()
+
         self.update_panels(True)
         #self.thumbs.Scroll(-1, self.current_tab)
         self.control.change_tool()
@@ -395,9 +397,13 @@ class GUI(wx.Frame):
     def on_close_tab(self, event=None):
         """
         Closes the current tab (if there are any to close).
-        Adds the 3 lists from the Whyteboard to a list inside the undo list.
+        Adds the 3 lists from the Whyteboard to a list inside the undo tab list.
         """
         if self.tab_count - 1:
+
+            if event:
+                self.current_tab = event.GetSelection()
+
             if len(self.closed_tabs) == 10:
                 del self.closed_tabs[9]
 
@@ -406,19 +412,16 @@ class GUI(wx.Frame):
                     board.virtual_size]
 
             self.closed_tabs.append(item)
+            self.tab_count -= 1
+            self.tabs.DeletePage(self.current_tab)
             self.notes.remove_tab(self.current_tab)
             self.thumbs.remove(self.current_tab)
-            self.tab_count -= 1
-            if os.name == "nt":
-                self.tabs.DeletePage(self.current_tab)  # fires on_change_tab
-            else:
-                self.tabs.RemovePage(self.current_tab)  # fires on_change_tab
+            self.on_change_tab()
             self.board.redraw_all()
 
             for x in range(self.current_tab, self.tab_count):
                 if self.tabs.GetPageText(x).startswith("Sheet "):
                     self.tabs.SetPageText(x, "Sheet " + str(x + 1))
-
 
 
     def on_undo_tab(self, event=None):

@@ -56,9 +56,9 @@ import wx
 import os
 import sys
 import random
-import urllib
-import tarfile
-import distutils.dir_util
+#import urllib
+#import tarfile
+#import distutils.dir_util
 from copy import copy
 
 try:

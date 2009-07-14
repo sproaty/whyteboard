@@ -31,6 +31,12 @@ from dialogs import TextInput
 
 #----------------------------------------------------------------------
 
+TOP_LEFT = 1
+TOP_RIGHT = 2
+BOTTOM_LEFT = 3
+BOTTOM_RIGHT = 4
+
+
 class Tool(object):
     """ Abstract class representing a tool: Drawing board/colour/thickness """
     tooltip = ""
@@ -158,7 +164,7 @@ class OverlayShape(Tool):
             odc.Clear()
 
         if not self.pen or self.selected or isinstance(self, Note):
-            self.make_pen(dc)  # Note needs a DC to draw its outline here
+            self.make_pen(dc)  # Note object needs a DC to draw its outline here
         dc.SetPen(self.pen)
         dc.SetBrush(self.brush)
         getattr(dc, "Draw" + _type)(*self.get_args())
@@ -233,6 +239,24 @@ class Rectangle(OverlayShape):
             self.rect = None
             self.sort_args()
         return self.rect.InsideXY(x, y)
+
+    def handle_hit_test(self, x, y):
+        points = self.get_handles()
+        top_left = points[0]
+        top_right = points[1]
+        bottom_left = points[2]
+        bottom_right = points[3]
+
+        rect1 = wx.Rect(top_left[0], top_left[1], 5, 5)
+        #print top_left, x, y
+        if rect1.InsideXY(x, y):
+            return TOP_LEFT
+
+        rect2 = wx.Rect(top_right[0], top_right[1], 5, 5)
+        if rect2.InsideXY(x, y):
+            return TOP_RIGHT
+
+        return False  # nothing hit
 
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
@@ -711,6 +735,7 @@ class Select(Tool):
         self.shape = None
         self.dragging = False
         self.undone = False
+        self.direction = None
         self.count = 0
         self.offset = (0, 0)
 
@@ -722,8 +747,17 @@ class Select(Tool):
         """
         shapes = self.board.shapes
         shapes.reverse()
+        found = False
         for count, shape in enumerate(shapes):
-            if shape.hit_test(x, y):
+            direction = shape.handle_hit_test(x, y)
+
+            if direction:
+                self.direction = direction
+                found = True
+            elif shape.hit_test(x, y):
+                found = True
+
+            if found:
                 self.board.overlay = wx.Overlay()
                 self.shape = shapes[count]
                 self.dragging = True
@@ -750,10 +784,13 @@ class Select(Tool):
             if not self.undone:
                 self.board.add_undo()
                 self.undone = True
-            #self.shape.width = x - self.x  --- resizing
-            #self.shape.height = y - self.y
-            self.shape.x = x - self.offset[0]
-            self.shape.y = y - self.offset[1]
+            if not self.direction:  # moving
+                self.shape.x = x - self.offset[0]
+                self.shape.y = y - self.offset[1]
+            else:
+                self.shape.width = x - self.x
+                self.shape.height = y - self.y
+
 
     def draw(self, dc, replay=False):
         if self.dragging:

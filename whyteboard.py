@@ -184,7 +184,7 @@ class Whyteboard(wx.ScrolledWindow):
 
     def add_shape(self, shape):
         """ Adds a shape to the "to-draw" list. """
-        self.add_undo()
+        self.add_undo(shape)
         self.shapes.append(shape)
 
         if self.selected:
@@ -197,10 +197,11 @@ class Whyteboard(wx.ScrolledWindow):
             self.redraw_all()
 
 
-    def add_undo(self):
+    def add_undo(self, shape=None):
         """ Creates an undo point """
         l = [copy.copy(x) for x in self.shapes]
         self.undo_list.append(l)
+
         if self.redo_list:
             self.redo_list = []
         if self.gui.util.saved:
@@ -220,8 +221,6 @@ class Whyteboard(wx.ScrolledWindow):
         for x in shapes:
             if isinstance(x, Note):
                 self.gui.notes.add_note(x)
-                #self.undo_note(x)
-                #break
 
         self.shapes = shapes
         self.deselect()
@@ -239,7 +238,7 @@ class Whyteboard(wx.ScrolledWindow):
         for x in shapes:
             if isinstance(x, Note):
                 self.gui.notes.add_note(x)
-                #break
+
         self.shapes = shapes
         self.deselect()
         self.redraw_all(True)

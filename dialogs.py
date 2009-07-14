@@ -25,8 +25,8 @@ import os
 import sys
 
 from copy import copy
-from BeautifulSoup import BeautifulSoup
-from urllib import urlopen, urlretrieve
+#from BeautifulSoup import BeautifulSoup
+#from urllib import urlopen, urlretrieve
 
 import tools
 
