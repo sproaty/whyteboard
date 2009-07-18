@@ -369,7 +369,7 @@ class TextInput(wx.Dialog):
         Standard constructor - sets text to supplied text variable, if present.
         """
         wx.Dialog.__init__(self, gui, title="Enter text",
-                            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+              style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER, size=(330, 250))
 
         self.ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(300, 120))
         self.okButton = wx.Button(self, wx.ID_OK, "&OK")
@@ -415,7 +415,6 @@ class TextInput(wx.Dialog):
         sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 7)
         sizer.Add(_sizer, 0, gap | wx.ALIGN_RIGHT, 5)
         sizer.Add((10, 10))  # Spacer.
-        btnSizer.Realize()
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
         self.SetSizer(sizer)
 

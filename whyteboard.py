@@ -42,10 +42,10 @@ class Whyteboard(wx.ScrolledWindow):
         """
         wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE
                                                         | wx.CLIP_CHILDREN )
-        self.virtual_size = (1000, 1000)
+        self.canvas_size = (1000, 1000)
         self.area = (1000, 1000)
         self.SetVirtualSizeHints(2, 2)
-        self.SetVirtualSize(self.virtual_size)
+        self.SetVirtualSize(self.canvas_size)
         self.SetScrollRate(3, 3)
 
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Windows!
@@ -96,7 +96,7 @@ class Whyteboard(wx.ScrolledWindow):
             for shape in (reversed(self.shapes)):
                 if shape.handle_hit_test(x, y):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
-                    break                    
+                    break
                 if shape.hit_test(x, y):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
                     break
@@ -323,27 +323,28 @@ class Whyteboard(wx.ScrolledWindow):
         Ignore_min is used when the user is resizing the canvas manually
         """
         width, height = new_size
+        x, y = width, height
         update = True
         if not ignore_min:
-            if width > self.virtual_size[0]:
+            if width > self.canvas_size[0]:
                 x = width
             else:
-                x = self.virtual_size[0]
+                x = self.canvas_size[0]
 
-            if height > self.virtual_size[1]:
+            if height > self.canvas_size[1]:
                 y = height
             else:
-                y =  self.virtual_size[1]
+                y =  self.canvas_size[1]
 
             update = False
             #  update the scrollbars and the board's buffer size
-            if x > self.virtual_size[0]:
+            if x > self.canvas_size[0]:
                 update = True
-            elif y > self.virtual_size[1]:
+            elif y > self.canvas_size[1]:
                 update = True
 
         if update:
-            self.virtual_size = (x, y)
+            self.canvas_size = (x, y)
             self.buffer = wx.EmptyBitmap(*(x, y))
             self.SetVirtualSize((x, y))
             self.redraw_all()

@@ -18,10 +18,10 @@
 
 """
 This module contains a utility helper class to reduce the amount of code
-inside gui.py - whiyteboard-file saving/loading, pdf/ps loading/conversion and
+inside gui.py - whyteboard-file saving/loading, pdf/ps loading/conversion and
 loading a standard image.
 
-The saved file structure is:
+The saved .wtbd file structure is:
 
   dictionary { 0: [colour, thickness, tool, tab, version, font], - app settings
                1: shapes { 0: [shape1, shape2, .. shapeN],
@@ -45,6 +45,10 @@ The saved file structure is:
                            1: 'sheet 2'
                            2: 'sheet 3'
                            ...
+                         ]
+               4: sizes  [ 0: (canvas_x, canvas_y),
+                           1: (canvas_x, canvas_y),
+                           .....
                          ]
              }
 
@@ -95,7 +99,7 @@ class Utility(object):
         self.thickness = 1
         self.font = None  # default font for text input
         self.tool = 1  # Current tool ID that is being drawn with
-        self.items = tools.items # shortcut
+        self.items = tools.items  # shortcut
         self.update_version = True
         self.saved_version = ""
         self.backup_ext = ".blahblah123blah"  # backup file extension
@@ -103,7 +107,7 @@ class Utility(object):
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
 
         # Make wxPython wildcard filter. Add a new item - new type supported!
-        self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "gif", "tiff",
+        self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
                        "bmp", "pcx"]
         label = ["All files (*.*)", "Whyteboard files (*.wtbd)", "Image Files",
                  "PDF/PS/SVG"]
@@ -126,12 +130,16 @@ class Utility(object):
         if self.filename:
             temp = {}
             names =  []
+            canvas_sizes = []
             tree_ids = []  # every note's tree ID
 
             # load in every shape from every tab
             for x in range(0, self.gui.tab_count):
-                save_pasted_images(self.gui.tabs.GetPage(x).shapes)
-                temp[x] = list(self.gui.tabs.GetPage(x).shapes)
+                board = self.gui.tabs.GetPage(x)
+                save_pasted_images(board.shapes)
+                temp[x] = list(board.shapes)
+                canvas_sizes.append(board.canvas_size)
+                print canvas_sizes
                 names.append(self.gui.tabs.GetPageText(x))
 
             if temp:
@@ -155,7 +163,8 @@ class Utility(object):
                               version, font],
                           1: temp,
                           2: self.to_convert,
-                          3: names }
+                          3: names,
+                          4: canvas_sizes }
 
                 f = open(self.filename, 'w')
                 try:
@@ -243,8 +252,9 @@ class Utility(object):
             try:
                 name = temp[3][x]
             except KeyError:
-                name = "Sheet " + str(x + 1)
+                name = "Sheet %s" % x + 1
             self.gui.on_new_tab(name=name)
+
 
             for shape in temp[1][x]:
                 shape.board = self.gui.board#wb  # restore board

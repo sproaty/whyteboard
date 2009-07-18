@@ -26,6 +26,7 @@ with by the user (e.g. they can't draw an image directly)
 import wx
 import os
 import time
+import math
 
 from dialogs import TextInput
 
@@ -67,6 +68,10 @@ class Tool(object):
 
     def hit_test(self, x, y):
         """ Returns True/False if a mouseclick in "inside" the shape """
+        pass
+
+    def handle_hit_test(self, x, y):
+        """ Returns the position of the handle the user has clicked on """
         pass
 
     def make_pen(self, dc=None):
@@ -184,9 +189,14 @@ class OverlayShape(Tool):
 
     def draw_selected(self, dc):
         """Draws each handle an object has"""
-        dc.SetBrush(wx.BLACK_BRUSH)
-        dc.SetPen(wx.Pen(wx.BLACK, 3, wx.SOLID))
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.SetPen(wx.Pen(wx.BLACK, 1, wx.SOLID))
         draw = lambda dc, x, y: dc.DrawRectangle(x, y, 5, 5)
+        [draw(dc, x, y) for x, y in self.get_handles()]
+
+        dc.SetBrush(find_inverse(self.colour))
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        draw = lambda dc, x, y: dc.DrawRectangle(x, y, 4, 4)
         [draw(dc, x, y) for x, y in self.get_handles()]
 
     def offset(self, x, y):
@@ -210,6 +220,7 @@ class Rectangle(OverlayShape):
         self.width = 0
         self.height = 0
         self.rect = None
+        self.handles = []
 
     def motion(self, x, y):
         self.width =  x - self.x
@@ -228,11 +239,32 @@ class Rectangle(OverlayShape):
         return d(x, y), d(x + w, y), d(x, y + h), d(x + w, y + h)
 
     def sort_args(self, force=False):
-        """Do some rectangle conversions instead of many if statements."""
+        """
+        Do some rectangle conversions instead of many if statements.
+        Thickness is added to allow the Select tool to select the shape via
+        its lines (as opposed to its x/y point)
+        The wx.Rects are worked out here instead of repeatedly in hit_tests
+        """
         x, y, width, height = self.get_args()[:4]
-        args = [min(x, width + x), min(y, height + y), abs(width), abs(height)]
-        if not self.rect or force:
+        thickness = math.ceil(self.thickness / 2)
+        args = [min(x, width + x) - thickness, min(y, height + y) - thickness,
+                abs(width) + self.thickness, abs(height) + self.thickness]
+        if not self.rect or not self.handles or force:
             self.rect = wx.Rect(*args)
+            # sort out handles.
+            points = self.get_handles()
+            top_left = points[0]
+            top_right = points[1]
+            bottom_left = points[2]
+            bottom_right = points[3]
+
+            rect1 = wx.Rect(top_left[0], top_left[1], 5, 5)
+            rect2 = wx.Rect(top_right[0], top_right[1], 5, 5)
+
+            rect3 = wx.Rect(bottom_left[0], bottom_left[1], 5, 5)
+            rect4 = wx.Rect(bottom_right[0], bottom_right[1], 5, 5)
+            self.handles = [rect1, rect2, rect3, rect4]
+
 
     def hit_test(self, x, y):
         if not hasattr(self, "rect"):
@@ -241,29 +273,14 @@ class Rectangle(OverlayShape):
         return self.rect.InsideXY(x, y)
 
     def handle_hit_test(self, x, y):
-        points = self.get_handles()
-        top_left = points[0]
-        top_right = points[1]
-        bottom_left = points[2]
-        bottom_right = points[3]
-
-        rect = wx.Rect(top_left[0], top_left[1], 5, 5)
-        #print top_left, x, y
-        if rect.InsideXY(x, y):
+        if self.handles[0].InsideXY(x, y):
             return TOP_LEFT
-
-        rect = wx.Rect(top_right[0], top_right[1], 5, 5)
-        if rect.InsideXY(x, y):
+        if self.handles[1].InsideXY(x, y):
             return TOP_RIGHT
-        
-        rect = wx.Rect(bottom_left[0], bottom_left[1], 5, 5)
-        if rect.InsideXY(x, y):
+        if self.handles[2].InsideXY(x, y):
             return BOTTOM_LEFT
-        
-        rect = wx.Rect(bottom_right[0], bottom_right[1], 5, 5)
-        if rect.InsideXY(x, y):
+        if self.handles[3].InsideXY(x, y):
             return BOTTOM_RIGHT
-                
         return False  # nothing hit
 
     def preview(self, dc, width, height):
@@ -283,13 +300,15 @@ class Circle(OverlayShape):
         self.radius = 1
 
     def motion(self, x, y):
-        self.radius = self.x - x
+        self.radius = abs(self.x - x)
 
     def draw(self, dc, replay=False):
         super(Circle, self).draw(dc, replay, "Circle")
 
     def get_args(self):
+        #print self.radius
         return [self.x, self.y, self.radius]
+
 
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
@@ -298,7 +317,8 @@ class Circle(OverlayShape):
 
     def hit_test(self, x, y):
         val = ((x - self.x) * (x - self.x)) + ((y - self.y) * (y - self.y))
-        if val <= (self.radius * self.radius) + self.thickness:
+
+        if val <= (self.radius * self.radius):
             return True
         return False
 
@@ -395,8 +415,8 @@ class Line(OverlayShape):
         #self.y2=28
         #print "x: %s, y: %s, x1: %s, y1: %s, x2: %s, y2: %s" % (x, y, self.x,
         #                                             self.y, self.x2, self.y2)
-        #print ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) *
-        #                                                        (x - self.x))
+        print ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) *
+                                                                (x - self.x))
 
 #---------------------------------------------------------------------
 
@@ -605,6 +625,8 @@ class Text(OverlayShape):
 
 #----------------------------------------------------------------------
 
+SIZE = 10  # border size for note
+
 class Note(Text):
     """
     A special type of text input, in the style of a post-it/"sticky" notes.
@@ -642,14 +664,22 @@ class Note(Text):
             self.find_extent()
             dc.SetBrush(wx.Brush((255, 223, 120)))
             dc.SetPen(wx.Pen((0, 0, 0), 1))
-            dc.DrawRectangle(self.x - 10, self.y - 10, *self.extent)
+            dc.DrawRectangle(self.x - SIZE, self.y - SIZE, *self.extent)
         super(Note, self).make_pen()
+
+    def hit_test(self, x, y):
+        width = self.x + self.extent[0] - SIZE
+        height = self.y + self.extent[1] - SIZE
+
+        if x > self.x - SIZE and x < width and y > self.y - SIZE and y < height:
+            return True
+        return False
 
     def get_handles(self):
         x, y, w, h = self.x, self.y, self.extent[0], self.extent[1]
         d = lambda x, y: (x - 2, y - 2)
-        return (d(x - 10, y - 10), d(x + w - 10, y - 10), d(x - 10, y + h - 10),
-               d(x + w - 10, y + h - 10))
+        return (d(x - SIZE, y - SIZE), d(x + w - SIZE, y - SIZE),
+                d(x - SIZE, y + h - SIZE), d(x + w - SIZE, y + h - SIZE))
 
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush((255, 223, 120)))
@@ -777,7 +807,10 @@ class Select(Tool):
                     self.board.deselect()
                 self.board.selected = shape
                 shape.selected = True
-                self.board.redraw_all()  # show
+                self.board.shapes.pop(count)
+                self.board.redraw_all()  # hide 'original'
+                self.board.shapes.insert(count, shape)
+                self.draw(self.board.get_dc())  # draw 'new'
                 break  # breaking is vital to selecting the correct shape
         else:
             self.board.deselect()
@@ -789,7 +822,7 @@ class Select(Tool):
 
     def motion(self, x, y):
         if self.dragging:
-            if not self.undone:
+            if not self.undone:  # add a single undo point, not one per call
                 self.board.add_undo()
                 self.undone = True
             if not self.direction:  # moving
@@ -850,6 +883,17 @@ class BitmapSelect(Rectangle):
         dc.DrawRectangle(10, 10, width - 20, height - 20)
 
 #---------------------------------------------------------------------
+
+def find_inverse(colour):
+    """ Invert an RGB colour """
+    if not isinstance(colour, wx.Colour):
+        c = colour
+        colour = wx.Colour()
+        colour.SetFromName(c)
+    r = 255 - colour.Red()
+    g = 255 - colour.Green()
+    b = 255 - colour.Blue()
+    return wx.Brush((r, g, b))
 
 
 #  Reference the correct classes for pickled files with old class names

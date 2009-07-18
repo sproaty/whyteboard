@@ -94,7 +94,7 @@ class GUI(wx.Frame):
         self.make_menu()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.current_tab = 0
-        self.closed_tabs = []  # [shapes - undo - redo - virtual_size] per tab
+        self.closed_tabs = []  # [shapes - undo - redo - canvas_size] per tab
 
         self.control = ControlPanel(self)
         self.tabs = wx.Notebook(self)
@@ -399,6 +399,7 @@ class GUI(wx.Frame):
         Closes the current tab (if there are any to close).
         Adds the 3 lists from the Whyteboard to a list inside the undo tab list.
         """
+        print 'ya'
         if self.tab_count - 1:
 
             if event:
@@ -409,7 +410,7 @@ class GUI(wx.Frame):
 
             board = self.board
             item = [board.shapes, board.undo_list, board.redo_list,
-                    board.virtual_size]
+                    board.canvas_size]
 
             self.closed_tabs.append(item)
             self.tab_count -= 1
@@ -419,7 +420,7 @@ class GUI(wx.Frame):
             self.on_change_tab()
             self.board.redraw_all()
 
-            for x in range(self.current_tab, self.tab_count):
+            for x in range(self.tab_count):
                 if self.tabs.GetPageText(x).startswith("Sheet "):
                     self.tabs.SetPageText(x, "Sheet " + str(x + 1))
 
@@ -434,7 +435,7 @@ class GUI(wx.Frame):
         self.board.shapes = shape[0]
         self.board.undo_list = shape[1]
         self.board.redo_list = shape[2]
-        self.board.virtual_size = shape[3]
+        self.board.canvas_size = shape[3]
 
         for shape in self.board.shapes:
             shape.board = self.board
@@ -461,8 +462,8 @@ class GUI(wx.Frame):
                 if self.util.get_clipboard():
                     self.can_paste = True
                 self.count = 0
-            event.Enable(self.can_paste)
-            self.menu.Enable(ID_PASTE_NEW, self.can_paste)
+                event.Enable(self.can_paste)
+                self.menu.Enable(ID_PASTE_NEW, self.can_paste)
             return
 
         do = False
