@@ -86,7 +86,7 @@ class GUI(wx.Frame):
             self.can_paste = True
         else:
             self.can_paste = False
-        self.tb = None
+        self.toolbar = None
         self.menu = None
         self.process = None
         self.dialog = None
@@ -228,7 +228,7 @@ class GUI(wx.Frame):
         """
         Creates a toolbar, Pythonically :D
         """
-        self.tb = self.CreateToolBar()
+        self.toolbar = self.CreateToolBar()
 
         ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_COPY, wx.ID_PASTE,
                wx.ID_UNDO, wx.ID_REDO]
@@ -242,15 +242,15 @@ class GUI(wx.Frame):
         x = 0
         for _id, art_id, tip in zip(ids, arts, tips):
             art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
-            self.tb.AddSimpleTool(_id, art, tip)
+            self.toolbar.AddSimpleTool(_id, art, tip)
 
             if x == 2:
-                self.tb.AddSeparator()
+                self.toolbar.AddSeparator()
             if x >= 3:
                 self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=_id)
-                self.tb.EnableTool(_id, False)
+                self.toolbar.EnableTool(_id, False)
             x += 1
-        self.tb.Realize()
+        self.toolbar.Realize()
 
 
     def on_save(self, event=None):
@@ -360,7 +360,7 @@ class GUI(wx.Frame):
         if name:
             self.tabs.AddPage(wb, name)
         else:
-            self.tabs.AddPage(wb, "Sheet "+ str(self.tab_count))
+            self.tabs.AddPage(wb, "Sheet %s" % self.tab_count)
         self.update_panels(False)
         self.current_tab = self.tab_count - 1
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
@@ -399,30 +399,29 @@ class GUI(wx.Frame):
         Closes the current tab (if there are any to close).
         Adds the 3 lists from the Whyteboard to a list inside the undo tab list.
         """
-        print 'ya'
-        if self.tab_count - 1:
+        if not self.tab_count - 1:
+            return
+        if event:
+            self.current_tab = event.GetSelection()
 
-            if event:
-                self.current_tab = event.GetSelection()
+        if len(self.closed_tabs) == 10:
+            del self.closed_tabs[9]
 
-            if len(self.closed_tabs) == 10:
-                del self.closed_tabs[9]
+        board = self.board
+        item = [board.shapes, board.undo_list, board.redo_list,
+                board.canvas_size]
 
-            board = self.board
-            item = [board.shapes, board.undo_list, board.redo_list,
-                    board.canvas_size]
+        self.closed_tabs.append(item)
+        self.tab_count -= 1
+        self.tabs.RemovePage(self.current_tab)
+        self.on_change_tab()  # updates self.board
+        self.notes.remove_tab(self.current_tab)
+        self.thumbs.remove(self.current_tab)
+        self.board.redraw_all()
 
-            self.closed_tabs.append(item)
-            self.tab_count -= 1
-            self.tabs.DeletePage(self.current_tab)
-            self.notes.remove_tab(self.current_tab)
-            self.thumbs.remove(self.current_tab)
-            self.on_change_tab()
-            self.board.redraw_all()
-
-            for x in range(self.tab_count):
-                if self.tabs.GetPageText(x).startswith("Sheet "):
-                    self.tabs.SetPageText(x, "Sheet " + str(x + 1))
+        for x in range(self.tab_count):
+            if self.tabs.GetPageText(x).startswith("Sheet "):
+                self.tabs.SetPageText(x, "Sheet " + str(x + 1))
 
 
     def on_undo_tab(self, event=None):
@@ -484,12 +483,11 @@ class GUI(wx.Frame):
         elif self.board:
             if self.board.copy:
                 do = True
-
         event.Enable(do)
 
 
     def on_copy(self, event):
-        """ If a rectangle selection is made, copy the selection as a bitmap"""
+        """ If a rectangle selection is made, copy the selection as a bitmap """
         self.board.copy.sort_args()
         rect = self.board.copy.rect
         self.board.copy = None
@@ -501,7 +499,8 @@ class GUI(wx.Frame):
 
     def on_paste(self, event=None):
         """ Grabs the image from the clipboard and places it on the panel """
-        shape = self.get_paste()
+        bmp = self.util.get_clipboard()
+        shape = Image(self.board, bmp.GetBitmap(), None)
         shape.button_down(0, 0)
         self.board.redraw_all(True)
 
@@ -510,18 +509,11 @@ class GUI(wx.Frame):
         self.on_new_tab()
         self.on_paste()
 
-    def get_paste(self):
-        """ Returns an Image of the clipboard's bitmap """
-        bmp = self.util.get_clipboard()
-        if bmp:
-            return Image(self.board, bmp.GetBitmap(), None)
-
     def on_fullscreen(self, event=None):
         """ Toggles fullscreen """
         flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION |
                wx.FULLSCREEN_NOSTATUSBAR)
         self.ShowFullScreen(not self.IsFullScreen(), flag)
-
 
     def convert_dialog(self, cmd):
         """
@@ -530,23 +522,17 @@ class GUI(wx.Frame):
         """
         self.process = wx.Process(self)
         wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
-
         self.dialog = ProgressDialog(self, "Converting...")
         self.dialog.ShowModal()
 
-
     def on_end_process(self, event):
-        """Destroy the progress process after convert returns"""
+        """ Destroy the progress process after convert returns """
         self.process.Destroy()
         self.dialog.Destroy()
         del self.process
 
-
     def on_done_load(self, event=None):
-        """
-        Refreshes the thumbnails and destroys the progress dialog after WB file
-        load.
-        """
+        """ Refreshes thumbnails, destroys progress dialog after loading """
         self.dialog.SetTitle("Updating thumbs")
         wx.MilliSleep(50)
         wx.SafeYield()
@@ -555,7 +541,7 @@ class GUI(wx.Frame):
 
 
     def on_exit(self, event=None):
-        """Ask to save, quit or cancel if the user hasn't saved."""
+        """ Ask to save, quit or cancel if the user hasn't saved. """
         self.util.prompt_for_save(self.Destroy)
 
     def tab_popup(self, event):
@@ -633,11 +619,10 @@ class GUI(wx.Frame):
             if d.ShowModal() == wx.ID_YES:
                 try:
                     self.util.download_help_files()
-                    wx.MessageBox("Folder whyteboard-help created")
                 except IOError:
                     pass
                 else:
-                    self.on_help()
+                    self.on_help()  # show newly downloaded files
 
 
     def on_about(self, event=None):

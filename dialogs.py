@@ -25,8 +25,8 @@ import os
 import sys
 
 from copy import copy
-#from BeautifulSoup import BeautifulSoup
-#from urllib import urlopen, urlretrieve
+from BeautifulSoup import BeautifulSoup
+from urllib import urlopen, urlretrieve
 
 import tools
 
@@ -220,7 +220,7 @@ class UpdateDialog(wx.Dialog):
     """
     def __init__(self, gui):
         """Defines a gauge and a timer which updates the gauge."""
-        wx.Dialog.__init__(self, gui, title="Updates", size=(350, 300))
+        wx.Dialog.__init__(self, gui, title="Updates", size=(350, 200))
         self.gui = gui
         self.downloaded = 0
         gap = wx.LEFT | wx.TOP | wx.RIGHT
@@ -242,7 +242,7 @@ class UpdateDialog(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.text, 0, gap, 10)
         sizer.Add(self.text2, 0, wx.TOP | wx.LEFT, 10)
-        sizer.Add(self.btn, 0, wx.TOP | wx.ALIGN_CENTRE, 10)
+        sizer.Add(self.btn, 0, wx.TOP | wx.ALIGN_CENTRE, 30)
         sizer.Add((10, 10)) # Spacer.
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
         self.SetSizer(sizer)
@@ -286,9 +286,8 @@ class UpdateDialog(wx.Dialog):
                 size = _all[i].findNext('a').renderContents().strip()
 
                 if version != self.gui.version:
-                    s = (" There is a new version available, "+version +"\n"+
-                         " File: " +_file +"\n"+
-                         " Size: " + size)
+                    s = " There is a new version available, %s\n File: %s\n" \
+                        " Size: %s" % (version, _file, size)
                     self.text.SetLabel(s)
                     self.btn.Enable(True)
                     self._file = td.findNext('a')['href']
@@ -377,14 +376,12 @@ class TextInput(wx.Dialog):
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
         self.colourBtn = wx.ColourPickerCtrl(self)
         fontBtn = wx.Button(self, label="Select Font")
-
         extent = self.ctrl.GetFullTextExtent("Hy")
         lineHeight = extent[1] + extent[3]
         self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
 
         if not gui.util.font:
             gui.util.font = self.ctrl.GetFont()
-
         self.gui = gui
         self.note = None
         self.colour = gui.util.colour
@@ -410,7 +407,6 @@ class TextInput(wx.Dialog):
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
         btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
-
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 7)
         sizer.Add(_sizer, 0, gap | wx.ALIGN_RIGHT, 5)
@@ -490,15 +486,12 @@ class TextInput(wx.Dialog):
 
 class FindIM(wx.Dialog):
     """
-    Asks a user for the location of ImageMagick.
+    Asks a user for the location of ImageMagick (Windows-only)
     """
     t = ("Whyteboard uses ImageMagick to load PDF, SVG and PS files. \n"
     "Please select its installed location.")
 
     def __init__(self, parent, gui):
-        """
-        Standard constructor
-        """
         wx.Dialog.__init__(self, gui, title="ImageMagick Notification")
         self.parent = parent  # utility class
         self.path = "C:/Program Files/"
@@ -510,7 +503,6 @@ class FindIM(wx.Dialog):
         self.okButton = wx.Button(self, wx.ID_OK, "&OK")
         self.okButton.SetDefault()
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
-
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
         btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
@@ -536,7 +528,6 @@ class FindIM(wx.Dialog):
             self.path = dlg.GetPath()
         else:
             dlg.Destroy()
-
 
     def ok(self, event=None):
         if self.parent.check_im_path(self.path):
@@ -574,24 +565,23 @@ class Resize(wx.Dialog):
 
         self.hctrl.SetValue(str(height))
         self.wctrl.SetValue(str(width))
-
         self.okButton = wx.Button(self, wx.ID_OK, "&OK")
         self.okButton.SetDefault()
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
 
+        order = (self.wctrl, self.hctrl)  # sort out tab order
+        for i in xrange(len(order) - 1):
+            order[i+1].MoveAfterInTabOrder(order[i])
+
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
         btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
-
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(csizer, 0, gap, 7)
         sizer.Add((10, 10)) # Spacer.
-        btnSizer.Realize()
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
-
         self.SetSizer(sizer)
         sizer.Fit(self)
-
         self.okButton.Bind(wx.EVT_BUTTON, self.ok)
 
 
@@ -600,10 +590,11 @@ class Resize(wx.Dialog):
         Set the virtual canvas size
         """
         value = (int(self.wctrl.GetValue()), int(self.hctrl.GetValue()))
-        board = self.gui.board
-        board.buffer = wx.EmptyBitmap(*value)
-        board.SetVirtualSize(value)
-        board.redraw_all()
+        self.gui.board.update_scrollbars(value, True)
+        #board = self.gui.board
+        #board.buffer = wx.EmptyBitmap(*value)
+        #board.SetVirtualSize(value)
+        #board.redraw_all()
         #board.SetVirtualSize(value)
         #board.SetSize(value)
         #board.SetBackgroundColour("Grey")
@@ -624,21 +615,15 @@ class IntValidator(wx.PyValidator):
         return IntValidator()
 
     def TransferFromWindow(self):
-        """
-        Need to override to stop a message box popping up
-        """
+        """ Need to override to stop a message box popping up """
         return True
 
     def TransferToWindow(self):
-        """
-        Need to override to stop a message box popping up
-        """
+        """ Need to override to stop a message box popping up """
         return True
 
     def Validate(self, win):
-        """
-        The actual validation method called on the input
-        """
+        """ The actual validation method called on the input """
         tc = self.GetWindow()
         val = tc.GetValue()
 
@@ -647,20 +632,13 @@ class IntValidator(wx.PyValidator):
                 return False
         return True
 
-
     def on_char(self, event):
-        """
-        Ensure a keypress is a digit
-        """
+        """ Ensure a keypress is a digit """
         key = event.GetKeyCode()
 
-        if key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255:
+        if (key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255 or
+            chr(key) in '0123456789'):
             event.Skip()
-            return
-
-        if chr(key) in '0123456789':
-            event.Skip()
-            return
         return
 
 #----------------------------------------------------------------------

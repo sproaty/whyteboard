@@ -40,25 +40,24 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE
-                                                        | wx.CLIP_CHILDREN )
+        style = wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN
+        wx.ScrolledWindow.__init__(self, tab, style=style)
         self.canvas_size = (1000, 1000)
         self.area = (1000, 1000)
         self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.canvas_size)
         self.SetScrollRate(3, 3)
-
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Windows!
         self.SetBackgroundColour("White")
         self.ClearBackground()
+        
         self.scroller = wx.lib.dragscroller.DragScroller(self)
         self.overlay = wx.Overlay()
-
         self.gui = gui
         self.tab = tab
         self.shapes = []  # list of shapes for re-drawing/saving
-        self.shape = None  # currently selected shape to draw with
-        self.selected = None  # selected shape with Select tool
+        self.shape = None  # currently selected shape *to draw with*
+        self.selected = None  # selected shape *with Select tool*
         self.text  = None  # current Text object for redraw all
         self.copy = None  # BitmapSelect instance
         self.undo_list = []
@@ -78,13 +77,12 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def left_down(self, event):
-        """Starts drawing, removes bitmap selection"""
-        x, y = self.convert_coords(event)
-        self.shape.button_down(x, y)
+        """Starts drawing"""
+        self.shape.button_down(*self.convert_coords(event))
         self.drawing = True
 
     def left_motion(self, event):
-        """Updates the shape. Indicate shape may be moved using Select tool"""
+        """Updates the shape. Indicate shape may be changed using Select tool"""
         x, y = self.convert_coords(event)
 
         #  Crashes without the Text check
@@ -93,7 +91,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.draw_shape(self.shape)
         elif isinstance(self.shape, Select):
 
-            for shape in (reversed(self.shapes)):
+            for shape in reversed(self.shapes):
                 if shape.handle_hit_test(x, y):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
                     break
@@ -117,7 +115,7 @@ class Whyteboard(wx.ScrolledWindow):
                 self.select_tool()
                 self.update_thumb()
             self.drawing = False
-
+        
     def left_double(self, event):
         """Double click for the Select tool - edit text"""
         x, y = self.convert_coords(event)
@@ -125,18 +123,13 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.double_click(x, y)
 
     def redraw_dirty(self, dc):
-        """
-        Figure out what part of the window to refresh.
-        """
+        """ Figure out what part of the window to refresh. """
         x1, y1, x2, y2 = dc.GetBoundingBox()
-        x1, y1 = self.CalcScrolledPosition(x1, y1)
-        x2, y2 = self.CalcScrolledPosition(x2, y2)
-
         rect = wx.Rect()
-        rect.SetTopLeft((x1, y1))
-        rect.SetBottomRight((x2, y2))
-        rect.Inflate(2, 2)
-        self.RefreshRect(rect)
+        rect.SetTopLeft(self.CalcScrolledPosition(x1, y1))
+        rect.SetBottomRight(self.CalcScrolledPosition(x2, y2))
+        self.RefreshRect(rect.Inflate(2, 2))
+
 
     def redraw_all(self, update_thumb=False):
         """
@@ -184,7 +177,6 @@ class Whyteboard(wx.ScrolledWindow):
         else:
             self.SetCursor(wx.StockCursor(self.shape.cursor) )
 
-
     def add_shape(self, shape):
         """ Adds a shape to the "to-draw" list. """
         self.add_undo(shape)
@@ -211,41 +203,28 @@ class Whyteboard(wx.ScrolledWindow):
             self.gui.util.saved = False
 
     def undo(self):
-        """
-        Undoes an action, and adds it to the redo list. Re-add any cleared shape
-        one-by-one because each shape is then undoable
-        """
-        if not self.undo_list:
-            return
-        shapes = self.undo_list.pop()
-        self.redo_list.append(list(self.shapes))
-        self.gui.notes.tree.DeleteChildren(self.gui.notes.tabs[self.gui.tabs.GetSelection()])
-
-        for x in shapes:
-            if isinstance(x, Note):
-                self.gui.notes.add_note(x)
-
-        self.shapes = shapes
-        self.deselect()
-        self.redraw_all(True)
-
+        """ Undoes an action, and adds it to the redo list. """
+        self.perform(self.undo_list, self.redo_list)
 
     def redo(self):
         """ Redoes an action, and adds it to the undo list. """
-        if not self.redo_list:
+        self.perform(self.redo_list, self.undo_list)
+
+    def perform(self, list_a, list_b):
+        """ list_a: to remove from / list b: append to """
+        if not list_a:
             return
-        shapes = self.redo_list.pop()
-        self.undo_list.append(list(self.shapes))
-        self.gui.notes.tree.DeleteChildren(self.gui.notes.tabs[self.gui.tabs.GetSelection()])
-
-        for x in shapes:
-            if isinstance(x, Note):
-                self.gui.notes.add_note(x)
-
+        list_b.append(list(self.shapes))
+        shapes = list_a.pop()
         self.shapes = shapes
         self.deselect()
         self.redraw_all(True)
-
+        
+        # nicest way to sort the notes out at the moment
+        self.gui.notes.tree.DeleteChildren(self.gui.notes.tabs[self.gui.tabs.GetSelection()])
+        for x in shapes:
+            if isinstance(x, Note):
+                self.gui.notes.add_note(x)
 
     def clear(self, keep_images=False):
         """ Removes all shapes from the 'to-draw' list. """
@@ -263,7 +242,6 @@ class Whyteboard(wx.ScrolledWindow):
     def convert_coords(self, event):
         """ Translate mouse x/y coords to virtual scroll ones. """
         return self.CalcUnscrolledPosition(event.GetX(), event.GetY())
-
 
     def middle_down(self, event):
         """ Begin dragging the scroller to move around the panel """
@@ -293,7 +271,7 @@ class Whyteboard(wx.ScrolledWindow):
         return wx.BufferedDC(cdc, self.buffer, wx.BUFFER_VIRTUAL_AREA)
 
     def draw_shape(self, shape, replay=False):
-        """Redraws a single shape"""
+        """ Redraws a single shape """
         dc = self.get_dc()
         if replay:
             shape.draw(dc, replay)
@@ -308,6 +286,13 @@ class Whyteboard(wx.ScrolledWindow):
     def update_thumb(self):
         """ Updates this tab's thumb """
         self.gui.thumbs.update(self.get_tab())
+
+    def resize_canvas(self, size):
+        """ Resizes the canvas. Size = (w, h) tuple """
+        self.buffer = wx.EmptyBitmap(*size)
+        self.SetVirtualSize(size)
+        self.canvas_size = size
+        self.redraw_all()        
 
     def on_size(self, event):
         """ Updates the scrollbars when the window is resized. """
@@ -326,18 +311,14 @@ class Whyteboard(wx.ScrolledWindow):
         x, y = width, height
         update = True
         if not ignore_min:
+            x = self.canvas_size[0]
             if width > self.canvas_size[0]:
                 x = width
-            else:
-                x = self.canvas_size[0]
-
+            y =  self.canvas_size[1]
             if height > self.canvas_size[1]:
                 y = height
-            else:
-                y =  self.canvas_size[1]
 
-            update = False
-            #  update the scrollbars and the board's buffer size
+            update = False #  update the scrollbars and the board's buffer size
             if x > self.canvas_size[0]:
                 update = True
             elif y > self.canvas_size[1]:
@@ -347,6 +328,9 @@ class Whyteboard(wx.ScrolledWindow):
             self.canvas_size = (x, y)
             self.buffer = wx.EmptyBitmap(*(x, y))
             self.SetVirtualSize((x, y))
+            self.SetSize((x, y))
+            self.SetBackgroundColour("Grey")
+            self.ClearBackground()            
             self.redraw_all()
         else:
             return False

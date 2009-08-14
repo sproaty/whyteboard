@@ -425,8 +425,11 @@ class SheetsPopup(wx.Menu):
         The close event uses current_tab to know which sheet to close, so set
         it to the selected tab from the menu
         """
+        x = self.parent.current_tab  # to switch back to
         self.parent.current_tab = self.sheet
+        self.parent.board = self.parent.tabs.GetPage(self.sheet)
         self.parent.on_close_tab()
+
 
     def export(self, event):
         """Export the selected tab"""

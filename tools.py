@@ -306,9 +306,7 @@ class Circle(OverlayShape):
         super(Circle, self).draw(dc, replay, "Circle")
 
     def get_args(self):
-        #print self.radius
         return [self.x, self.y, self.radius]
-
 
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
@@ -415,8 +413,8 @@ class Line(OverlayShape):
         #self.y2=28
         #print "x: %s, y: %s, x1: %s, y1: %s, x2: %s, y2: %s" % (x, y, self.x,
         #                                             self.y, self.x2, self.y2)
-        print ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) *
-                                                                (x - self.x))
+        #print ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) *
+        #                                                        (x - self.x))
 
 #---------------------------------------------------------------------
 
@@ -431,13 +429,14 @@ class Eraser(Pen):
         cursor = self.make_cursor(thickness)
         Pen.__init__(self, board, (255, 255, 255), thickness + 1, cursor)
 
+
     def make_cursor(self, thickness):
-        cursor = wx.EmptyBitmap(thickness + 2, thickness + 2)
+        cursor = wx.EmptyBitmap(thickness + 1, thickness + 1)
         memory = wx.MemoryDC()
         memory.SelectObject(cursor)
         memory.SetPen(wx.Pen((0, 0, 0), 1))  # border
         memory.SetBrush(wx.Brush((255, 255, 255)))
-        memory.FloodFill(0, 0, (255, 255, 255), wx.FLOOD_BORDER)
+        memory.DrawRectangle(0, 0, thickness + 1, thickness + 1)
         memory.SelectObject(wx.NullBitmap)
 
         img = wx.ImageFromBitmap(cursor)
@@ -448,6 +447,11 @@ class Eraser(Pen):
         thickness = self.thickness + 1
         dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
         dc.DrawRectangle(15, 7, 5 + thickness, 5 + thickness)
+
+    def make_pen(self, dc=None):
+        """ Creates a pen, usually after loading in a save file """
+        super(Eraser, self).make_pen()
+        self.pen = wx.Pen(self.colour, self.thickness + 1, wx.SOLID)
 
     def save(self):
         super(Eraser, self).save()
@@ -702,7 +706,7 @@ class Image(OverlayShape):
     When being pickled, the image reference will be removed.
     """
     def __init__(self, board, image, path):
-        OverlayShape.__init__(self, board, (0, 0, 0), 1)
+        OverlayShape.__init__(self, board, "Black", 1)
         self.image = image
         self.path = path  # used to restore image on load
 
