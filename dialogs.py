@@ -347,11 +347,11 @@ class UpdateDialog(wx.Dialog):
         total /= 1024
         rem = ""
         if total > 1024:
-            rem = "."+ str(total % 1024)
+            rem = ".%s" % (total % 1024)
             total /= 1024
             _type2 = "MB"
 
-        self.text2.SetLabel("Downloaded "+str(done) + "KB of "+ str(total) +
+        self.text2.SetLabel("Downloaded %s" % done + "KB of %s" % total +
                                           rem + _type2)
 
 

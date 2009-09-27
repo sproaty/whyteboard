@@ -48,7 +48,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetVirtualSize(self.canvas_size)
         self.SetScrollRate(3, 3)
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Windows!
-        self.SetBackgroundColour("White")
+        self.SetBackgroundColour('White')
         self.ClearBackground()
         
         self.scroller = wx.lib.dragscroller.DragScroller(self)
@@ -63,6 +63,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
+        self.renamed = False  # used by GUI
         self.select_tool()
         self.buffer = wx.EmptyBitmap(*self.area)
 
@@ -78,7 +79,7 @@ class Whyteboard(wx.ScrolledWindow):
 
     def left_down(self, event):
         """Starts drawing"""
-        self.shape.button_down(*self.convert_coords(event))
+        self.shape.left_down(*self.convert_coords(event))
         self.drawing = True
 
     def left_motion(self, event):
@@ -109,7 +110,7 @@ class Whyteboard(wx.ScrolledWindow):
 
         if self.drawing:
             before = len(self.shapes)
-            self.shape.button_up(x, y)
+            self.shape.left_up(x, y)
 
             if len(self.shapes) - before:
                 self.select_tool()

@@ -297,7 +297,7 @@ class Notes(wx.Panel):
         if not _id:
             _id = 0
         data = wx.TreeItemData(_id)
-        t = self.tree.AppendItem(self.root, "Sheet " + str(_id + 1), data=data)
+        t = self.tree.AppendItem(self.root, "Sheet %s" % (_id + 1), data=data)
         self.tabs.insert(_id, t)
 
 
@@ -326,7 +326,7 @@ class Notes(wx.Panel):
         # now ensure all nodes are linked to the right tab
         for x in range(self.gui.current_tab, len(self.tabs)):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
-            self.tree.SetItemText(self.tabs[x], "Sheet " + str(x + 1))
+            self.tree.SetItemText(self.tabs[x], "Sheet %s" % (x + 1))
 
 
     def remove_all(self):
@@ -419,13 +419,13 @@ class SheetsPopup(wx.Menu):
         else:
             if dlg.GetValue():
                 self.parent.tabs.SetPageText(self.sheet, dlg.GetValue())
+                self.parent.tabs.GetPage(self.sheet).renamed = True
 
     def close(self, event):
         """
         The close event uses current_tab to know which sheet to close, so set
         it to the selected tab from the menu
         """
-        x = self.parent.current_tab  # to switch back to
         self.parent.current_tab = self.sheet
         self.parent.board = self.parent.tabs.GetPage(self.sheet)
         self.parent.on_close_tab()
@@ -478,7 +478,7 @@ class Thumbs(scrolled.ScrolledPanel):
             memory.FloodFill(0, 0, (255, 255, 255), wx.FLOOD_BORDER)
             memory.SelectObject(wx.NullBitmap)
 
-        text = wx.StaticText(self, label="Sheet " + str(_id + 1))
+        text = wx.StaticText(self, label="Sheet %s" % (_id + 1))
         btn = ThumbButton(self, _id, bmp)
         self.text.insert(_id, text)
         self.thumbs.insert(_id, btn)
@@ -509,7 +509,7 @@ class Thumbs(scrolled.ScrolledPanel):
         # now ensure all thumbnail classes are pointing to the right tab
         for x in range(0, len(self.thumbs)):
             self.thumbs[x].thumb_id = x
-            self.text[x].SetLabel("Sheet " + str(x + 1))
+            self.text[x].SetLabel("Sheet %s" % (x + 1))
 
 
     def remove_all(self):

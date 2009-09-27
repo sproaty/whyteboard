@@ -60,9 +60,9 @@ import wx
 import os
 import sys
 import random
-#import urllib
-#import tarfile
-#import distutils.dir_util
+import urllib
+import tarfile
+import distutils.dir_util
 from copy import copy
 
 try:
@@ -102,7 +102,7 @@ class Utility(object):
         self.items = tools.items  # shortcut
         self.update_version = True
         self.saved_version = ""
-        self.backup_ext = ".blahblah123blah"  # backup file extension
+        self.backup_ext = ".blah5bl8ah123bla6h"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
 
@@ -139,7 +139,6 @@ class Utility(object):
                 save_pasted_images(board.shapes)
                 temp[x] = list(board.shapes)
                 canvas_sizes.append(board.canvas_size)
-                print canvas_sizes
                 names.append(self.gui.tabs.GetPageText(x))
 
             if temp:
@@ -259,8 +258,9 @@ class Utility(object):
             for shape in temp[1][x]:
                 shape.board = self.gui.board#wb  # restore board
                 shape.load()  # restore unpickleable settings
-                self.gui.board.add_shape(shape)                
-            self.gui.board.update_scrollbars(temp[4][x], True)
+                self.gui.board.add_shape(shape)  
+                # note: restore saved canvas sizes               
+            self.gui.board.redraw_all()
 
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
@@ -353,11 +353,12 @@ class Utility(object):
                 self.remove_all_sheets()
 
             for x in range(0, count):
-                name = os.path.split(_file)[1] + " - " + str(x + 1)
+                name = os.path.split(_file)[1] + " - %s" % (x + 1)
                 self.gui.on_new_tab(name=name)
+                self.gui.board.renamed = True
 
                 # store the temp file path for this file in the dictionary
-                temp_file = path + tmp_file + "-" + str(x) + ".png"
+                temp_file = path + tmp_file + "-%s" % (x) + ".png"
                 load_image(temp_file, self.gui.board)
                 self.to_convert[index][x + 1] = temp_file
             self.gui.board.redraw_all()
@@ -626,7 +627,7 @@ def load_image(path, board):
     """
     image = wx.Bitmap(path)
     shape = tools.Image(board, image, path)
-    shape.button_down(0, 0)  # renders, updates scrollbars
+    shape.left_down(0, 0)  # renders, updates scrollbars
 
 
 def make_filename():
@@ -640,7 +641,7 @@ def make_filename():
         _list.append(x)
 
     string = "".join(_list)
-    return string +"-temp-"+ str(random.randrange(0, 999999))
+    return string +"-temp-%s" % (random.randrange(0, 999999))
 
 
 def get_home_dir(extra_path=None):

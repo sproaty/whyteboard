@@ -41,24 +41,26 @@ from panels import ControlPanel, SidePanel, SheetsPopup
 
 #----------------------------------------------------------------------
 
-ID_NEW = wx.NewId()               # new window
-ID_PASTE_NEW = wx.NewId()         # paste as new selection
-#ID_EXPORT = wx.NewId()            # export sheet to image file
-ID_UNDO_SHEET = wx.NewId()        # undo close sheet
-ID_HISTORY = wx.NewId()           # history viewer
-ID_RESIZE = wx.NewId()            # resize dialog
-ID_PREV = wx.NewId()              # previous sheet
-ID_NEXT = wx.NewId()              # next sheet
 ID_CLEAR_ALL = wx.NewId()         # remove all from current tab
-ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove all from all tabs
+ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
+ID_EXPORT = wx.NewId()            # export sheet to image file
 ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
-ID_PDF = wx.NewId()               # import->PDF
-ID_PS = wx.NewId()                # import->PS
+ID_HISTORY = wx.NewId()           # history viewer
 ID_IMG = wx.NewId()               # import->Image
-ID_EXP_IMG = wx.NewId()           # export->Image
-ID_EXP_PDF = wx.NewId()           # export->PDF
+ID_NEW = wx.NewId()               # new window
+ID_NEXT = wx.NewId()              # next sheet
+ID_PASTE_NEW = wx.NewId()         # paste as new selection
+ID_PDF = wx.NewId()               # import->PDF
+ID_PREV = wx.NewId()              # previous sheet
+ID_PS = wx.NewId()                # import->PS
+ID_RESIZE = wx.NewId()            # resize dialog
+ID_UNDO_SHEET = wx.NewId()        # undo close sheet
 ID_UPDATE = wx.NewId()            # update self
+
+#ID_EXP_IMG = wx.NewId()           # export->Image
+#ID_EXP_PDF = wx.NewId()           # export->PDF
+
 
 class GUI(wx.Frame):
     """
@@ -134,9 +136,9 @@ class GUI(wx.Frame):
         _import.Append(ID_PDF, '&PDF')
         _import.Append(ID_PS, 'Post&Script')
         _import.Append(ID_IMG, '&Image')
-        _export = wx.Menu()
-        _export.Append(ID_EXP_PDF, '&PDF')
-        _export.Append(ID_EXP_IMG, 'Current Sheet as &Image')
+        #_export = wx.Menu()
+        #_export.Append(ID_EXP_PDF, '&PDF')
+        #_export.Append(ID_EXP_IMG, 'Current Sheet as &Image')
 
         new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new Whyteboard instance")
         new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
@@ -155,15 +157,15 @@ class GUI(wx.Frame):
         _file.Append(wx.ID_SAVE, "&Save\tCtrl+S", "Save the Whyteboard data")
         _file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl+Shift+S", "Save the Whyteboard data in a new file")
         _file.AppendMenu(+1, '&Import File', _import)
-        _file.AppendMenu(+1, '&Export File', _export)
-        #_file.Append(ID_EXPORT, "&Export Sheet\tCtrl+E", "Export the current sheet to an image file")
+        #_file.AppendMenu(+1, '&Export File', _export)
+        _file.Append(ID_EXPORT, "&Export Sheet\tCtrl+E", "Export the current sheet to an image file")
         _file.AppendSeparator()
         _file.Append(wx.ID_EXIT, "&Quit\tAlt+F4", "Quit Whyteboard")
 
         edit.Append(wx.ID_UNDO, "&Undo\tCtrl+Z", "Undo the last operation")
         edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
         edit.AppendSeparator()
-        edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
+        #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
         edit.Append(wx.ID_COPY, "&Copy\tCtrl+C", "Copy a Bitmap Selection region")
         edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
         edit.AppendItem(pnew)
@@ -215,7 +217,7 @@ class GUI(wx.Frame):
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new",
                   "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "help", "update", "about"]
 
-        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXP_IMG, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
+        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
                wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
                ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, wx.ID_HELP, ID_UPDATE, wx.ID_ABOUT]
 
@@ -323,6 +325,7 @@ class GUI(wx.Frame):
 
     def on_export(self, event=None, pdf=None):
         """Exports the current sheet as an image, or all as a PDF."""
+        print 'ey'
         wc =  ("PDF (*.pdf)")
         if not pdf:
             wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|"+
@@ -386,12 +389,16 @@ class GUI(wx.Frame):
         """Updates thumbnails and notes to indicate current tab"""
         tab = self.current_tab
         if self.thumbs.text:
-            font = self.thumbs.text[tab].GetClassDefaultAttributes().font
-            if select:
-                font.SetWeight(wx.FONTWEIGHT_BOLD)
-            else:
-                font.SetWeight(wx.FONTWEIGHT_NORMAL)
-            self.thumbs.text[tab].SetFont(font)
+            try:
+                font = self.thumbs.text[tab].GetClassDefaultAttributes().font
+                if select:
+                    font.SetWeight(wx.FONTWEIGHT_BOLD)
+                else:
+                    font.SetWeight(wx.FONTWEIGHT_NORMAL)
+                self.thumbs.text[tab].SetFont(font)
+            except IndexError:
+                pass  # ignore a bug closing the last tab from the pop-up menu
+                      # temp fix, can't think how to solve it otherwise
 
 
     def on_close_tab(self, event=None):
@@ -399,29 +406,31 @@ class GUI(wx.Frame):
         Closes the current tab (if there are any to close).
         Adds the 3 lists from the Whyteboard to a list inside the undo tab list.
         """
-        if not self.tab_count - 1:
+        if not self.tab_count - 1:  # must have at least one sheet open
             return
-        if event:
-            self.current_tab = event.GetSelection()
-
         if len(self.closed_tabs) == 10:
-            del self.closed_tabs[9]
+            del self.closed_tabs[9]        
+        if event:
+            self.current_tab = event.GetSelection()            
 
         board = self.board
+        name = ""
+        if board.renamed:
+            name = self.tabs.GetPageText(self.current_tab)
         item = [board.shapes, board.undo_list, board.redo_list,
-                board.canvas_size]
+                board.canvas_size, name]
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
-        self.tabs.RemovePage(self.current_tab)
-        self.on_change_tab()  # updates self.board
+        self.tabs.RemovePage(self.current_tab)        
         self.notes.remove_tab(self.current_tab)
         self.thumbs.remove(self.current_tab)
+        self.on_change_tab()  # updates self.board
         self.board.redraw_all()
 
         for x in range(self.tab_count):
-            if self.tabs.GetPageText(x).startswith("Sheet "):
-                self.tabs.SetPageText(x, "Sheet " + str(x + 1))
+            if not self.tabs.GetPage(x).renamed:
+                self.tabs.SetPageText(x, "Sheet %s" % (x + 1))
 
 
     def on_undo_tab(self, event=None):
@@ -435,12 +444,16 @@ class GUI(wx.Frame):
         self.board.undo_list = shape[1]
         self.board.redo_list = shape[2]
         self.board.canvas_size = shape[3]
-
+        
+        if shape[4]:
+            self.tabs.SetPageText(self.current_tab, shape[4])
+            
         for shape in self.board.shapes:
             shape.board = self.board
             if isinstance(shape, Note):
                 self.notes.add_note(shape)
         self.board.redraw_all(True)
+
 
 
     def update_menus(self, event):
@@ -501,7 +514,7 @@ class GUI(wx.Frame):
         """ Grabs the image from the clipboard and places it on the panel """
         bmp = self.util.get_clipboard()
         shape = Image(self.board, bmp.GetBitmap(), None)
-        shape.button_down(0, 0)
+        shape.left_down(0, 0)
         self.board.redraw_all(True)
 
     def on_paste_new(self, event):
@@ -644,7 +657,7 @@ class WhyteboardApp(wx.App):
         self.frame = GUI(None)
         self.frame.Show(True)
         self.parse_args()
-        self.delete_temp_files()
+        self.delete_temp_files()        
         return True
 
     def parse_args(self):
@@ -673,7 +686,7 @@ class WhyteboardApp(wx.App):
 #----------------------------------------------------------------------
 
 def main():
-    app = WhyteboardApp()
+    app = WhyteboardApp()    
     app.MainLoop()
 
 if __name__ == '__main__':
