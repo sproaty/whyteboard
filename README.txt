@@ -1,4 +1,4 @@
-Whyteboard 0.37.1 - a simple image, PDF and postscript file annotator
+Whyteboard 0.38 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Wed 06 May 2009 17:42:59 BST
 
@@ -7,7 +7,11 @@ Wed 06 May 2009 17:42:59 BST
 If you have installed the Windows .exe file, simply run Whyteboard from the
 start menu.
 
-First, you need Python, wxPython, and (optionally) ImageMagick/GhostScript:
+Otherwise, here are the requirements:
+
+* Python - 2.5.4 or 2.6.3 (untested on others, but probably should work)
+* wxPython - latest version is recommended (currently 2.8.10.1)
+* ImageMagick, possibly GhostScript for Windows users (optional)
 
 http://python.org/download/
 http://www.wxpython.org/download.php
@@ -31,7 +35,7 @@ https://bugs.launchpad.net/whyteboard
 
 ---- VERSION HISTORY ----
 
-xx Jul 2009 - * Select tool: can select shapes to alter their colour/thickness,
+05 Oct 2009 - * Select tool: can select shapes to alter their colour/thickness,
                 edit text and notes, move shapes and resize them. Selected
                 shapes are drawn with an outline "handle" at their corners
                 -- Images and text can also be repositioned
@@ -47,12 +51,12 @@ xx Jul 2009 - * Select tool: can select shapes to alter their colour/thickness,
               * Thumbnail label shows the selected thumb label in bold
               * The Pen tool now draws in response to a single mouse click;
                 before the mouse needed to be moved to draw
-              * Resize canvas - each sheet can have its own canvas size
               * Each sheet can have its own BitmapSelect at anytime. Undoing and
-                redoing will not remove the selection - drawing a new shape will
+                redoing will not remove the selection; drawing a new shape will
               * Help files updated to reflect new changes and clarify any
                 issues before
-              * Multiple small bug fixes (over 10)
+              * Mouse x/y position tracked in the status bar
+              * Multiple bug fixes (over 10)
               * Misc existing code improvements and performance increases
               * More/better unit testing to help with adding new features,
                 tracking down potential bugs and increased code confidence
@@ -277,4 +281,3 @@ xx Jul 2009 - * Select tool: can select shapes to alter their colour/thickness,
 02 Feb 2009 - Added a toolbar, each whyteboard tab has its own undo/redo history
 
 31 Jan 2009 - Closing the program removes temporary PNG files from PDF convert
-

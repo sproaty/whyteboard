@@ -50,7 +50,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Windows!
         self.SetBackgroundColour('White')
         self.ClearBackground()
-        
+
         self.scroller = wx.lib.dragscroller.DragScroller(self)
         self.overlay = wx.Overlay()
         self.gui = gui
@@ -85,6 +85,7 @@ class Whyteboard(wx.ScrolledWindow):
     def left_motion(self, event):
         """Updates the shape. Indicate shape may be changed using Select tool"""
         x, y = self.convert_coords(event)
+        self.gui.SetStatusText(" %s, %s" % (x, y))
 
         #  Crashes without the Text check
         if self.drawing and not isinstance(self.shape, Text):
@@ -116,7 +117,7 @@ class Whyteboard(wx.ScrolledWindow):
                 self.select_tool()
                 self.update_thumb()
             self.drawing = False
-        
+
     def left_double(self, event):
         """Double click for the Select tool - edit text"""
         x, y = self.convert_coords(event)
@@ -220,7 +221,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.shapes = shapes
         self.deselect()
         self.redraw_all(True)
-        
+
         # nicest way to sort the notes out at the moment
         self.gui.notes.tree.DeleteChildren(self.gui.notes.tabs[self.gui.tabs.GetSelection()])
         for x in shapes:
@@ -293,7 +294,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.buffer = wx.EmptyBitmap(*size)
         self.SetVirtualSize(size)
         self.canvas_size = size
-        self.redraw_all()        
+        self.redraw_all()
 
     def on_size(self, event):
         """ Updates the scrollbars when the window is resized. """
@@ -329,9 +330,9 @@ class Whyteboard(wx.ScrolledWindow):
             self.canvas_size = (x, y)
             self.buffer = wx.EmptyBitmap(*(x, y))
             self.SetVirtualSize((x, y))
-            self.SetSize((x, y))
-            self.SetBackgroundColour("Grey")
-            self.ClearBackground()            
+            #self.SetSize((x, y))
+            #self.SetBackgroundColour("Grey")
+            #self.ClearBackground()
             self.redraw_all()
         else:
             return False

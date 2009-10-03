@@ -30,6 +30,7 @@ import wx
 import wx.lib.newevent
 import os
 import sys
+from wx.html import HtmlHelpController
 
 import icon
 from whyteboard import Whyteboard
@@ -69,7 +70,7 @@ class GUI(wx.Frame):
     event handlers call the appropriate functions of other classes.
     """
     version = "0.38.0"
-    title = "Whyteboard %s" % version
+    title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent):
@@ -84,10 +85,10 @@ class GUI(wx.Frame):
         self.file_drop = FileDropTarget(self)
         self.SetDropTarget(self.file_drop)
         self.CreateStatusBar()
+
+        self.can_paste = False
         if self.util.get_clipboard():
             self.can_paste = True
-        else:
-            self.can_paste = False
         self.toolbar = None
         self.menu = None
         self.process = None
@@ -325,7 +326,6 @@ class GUI(wx.Frame):
 
     def on_export(self, event=None, pdf=None):
         """Exports the current sheet as an image, or all as a PDF."""
-        print 'ey'
         wc =  ("PDF (*.pdf)")
         if not pdf:
             wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|"+
@@ -409,9 +409,9 @@ class GUI(wx.Frame):
         if not self.tab_count - 1:  # must have at least one sheet open
             return
         if len(self.closed_tabs) == 10:
-            del self.closed_tabs[9]        
+            del self.closed_tabs[9]
         if event:
-            self.current_tab = event.GetSelection()            
+            self.current_tab = event.GetSelection()
 
         board = self.board
         name = ""
@@ -422,7 +422,7 @@ class GUI(wx.Frame):
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
-        self.tabs.RemovePage(self.current_tab)        
+        self.tabs.RemovePage(self.current_tab)
         self.notes.remove_tab(self.current_tab)
         self.thumbs.remove(self.current_tab)
         self.on_change_tab()  # updates self.board
@@ -444,10 +444,10 @@ class GUI(wx.Frame):
         self.board.undo_list = shape[1]
         self.board.redo_list = shape[2]
         self.board.canvas_size = shape[3]
-        
+
         if shape[4]:
             self.tabs.SetPageText(self.current_tab, shape[4])
-            
+
         for shape in self.board.shapes:
             shape.board = self.board
             if isinstance(shape, Note):
@@ -501,7 +501,7 @@ class GUI(wx.Frame):
 
     def on_copy(self, event):
         """ If a rectangle selection is made, copy the selection as a bitmap """
-        self.board.copy.sort_args()
+        self.board.copy.update_rect()
         rect = self.board.copy.rect
         self.board.copy = None
         self.board.redraw_all()
@@ -623,7 +623,7 @@ class GUI(wx.Frame):
         _file = os.path.join(path, 'whyteboard-help', 'whyteboard.hhp')
 
         if os.path.exists(_file):
-            self.help = wx.html.HtmlHelpController()
+            self.help = HtmlHelpController()
             self.help.AddBook(_file)
             self.help.DisplayContents()
         else:
@@ -657,7 +657,7 @@ class WhyteboardApp(wx.App):
         self.frame = GUI(None)
         self.frame.Show(True)
         self.parse_args()
-        self.delete_temp_files()        
+        self.delete_temp_files()
         return True
 
     def parse_args(self):
@@ -686,7 +686,7 @@ class WhyteboardApp(wx.App):
 #----------------------------------------------------------------------
 
 def main():
-    app = WhyteboardApp()    
+    app = WhyteboardApp()
     app.MainLoop()
 
 if __name__ == '__main__':

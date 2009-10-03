@@ -32,10 +32,15 @@ from dialogs import TextInput
 
 #----------------------------------------------------------------------
 
-TOP_LEFT = 1
-TOP_RIGHT = 2
-BOTTOM_LEFT = 3
-BOTTOM_RIGHT = 4
+# constants for selection handles
+TOP_LEFT      = 1
+TOP_RIGHT     = 2
+BOTTOM_LEFT   = 3
+BOTTOM_RIGHT  = 4
+CENTER_TOP    = 5
+CENTER_RIGHT  = 6
+CENTER_BOTTOM = 7
+CENTER_LEFT   = 8
 
 
 class Tool(object):
@@ -143,9 +148,13 @@ class Pen(Tool):
 #----------------------------------------------------------------------
 
 class OverlayShape(Tool):
-    """Contains methods for drawing an overlayed shape"""
+    """
+    Contains methods for drawing an overlayed shape. Has some general method
+    implementations for drawing handles and drawing the shape.
+    """
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_CROSS):
-        Tool.__init__(self, board, colour, thickness, cursor)        
+        Tool.__init__(self, board, colour, thickness, cursor)
+        self.handles = []
 
     def left_down(self, x, y):
         self.x = x
@@ -156,6 +165,7 @@ class OverlayShape(Tool):
         """ Only adds the shape if it was actually dragged out """
         if x != self.x and y != self.y:
             self.board.add_shape(self)
+            self.sort_handles()
 
     def draw(self, dc, replay=False, _type="Rectangle"):
         """
@@ -180,12 +190,55 @@ class OverlayShape(Tool):
             del odc
 
     def get_args(self):
-        """The drawing arguments that this class passes to draw()"""
+        """The drawing arguments that this class uses to draw itself"""
         pass
 
     def get_handles(self):
         """Returns the handle positions: top-lef, top-rig, btm-lef, btm-rig"""
         pass
+
+    def resize(self, x, y, direction=None):
+        """When the shape is being resized with Select tool"""
+        self.motion(x, y)
+
+    def move(self, x, y, offset):
+        """Being moved with Select. Offset is to keep the cursor centered"""
+        self.x = x - offset[0]
+        self.y = y - offset[1]
+
+    def sort_handles(self):
+        """Sets the shape's handles"""
+        top_left, top_right, bottom_left, bottom_right = self.get_handles()[:4]
+        rect1 = wx.Rect(top_left[0], top_left[1], 5, 5)
+        rect2 = wx.Rect(top_right[0], top_right[1], 5, 5)
+        rect3 = wx.Rect(bottom_left[0], bottom_left[1], 5, 5)
+        rect4 = wx.Rect(bottom_right[0], bottom_right[1], 5, 5)
+        self.handles = [rect1, rect2, rect3, rect4]
+
+    def handle_hit_test(self, x, y):
+        """Returns which handle has been clicked on"""
+        if not hasattr(self, "handles"):
+            self.sort_handles()
+            self.handle_hit_test(x, y)
+            
+        if self.handles[0].InsideXY(x, y):
+            return TOP_LEFT
+        if self.handles[1].InsideXY(x, y):
+            return TOP_RIGHT
+        if len(self.handles) > 2:
+            if self.handles[2].InsideXY(x, y):
+                return BOTTOM_LEFT
+            if self.handles[3].InsideXY(x, y):
+                return BOTTOM_RIGHT
+        return False  # nothing hit
+
+    def anchor(self, direction):
+        """
+        Avoids an issue when resizing, anchors shape's x/y point to the opposite 
+        corner of the corner being dragged
+        """
+        pass
+
 
     def draw_selected(self, dc):
         """Draws each handle an object has"""
@@ -194,7 +247,7 @@ class OverlayShape(Tool):
         draw = lambda dc, x, y: dc.DrawRectangle(x, y, 5, 5)
         [draw(dc, x, y) for x, y in self.get_handles()]
 
-        dc.SetBrush(find_inverse(self.colour))  # inside
+        dc.SetBrush(wx.Brush(wx.WHITE))#find_inverse(self.colour))  # inside
         dc.SetPen(wx.TRANSPARENT_PEN)
         draw = lambda dc, x, y: dc.DrawRectangle(x, y, 4, 4)
         [draw(dc, x, y) for x, y in self.get_handles()]
@@ -220,87 +273,78 @@ class Rectangle(OverlayShape):
         self.width = 0
         self.height = 0
         self.rect = None
-        self.handles = []
 
     def motion(self, x, y):
         self.width =  x - self.x
         self.height = y - self.y
 
-    def left_up(self, x, y):
-        super(Rectangle, self).left_up(x, y)
-        self.sort_args()
-        
-#    def make_pen(self, dc=None):
-#        super(Rectangle, self).make_pen(dc)
-#        if self.selected:
-#            self.pen = wx.Pen(self.colour, self.thickness, wx.DOT_DASH)
-#        else:
-#            self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
-        
     def get_args(self):
-        return [self.x, self.y, self.width, self.height]
+        x, y, w, h = self.x, self.y, self.width, self.height
+        t = math.ceil(self.thickness / 2)
+        args = [min(x, w + x), min(y, h + y), abs(w), abs(h)]        
+        return args
 
     def get_handles(self):
-        #d = lambda x, y: (x - 2, y - 2)
-        t = self.thickness / 2
-        x, y, w, h = self.get_args()[:4]  # RoundedRect has 5 args
-        return (x - t, y - t), (x + t + w, y - t), (x, y + h), (x + w, y + h)
+        t = round(self.thickness / 2)
+        x, y, w, h = self.get_args()[:4]  # RoundedRect has 5 args    
+        return [(x - t, y - t), (x + t + w, y - t), (x, y + h), (x + w, y + h)]
 
-    def sort_args(self, force=False):
+    def anchor(self, direction):
+        """
+        Avoids an issue when resizing, anchors shape's x/y point to the opposite 
+        corner of the corner being dragged
+        """
+        r = self.get_args()[:4]
+        
+        if direction == TOP_LEFT:
+            self.x = r[0] + r[2]
+            self.y =  r[1] + r[3]
+            self.width = -(r[2] - r[0])
+            self.height = -(r[1] - r[1])
+        elif direction == BOTTOM_LEFT:
+            self.x = r[0] + r[2]
+            self.y = r[1]
+            self.width = -r[0]
+            self.height = -r[1]            
+        elif direction == TOP_RIGHT:
+            self.x = r[0]
+            self.y =  r[1] + r[3]
+            self.width = -(r[2] - r[0])
+            self.height = -(r[1] - r[1])   
+        elif direction == BOTTOM_RIGHT:
+            self.x = r[0]
+            self.y = r[1]
+            self.width = r[2]
+            self.height = r[3]
+                 
+        self.sort_handles()
+
+    def sort_handles(self):
         """
         Do some rectangle conversions instead of many if statements.
         Thickness is added to allow the Select tool to select the shape via
         its lines (as opposed to its x/y point)
-        The wx.Rects are worked out here instead of repeatedly in hit_tests
         """
-        x, y, width, height = self.get_args()[:4]
-        thickness = math.ceil(self.thickness / 2)
-        args = [min(x, width + x) - thickness, min(y, height + y) - thickness,
-                abs(width) + self.thickness, abs(height) + self.thickness]
-        if not self.rect or not self.handles or force:
-            self.rect = wx.Rect(*args)
-            # sort out handles.
-            points = self.get_handles()
-            #for point in points:
-            #    point[0] + self.width + 2
-            #    point[1] + self.width + 2
-            #print points
-            top_left = points[0]
-            top_right = points[1]
-            bottom_left = points[2]
-            bottom_right = points[3]
-
-            rect1 = wx.Rect(top_left[0], top_left[1], 5, 5)
-            rect2 = wx.Rect(top_right[0], top_right[1], 5, 5)
-
-            rect3 = wx.Rect(bottom_left[0], bottom_left[1], 5, 5)
-            rect4 = wx.Rect(bottom_right[0], bottom_right[1], 5, 5)
-            self.handles = [rect1, rect2, rect3, rect4]
-
+        super(Rectangle, self).sort_handles()
+        self.update_rect()
+    
+    def update_rect(self):
+        """Need to pad out the rectangle with the line thickness"""
+        x, y, w, h = self.get_args()[:4]
+        t = math.ceil(self.thickness / 2)
+        w =  abs(w) + self.thickness
+        h =  abs(h) + self.thickness
+        self.rect = wx.Rect(x - t, y - t, w, h)
 
     def hit_test(self, x, y):
         if not hasattr(self, "rect"):
-            self.rect = None
-            self.sort_args()
+            self.sort_handles()
         return self.rect.InsideXY(x, y)
-
-    def handle_hit_test(self, x, y):
-        if self.handles[0].InsideXY(x, y):
-            return TOP_LEFT
-        if self.handles[1].InsideXY(x, y):
-            return TOP_RIGHT
-        if self.handles[2].InsideXY(x, y):
-            return BOTTOM_LEFT
-        if self.handles[3].InsideXY(x, y):
-            return BOTTOM_RIGHT
-        return False  # nothing hit
 
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
 
-#----------------------------------------------------------------------
-
-
+#----------------------------------------------------------------------
 
 class Ellipse(Rectangle):
     """
@@ -320,14 +364,13 @@ class Ellipse(Rectangle):
         if dx * dx + dy * dy < 1:
             return True
         return False
-    
-    
+
 #----------------------------------------------------------------------
 
 
 class Circle(OverlayShape):
     """
-    Draws a circle. Extended from a Rectangle to save on repeated code.
+    Draws a circle. Uses its radius to calculate handle position
     """
     tooltip = "Draw a circle"
 
@@ -341,8 +384,14 @@ class Circle(OverlayShape):
     def draw(self, dc, replay=False):
         super(Circle, self).draw(dc, replay, "Circle")
 
+    def preview(self, dc, width, height):
+        dc.DrawCircle(width/2, height/2, 15)
+
     def get_args(self):
         return [self.x, self.y, self.radius]
+
+    def resize(self, x, y, direction=None):
+        self.motion(x, y)
 
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
@@ -355,10 +404,6 @@ class Circle(OverlayShape):
         if val <= (self.radius * self.radius):
             return True
         return False
-
-    def preview(self, dc, width, height):
-        dc.DrawCircle(width/2, height/2, 15)
-
 
 #----------------------------------------------------------------------
 
@@ -383,7 +428,7 @@ class RoundedRect(Rectangle):
 
 class Line(OverlayShape):
     """
-    Draws a line. Extended from a Rectangle for outline code.
+    Draws a line - methods for its own handles, resizing/moving and line length
     """
     tooltip = "Draw a straight line"
     def __init__(self, board, colour, thickness):
@@ -402,14 +447,39 @@ class Line(OverlayShape):
 
     def left_up(self, x, y):
         """ Don't add a 'blank' line """
-        if self.x2 != self.x or self.y2 != self.y:
+        if self.x != self.x2 or self.y != self.y2:
             self.board.add_shape(self)
+            self.sort_handles()
+
+    def offset(self, x, y):
+        """Returns two tupples (unlike the others) - one for each point"""
+        return ((x - self.x, y - self.y), (x - self.x2, y - self.y2))
+
+    def sort_handles(self):
+        len = self.get_handles()
+        rect1 = wx.Rect(len[0][0], len[0][1], 5, 5)
+        rect2 = wx.Rect(len[1][0], len[1][1], 5, 5)
+        self.handles = [rect1, rect2]
 
     def draw(self, dc, replay=False):
         super(Line, self).draw(dc, replay, "Line")
 
     def get_args(self):
         return [self.x, self.y, self.x2, self.y2]
+
+    def move(self, x, y, offset):
+        self.x = x - offset[0][0]
+        self.y = y - offset[0][1]
+        self.x2 = x - offset[1][0]
+        self.y2 = y - offset[1][1]
+
+    def resize(self, x, y, direction):
+        if direction == TOP_LEFT:
+            self.x = x
+            self.y = y
+        else:
+            self.x2 = x
+            self.y2 = y
 
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
@@ -418,13 +488,29 @@ class Line(OverlayShape):
     def preview(self, dc, width, height):
         dc.DrawLine(10, height / 2, width - 10, height / 2)
 
+    def point_distance(self, a, b, c):
+        """Taken/reformatted from http://stackoverflow.com/questions/849211/"""
+        t = b[0] - a[0], b[1] - a[1]                   # Vector ab
+        dd = math.sqrt(t[0] ** 2 + t[1] ** 2)          # Length of ab
+        t = t[0] / dd, t[1] / dd                       # unit vector of ab
+        n = -t[1], t[0]                                # normal unit vector to ab
+        ac = c[0] - a[0], c[1] - a[1]                  # vector ac
+        return math.fabs(ac[0] * n[0] + ac[1] * n[1])  # the minimum distance
+
     def hit_test(self, x, y):
-        """We need to give it some tolerance to account for line thickness"""
-        val = ((y - self.y) * (self.x2 - self.x) - (self.y2 - self.y) *
-                                                                (x - self.x))
-        x =  self.thickness * 20
-        if val > -300 - x and val < 300  + x:  # may be wrong - adding to length
-            # not thickness
+        """
+        The above function calculates further than the length of the line. This
+        stops it from even performing that calculation
+        """
+        if self.x < self.x2:
+            if x < self.x or x > self.x2:
+                return False
+        else:
+            if x > self.x or x < self.x2:
+                return False
+
+        val = self.point_distance((self.x, self.y), (self.x2, self.y2), (x, y))
+        if val < 3 + round(self.thickness / 2):
             return True
         return False
 
@@ -510,6 +596,12 @@ class Text(OverlayShape):
         self.text = ""
         self.font_data = ""
         self.extent = (0, 0)
+
+    def handle_hit_test(self, x, y):
+        pass
+
+    def resize(self, x, y, direction):
+        pass
 
     def left_down(self, x, y):
         super(Text, self).left_down(x, y)
@@ -610,6 +702,7 @@ class Text(OverlayShape):
         x, y, w, h = self.x, self.y, self.extent[0], self.extent[1]
         d = lambda x, y: (x - 2, y - 2)
         return d(x, y), d(x + w, y), d(x, y + h), d(x + w, y + h)
+
 
     def get_args(self):
         w = self.x + self.extent[0]
@@ -732,7 +825,10 @@ class Image(OverlayShape):
         dc = wx.BufferedDC(None, self.board.buffer)
         self.draw(dc)
         self.board.redraw_dirty(dc)
-
+        
+    def handle_hit_test(self, x, y):
+        pass
+    
     def draw(self, dc, replay=False):
         super(Image, self).draw(dc, replay, "Bitmap")
 
@@ -842,38 +938,13 @@ class Select(Tool):
                 self.board.add_undo()
                 self.undone = True
             if not self.direction:  # moving
-                self.shape.x = x - self.offset[0]
-                self.shape.y = y - self.offset[1]
+                self.shape.move(x, y, self.offset)
             else:
-                #if not self.anchored:
-                #    self.anchor(self.direction)
-                #    self.anchored = True
-
-                self.shape.width = x - self.x
-                self.shape.height = y - self.y
-                
-
-
-    def anchor(self, direction):
-        """Avoids a strange issue when resizing - anchors shape's x point"""
-        args = self.shape.get_args()
-        if direction == 2:
-            self.shape.x = args[0]#self.shape.x + self.shape.width
-            self.shape.y = args[1]#self.shape.x
-            self.shape.width = args[2]
-            self.shape.height = args[3]
-        elif direction == 3:
-            self.shape.x = args[0] + args[3]#self.shape.x + self.shape.height
-            self.shape.y = self.shape.x
-            self.shape.width = args[0]
-            self.shape.height = args[1]
-        elif direction == 4:
-            self.shape.x = args[0] + self.args[2] + args[3]#self.shape.x + self.shape.height
-            self.shape.y = self.shape.x
-            self.shape.width = args[0]
-            self.shape.height = args[1]            
-            #self.shape.x = self.shape.x + self.shape.height + self.shape.width
-            #self.shape.y = self.shape.x        
+                if not self.anchored:  # don't want to keep anchoring
+                    self.shape.anchor(self.direction)
+                    self.anchored = True
+                self.shape.resize(x, y, self.direction)
+                 
 
     def draw(self, dc, replay=False):
         if self.dragging:
@@ -881,14 +952,16 @@ class Select(Tool):
 
 
     def left_up(self, x, y):
-        if self.dragging:                
+        if self.dragging:
+            self.shape.sort_handles()
+            
             if isinstance(self.shape, Image):
                 image = self.shape.image
                 size = (x + image.GetWidth(), y + image.GetHeight())
                 self.board.update_scrollbars(size)
-            elif isinstance(self.shape, Rectangle):
-                self.shape.sort_args(True)  # force update for hit test
-        
+            elif isinstance(self.shape, Text):
+                self.shape.update_scroll(False)                
+
         self.board.redraw_all(update_thumb=True)
         self.board.select_tool()
 
@@ -924,7 +997,7 @@ class BitmapSelect(Rectangle):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         dc.DrawRectangle(10, 10, width - 20, height - 20)
 
-#---------------------------------------------------------------------     
+#---------------------------------------------------------------------
 
 def find_inverse(colour):
     """ Invert an RGB colour """

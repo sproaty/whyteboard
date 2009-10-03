@@ -254,12 +254,12 @@ class Utility(object):
                 name = "Sheet %s" % x + 1
             self.gui.on_new_tab(name=name)
 
-        
+
             for shape in temp[1][x]:
                 shape.board = self.gui.board#wb  # restore board
                 shape.load()  # restore unpickleable settings
-                self.gui.board.add_shape(shape)  
-                # note: restore saved canvas sizes               
+                self.gui.board.add_shape(shape)
+                # note: restore saved canvas sizes
             self.gui.board.redraw_all()
 
         # close progress bar, handle older file versions gracefully

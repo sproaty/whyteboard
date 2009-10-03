@@ -49,9 +49,13 @@ class App(PySimpleApp):
 class Event(object):
     def __init__(self, *args, **kwds):
         self.calls = []
+        self.selection = 0
 
     def Skip(self):
         pass
+
+    def GetSelection(self):
+        return self.selection
 
 ############
 # Graphics
@@ -104,8 +108,8 @@ class Image(object):
     def __getattr__(self, attr):
         """Just fake any other methods"""
         self.calls.append(attr)
-        return lambda *args, **kwds: None        
-        
+        return lambda *args, **kwds: None
+
 class Mask(object):
     def __init__(self, bmp, mask):
         self.bitmap = bmp
@@ -163,7 +167,7 @@ class DC(object):
     def __init__(self, *args, **kwds):
         self.__dict__.update(kwds)
         self.calls = []
-        
+
     def GetMultiLineTextExtent(self, *args, **kwds):
         return (0, 0)
 
@@ -209,8 +213,8 @@ class Window(object):
         self.size = (0, 0)
 
     def GetClientSizeTuple(self):
-        return (0, 0)    
-    
+        return (0, 0)
+
     def Enable(self):
         self.Enabled=True
 
@@ -225,13 +229,13 @@ class Window(object):
 
     def Refresh(self):
         pass
-        
+
     def GetSize(self):
         return self.size
-        
+
     def SetSize(self, size):
         self.size = size
-                
+
     def RefreshRect(self):
         pass
 
@@ -261,10 +265,10 @@ class Window(object):
 
     def SetSizerProp(self, prop):
         pass
-        
+
     def SetSizer(self, sizer):
         pass
-        
+
     def GetSizer(self):
         return Sizer()
 
@@ -274,7 +278,7 @@ class Window(object):
     def SetBackgroundColour(self, *size):
         pass
     def SetBackgroundStyle(self, *size):
-        pass    
+        pass
     def ClearBackground(self):
         pass
 
@@ -285,7 +289,7 @@ class ScrolledWindow(Window):
 
     def SetVirtualSizeHints(self, *size):
         pass
-        
+
     def Scroll(self, width, height):
         pass
 
@@ -297,7 +301,7 @@ class ScrolledWindow(Window):
 
     def GetBestVirtualSize(self, *size):
         pass
-        
+
 class Panel(Window):
     def __init__(self, *args, **kwds):
         Window.__init__(self, *args, **kwds)
@@ -360,10 +364,10 @@ class ToggleButton(Button):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
-        
+
 class BitmapButton(ToggleButton):
     pass
-                    
+
 class StaticBox(Window):
     def __init__(self, parent, id=-1, label="", **kwds):
         Window.__init__(self, parent, **kwds)
@@ -398,7 +402,7 @@ class TextCtrl(Control):
         self.calls.append(attr)
         return lambda *args, **kwds: None
 
-        
+
 class ComboBox(Control):
     def __init__(self, parent=None, choices=None, size=None, style=None):
         Control.__init__(self,parent)
@@ -414,18 +418,18 @@ class ComboBox(Control):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
-        
-        
+
+
 class TreeItemData(object):
     #  holds a Python object referenced to a tree node
     def __init__(self, data):
         self.data = data
-        
+
     def SetData(self, data):
         self.data = data
-        
+
     def	GetData(self):
-        return self.data                      
+        return self.data
 
 
 class TreeItemId(object):
@@ -433,28 +437,28 @@ class TreeItemId(object):
     ids = []
     def __init__(self):
         self.ids.append(self)
-        
-    
-                
+
+
+
 class TreeCtrl(Control):
     def __init__(self, parent=None, size=None, style=None):
         Control.__init__(self, parent)
         self.Size = size
         self.Style = style
-                
+
     def GetFirstChild(self, item):
         return (None, None)
-        
+
     def GetNextChild(self, item, cookie):
         return ("item", cookie)
-        
-        
+
+
     def __getattr__(self, attr):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
-        
-                        
+
+
 class ListCtrl(Control):
     """Mocks wx.ListCtrl"""
 
@@ -559,7 +563,7 @@ class StaticText(Control):
 class VisualAttributes(object):
     def __init__(self, *args, **kwds):
         self.font = Font()
-    
+
 
 class StatusBar(Window):
     def __init__(self, *args, **kwds):
@@ -584,57 +588,62 @@ class CollapsiblePane(Window):
 
     def Collapse(self):
         pass
-        
+
     def Expand(self):
         pass
-        
+
     def GetPane(self):
         return self.parent
-                
+
     def __getattr__(self, attr):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
-        
-        
+
+
 class Notebook(Window):
     def __init__(self, parent, *args, **kwds):
         Window.__init__(self,parent, *args, **kwds)
         self.pages = []
-        self.texts = [] 
+        self.texts = []
         self.parent = parent
         self.selection = 0
 
     def AddPage(self, page, text):
         self.pages.append(page)
         self.texts.append(text)
-        
+        self.selection = len(self.pages)
+
     def RemovePage(self, page):
         del self.texts[page - 1]
         del self.pages[page - 1]
-        
+        self.selection -= 1
+
     def DeletePage(self, page):
         del self.texts[page - 1]
         del self.pages[page - 1]
-        
+        self.selection -= 1
+
     def GetPage(self, n):
         return self.pages[n]
-        
+
     def GetCurrentPage(self):
-        return self.pages[self.selection]
-                
+        if self.selection == 0:
+            return self.pages[0]
+        return self.pages[self.selection - 1]
+
     def GetPageText(self):
-        return self.selection
-        
-    def SetPageText(self, sel):
-        self.selection = sel
-                
+        return self.texts[self.selection - 1]
+
+    def SetPageText(self, sel, text):
+        self.texts[self.selection - 1] = text
+
     def GetSelection(self):
         return self.selection - 1
-        
+
     def SetSelection(self, sel):
         self.selection = sel
-        
+
     def GetParent(self):
         return self.parent
 
@@ -767,7 +776,7 @@ class Frame(TopWindow):
 
     def CreateToolBar(self, *args, **kwds):
         return ToolBar(self, *args, **kwds)
-        
+
     def SetMenuBar(self, mb):
         self.MenuBar = mb
 
@@ -930,8 +939,8 @@ class ColourPickerCtrl(Dialog):
     def __getattr__(self, attr):
         """Just fake any other methods"""
         self.calls.append(attr)
-        return lambda *args, **kwds: None        
-        
+        return lambda *args, **kwds: None
+
 ###########
 # Sizers
 ###########
@@ -964,9 +973,9 @@ class BoxSizer(Sizer):
 class StaticBoxSizer(Sizer):
     def __init__(self, *args, **kwds):
         Sizer.__init__(self, None, **kwds)
-        
+
 class GridSizer(StaticBoxSizer):
-    pass       
+    pass
 
 class FlexGridSizer(Sizer):
     def __init__(self, rows, cols, vgap, hgap):
@@ -992,8 +1001,8 @@ class FlexGridSizer(Sizer):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
-     
-  
+
+
 
 #############
 # Functions
@@ -1013,41 +1022,41 @@ def CursorFromImage(*args):
 
 def FFont(*args):
     return Font(*args)
-    
-    
+
+
 #
 # This is a static class which needs to be emulated
-#    
-    
-class TheClipboard(object):       
-    def Open():        
+#
+
+class TheClipboard(object):
+    def Open():
         pass
     Open = staticmethod(Open)
-    
-    def GetData(data):        
-        pass
-    GetData = staticmethod(GetData) 
 
-    def SetData(data):        
+    def GetData(data):
         pass
-    SetData = staticmethod(GetData)       
+    GetData = staticmethod(GetData)
 
-    def Close():        
+    def SetData(data):
         pass
-    Close = staticmethod(Close)  
+    SetData = staticmethod(GetData)
 
-class ArtProvider(object):       
-    def GetBitmap(bmp, id):        
+    def Close():
+        pass
+    Close = staticmethod(Close)
+
+class ArtProvider(object):
+    def GetBitmap(bmp, id):
         pass
     GetBitmap = staticmethod(GetBitmap)
- 
-    
-class lib(object):       
-    class scrolledpanel():        
+
+
+class lib(object):
+    class scrolledpanel():
         pass
 
-    
-            
+
+
 # Overwrite the wx namespace with the fake classes declared above
 import wx
 wx.__dict__.update(locals())

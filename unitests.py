@@ -23,10 +23,13 @@ the GUI event handling code (example: undo/redo closing tabs)
 """
 
 import random
+import os
 
 import fakewidgets
+from fakewidgets.core import Event
 import tools
 import gui
+
 
 
 def make_shapes(board):
@@ -56,7 +59,10 @@ class TestWhyteboard:
     Tests the Whyteboard panel and its functionality:
         Undo/redo
         Adding new shapes
-        Clearing shapes / undoing/redoing the clearing
+        Select tool
+        Clearing shapes of single sheet / keep images
+        "" ..all sheets
+        undoing/redoing the clearing (per-sheet basis)
     """
     def setup(self):
         """
@@ -69,12 +75,10 @@ class TestWhyteboard:
         self.shapes = list(self.board.shapes)  # value to test changes against
 
     def test_add(self):
-        """
-        Add a shape to the list, optionally positional
-        """
+        """Add a shape to the list, optionally positional"""
         shape = tools.Rectangle(self.board, (0, 0, 0), 1)
         self.board.add_shape(shape)
-        assert not self.board.redo_list
+        assert not self.board.redo_list, "Redo list should be empty"
         assert not self.board.gui.util.saved
 
 
@@ -119,6 +123,12 @@ class TestWhyteboard:
         assert self.board.shapes
         assert self.board.undo_list
 
+    def test_clear_all(self):
+        passs
+        
+    def test_clear_all_keep_images(self):
+        pass
+    
     def test_undo_and_redo_clear(self):
         """
         Clear then undo = state restored. Redo; clear is re-applied = no shapes
@@ -130,8 +140,21 @@ class TestWhyteboard:
         assert len(self.board.shapes) == 0, "Shapes should be empty"
 
 
-class TestGuiFunctionality:
+#----------------------------------------------------------------------
 
+
+class TestGuiFunctionality:
+    """
+    Bit tricky to do due to some GUI functions firing events and depending upon
+    that function call at that time in -that- function call. Testing:
+        Adding new sheets
+        Closing sheets
+        Changing sheets
+        Undoing closed sheets
+        Changing next/previous sheets
+        Loading .wtbd files
+        Saving .wtbd files
+    """
     def setup(self):
         """
         Add a few mock tabs, each with random shapes
@@ -140,25 +163,54 @@ class TestGuiFunctionality:
         self.gui = self.board.gui
         for x in range(9):
             self.gui.on_new_tab()
-
             make_shapes(self.board)
         assert len(self.gui.tabs.pages) == 10
 
-    def test_close_tab(self):
+    def test_close_sheet(self):
         """Currently lacking a faked tab thing that's good enough"""
         x = len(self.gui.tabs.pages)
-        #self.gui.on_close_tab()
-        #self.gui.on_change_tab()
-        #assert len(self.gui.tabs.pages) == x - 1
-        #print self.gui.current_tab
-        #self.gui.on_close_tab()
-        #assert len(self.gui.tabs.pages) == x - 1
+        self.gui.on_close_tab()
+        assert len(self.gui.tabs.pages) == x - 1
+        self.gui.on_close_tab()
+        assert len(self.gui.tabs.pages) == x - 2
+
+    def test_changing_sheets(self):
+        evt = Event()
+        evt.selection = 2
+        self.gui.on_change_tab(evt)
+        assert self.gui.current_tab == 2
+        evt.selection = 4
+        self.gui.on_change_tab(evt)
+        assert self.gui.current_tab == 4
+
+    def test_undo_closed_sheets(self):
+        assert self.gui.tab_count == 10
+        shapes = self.gui.board.shapes
+        self.gui.on_close_tab()
+        assert self.gui.tab_count == 9
+        self.gui.on_undo_tab()
+        assert self.gui.tab_count == 10
+        assert self.gui.board.shapes == shapes
+
+    def test_next(self):
+        pass
+    
+    def test_prev(self):
+        pass
+
+    def test_load_wtbd(self):
+        _file = os.path.join(os.getcwd(), "test.wtbd")
+        assert os.path.exists(_file), _file
+        #self.gui.do_open(_file)
+
+
+#----------------------------------------------------------------------
 
 
 class TestShapes:
     """
     We want to test shape's functionality, if they respond to their hit tests
-    correctly and boundaries.
+    correctly and boundaries. Can probably ignore the math-based ones (?)
     """
     def setup(self):
         self.board = SimpleApp().board
@@ -185,18 +237,35 @@ class TestShapes:
         r1.y, r2.y, r3.y, r4.y = y, y, y, y
 
         r1.width, r1.height = 50, 50
+        r1.update_rect()
         assert r1.hit_test(155, 155)
         assert not r1.hit_test(145, 155)
 
         r2.width, r2.height = -50, -50
+        r2.update_rect()
         assert r2.hit_test(120, 130)
         assert not r2.hit_test(155, 155)
 
         r3.width, r3.height = 50, -50
+        r3.update_rect()
         assert r3.hit_test(165, 130)
         assert not r3.hit_test(140, 155)
 
         r4.width, r4.height = -50, 50
+        r4.update_rect()
         assert r4.hit_test(120, 180)
         assert not r4.hit_test(120, 130)
         assert not r4.hit_test(155, 155)
+
+    def test_line_hit(self):
+        line = tools.Line(self.board, (0, 0, 0), 1)  # diagonal right
+        line.x, line.y = 150, 150
+        line.x2, line.y2 = 250, 70
+
+        assert line.hit_test(189, 119)
+        assert not line.hit_test(182, 119)
+        line.thickness = 10
+        assert line.hit_test(178, 119)
+
+
+#----------------------------------------------------------------------

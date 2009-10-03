@@ -164,33 +164,24 @@ class ControlPanel(wx.Panel):
 
 
     def change_colour(self, event=None, colour=None):
-        """
-        Changes colour and updates the preview window.
-        event can also be a string representing a colour for the grid
-        """
+        """Event can also be a string representing a colour for the grid"""
         if event and not colour:
             colour = event.GetColour()  # from the colour button
-        self.gui.util.colour = colour
         self.colour.SetColour(colour)
-        if self.gui.board.selected:
-            selected = self.gui.board.selected
-            self.gui.board.add_undo()
-            selected.colour = colour
-            self.gui.board.draw_shape(selected, True)  # no need to redraw all
-        self.update()
+        self.update(colour, "colour")
 
     def change_thickness(self, event=None):
-        """Changes thickness and updates the preview window."""
-        thickness = self.thickness.GetSelection()
-        self.gui.util.thickness = thickness
+        self.update(self.thickness.GetSelection(), "thickness")
+
+
+    def update(self, value, var_name):
+        """Updates the given utility variable and the select object"""
+        setattr(self.gui.util, var_name, value)
+
         if self.gui.board.selected:
             self.gui.board.add_undo()
-            self.gui.board.selected.thickness = thickness
-            self.gui.board.redraw_all(True)  # causes a bug if drawn as above
-        self.update()
-
-    def update(self):
-        """Small method to save repeating code"""
+            setattr(self.gui.board.selected, var_name, value)
+            self.gui.board.redraw_all(True)
         self.gui.board.select_tool()
         self.preview.Refresh()
 
