@@ -48,6 +48,7 @@ class SimpleApp(fakewidgets.core.PySimpleApp):
     Create a GUI instance and create a new
     """
     def __init__(self):
+        fakewidgets.core.PySimpleApp.__init__(self)
         g = gui.GUI(None)  # mock the GUI, referenced by all
         self.board = g.board
         self.board.Show()
@@ -64,6 +65,10 @@ class TestWhyteboard:
         "" ..all sheets
         undoing/redoing the clearing (per-sheet basis)
     """
+    def __init__(self):
+        self.board = None
+        self.shapes = None
+
     def setup(self):
         """
         Create a random list of fake Tool objects, excluding Erasers
@@ -124,11 +129,11 @@ class TestWhyteboard:
         assert self.board.undo_list
 
     def test_clear_all(self):
-        passs
-        
+        pass
+
     def test_clear_all_keep_images(self):
         pass
-    
+
     def test_undo_and_redo_clear(self):
         """
         Clear then undo = state restored. Redo; clear is re-applied = no shapes
@@ -155,6 +160,10 @@ class TestGuiFunctionality:
         Loading .wtbd files
         Saving .wtbd files
     """
+    def __init__(self):
+        self.board = None
+        self.gui = None
+
     def setup(self):
         """
         Add a few mock tabs, each with random shapes
@@ -194,7 +203,7 @@ class TestGuiFunctionality:
 
     def test_next(self):
         pass
-    
+
     def test_prev(self):
         pass
 
@@ -212,6 +221,10 @@ class TestShapes:
     We want to test shape's functionality, if they respond to their hit tests
     correctly and boundaries. Can probably ignore the math-based ones (?)
     """
+    def __init__(self):
+        self.board = None
+        self.gui = None
+
     def setup(self):
         self.board = SimpleApp().board
         self.gui = self.board.gui

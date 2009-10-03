@@ -93,6 +93,7 @@ class GUI(wx.Frame):
         self.menu = None
         self.process = None
         self.dialog = None
+        self.help = None
         self.make_toolbar()
         self.make_menu()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
@@ -438,6 +439,8 @@ class GUI(wx.Frame):
         Undoes the last closed tab from the list.
         Re-creates the board from the saved shapes/undo/redo lists
         """
+        if not self.closed_tabs:
+            return
         shape = self.closed_tabs.pop()
         self.on_new_tab()
         self.board.shapes = shape[0]

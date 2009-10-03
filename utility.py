@@ -63,7 +63,6 @@ import random
 import urllib
 import tarfile
 import distutils.dir_util
-from copy import copy
 
 try:
     import cPickle as pickle

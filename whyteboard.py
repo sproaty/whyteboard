@@ -223,7 +223,8 @@ class Whyteboard(wx.ScrolledWindow):
         self.redraw_all(True)
 
         # nicest way to sort the notes out at the moment
-        self.gui.notes.tree.DeleteChildren(self.gui.notes.tabs[self.gui.tabs.GetSelection()])
+        notes = self.gui.notes
+        notes.tree.DeleteChildren(notes.tabs[self.gui.tabs.GetSelection()])
         for x in shapes:
             if isinstance(x, Note):
                 self.gui.notes.add_note(x)
