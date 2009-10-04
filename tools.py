@@ -33,6 +33,7 @@ from dialogs import TextInput
 #----------------------------------------------------------------------
 
 # constants for selection handles
+HANDLE_SIZE   = 6  # pixels
 TOP_LEFT      = 1
 TOP_RIGHT     = 2
 BOTTOM_LEFT   = 3
@@ -209,10 +210,11 @@ class OverlayShape(Tool):
     def sort_handles(self):
         """Sets the shape's handles"""
         top_left, top_right, bottom_left, bottom_right = self.get_handles()[:4]
-        rect1 = wx.Rect(top_left[0], top_left[1], 5, 5)
-        rect2 = wx.Rect(top_right[0], top_right[1], 5, 5)
-        rect3 = wx.Rect(bottom_left[0], bottom_left[1], 5, 5)
-        rect4 = wx.Rect(bottom_right[0], bottom_right[1], 5, 5)
+        size = HANDLE_SIZE
+        rect1 = wx.Rect(top_left[0], top_left[1], size, size)
+        rect2 = wx.Rect(top_right[0], top_right[1], size, size)
+        rect3 = wx.Rect(bottom_left[0], bottom_left[1], size, size)
+        rect4 = wx.Rect(bottom_right[0], bottom_right[1], size, size)
         self.handles = [rect1, rect2, rect3, rect4]
 
     def handle_hit_test(self, x, y):
@@ -242,15 +244,16 @@ class OverlayShape(Tool):
 
     def draw_selected(self, dc):
         """Draws each handle an object has"""
-        dc.SetBrush(wx.TRANSPARENT_BRUSH)  # fill outside
+        dc.SetBrush(find_inverse(self.colour))#wx.TRANSPARENT_BRUSH)  # fill outside
         dc.SetPen(wx.Pen(wx.BLACK, 1, wx.SOLID))
-        draw = lambda dc, x, y: dc.DrawRectangle(x, y, 5, 5)
+        
+        draw = lambda dc, x, y: dc.DrawRectangle(x, y, HANDLE_SIZE, HANDLE_SIZE)
         [draw(dc, x, y) for x, y in self.get_handles()]
 
-        dc.SetBrush(wx.Brush(wx.WHITE))#find_inverse(self.colour))  # inside
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        draw = lambda dc, x, y: dc.DrawRectangle(x, y, 4, 4)
-        [draw(dc, x, y) for x, y in self.get_handles()]
+        #dc.SetBrush(find_inverse(self.colour))  # inside
+        #dc.SetPen(wx.TRANSPARENT_PEN)
+        #draw = lambda dc, x, y: dc.DrawRectangle(x, y, 3, 3)
+        #[draw(dc, x, y) for x, y in self.get_handles()]
 
     def offset(self, x, y):
         """Used when moving the shape, to keep the cursor in the same place"""
@@ -286,7 +289,10 @@ class Rectangle(OverlayShape):
     def get_handles(self):
         t = round(self.thickness / 2)
         x, y, w, h = self.get_args()[:4]  # RoundedRect has 5 args
-        return [(x - t, y - t), (x + t + w, y - t), (x, y + h), (x + w, y + h)]
+        return [(x - t - 5, y - t - 5), 
+                (x + w + t, y - t - 5), 
+                (x - t - 5, y + h + t), 
+                (x + w + t, y + h + t)]
 
     def anchor(self, direction):
         """
@@ -456,8 +462,9 @@ class Line(OverlayShape):
 
     def sort_handles(self):
         handles = self.get_handles()
-        rect1 = wx.Rect(handles[0][0], handles[0][1], 5, 5)
-        rect2 = wx.Rect(handles[1][0], handles[1][1], 5, 5)
+        size = HANDLE_SIZE
+        rect1 = wx.Rect(handles[0][0], handles[0][1], size, size)
+        rect2 = wx.Rect(handles[1][0], handles[1][1], size, size)
         self.handles = [rect1, rect2]
 
     def draw(self, dc, replay=False):
@@ -537,7 +544,7 @@ class Eraser(Pen):
             memory.SetBrush(wx.Brush((0, 0, 0)))            
         else:                    
             memory.SetPen(wx.Pen((0, 0, 0), 1))  # border
-            memory.SetBrush(wx.TRANSPARENT_BRUSH)
+            memory.SetBrush(wx.Brush((255, 255, 255)))
 
         memory.DrawRectangle(0, 0, thickness + 2, thickness + 2)
         memory.SelectObject(wx.NullBitmap)       

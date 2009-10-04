@@ -216,8 +216,7 @@ class Utility(object):
 
     def load_wtbd(self, filename):
         """
-        Closes all tabs, loads in a Whyteboard save file into their proper
-        tab
+        Closes all tabs, loads in a Whyteboard save file into their proper tab
         """
         temp = {}
         f = open(filename)

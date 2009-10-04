@@ -216,13 +216,19 @@ class ProgressDialog(wx.Dialog):
 
 class UpdateDialog(wx.Dialog):
     """
-    Shows a Progres Gauge while an operation is taking place.
+    Updates Whyteboard. First, connect to server, parse HTML to check for new
+    version. Then, when the user clicks update, fetch the file and show the
+    download progress. Then, depending on exe/python source, we update the 
+    program accordingly
     """
     def __init__(self, gui):
         """Defines a gauge and a timer which updates the gauge."""
         wx.Dialog.__init__(self, gui, title="Updates", size=(350, 200))
         self.gui = gui
         self.downloaded = 0
+        self.version = None
+        self._file = None
+        self._type = None
         gap = wx.LEFT | wx.TOP | wx.RIGHT
 
         self.text = wx.StaticText(self, label="Connecting to server...")
@@ -233,7 +239,8 @@ class UpdateDialog(wx.Dialog):
         self.text2.SetFont(font)
 
         self.btn = wx.Button(self, label="Update")
-        self.btn.Disable()
+        self.btn.Enable(False)
+        
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
         self.cancelButton.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
@@ -249,6 +256,7 @@ class UpdateDialog(wx.Dialog):
 
         self.btn.Bind(wx.EVT_BUTTON, self.update)
         wx.CallAfter(self.check)  # we want to show the dialog then fetch URL
+        
 
 
     def check(self):
@@ -275,7 +283,7 @@ class UpdateDialog(wx.Dialog):
             _file = td.findNext('a').renderContents().strip()
 
             if _file.endswith(_type):
-                if _file.find("installer") != -1:
+                if _file.find("installer") != -1 or _file.find("help") != -1:
                     continue  # ignore it
 
                 found = True
@@ -297,6 +305,7 @@ class UpdateDialog(wx.Dialog):
                     self.text.SetLabel("You are running the latest version.")
         if not found:
             self.text.SetLabel("Error getting file list from the server.")
+
 
     def update(self, event=None):
         """
@@ -333,7 +342,7 @@ class UpdateDialog(wx.Dialog):
             args = ['python', ['python', sys.argv[0]]]  # for os.execvp
 
         if self.gui.util.filename:
-            name = "\""+self.gui.util.filename+"\""  # gotta escape for Windows
+            name = '"%s"' % self.gui.util.filename  # gotta escape for Windows
             args[1].append(name)  # restart, load .wtbd
         self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)
 
@@ -346,7 +355,7 @@ class UpdateDialog(wx.Dialog):
         _type2 = "KB"
         total /= 1024
         rem = ""
-        if total > 1024:
+        if total >= 1024:
             rem = ".%s" % (total % 1024)
             total /= 1024
             _type2 = "MB"
