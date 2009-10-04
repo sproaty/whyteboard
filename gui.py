@@ -516,6 +516,8 @@ class GUI(wx.Frame):
     def on_paste(self, event=None):
         """ Grabs the image from the clipboard and places it on the panel """
         bmp = self.util.get_clipboard()
+        if not bmp:
+            return
         shape = Image(self.board, bmp.GetBitmap(), None)
         shape.left_down(0, 0)
         self.board.redraw_all(True)

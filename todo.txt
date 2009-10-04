@@ -1,6 +1,6 @@
 Whyteboard 0.38 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Mon 20 Apr 2009 06:06:12 BST
+Sun 04 October 2009
 
 ---- NEW FEATURES ----
 
@@ -11,5 +11,6 @@ Mon 20 Apr 2009 06:06:12 BST
 Eventually, long term:
 
  - Network support w/ Twisted (a Python library)
+ - Poppler support for better PDF rendering - no need to use ImageMagick
  - Slider bar to "move" back/forwards through a drawing's timeline in a replay,
    as well as being able to jump to the start/end 

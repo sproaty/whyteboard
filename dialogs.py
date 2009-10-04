@@ -301,6 +301,7 @@ class UpdateDialog(wx.Dialog):
                     self._file = td.findNext('a')['href']
                     self._type = _type
                     self.version = version
+                    break
                 else:
                     self.text.SetLabel("You are running the latest version.")
         if not found:
@@ -317,8 +318,9 @@ class UpdateDialog(wx.Dialog):
         """
         path = self.gui.util.path
         args = []  # args to reload running program, may include filename
-        tmp = None
-        tmp_file = os.path.join(path[0], 'tmp'+ self._type)
+        tmp = None                        
+        tmp_file = os.path.join(path[0], 't-m-p-' + self._type)
+        
         try:
             tmp = urlretrieve(self._file, tmp_file, self.reporter)
         except IOError:

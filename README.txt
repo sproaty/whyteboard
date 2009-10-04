@@ -1,6 +1,6 @@
 Whyteboard 0.38 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 06 May 2009 17:42:59 BST
+Sun 04 October 2009
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -35,7 +35,7 @@ https://bugs.launchpad.net/whyteboard
 
 ---- VERSION HISTORY ----
 
-05 Oct 2009 - * Select tool: can select shapes to alter their colour/thickness,
+04 Oct 2009 - * Select tool: can select shapes to alter their colour/thickness,
                 edit text and notes, move shapes and resize them. Selected
                 shapes are drawn with an outline "handle" at their corners
                 -- Images and text can also be repositioned

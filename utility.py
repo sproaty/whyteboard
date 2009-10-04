@@ -237,7 +237,7 @@ class Utility(object):
         # change program settings and update the Preview window
         self.colour = temp[0][0]
         self.thickness = temp[0][1]
-        self.tool = temp[0][2]
+        self.tool = temp[0][2]        
         self.to_convert = temp[2]
         self.gui.control.change_tool(_id = self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
@@ -263,7 +263,13 @@ class Utility(object):
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
         self.saved = True
-
+        self.gui.board.select_tool()
+        
+        try:
+            self.gui.tabs.SetSelection(temp[0][3])
+        except IndexError:
+            pass
+        
         try:
             version = temp[0][4]
         except IndexError:
@@ -290,14 +296,7 @@ class Utility(object):
         elif num[1] == ver[1]:
             if num[2] > ver[2]:
                 self.update_version = False
-
-        try:
-            self.gui.tabs.SetSelection(temp[0][3])
-        except IndexError:
-            wx.MessageBox("Warning: This save file was created in an older "
-            + "version of Whyteboard ("+version+"). Saving the file will " +
-            "update it to the latest version, " + self.gui.version)
-            self.gui.tabs.SetSelection(0)
+              
 
 
     def convert(self, _file=None):
@@ -404,12 +403,12 @@ class Utility(object):
 
     def remove_all_sheets(self):
         """  Remove all tabs, thumbnails and tree note items """
-        for x in range(self.gui.tab_count -1, -1, -1):
-            self.gui.tabs.RemovePage(x)
+        self.gui.board.shapes = []
+        self.gui.board.redraw_all()
+        self.gui.tabs.DeleteAllPages()        
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
-        self.gui.board.Destroy()
 
 
     def prompt_for_save(self, method, style=wx.YES_NO | wx.CANCEL, args=None):

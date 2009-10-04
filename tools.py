@@ -862,6 +862,7 @@ class Image(OverlayShape):
             self.image = wx.Bitmap(self.path)
             size = (self.image.GetWidth(), self.image.GetHeight())
             self.board.update_scrollbars(size)
+            self.colour = "Black"
         else:
             self.image = wx.EmptyBitmap(0, 0)
             wx.MessageBox("Path for the image %s not found." % self.path)
@@ -875,9 +876,6 @@ class Image(OverlayShape):
         rect_y2 = rect_y + height
 
         if x > rect_x and x < rect_x2 and y > rect_y and y < rect_y2:
-            #img = self.image.ConvertToImage()
-            #img = img.Rotate90()
-            #self.image = wx.BitmapFromImage(img)
             return True
         else:
             return False
