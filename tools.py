@@ -116,9 +116,11 @@ class Pen(Tool):
         self.y = y
         self.motion(x, y)
 
-    def left_up(self, x, y):
+    def left_up(self, x, y):        
         if self.points:
             self.board.add_shape(self)
+            if len(self.points) == 1:  # a single click
+                self.board.redraw_all()
 
     def motion(self, x, y):
         self.points.append( [self.x, self.y, x, y] )
@@ -243,17 +245,12 @@ class OverlayShape(Tool):
 
 
     def draw_selected(self, dc):
-        """Draws each handle an object has"""
-        dc.SetBrush(find_inverse(self.colour))#wx.TRANSPARENT_BRUSH)  # fill outside
-        dc.SetPen(wx.Pen(wx.BLACK, 1, wx.SOLID))
-        
+        """Draws each handle that an object has"""
+        dc.SetBrush(find_inverse(self.colour))
+        dc.SetPen(wx.Pen(wx.BLACK, 1, wx.SOLID))        
         draw = lambda dc, x, y: dc.DrawRectangle(x, y, HANDLE_SIZE, HANDLE_SIZE)
         [draw(dc, x, y) for x, y in self.get_handles()]
 
-        #dc.SetBrush(find_inverse(self.colour))  # inside
-        #dc.SetPen(wx.TRANSPARENT_PEN)
-        #draw = lambda dc, x, y: dc.DrawRectangle(x, y, 3, 3)
-        #[draw(dc, x, y) for x, y in self.get_handles()]
 
     def offset(self, x, y):
         """Used when moving the shape, to keep the cursor in the same place"""
@@ -406,7 +403,7 @@ class Circle(OverlayShape):
     def hit_test(self, x, y):
         val = ((x - self.x) * (x - self.x)) + ((y - self.y) * (y - self.y))
 
-        if val <= (self.radius * self.radius) + self.thickness:
+        if val <= (self.radius * self.radius):
             return True
         return False
 

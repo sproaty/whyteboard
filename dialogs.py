@@ -319,7 +319,7 @@ class UpdateDialog(wx.Dialog):
         path = self.gui.util.path
         args = []  # args to reload running program, may include filename
         tmp = None                        
-        tmp_file = os.path.join(path[0], 't-m-p-' + self._type)
+        tmp_file = os.path.join(path[0], 'tmp-wb-' + self._type)
         
         try:
             tmp = urlretrieve(self._file, tmp_file, self.reporter)
@@ -332,7 +332,7 @@ class UpdateDialog(wx.Dialog):
             # rename current exe, rename temp to current
             if os.name == "nt":
                 os.rename(path[1], "wtbd-bckup.exe")
-                os.rename("tmp.exe", "whyteboard.exe")
+                os.rename("tmp-wb-.exe", "whyteboard.exe")
                 args = [sys.argv[0], [sys.argv[0]]]
         else:
             if os.name == "posix":

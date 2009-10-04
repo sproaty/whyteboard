@@ -56,7 +56,7 @@ https://bugs.launchpad.net/whyteboard
               * Help files updated to reflect new changes and clarify any
                 issues before
               * Mouse x/y position tracked in the status bar
-              * Multiple bug fixes (over 10)
+              * Over 10 bug fixes
               * Misc existing code improvements and performance increases
               * More/better unit testing to help with adding new features,
                 tracking down potential bugs and increased code confidence
