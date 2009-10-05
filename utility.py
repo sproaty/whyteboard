@@ -137,8 +137,11 @@ class Utility(object):
                 board = self.gui.tabs.GetPage(x)
                 save_pasted_images(board.shapes)
                 temp[x] = list(board.shapes)
-                canvas_sizes.append(board.canvas_size)
-                names.append(self.gui.tabs.GetPageText(x))
+                canvas_sizes.append(board.canvas_size)                
+                text = None
+                if board.renamed:
+                    text = self.gui.tabs.GetPageText(x)
+                names.append(text)
 
             if temp:
                 for x in temp:
@@ -246,13 +249,16 @@ class Utility(object):
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
+            name = None
             try:
                 name = temp[3][x]
-            except KeyError:
-                name = "Sheet %s" % x + 1
+            except KeyError:  
+                pass              
             self.gui.on_new_tab(name=name)
-
-
+            if name:
+                self.gui.board.renamed = True
+            
+            
             for shape in temp[1][x]:
                 shape.board = self.gui.board#wb  # restore board
                 shape.load()  # restore unpickleable settings

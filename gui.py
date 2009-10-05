@@ -358,8 +358,8 @@ class GUI(wx.Frame):
         """Opens a new tab, selects it, creates a new thumbnail and tree item"""
         if not wb:
             wb = Whyteboard(self.tabs, self)
-        self.thumbs.new_thumb()
-        self.notes.add_tab()
+        self.thumbs.new_thumb(name=name)
+        self.notes.add_tab(name)
         self.tab_count += 1
         if name:
             self.tabs.AddPage(wb, name)
@@ -374,7 +374,7 @@ class GUI(wx.Frame):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
         self.update_panels(False)
-        self.current_tab = self.tabs.GetSelection()
+        self.current_tab = self.tabs.GetSelection()       
         if event:
             self.current_tab = event.GetSelection()
 
@@ -411,8 +411,6 @@ class GUI(wx.Frame):
             return
         if len(self.closed_tabs) == 10:
             del self.closed_tabs[9]
-        if event:
-            self.current_tab = event.GetSelection()
 
         board = self.board
         name = ""
@@ -423,7 +421,11 @@ class GUI(wx.Frame):
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
+        #if os.name == "posix":
+        #    self.tabs.DeletePage(self.current_tab)
+        #else:
         self.tabs.RemovePage(self.current_tab)
+        
         self.notes.remove_tab(self.current_tab)
         self.thumbs.remove(self.current_tab)
         self.on_change_tab()  # updates self.board
@@ -442,21 +444,23 @@ class GUI(wx.Frame):
         if not self.closed_tabs:
             return
         shape = self.closed_tabs.pop()
-        self.on_new_tab()
+        
+        if shape[4]:
+            self.on_new_tab(name=shape[4])
+        else:        
+            self.on_new_tab()
         self.board.shapes = shape[0]
         self.board.undo_list = shape[1]
         self.board.redo_list = shape[2]
         self.board.canvas_size = shape[3]
 
-        if shape[4]:
-            self.tabs.SetPageText(self.current_tab, shape[4])
-
         for shape in self.board.shapes:
             shape.board = self.board
             if isinstance(shape, Note):
                 self.notes.add_note(shape)
-        self.board.redraw_all(True)
 
+        wx.SafeYield()  # doesn't draw thumbnail otherwise...
+        self.board.redraw_all(True)    
 
 
     def update_menus(self, event):

@@ -272,6 +272,7 @@ class Notes(wx.Panel):
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
         self.notes = []
+        self.names = []
         self.add_tab()
         self.tree.Expand(self.root)
 
@@ -282,15 +283,20 @@ class Notes(wx.Panel):
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
 
 
-    def add_tab(self):
-        """Adds a new tab as a child to the root element"""
+    def add_tab(self, name=None):
+        """Adds a new tab as a child to the root element"""        
         _id = len(self.tabs)
         if not _id:
             _id = 0
+        self.names.insert(_id, name)  
+          
+        if not name:
+            name = "Sheet %s" % (_id + 1)
+                        
         data = wx.TreeItemData(_id)
-        t = self.tree.AppendItem(self.root, "Sheet %s" % (_id + 1), data=data)
+        t = self.tree.AppendItem(self.root, name, data=data)
         self.tabs.insert(_id, t)
-
+        
 
     def add_note(self, note, _id=None):
         """
@@ -312,18 +318,27 @@ class Notes(wx.Panel):
         item = self.tabs[note]
         self.tree.DeleteChildren(item)
         self.tree.Delete(item)
+        
         del self.tabs[note]
-
+        del self.names[note]
         # now ensure all nodes are linked to the right tab
-        for x in range(self.gui.current_tab, len(self.tabs)):
+        count = self.gui.current_tab
+        for x in range(self.gui.current_tab, len(self.tabs)):            
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
-            self.tree.SetItemText(self.tabs[x], "Sheet %s" % (x + 1))
+            if not self.names[x]:
+                count += 1
+                self.tree.SetItemText(self.tabs[x], "Sheet %s" % count)        
 
 
+    def update_name(self, _id, name):
+        self.names[_id] = name
+        self.tree.SetItemText(self.tabs[_id], name)
+        
     def remove_all(self):
         """Removes all tabs."""
         self.tree.DeleteChildren(self.root)
         self.tabs = []
+        self.notes = []
 
 
     def on_click(self, event):
@@ -408,9 +423,12 @@ class SheetsPopup(wx.Menu):
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
         else:
-            if dlg.GetValue():
-                self.parent.tabs.SetPageText(self.sheet, dlg.GetValue())
+            val = dlg.GetValue()
+            if val:
+                self.parent.tabs.SetPageText(self.sheet, val)
                 self.parent.tabs.GetPage(self.sheet).renamed = True
+                self.parent.thumbs.update_name(self.sheet, val)
+                self.parent.notes.update_name(self.sheet, val)
 
     def close(self, event):
         """
@@ -446,11 +464,12 @@ class Thumbs(scrolled.ScrolledPanel):
         self.gui = gui
         self.thumbs  = []
         self.text = []
+        self.names = []
         self.new_thumb()  # inital thumb
         self.thumbs[0].current = True
 
 
-    def new_thumb(self, _id=0):
+    def new_thumb(self, _id=0, name=None):
         """
         Creates a new thumbnail button and manages its ID, along with a label.
         """
@@ -468,11 +487,15 @@ class Thumbs(scrolled.ScrolledPanel):
             memory.Clear()
             memory.FloodFill(0, 0, (255, 255, 255), wx.FLOOD_BORDER)
             memory.SelectObject(wx.NullBitmap)
-
-        text = wx.StaticText(self, label="Sheet %s" % (_id + 1))
+            
+        self.names.insert(_id, name)    
+        if not name:
+            name = "Sheet %s" % (_id + 1)
+            
+        text = wx.StaticText(self, label=name)
         btn = ThumbButton(self, _id, bmp)
         self.text.insert(_id, text)
-        self.thumbs.insert(_id, btn)
+        self.thumbs.insert(_id, btn)        
 
         for x in self.thumbs:
             if x is not btn:
@@ -495,13 +518,19 @@ class Thumbs(scrolled.ScrolledPanel):
 
         del self.thumbs[_id]  # 'physically' remove
         del self.text[_id]
+        del self.names[_id]
         self.SetVirtualSize(self.GetBestVirtualSize())
 
         # now ensure all thumbnail classes are pointing to the right tab
-        for x in range(0, len(self.thumbs)):
-            self.thumbs[x].thumb_id = x
-            self.text[x].SetLabel("Sheet %s" % (x + 1))
+        count = self.gui.current_tab
+        for x in range(self.gui.current_tab, len(self.thumbs)):
 
+            self.thumbs[x].thumb_id = x
+            if not self.names[x]:
+                count += 1                
+                self.text[x].SetLabel("Sheet %s" % count)
+ 
+                
 
     def remove_all(self):
         """
@@ -540,6 +569,9 @@ class Thumbs(scrolled.ScrolledPanel):
         bmp = wx.BitmapFromImage(img)
         return bmp
 
+    def update_name(self, _id, name):
+        self.names[_id] = name
+        self.text[_id].SetLabel(name)
 
     def update(self, _id):
         """
