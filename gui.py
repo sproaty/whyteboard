@@ -69,7 +69,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.38.0"
+    version = "0.38.1"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -374,7 +374,7 @@ class GUI(wx.Frame):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
         self.update_panels(False)
-        self.current_tab = self.tabs.GetSelection()       
+        self.current_tab = self.tabs.GetSelection()
         if event:
             self.current_tab = event.GetSelection()
 
@@ -412,6 +412,10 @@ class GUI(wx.Frame):
         if len(self.closed_tabs) == 10:
             del self.closed_tabs[9]
 
+        # doesn't remove the notes if called earlier
+        self.notes.remove_tab(self.current_tab)
+        self.thumbs.remove(self.current_tab)
+
         board = self.board
         name = ""
         if board.renamed:
@@ -421,15 +425,12 @@ class GUI(wx.Frame):
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
-        #if os.name == "posix":
-        #    self.tabs.DeletePage(self.current_tab)
-        #else:
-        self.tabs.RemovePage(self.current_tab)
-        
-        self.notes.remove_tab(self.current_tab)
-        self.thumbs.remove(self.current_tab)
+        if os.name == "posix":
+            self.tabs.RemovePage(self.current_tab)
+        else:
+            self.tabs.DeletePage(self.current_tab)
+
         self.on_change_tab()  # updates self.board
-        self.board.redraw_all()
 
         for x in range(self.tab_count):
             if not self.tabs.GetPage(x).renamed:
@@ -441,13 +442,14 @@ class GUI(wx.Frame):
         Undoes the last closed tab from the list.
         Re-creates the board from the saved shapes/undo/redo lists
         """
+        #self.board.redraw_all()
         if not self.closed_tabs:
             return
         shape = self.closed_tabs.pop()
-        
+
         if shape[4]:
             self.on_new_tab(name=shape[4])
-        else:        
+        else:
             self.on_new_tab()
         self.board.shapes = shape[0]
         self.board.undo_list = shape[1]
@@ -460,7 +462,7 @@ class GUI(wx.Frame):
                 self.notes.add_note(shape)
 
         wx.SafeYield()  # doesn't draw thumbnail otherwise...
-        self.board.redraw_all(True)    
+        self.board.redraw_all(True)
 
 
     def update_menus(self, event):

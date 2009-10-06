@@ -218,7 +218,7 @@ class UpdateDialog(wx.Dialog):
     """
     Updates Whyteboard. First, connect to server, parse HTML to check for new
     version. Then, when the user clicks update, fetch the file and show the
-    download progress. Then, depending on exe/python source, we update the 
+    download progress. Then, depending on exe/python source, we update the
     program accordingly
     """
     def __init__(self, gui):
@@ -240,7 +240,7 @@ class UpdateDialog(wx.Dialog):
 
         self.btn = wx.Button(self, label="Update")
         self.btn.Enable(False)
-        
+
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
         self.cancelButton.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
@@ -256,7 +256,7 @@ class UpdateDialog(wx.Dialog):
 
         self.btn.Bind(wx.EVT_BUTTON, self.update)
         wx.CallAfter(self.check)  # we want to show the dialog then fetch URL
-        
+
 
 
     def check(self):
@@ -318,9 +318,9 @@ class UpdateDialog(wx.Dialog):
         """
         path = self.gui.util.path
         args = []  # args to reload running program, may include filename
-        tmp = None                        
+        tmp = None
         tmp_file = os.path.join(path[0], 'tmp-wb-' + self._type)
-        
+
         try:
             tmp = urlretrieve(self._file, tmp_file, self.reporter)
         except IOError:
@@ -653,8 +653,3 @@ class IntValidator(wx.PyValidator):
         return
 
 #----------------------------------------------------------------------
-
-if __name__ == '__main__':
-    from gui import WhyteboardApp
-    app = WhyteboardApp(redirect=True)
-    app.MainLoop()

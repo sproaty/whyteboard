@@ -116,7 +116,7 @@ class Pen(Tool):
         self.y = y
         self.motion(x, y)
 
-    def left_up(self, x, y):        
+    def left_up(self, x, y):
         if self.points:
             self.board.add_shape(self)
             if len(self.points) == 1:  # a single click
@@ -247,7 +247,7 @@ class OverlayShape(Tool):
     def draw_selected(self, dc):
         """Draws each handle that an object has"""
         dc.SetBrush(find_inverse(self.colour))
-        dc.SetPen(wx.Pen(wx.BLACK, 1, wx.SOLID))        
+        dc.SetPen(wx.Pen(wx.BLACK, 1, wx.SOLID))
         draw = lambda dc, x, y: dc.DrawRectangle(x, y, HANDLE_SIZE, HANDLE_SIZE)
         [draw(dc, x, y) for x, y in self.get_handles()]
 
@@ -286,10 +286,15 @@ class Rectangle(OverlayShape):
     def get_handles(self):
         t = round(self.thickness / 2)
         x, y, w, h = self.get_args()[:4]  # RoundedRect has 5 args
-        return [(x - t - 5, y - t - 5), 
-                (x + w + t, y - t - 5), 
-                (x - t - 5, y + h + t), 
-                (x + w + t, y + h + t)]
+        return [(x - t - 5, y - t - 5),
+                (x + w + t, y - t - 5),
+                (x - t - 5, y + h + t),
+                (x + w + t, y + h + t)] #,
+
+                #(x - t - 5 + (w / 2), y - t - 5),  middle handles
+                #(x + w + t, y - t - 5 + (h / 2)),
+                #(x - t - 5 + (w / 2), y + h + t),
+                #(x - t - 5, y + h + t - (h / 2) - 5)]
 
     def anchor(self, direction):
         """
@@ -398,7 +403,7 @@ class Circle(OverlayShape):
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
         x, y, r = self.get_args()
-        return d(x- r, y + r), d(x - r, y - r), d(x + r, y + r), d(x + r, y - r)
+        return d(x - r, y - r), d(x- r, y + r), d(x + r, y - r), d(x + r, y + r)
 
     def hit_test(self, x, y):
         val = ((x - self.x) * (x - self.x)) + ((y - self.y) * (y - self.y))
@@ -535,16 +540,16 @@ class Eraser(Pen):
         cursor = wx.EmptyBitmap(thickness + 2, thickness + 2)
         memory = wx.MemoryDC()
         memory.SelectObject(cursor)
-        
+
         if os.name == "posix":
             memory.SetPen(wx.Pen((255, 255, 255), 1))  # border
-            memory.SetBrush(wx.Brush((0, 0, 0)))            
-        else:                    
+            memory.SetBrush(wx.Brush((0, 0, 0)))
+        else:
             memory.SetPen(wx.Pen((0, 0, 0), 1))  # border
             memory.SetBrush(wx.Brush((255, 255, 255)))
 
         memory.DrawRectangle(0, 0, thickness + 2, thickness + 2)
-        memory.SelectObject(wx.NullBitmap)       
+        memory.SelectObject(wx.NullBitmap)
         img = wx.ImageFromBitmap(cursor)
         cursor = wx.CursorFromImage(img)
         return cursor
@@ -1029,8 +1034,3 @@ RectSelect = BitmapSelect
 # items to draw with
 items = [Pen, Eraser, Rectangle, RoundedRect, Line, Ellipse, Circle, Text, Note,
         Eyedrop, BitmapSelect, Select]
-
-if __name__ == '__main__':
-    from gui import WhyteboardApp
-    app = WhyteboardApp(redirect=True)
-    app.MainLoop()

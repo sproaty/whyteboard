@@ -104,6 +104,7 @@ class Utility(object):
         self.backup_ext = ".blah5bl8ah123bla6h"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
+        self.library = os.path.join(get_home_dir(), "library.known")
 
         # Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
@@ -137,7 +138,7 @@ class Utility(object):
                 board = self.gui.tabs.GetPage(x)
                 save_pasted_images(board.shapes)
                 temp[x] = list(board.shapes)
-                canvas_sizes.append(board.canvas_size)                
+                canvas_sizes.append(board.canvas_size)
                 text = None
                 if board.renamed:
                     text = self.gui.tabs.GetPageText(x)
@@ -240,7 +241,7 @@ class Utility(object):
         # change program settings and update the Preview window
         self.colour = temp[0][0]
         self.thickness = temp[0][1]
-        self.tool = temp[0][2]        
+        self.tool = temp[0][2]
         self.to_convert = temp[2]
         self.gui.control.change_tool(_id = self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
@@ -252,13 +253,13 @@ class Utility(object):
             name = None
             try:
                 name = temp[3][x]
-            except KeyError:  
-                pass              
+            except KeyError:
+                pass
             self.gui.on_new_tab(name=name)
             if name:
                 self.gui.board.renamed = True
-            
-            
+
+
             for shape in temp[1][x]:
                 shape.board = self.gui.board#wb  # restore board
                 shape.load()  # restore unpickleable settings
@@ -270,12 +271,12 @@ class Utility(object):
         wx.PostEvent(self.gui, self.gui.LoadEvent())
         self.saved = True
         self.gui.board.select_tool()
-        
+
         try:
             self.gui.tabs.SetSelection(temp[0][3])
         except IndexError:
             pass
-        
+
         try:
             version = temp[0][4]
         except IndexError:
@@ -302,7 +303,42 @@ class Utility(object):
         elif num[1] == ver[1]:
             if num[2] > ver[2]:
                 self.update_version = False
-              
+
+
+    def library_create(self):
+        if not os.path.exists(self.library):
+            f = open(self.library, "w")
+            f.write("")
+            pickle.dump({}, f)
+            f.close()
+
+
+    def library_lookup(self, _file):
+        """Check whether a file is inside our known file library"""
+        self.library_create()
+        f = open(self.library)
+        files = pickle.load(f)
+        f.close()
+
+        for x, key in files.items():
+            if os.path.basename(files[x]['file']) == _file:
+                return files[x]['images']
+        else:
+            return False
+        #self.gui.util.library_write('/blah/blah/file.pdf', ['/loc/1/img1.png', '/loc2/img1.png'])
+
+
+    def library_write(self, location, images):
+        """Adds a newly converted file to the library"""
+        self.library_create()
+        f = open(self.library)
+        files = pickle.load(f)
+        f.close()
+        files[len(files)] = {'file': location, 'images': images}
+
+        f = open(path, "w")
+        pickle.dump(files, f)
+        f.close()
 
 
     def convert(self, _file=None):
@@ -324,6 +360,8 @@ class Utility(object):
             return
         if _file is None:
             _file = self.temp_file
+
+        self.library_lookup(_file)
 
         path = get_home_dir("wtbd-tmp")
         tmp_file = make_filename()  #
@@ -356,7 +394,7 @@ class Utility(object):
                 self.remove_all_sheets()
 
             for x in range(0, count):
-                name = os.path.split(_file)[1] + " - %s" % (x + 1)
+                name = os.path.split(_file)[1][:20] + " - %s" % (x + 1)
                 self.gui.on_new_tab(name=name)
                 self.gui.board.renamed = True
 
@@ -411,7 +449,7 @@ class Utility(object):
         """  Remove all tabs, thumbnails and tree note items """
         self.gui.board.shapes = []
         self.gui.board.redraw_all()
-        self.gui.tabs.DeleteAllPages()        
+        self.gui.tabs.DeleteAllPages()
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
@@ -663,8 +701,3 @@ def get_home_dir(extra_path=None):
     return path
 
 #----------------------------------------------------------------------
-
-if __name__ == '__main__':
-    from gui import WhyteboardApp
-    app = WhyteboardApp()
-    app.MainLoop()

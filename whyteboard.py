@@ -28,7 +28,8 @@ import wx
 import wx.lib.dragscroller
 import copy
 
-from tools import Image, Text, Note, Select, OverlayShape
+from tools import (Image, Text, Line,Note, Select, OverlayShape, TOP_LEFT,
+                   TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT)
 
 #----------------------------------------------------------------------
 
@@ -80,22 +81,29 @@ class Whyteboard(wx.ScrolledWindow):
     def left_down(self, event):
         """Starts drawing"""
         self.shape.left_down(*self.convert_coords(event))
-        self.drawing = True
+        if not isinstance(self.shape, Text):  #  Crashes without the Text check
+            self.drawing = True
 
     def left_motion(self, event):
         """Updates the shape. Indicate shape may be changed using Select tool"""
         x, y = self.convert_coords(event)
         self.gui.SetStatusText(" %s, %s" % (x, y))
 
-        #  Crashes without the Text check
-        if self.drawing and not isinstance(self.shape, Text):
+        if self.drawing:
             self.shape.motion(x, y)
             self.draw_shape(self.shape)
         elif isinstance(self.shape, Select):
 
             for shape in reversed(self.shapes):
-                if shape.handle_hit_test(x, y):
+                res = shape.handle_hit_test(x, y)
+                if res and isinstance(shape, Line):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
+                    break
+                elif res in [TOP_LEFT, BOTTOM_RIGHT]:
+                    self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
+                    break
+                elif res in [TOP_RIGHT, BOTTOM_LEFT]:
+                    self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
                     break
                 if shape.hit_test(x, y):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
@@ -107,11 +115,9 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Called when the left mouse button is released.
         """
-        x, y = self.convert_coords(event)
-
-        if self.drawing:
+        if self.drawing or isinstance(self.shape, Text):
             before = len(self.shapes)
-            self.shape.left_up(x, y)
+            self.shape.left_up(*self.convert_coords(event))
 
             if len(self.shapes) - before:
                 self.select_tool()
@@ -342,5 +348,5 @@ class Whyteboard(wx.ScrolledWindow):
 
 if __name__ == '__main__':
     from gui import WhyteboardApp
-    app = WhyteboardApp(False)
+    app = WhyteboardApp()
     app.MainLoop()

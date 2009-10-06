@@ -284,19 +284,19 @@ class Notes(wx.Panel):
 
 
     def add_tab(self, name=None):
-        """Adds a new tab as a child to the root element"""        
+        """Adds a new tab as a child to the root element"""
         _id = len(self.tabs)
         if not _id:
             _id = 0
-        self.names.insert(_id, name)  
-          
+        self.names.insert(_id, name)
+
         if not name:
             name = "Sheet %s" % (_id + 1)
-                        
+
         data = wx.TreeItemData(_id)
         t = self.tree.AppendItem(self.root, name, data=data)
         self.tabs.insert(_id, t)
-        
+
 
     def add_note(self, note, _id=None):
         """
@@ -318,22 +318,22 @@ class Notes(wx.Panel):
         item = self.tabs[note]
         self.tree.DeleteChildren(item)
         self.tree.Delete(item)
-        
+
         del self.tabs[note]
         del self.names[note]
         # now ensure all nodes are linked to the right tab
         count = self.gui.current_tab
-        for x in range(self.gui.current_tab, len(self.tabs)):            
+        for x in range(self.gui.current_tab, len(self.tabs)):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
             if not self.names[x]:
                 count += 1
-                self.tree.SetItemText(self.tabs[x], "Sheet %s" % count)        
+                self.tree.SetItemText(self.tabs[x], "Sheet %s" % count)
 
 
     def update_name(self, _id, name):
         self.names[_id] = name
         self.tree.SetItemText(self.tabs[_id], name)
-        
+
     def remove_all(self):
         """Removes all tabs."""
         self.tree.DeleteChildren(self.root)
@@ -487,15 +487,15 @@ class Thumbs(scrolled.ScrolledPanel):
             memory.Clear()
             memory.FloodFill(0, 0, (255, 255, 255), wx.FLOOD_BORDER)
             memory.SelectObject(wx.NullBitmap)
-            
-        self.names.insert(_id, name)    
+
+        self.names.insert(_id, name)
         if not name:
             name = "Sheet %s" % (_id + 1)
-            
+
         text = wx.StaticText(self, label=name)
         btn = ThumbButton(self, _id, bmp)
         self.text.insert(_id, text)
-        self.thumbs.insert(_id, btn)        
+        self.thumbs.insert(_id, btn)
 
         for x in self.thumbs:
             if x is not btn:
@@ -527,10 +527,10 @@ class Thumbs(scrolled.ScrolledPanel):
 
             self.thumbs[x].thumb_id = x
             if not self.names[x]:
-                count += 1                
+                count += 1
                 self.text[x].SetLabel("Sheet %s" % count)
- 
-                
+
+
 
     def remove_all(self):
         """
@@ -638,8 +638,3 @@ class ThumbButton(wx.BitmapButton):
 
 
 #----------------------------------------------------------------------
-
-if __name__ == '__main__':
-    from gui import WhyteboardApp
-    app = WhyteboardApp(True)
-    app.MainLoop()
