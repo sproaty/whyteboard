@@ -24,9 +24,9 @@ a list of undo/redo actions for itself; thus each Whyteboard tab on the GUI has
 its own undo/redo.
 """
 
+import copy
 import wx
 import wx.lib.dragscroller
-import copy
 
 from tools import (Image, Text, Line,Note, Select, OverlayShape, TOP_LEFT,
                    TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT)

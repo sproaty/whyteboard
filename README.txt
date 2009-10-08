@@ -1,4 +1,4 @@
-Whyteboard 0.38.1 - A simple image, PDF and postscript file annotator
+Whyteboard 0.38.2 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Tue 06 October 2009
 
@@ -21,10 +21,11 @@ http://pages.cs.wisc.edu/~ghost/ - Windows users may need this for ImageMagick
 ***
 
 Run whyteboard.py or gui.py to launch the application, no installation needed!
-
 If nothing happens, try launching one of the scripts from the console:
+
 $ python whyteboard.py
-see what error occurred and let me know at, <sproaty -at- gmail -dot- com>,
+
+see what error occurred and let me know at, <sproaty@gmail.com>,
 or report a bug at Lunchpad at the link below
 
 ---- KNOWN BUGS ----

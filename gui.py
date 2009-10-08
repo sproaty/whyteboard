@@ -4,17 +4,17 @@
 #
 # GNU General Public Licence (GPL)
 #
-# Whyteboard is free software; you can redistribute it and/or modify it under
-# the terms of the GNU General Public License as published by the Free Software
-# Foundation; either version 3 of the License, or (at your option) any later
-# version.
-# Whyteboard is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-# details.
-# You should have received a copy of the GNU General Public License along with
-# Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
-# Place, Suite 330, Boston, MA  02111-1307  USA
+s = """Whyteboard is free software; you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by the Free 
+Software Foundation; either version 3 of the License, or (at your option) any 
+later version.
+Whyteboard is distributed in the hope that it will be useful, but WITHOUT ANY 
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place, Suite 330, Boston, MA  02111-1307  USA"""
 
 """
 This module implements the Whteboard application.  It takes a Whyteboard class
@@ -26,10 +26,11 @@ Also on the GUI is a panel for setting color and line thickness, with an
 indicator that shows an example of the drawing-to-be
 """
 
-import wx
-import wx.lib.newevent
+
 import os
 import sys
+import wx
+import wx.lib.newevent
 from wx.html import HtmlHelpController
 
 import icon
@@ -39,13 +40,17 @@ from utility import Utility, FileDropTarget
 from dialogs import  History, ProgressDialog, Resize, UpdateDialog
 from panels import ControlPanel, SidePanel, SheetsPopup
 
+# Define a translation string
+_ = wx.GetTranslation
+
 
 #----------------------------------------------------------------------
 
-ID_CLEAR_ALL = wx.NewId()         # remove all from current tab
-ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove all from all tabs
+ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
+ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
 ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
 ID_EXPORT = wx.NewId()            # export sheet to image file
+ID_EXPORT_ALL = wx.NewId()        # export every sheet to numbered image files
 ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
 ID_HISTORY = wx.NewId()           # history viewer
 ID_IMG = wx.NewId()               # import->Image
@@ -58,7 +63,6 @@ ID_PS = wx.NewId()                # import->PS
 ID_RESIZE = wx.NewId()            # resize dialog
 ID_UNDO_SHEET = wx.NewId()        # undo close sheet
 ID_UPDATE = wx.NewId()            # update self
-
 #ID_EXP_IMG = wx.NewId()           # export->Image
 #ID_EXP_PDF = wx.NewId()           # export->PDF
 
@@ -69,7 +73,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.38.1"
+    version = "0.38.2"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -126,7 +130,7 @@ class GUI(wx.Frame):
     def make_menu(self):
         """
         Creates the menu...pretty damn messy, may give this a cleanup like the
-        do_bindings/make_toolbar
+        do_bindings/make_toolbar. I hate this method - made worse by i8n!
         """
         self.menu = wx.MenuBar()
         _file = wx.Menu()
@@ -135,65 +139,66 @@ class GUI(wx.Frame):
         sheets = wx.Menu()
         _help = wx.Menu()
         _import = wx.Menu()
-        _import.Append(ID_PDF, '&PDF')
-        _import.Append(ID_PS, 'Post&Script')
-        _import.Append(ID_IMG, '&Image')
+        _import.Append(ID_PDF, '&PDF...')
+        _import.Append(ID_PS, 'Post&Script...')
+        _import.Append(ID_IMG, _('&Image...'))
         #_export = wx.Menu()
         #_export.Append(ID_EXP_PDF, '&PDF')
         #_export.Append(ID_EXP_IMG, 'Current Sheet as &Image')
 
-        new = wx.MenuItem(_file, ID_NEW, "&New Window\tCtrl-N", "Opens a new Whyteboard instance")
+        new = wx.MenuItem(_file, ID_NEW, _("&New Window")+"\tCtrl-N", _("Opens a new Whyteboard instance"))
         new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
 
-        pnew = wx.MenuItem(edit, ID_PASTE_NEW, "Paste to a &New Sheet\tCtrl+Shift-V", "Paste from your clipboard into a new sheet")
+        pnew = wx.MenuItem(edit, ID_PASTE_NEW, _("Paste to a &New Sheet")+"\tCtrl+Shift-V", _("Paste from your clipboard into a new sheet"))
         pnew.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_PASTE, wx.ART_MENU))
 
-        undo_sheet = wx.MenuItem(edit, ID_UNDO_SHEET, "Undo Last Closed Sheet\tCtrl+Shift-T", "Undo the last closed sheet")
+        undo_sheet = wx.MenuItem(edit, ID_UNDO_SHEET, _("Undo Last Closed Sheet")+"\tCtrl+Shift-T", _("Undo the last closed sheet"))
         undo_sheet.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_UNDO, wx.ART_MENU))
 
         _file.AppendItem(new)
-        _file.Append(wx.ID_NEW, "&New Sheet\tCtrl-T", "Add a new sheet")
-        _file.Append(wx.ID_OPEN, "&Open\tCtrl-O", "Load a Whyteboard save file, an image or convert a PDF/PS document")
-        _file.Append(wx.ID_CLOSE, "&Remove Sheet\tCtrl+W", "Close the current sheet")
+        _file.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T", _("Add a new sheet"))
+        _file.Append(wx.ID_OPEN, _("&Open...")+"\tCtrl-O", _("Load a Whyteboard save file, an image or convert a PDF/PS document"))
+        _file.Append(wx.ID_CLOSE, _("&Remove Sheet")+"\tCtrl+W", _("Close the current sheet"))
         _file.AppendSeparator()
-        _file.Append(wx.ID_SAVE, "&Save\tCtrl+S", "Save the Whyteboard data")
-        _file.Append(wx.ID_SAVEAS, "Save &As...\tCtrl+Shift+S", "Save the Whyteboard data in a new file")
-        _file.AppendMenu(+1, '&Import File', _import)
+        _file.Append(wx.ID_SAVE, _("&Save")+"\tCtrl+S", _("Save the Whyteboard data"))
+        _file.Append(wx.ID_SAVEAS, _("Save &As...")+"\tCtrl+Shift+S", _("Save the Whyteboard data in a new file"))
+        _file.AppendMenu(+1, _('&Import File'), _import)
         #_file.AppendMenu(+1, '&Export File', _export)
-        _file.Append(ID_EXPORT, "&Export Sheet\tCtrl+E", "Export the current sheet to an image file")
+        _file.Append(ID_EXPORT, _("&Export Sheet...")+"\tCtrl+E", _("Export the current sheet to an image file"))
+        _file.Append(ID_EXPORT_ALL, _("&Export All Sheets...")+"\tCtrl+A",_( "Export every sheet to a series of image file"))
         _file.AppendSeparator()
-        _file.Append(wx.ID_EXIT, "&Quit\tAlt+F4", "Quit Whyteboard")
+        _file.Append(wx.ID_EXIT, _("&Quit")+"\tAlt+F4", _("Quit Whyteboard"))
 
-        edit.Append(wx.ID_UNDO, "&Undo\tCtrl+Z", "Undo the last operation")
-        edit.Append(wx.ID_REDO, "&Redo\tCtrl+Y", "Redo the last undone operation")
+        edit.Append(wx.ID_UNDO, _("&Undo")+"\tCtrl+Z", _("Undo the last operation"))
+        edit.Append(wx.ID_REDO, _("&Redo")+"\tCtrl+Y", _("Redo the last undone operation"))
         edit.AppendSeparator()
         #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
-        edit.Append(wx.ID_COPY, "&Copy\tCtrl+C", "Copy a Bitmap Selection region")
-        edit.Append(wx.ID_PASTE, "&Paste\tCtrl+V", "Paste an image from your clipboard into Whyteboard")
+        edit.Append(wx.ID_COPY, _("&Copy")+"\tCtrl+C", _("Copy a Bitmap Selection region"))
+        edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste an image from your clipboard into Whyteboard"))
         edit.AppendItem(pnew)
 
-        view.Append(ID_FULLSCREEN, " &Full Screen\tF11", "View Whyteboard in full-screen mode", kind=wx.ITEM_CHECK)
-        view.Append(ID_HISTORY, "&History Viewer\tCtrl+H", "View and replay your drawing history")
+        view.Append(ID_FULLSCREEN, _(" &Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
+        view.Append(ID_HISTORY, _("&History Viewer...")+"\tCtrl+H", _("View and replay your drawing history"))
 
-        sheets.Append(ID_NEXT, "&Next Sheet\tCtrl+Tab", "Go to the next sheet")
-        sheets.Append(ID_PREV, "&Previous Sheet\tCtrl+Shift+Tab", "Go to the previous sheet")
+        sheets.Append(ID_NEXT, _("&Next Sheet")+"\tCtrl+Tab", _("Go to the next sheet"))
+        sheets.Append(ID_PREV, _("&Previous Sheet")+"\tCtrl+Shift+Tab", _("Go to the previous sheet"))
         sheets.AppendItem(undo_sheet)
         sheets.AppendSeparator()
-        sheets.Append(wx.ID_CLEAR, "&Clear Sheets' Drawings", "Clear drawings on the current sheet (keep images)")
-        sheets.Append(ID_CLEAR_ALL, "Clear &Sheet", "Clear the current sheet")
+        sheets.Append(wx.ID_CLEAR, _("&Clear Sheets' Drawings"), _("Clear drawings on the current sheet (keep images)"))
+        sheets.Append(ID_CLEAR_ALL, _("Clear &Sheet"), _("Clear the current sheet"))
         sheets.AppendSeparator()
-        sheets.Append(ID_CLEAR_SHEETS, "Clear All Sheets' &Drawings", "Clear all sheets' drawings (keep images)")
-        sheets.Append(ID_CLEAR_ALL_SHEETS, "Clear &All Sheets", "Clear all sheets")
+        sheets.Append(ID_CLEAR_SHEETS, _("Clear All Sheets' &Drawings"), _("Clear all sheets' drawings (keep images)"))
+        sheets.Append(ID_CLEAR_ALL_SHEETS, _("Clear &All Sheets"), _("Clear all sheets"))
 
-        _help.Append(wx.ID_HELP, "&Contents\tF1", "View information about Whyteboard")
+        _help.Append(wx.ID_HELP, _("&Contents")+"\tF1", _("View information about Whyteboard"))
         _help.AppendSeparator()
-        _help.Append(ID_UPDATE, "Check for &Updates\tF12", "Search for updates to Whyteboard")
-        _help.Append(wx.ID_ABOUT, "&About", "View information about Whyteboard")
-        self.menu.Append(_file, "&File")
-        self.menu.Append(edit, "&Edit")
-        self.menu.Append(view, "&View")
-        self.menu.Append(sheets, "&Sheets")
-        self.menu.Append(_help, "&Help")
+        _help.Append(ID_UPDATE, _("Check for &Updates")+"\tF12", _("Search for updates to Whyteboard"))
+        _help.Append(wx.ID_ABOUT, _("&About"), _("View information about Whyteboard"))
+        self.menu.Append(_file, _("&File"))
+        self.menu.Append(edit, _("&Edit"))
+        self.menu.Append(view, _("&View"))
+        self.menu.Append(sheets, _("&Sheets"))
+        self.menu.Append(_help, _("&Help"))
         self.SetMenuBar(self.menu)
         self.menu.Enable(ID_PASTE_NEW, self.can_paste)
         self.menu.Enable(ID_UNDO_SHEET, False)
@@ -216,10 +221,10 @@ class GUI(wx.Frame):
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new",
+        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new",
                   "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "help", "update", "about"]
 
-        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
+        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
                wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
                ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, wx.ID_HELP, ID_UPDATE, wx.ID_ABOUT]
 
@@ -238,9 +243,9 @@ class GUI(wx.Frame):
                wx.ID_UNDO, wx.ID_REDO]
         arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_COPY,
                 wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO]
-        tips = ["New Sheet", "Open a File", "Save Drawing", "Copy a Bitmap " +
-                "Selection", "Paste Image", "Undo the Last Action",
-                "Redo the Last Undone Action"]
+        tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap "),
+                _("Selection"), _("Paste Image"), _("Undo the Last Action"),
+                _("Redo the Last Undone Action")]
 
         # add tools, add a separator and bind paste/undo/redo for UI updating
         x = 0
@@ -272,9 +277,9 @@ class GUI(wx.Frame):
         """
         Prompts for the filename and location to save to.
         """
-        dlg = wx.FileDialog(self, "Save Whyteboard As...", os.getcwd(),
+        dlg = wx.FileDialog(self, _("Save Whyteboard As..."), os.getcwd(),
                 style=wx.SAVE | wx.OVERWRITE_PROMPT,
-                wildcard = "Whyteboard file (*.wtbd)|*.wtbd")
+                wildcard = _("Whyteboard file ")+"(*.wtbd)|*.wtbd")
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
             if not os.path.splitext(filename)[1]:  # no file extension
@@ -299,7 +304,7 @@ class GUI(wx.Frame):
         elif text:
             wc = wc[ wc.find("PDF") :]  # page descriptions
 
-        dlg = wx.FileDialog(self, "Open file...", style=wx.OPEN, wildcard=wc)
+        dlg = wx.FileDialog(self, _("Open file..."), style=wx.OPEN, wildcard=wc)
         dlg.SetFilterIndex(1)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -327,12 +332,34 @@ class GUI(wx.Frame):
 
     def on_export(self, event=None, pdf=None):
         """Exports the current sheet as an image, or all as a PDF."""
-        wc =  ("PDF (*.pdf)")
-        if not pdf:
-            wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|"+
-                   "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
+        filename = self.export_prompt()
+        if filename:
+            self.util.export(filename)
+        
+        
+    def on_export_all(self, event=None):
+        """
+        Iterate over the chosen filename, add a numeric value to each path to
+        separate each sheet's image.
+        """ 
+        filename = self.export_prompt()
+        if filename:
+            name = os.path.splitext(filename)
+            board = self.board
+            for x in range(0, self.tab_count):
+                self.board = self.tabs.GetPage(x)
+                filename = name[0] + "-%s" % (x + 1) + name[1]
+                self.util.export(filename)
+            self.board = board
 
-        dlg = wx.FileDialog(self, "Export data to...", style=wx.SAVE |
+
+    def export_prompt(self):
+        """Find out the filename to save to"""
+        val = None  # return balue
+        wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
+               "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
+        
+        dlg = wx.FileDialog(self, _("Export data to..."), style=wx.SAVE |
                              wx.OVERWRITE_PROMPT, wildcard=wc)
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
@@ -342,13 +369,17 @@ class GUI(wx.Frame):
             if not os.path.splitext(filename)[1]:
                 _name = types[dlg.GetFilterIndex()]
                 filename += "." + _name
+                val = filename
             if not _name in self.util.types[2:]:
-                wx.MessageBox("Invalid filetype to export as.", "Invalid type")
+                wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % _name, 
+                              _("Invalid filetype"))
             else:
-                self.util.export(filename)
+                val = filename
+                
         dlg.Destroy()
-
-
+        return val
+        
+        
     def on_new_win(self, event=None):
         """Fires up a new Whyteboard window"""
         frame = GUI(None)
@@ -364,7 +395,7 @@ class GUI(wx.Frame):
         if name:
             self.tabs.AddPage(wb, name)
         else:
-            self.tabs.AddPage(wb, "Sheet %s" % self.tab_count)
+            self.tabs.AddPage(wb, _("Sheet")+" %s" % self.tab_count)
         self.update_panels(False)
         self.current_tab = self.tab_count - 1
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
@@ -434,7 +465,7 @@ class GUI(wx.Frame):
 
         for x in range(self.tab_count):
             if not self.tabs.GetPage(x).renamed:
-                self.tabs.SetPageText(x, "Sheet %s" % (x + 1))
+                self.tabs.SetPageText(x, _("Sheet")+" %s" % (x + 1))
 
 
     def on_undo_tab(self, event=None):
@@ -483,7 +514,10 @@ class GUI(wx.Frame):
                 if self.util.get_clipboard():
                     self.can_paste = True
                 self.count = 0
-                event.Enable(self.can_paste)
+                try:
+                    event.Enable(self.can_paste)
+                except wx.PyDeadObjectError:
+                    pass
                 self.menu.Enable(ID_PASTE_NEW, self.can_paste)
             return
 
@@ -546,7 +580,7 @@ class GUI(wx.Frame):
         """
         self.process = wx.Process(self)
         wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
-        self.dialog = ProgressDialog(self, "Converting...")
+        self.dialog = ProgressDialog(self, _("Converting..."))
         self.dialog.ShowModal()
 
     def on_end_process(self, event):
@@ -557,7 +591,7 @@ class GUI(wx.Frame):
 
     def on_done_load(self, event=None):
         """ Refreshes thumbnails, destroys progress dialog after loading """
-        self.dialog.SetTitle("Updating thumbs")
+        self.dialog.SetTitle(_("Updating Thumbnails"))
         wx.MilliSleep(50)
         wx.SafeYield()
         self.on_refresh()  # force thumbnails
@@ -638,7 +672,7 @@ class GUI(wx.Frame):
             self.help.AddBook(_file)
             self.help.DisplayContents()
         else:
-            msg = ("Help files not found, do you want to download them?")
+            msg = _("Help files not found, do you want to download them?")
             d = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)
             if d.ShowModal() == wx.ID_YES:
                 try:
@@ -649,21 +683,36 @@ class GUI(wx.Frame):
                     self.on_help()  # show newly downloaded files
 
 
-    def on_about(self, event=None):
-        info = wx.AboutDialogInfo()
-        info.Name = "Whyteboard"
-        info.Version = self.version
-        info.Copyright = "(C) 2009 Steven Sproat"
-        info.Description = "A simle PDF annotator and image editor"
-        info.WebSite = ("http://www.launchpad.net/whyteboard", "Launchpad")
-        info.Developers = ["Steven Sproat"]
-        wx.AboutBox(info)
+    def on_about(self, event=None):        
+        inf = wx.AboutDialogInfo()
+        inf.Name = "Whyteboard"
+        inf.Version = self.version
+        inf.Description = _("A simple whiteboard and PDF annotator")
+        inf.Developers = inf.DocWriters = ["Steven Sproat <sproaty@gmail.com>"] 
+        inf.Copyright = "(C) 2009 Steven Sproat"
+        if os.name == "posix":
+            x = "http://www.launchpad.net/whyteboard"   
+            inf.WebSite = (x, x)    
+            inf.Licence = s                            
+        wx.AboutBox(inf)
 
 
 #----------------------------------------------------------------------
 
 class WhyteboardApp(wx.App):
-    def OnInit(self):
+    def OnInit(self): 
+        nolog = wx.LogNull()            
+        locale = wx.Locale(wx.LANGUAGE_ENGLISH, wx.LOCALE_LOAD_DEFAULT)
+        del nolog  
+        if not wx.Locale.IsOk(locale):            
+            locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
+             
+        path = os.path.dirname(sys.argv[0])
+        langdir = os.path.join(path, 'locale')   
+         
+        locale.AddCatalogLookupPathPrefix(langdir)
+        locale.AddCatalog("Whyteboard")
+                    
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
         self.frame = GUI(None)
         self.frame.Show(True)
@@ -674,9 +723,9 @@ class WhyteboardApp(wx.App):
     def parse_args(self):
         """Forward the first command-line arg to gui.do_open()"""
         try:
-            _file = sys.argv[1]
+            _file = os.path.abspath(sys.argv[1])
             if os.path.exists(_file):
-                self.frame.do_open(os.path.abspath(sys.argv[1]))
+                self.frame.do_open(_file)
         except IndexError:
             pass
 
@@ -684,7 +733,7 @@ class WhyteboardApp(wx.App):
         """
         Delete temporary files from an update. Remove a backup exe, otherwise
         iterate over the current directory (where the backup files will be) and
-        remove any that matches the randon file extension
+        remove any that matches the random file extension
         """
         if self.frame.util.is_exe() and os.path.exists("wtbd-bckup.exe"):
             os.remove("wtbd-bckup.exe")

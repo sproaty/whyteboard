@@ -20,15 +20,17 @@
 This module contains classes extended from wx.Dialog used by the GUI.
 """
 
-import wx
 import os
 import sys
+import wx
 
 from copy import copy
 from BeautifulSoup import BeautifulSoup
 from urllib import urlopen, urlretrieve
 
 import tools
+
+_ = wx.GetTranslation
 
 #----------------------------------------------------------------------
 
@@ -37,7 +39,7 @@ class History(wx.Dialog):
     Creates a history replaying dialog and methods for its functionality
     """
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui, title="History Player", size=(400, 200),
+        wx.Dialog.__init__(self, gui, _(title="History Player"), size=(400, 200),
                            style=wx.CLOSE_BOX | wx.CAPTION)
         self.gui = gui
         self.looping = False
@@ -50,14 +52,14 @@ class History(wx.Dialog):
         #self.slider.SetTickFreq(5, 1)
 
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
-        btn_stop = wx.Button(self, label="Stop", size=(45, 30) )
-        btn_pause = wx.Button(self, label="Pause", size=(50, 30) )
-        btn_play = wx.Button(self, label="Play", size=(45, 30) )
+        btn_stop = wx.Button(self, label=_("Stop"), size=(45, 30) )
+        btn_pause = wx.Button(self, label=_("Pause"), size=(50, 30) )
+        btn_play = wx.Button(self, label=_("Play"), size=(45, 30) )
         historySizer.Add(btn_play, 0,  wx.ALL, 2)
         historySizer.Add(btn_pause, 0,  wx.ALL, 2)
         historySizer.Add(btn_stop, 0,  wx.ALL, 2)
 
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         self.cancelButton.SetDefault()
 
 
@@ -223,7 +225,7 @@ class UpdateDialog(wx.Dialog):
     """
     def __init__(self, gui):
         """Defines a gauge and a timer which updates the gauge."""
-        wx.Dialog.__init__(self, gui, title="Updates", size=(350, 200))
+        wx.Dialog.__init__(self, gui, title=_("Updates"), size=(350, 200))
         self.gui = gui
         self.downloaded = 0
         self.version = None
@@ -231,17 +233,17 @@ class UpdateDialog(wx.Dialog):
         self._type = None
         gap = wx.LEFT | wx.TOP | wx.RIGHT
 
-        self.text = wx.StaticText(self, label="Connecting to server...")
+        self.text = wx.StaticText(self, label=_("Connecting to server..."))
         self.text2 = wx.StaticText(self, label="")
         font = self.text.GetClassDefaultAttributes().font
         font.SetPointSize(11)
         self.text.SetFont(font)
         self.text2.SetFont(font)
 
-        self.btn = wx.Button(self, label="Update")
+        self.btn = wx.Button(self, label=_("Update"))
         self.btn.Enable(False)
 
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         self.cancelButton.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 2)
@@ -268,7 +270,7 @@ class UpdateDialog(wx.Dialog):
         try:
             f = urlopen("http://code.google.com/p/whyteboard/downloads/list")
         except IOError:
-            self.text.SetLabel("Could not connect to server.")
+            self.text.SetLabel(_("Could not connect to server."))
             return
         html = f.read()
         f.close()
@@ -294,8 +296,8 @@ class UpdateDialog(wx.Dialog):
                 size = _all[i].findNext('a').renderContents().strip()
 
                 if version != self.gui.version:
-                    s = " There is a new version available, %s\n File: %s\n" \
-                        " Size: %s" % (version, _file, size)
+                    s = _(" There is a new version available, %s\n File: %s\n" 
+                        " Size: %s") % (version, _file, size)
                     self.text.SetLabel(s)
                     self.btn.Enable(True)
                     self._file = td.findNext('a')['href']
@@ -303,9 +305,9 @@ class UpdateDialog(wx.Dialog):
                     self.version = version
                     break
                 else:
-                    self.text.SetLabel("You are running the latest version.")
+                    self.text.SetLabel(_("You are running the latest version."))
         if not found:
-            self.text.SetLabel("Error getting file list from the server.")
+            self.text.SetLabel(_("Error getting file list from the server."))
 
 
     def update(self, event=None):
@@ -324,8 +326,8 @@ class UpdateDialog(wx.Dialog):
         try:
             tmp = urlretrieve(self._file, tmp_file, self.reporter)
         except IOError:
-            self.text.SetLabel("Could not connect to server.")
-            self.btn.SetLabel("Retry")
+            self.text.SetLabel(_("Could not connect to server."))
+            self.btn.SetLabel(_("Retry"))
             return
 
         if self.gui.util.is_exe():
@@ -362,7 +364,7 @@ class UpdateDialog(wx.Dialog):
             total /= 1024
             _type2 = "MB"
 
-        self.text2.SetLabel("Downloaded %s" % done + "KB of %s" % total +
+        self.text2.SetLabel(_("Downloaded")+" %s" % done + "KB of %s" % total +
                                           rem + _type2)
 
 
@@ -378,15 +380,15 @@ class TextInput(wx.Dialog):
         """
         Standard constructor - sets text to supplied text variable, if present.
         """
-        wx.Dialog.__init__(self, gui, title="Enter text",
+        wx.Dialog.__init__(self, gui, title=_("Enter text"),
               style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER, size=(330, 250))
 
         self.ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(300, 120))
-        self.okButton = wx.Button(self, wx.ID_OK, "&OK")
+        self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         self.okButton.SetDefault()
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         self.colourBtn = wx.ColourPickerCtrl(self)
-        fontBtn = wx.Button(self, label="Select Font")
+        fontBtn = wx.Button(self, label=_("Select Font"))
         extent = self.ctrl.GetFullTextExtent("Hy")
         lineHeight = extent[1] + extent[3]
         self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
@@ -503,17 +505,17 @@ class FindIM(wx.Dialog):
     "Please select its installed location.")
 
     def __init__(self, parent, gui):
-        wx.Dialog.__init__(self, gui, title="ImageMagick Notification")
+        wx.Dialog.__init__(self, gui, title=_("ImageMagick Notification"))
         self.parent = parent  # utility class
         self.path = "C:/Program Files/"
 
         text = wx.StaticText(self, label=self.t)
-        btn = wx.Button(self, label="Find location...")
+        btn = wx.Button(self, label=_("Find location..."))
         gap = wx.LEFT | wx.TOP | wx.RIGHT
 
-        self.okButton = wx.Button(self, wx.ID_OK, "&OK")
+        self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         self.okButton.SetDefault()
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
         btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
@@ -533,7 +535,7 @@ class FindIM(wx.Dialog):
 
 
     def browse(self, event=None):
-        dlg = wx.DirDialog(self, "Choose a directory", self.path)
+        dlg = wx.DirDialog(self, _("Choose a directory"), self.path)
 
         if dlg.ShowModal() == wx.ID_OK:
             self.path = dlg.GetPath()
@@ -558,7 +560,7 @@ class Resize(wx.Dialog):
         Two text controls for inputting the size, limited to integers only
         using a Validator class
         """
-        wx.Dialog.__init__(self, gui, title="Resize Canvas")
+        wx.Dialog.__init__(self, gui, title=_("Resize Canvas"))
 
         self.gui = gui
         gap = wx.LEFT | wx.TOP | wx.RIGHT
@@ -567,18 +569,18 @@ class Resize(wx.Dialog):
         csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
         self.hctrl = wx.TextCtrl(self, validator = IntValidator())
         self.wctrl = wx.TextCtrl(self, validator = IntValidator())
-        csizer.Add(wx.StaticText(self, label="Width:"), 0, wx.TOP |
+        csizer.Add(wx.StaticText(self, label=_("Width:")), 0, wx.TOP |
                                                             wx.ALIGN_RIGHT, 10)
         csizer.Add(self.wctrl, 1, gap, 7)
-        csizer.Add(wx.StaticText(self, label="Height:"), 0, wx.TOP |
+        csizer.Add(wx.StaticText(self, label=_("Height:")), 0, wx.TOP |
                                                              wx.ALIGN_RIGHT, 7)
         csizer.Add(self.hctrl, 1, gap, 7)
 
         self.hctrl.SetValue(str(height))
         self.wctrl.SetValue(str(width))
-        self.okButton = wx.Button(self, wx.ID_OK, "&OK")
+        self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         self.okButton.SetDefault()
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, "&Cancel")
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
 
         order = (self.wctrl, self.hctrl)  # sort out tab order
         for i in xrange(len(order) - 1):

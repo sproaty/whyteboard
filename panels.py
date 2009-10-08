@@ -24,6 +24,8 @@ import wx
 from wx.lib import scrolledpanel as scrolled
 from copy import copy
 
+_ = wx.GetTranslation
+
 #----------------------------------------------------------------------
 
 class ControlPanel(wx.Panel):
@@ -65,10 +67,10 @@ class ControlPanel(wx.Panel):
             self.tools[x + 1] = b
 
         self.tools[self.toggled].SetValue(True)
-        width = wx.StaticText(pane, label="Thickness:")
-        prev = wx.StaticText(pane, label="Preview:")
+        width = wx.StaticText(pane, label=_("Thickness:"))
+        prev = wx.StaticText(pane, label=_("Preview:"))
         self.colour = wx.ColourPickerCtrl(pane)
-        self.colour.SetToolTipString("Select a custom colour")
+        self.colour.SetToolTipString(_("Select a custom colour"))
 
         self.colour_list = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
                             'Cyan', 'Orange', 'Light Grey']
@@ -86,7 +88,7 @@ class ControlPanel(wx.Panel):
         self.thickness = wx.ComboBox(pane, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
-        self.thickness.SetToolTipString("Sets the drawing thickness")
+        self.thickness.SetToolTipString(_("Sets the drawing thickness"))
 
         spacing = 4
         box = wx.BoxSizer(wx.VERTICAL)
@@ -202,7 +204,7 @@ class DrawingPreview(wx.Window):
         self.SetBackgroundColour(wx.WHITE)
         self.SetSize((45, 45))
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        self.SetToolTipString("A preview of your drawing")
+        self.SetToolTipString(_("A preview of your drawing"))
 
     def on_paint(self, event=None):
         """
@@ -239,8 +241,8 @@ class SidePanel(wx.Panel):
         self.tabs = wx.Notebook(self.cp.GetPane())
         self.thumbs = Thumbs(self.tabs, gui)
         self.notes = Notes(self.tabs, gui)
-        self.tabs.AddPage(self.thumbs, "Thumbnails")
-        self.tabs.AddPage(self.notes, "Notes")
+        self.tabs.AddPage(self.thumbs, _("Thumbnails"))
+        self.tabs.AddPage(self.notes, _("Notes"))
 
         csizer.Add(self.tabs, 1, wx.EXPAND)
         sizer.Add(self.cp, 1, wx.EXPAND)
@@ -291,7 +293,7 @@ class Notes(wx.Panel):
         self.names.insert(_id, name)
 
         if not name:
-            name = "Sheet %s" % (_id + 1)
+            name = _("Sheet")+" %s" % (_id + 1)
 
         data = wx.TreeItemData(_id)
         t = self.tree.AppendItem(self.root, name, data=data)
@@ -327,7 +329,7 @@ class Notes(wx.Panel):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
             if not self.names[x]:
                 count += 1
-                self.tree.SetItemText(self.tabs[x], "Sheet %s" % count)
+                self.tree.SetItemText(self.tabs[x], _("Sheet")+" %s" % count)
 
 
     def update_name(self, _id, name):
@@ -356,8 +358,9 @@ class Notes(wx.Panel):
             item.edit()
 
     def pop_up(self, event):
-        """Brings up the context menu on right click"""
-        self.PopupMenu(NotesPopup(self, event))
+        """Brings up the context menu on right click (except on root node)"""
+        if self.tree.GetPyData(event.GetItem()) is not None:
+            self.PopupMenu(NotesPopup(self, event))
 
 #----------------------------------------------------------------------
 
@@ -370,20 +373,46 @@ class NotesPopup(wx.Menu):
     def __init__(self, parent, event):
         wx.Menu.__init__(self)
         self.parent = parent
-        item = parent.tree.GetPyData(event.GetItem())
+        self.item = parent.tree.GetPyData(event.GetItem())
         ID = wx.NewId()
+        do = False
 
-        if item is None:
+        if self.item is None:
             return  # root node
-        if isinstance(item, int):  # sheet node
-            menu = wx.MenuItem(self, ID, "Switch to")
+        if isinstance(self.item, int):  # sheet node
+            menu = wx.MenuItem(self, ID, _("Select"))
+            do = True
         else:
-            menu = wx.MenuItem(self, ID, "Edit")
+            menu = wx.MenuItem(self, ID, _("Edit Note..."))
 
         self.AppendItem(menu)
         method = lambda x: parent.on_click(event)
         self.Bind(wx.EVT_MENU, method, id=ID)
+        
+        if do:            
+            ID2, ID3 = wx.NewId(), wx.NewId()
+            menu = wx.MenuItem(self, ID2, _("Close"))       
+            self.AppendItem(menu)
+            self.Bind(wx.EVT_MENU, self.close, id=ID2)
 
+            menu = wx.MenuItem(self, ID3, _("Rename..."))            
+            self.AppendItem(menu)
+            self.Bind(wx.EVT_MENU, self.rename, id=ID3)            
+                    
+                    
+    def rename(self, event):
+        """Bit of a hack to call the sheet popup rename"""
+        sheets = SheetsPopup(self.parent.gui, (0, 0))        
+        sheets.sheet = self.item
+        sheets.rename()
+        
+        
+    def close(self, event):
+        sheets = SheetsPopup(self.parent.gui, (0, 0))        
+        sheets.sheet = self.item
+        sheets.close()
+        
+        
 #----------------------------------------------------------------------
 
 class SheetsPopup(wx.Menu):
@@ -403,21 +432,21 @@ class SheetsPopup(wx.Menu):
         else:
             self.sheet = sheet[0]
 
-        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, "New Sheet"))
-        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, "Close Sheet"))
+        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, _("New Sheet")))
+        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Close Sheet")))
         self.AppendSeparator()
-        self.AppendItem(wx.MenuItem(self, rename, "Rename Sheet"))
-        self.AppendItem(wx.MenuItem(self, export, "Export Sheet"))
+        self.AppendItem(wx.MenuItem(self, rename, _("Rename Sheet...")))
+        self.AppendItem(wx.MenuItem(self, export, _("Export Sheet...")))
 
         self.Bind(wx.EVT_MENU, self.rename, id=rename)
         self.Bind(wx.EVT_MENU, self.export, id=export)
         self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
 
 
-    def rename(self, event):
+    def rename(self, event=None):
         """Rename the selected sheet"""
-        dlg = wx.TextEntryDialog(self.parent, "Rename this sheet to:",
-                                                        "Rename sheet")
+        dlg = wx.TextEntryDialog(self.parent, _("Rename this sheet to:"),
+                                                        _("Rename sheet"))
         dlg.SetValue(self.parent.tabs.GetPageText(self.sheet))
 
         if dlg.ShowModal() == wx.ID_CANCEL:
@@ -430,7 +459,7 @@ class SheetsPopup(wx.Menu):
                 self.parent.thumbs.update_name(self.sheet, val)
                 self.parent.notes.update_name(self.sheet, val)
 
-    def close(self, event):
+    def close(self, event=None):
         """
         The close event uses current_tab to know which sheet to close, so set
         it to the selected tab from the menu
@@ -490,7 +519,7 @@ class Thumbs(scrolled.ScrolledPanel):
 
         self.names.insert(_id, name)
         if not name:
-            name = "Sheet %s" % (_id + 1)
+            name = _("Sheet")+" %s" % (_id + 1)
 
         text = wx.StaticText(self, label=name)
         btn = ThumbButton(self, _id, bmp)
@@ -528,7 +557,7 @@ class Thumbs(scrolled.ScrolledPanel):
             self.thumbs[x].thumb_id = x
             if not self.names[x]:
                 count += 1
-                self.text[x].SetLabel("Sheet %s" % count)
+                self.text[x].SetLabel(_("Sheet")+" %s" % count)
 
 
 

@@ -23,12 +23,14 @@ Note: the list "items" at the bottom contains all the classes that can be drawn
 with by the user (e.g. they can't draw an image directly)
 """
 
-import wx
 import os
 import time
 import math
+import wx
 
 from dialogs import TextInput
+
+_ = wx.GetTranslation
 
 #----------------------------------------------------------------------
 
@@ -104,12 +106,12 @@ class Tool(object):
 
 class Pen(Tool):
     """ A free-hand pen. """
-    tooltip = "Draw strokes with a brush"
+    tooltip = _("Draw strokes with a brush")
 
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
         Tool.__init__(self, board, colour, thickness, cursor)
         self.points = []  # ALL x1, y1, x2, y2 coords to render
-        self.time = []  # list of times for each point, for redrawing
+        self.time = []  # list of times for each point, for redrawing        
 
     def left_down(self, x, y):
         self.x = x  # original mouse coords
@@ -266,7 +268,7 @@ class Rectangle(OverlayShape):
     The rectangle and its descended classes (ellipse/rounded rect) use an
     overlay as a rubber banding method of drawing itself over other shapes.
     """
-    tooltip = "Draw a rectangle"
+    tooltip = _("Draw a rectangle")
 
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness)
@@ -357,7 +359,7 @@ class Ellipse(Rectangle):
     """
     Easily extends from Rectangle.
     """
-    tooltip = "Draw an oval shape"
+    tooltip = _("Draw an oval shape")
     def draw(self, dc, replay=False):
         super(Ellipse, self).draw(dc, replay, "Ellipse")
 
@@ -379,7 +381,7 @@ class Circle(OverlayShape):
     """
     Draws a circle. Uses its radius to calculate handle position
     """
-    tooltip = "Draw a circle"
+    tooltip = _("Draw a circle")
 
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness)
@@ -418,7 +420,7 @@ class RoundedRect(Rectangle):
     """
     Easily extends from Rectangle.
     """
-    tooltip = "Draw a rectangle with rounded edges"
+    tooltip = _("Draw a rectangle with rounded edges")
     def draw(self, dc, replay=False):
         super(RoundedRect, self).draw(dc, replay, "RoundedRectangle")
 
@@ -437,7 +439,7 @@ class Line(OverlayShape):
     """
     Draws a line - methods for its own handles, resizing/moving and line length
     """
-    tooltip = "Draw a straight line"
+    tooltip = _("Draw a straight line")
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness)
         self.x2 = 0
@@ -529,7 +531,7 @@ class Eraser(Pen):
     Erases stuff. Has a custom cursor from a drawn rectangle on a DC, turned
     into an image then into a cursor.
     """
-    tooltip = "Erase a painting to the background"
+    tooltip = _("Erase a drawing to the background")
 
     def __init__(self, board, colour, thickness):
         cursor = self.make_cursor(thickness)
@@ -574,7 +576,7 @@ class Eyedrop(Tool):
     """
     Selects the colour at the specified x,y coords
     """
-    tooltip = "Picks a colour from the selected pixel"
+    tooltip = _("Picks a colour from the selected pixel")
 
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
@@ -601,7 +603,7 @@ class Text(OverlayShape):
     storing its values is stored. This string is then used to reconstruct the
     font.
     """
-    tooltip = "Input text"
+    tooltip = _("Input text")
 
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness, wx.CURSOR_IBEAM)
@@ -756,7 +758,7 @@ class Note(Text):
     yellow background (to show that it's a note). An overview of notes for each
     tab can be viewed on the side panel.
     """
-    tooltip = "Insert a note"
+    tooltip = _("Insert a note")
     def __init__(self, board, colour, thickness):
         Text.__init__(self, board, colour, thickness)
         self.tree_id = None
@@ -889,7 +891,7 @@ class Select(Tool):
     Select an item to move it around/resize/change colour/thickness/edit text
     Only create an undo point when an item is selected and been moved/resized
     """
-    tooltip = "Select a shape to move and resize it"
+    tooltip = _("Select a shape to move and resize it")
 
     def __init__(self, board, image, path):
         Tool.__init__(self, board, (0, 0, 0), 1, wx.CURSOR_ARROW)
@@ -984,7 +986,7 @@ class BitmapSelect(Rectangle):
     Rectangle selection tool, used to select a region to copy/paste. When it
     is drawn it is stored inside the current tab, not in the shapes list
     """
-    tooltip = "Select a rectangle region to copy as a bitmap"
+    tooltip = _("Select a rectangle region to copy as a bitmap")
     def __init__(self, board, image, path):
         Rectangle.__init__(self, board, (0, 0, 0), 2)
 

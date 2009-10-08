@@ -56,22 +56,25 @@ Image Tools have the assosicated image removed from their class upon saving,
 but are restored with it upon loading the file.
 """
 
-import wx
+
 import os
 import sys
 import random
 import urllib
 import tarfile
 import distutils.dir_util
+import wx
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
+from configobj import ConfigObj
 from dialogs import ProgressDialog, FindIM
 import tools
 
+_ = wx.GetTranslation
 
 #----------------------------------------------------------------------
 
@@ -104,6 +107,11 @@ class Utility(object):
         self.backup_ext = ".blah5bl8ah123bla6h"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
+        
+        path = os.path.join(get_home_dir(), "user.pref")
+        self.config = ConfigObj(path)
+        if not os.path.exists(path):
+            self.write_blank_config()       
         self.library = os.path.join(get_home_dir(), "library.known")
 
         # Make wxPython wildcard filter. Add a new item - new type supported!
@@ -174,7 +182,7 @@ class Utility(object):
                     t = os.path.split(self.filename)[1] + ' - ' + self.gui.title
                     self.gui.SetTitle(t)
                 except pickle.PickleError:
-                    wx.MessageBox("Error saving file data")
+                    wx.MessageBox(_("Error saving file data"))
                     self.saved = False
                     self.filename = None
                 finally:
@@ -192,7 +200,7 @@ class Utility(object):
                         else:
                             shape.load()
             else:
-                wx.MessageBox("Error saving file data - no data to save")
+                wx.MessageBox(_("Error saving file data - no data to save"))
                 self.saved = False
                 self.filename = None
 
@@ -215,7 +223,7 @@ class Utility(object):
             load_image(self.temp_file, self.gui.board)
             self.gui.board.redraw_all()
         else:
-            wx.MessageBox("Whyteboard doesn't support the filetype .%s" % _type)
+            wx.MessageBox(_("Whyteboard doesn't support the filetype")+" .%s" % _type)
 
 
     def load_wtbd(self, filename):
@@ -226,15 +234,15 @@ class Utility(object):
         f = open(filename)
         try:
             temp = pickle.load(f)
-        except (pickle.UnpicklingError, ValueError, TypeError, EOFError):
-            wx.MessageBox('"%s" has corrupt Whyteboard data. No action taken.'
+        except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):
+            wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.')
                         % os.path.basename(filename))
             return
         finally:
             f.close()
 
         self.filename = filename
-        self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
+        self.gui.dialog = ProgressDialog(self.gui, _("Loading..."), 30)
         self.gui.dialog.Show()
         self.remove_all_sheets()
 
@@ -394,7 +402,7 @@ class Utility(object):
                 self.remove_all_sheets()
 
             for x in range(0, count):
-                name = os.path.split(_file)[1][:20] + " - %s" % (x + 1)
+                name = os.path.split(_file)[1][:15] + " - %s" % (x + 1)
                 self.gui.on_new_tab(name=name)
                 self.gui.board.renamed = True
 
@@ -405,7 +413,7 @@ class Utility(object):
             self.gui.board.redraw_all()
 
         # Just in case it's a file with many pages
-        self.gui.dialog = ProgressDialog(self.gui, "Loading...", 30)
+        self.gui.dialog = ProgressDialog(self.gui, _("Loading..."), 30)
         self.gui.dialog.Show()
         self.gui.on_done_load()
 
@@ -467,12 +475,12 @@ class Utility(object):
             args = []
 
         if not self.saved:
-            name = "Untitled"
+            name = _("Untitled")
             if self.filename:
                 name = os.path.basename(self.filename)
-            msg = ('"%s" has been modified.\nDo you want to save '
-                   'your changes?' % name)
-            dialog = wx.MessageDialog(self.gui, msg, "Save File?", style |
+            msg = (_('"%s" has been modified.\nDo you want to save '
+                   'your changes?') % name)
+            dialog = wx.MessageDialog(self.gui, msg, _("Save File?"), style |
                                       wx.ICON_EXCLAMATION)
             val = dialog.ShowModal()
 
@@ -493,32 +501,38 @@ class Utility(object):
     def prompt_for_im(self):
         """
         Prompts a Windows user for ImageMagick's directory location on
-        initialisation
+        initialisation. Save location to config file.
         """
-        if os.name == "posix":
-            value = os.system("which convert")
-            if value == 256:
-                wx.MessageBox("ImageMagick was not found. You will be unable " +
-                              "to load PDF and PS files until it is installed.")
-            else:
-                self.im_location = "convert"
-        elif os.name == "nt":
-            path = get_home_dir()
-            path = os.path.join(path, "user.pref")
+        imagick = None  # imagemagick location
+#        if os.name == "posix":
+#            value = os.system("which convert")
+#            if value == 256:
+#                wx.MessageBox(_("ImageMagick was not found. You will be unable " +
+#                              "to load PDF and PS files until it is installed."))
+#            else:
+#                self.im_location = imagick = "convert"
+#        elif os.name == "nt":
+     
+        if not self.config['section1'].has_key('path'):
+            print 'hih'
+            dlg = FindIM(self, self.gui)
+            dlg.ShowModal()
+            if self.im_location:
+                # save the ImageMagick directory location
+                loc = self.im_location.replace("convert.exe", "")
+                self.config['section1']['path'] = loc 
+                self.config.write()
+        else:
+            # verify loaded file's IM directory is valid
+            self.check_im_path(self.config['section1']['path'])
+            #for pref in open(path, "r"):
+            #    self.check_im_path(pref.split("=")[1])
 
-            if not os.path.exists(path):
-                dlg = FindIM(self, self.gui)
-                dlg.ShowModal()
-                if self.im_location:
-                    # save the ImageMagick directory location
-                    loc = self.im_location.replace("convert.exe", "")
-                    _file = open(path, "w")
-                    _file.write("imagemagick_location=" + loc)
-            else:
-                # verify loaded file's IM directory is valid
-                for pref in open(path, "r"):
-                    self.check_im_path(pref.split("=")[1])
 
+ 
+    def write_blank_config(self):
+        self.config['section1'] = 'imagemagick'
+        self.config.write()   
 
     def check_im_path(self, path):
         """
@@ -544,7 +558,7 @@ class Utility(object):
         try:
             tmp = urllib.urlretrieve(url, _file)
         except IOError:
-            wx.MessageBox("Could not connect to server.", "Error")
+            wx.MessageBox(_("Could not connect to server."), _("Error"))
             raise IOError
 
         if os.name == "posix":

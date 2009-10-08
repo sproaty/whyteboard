@@ -44,4 +44,3 @@ getwhyteboard2Data = whyteboard.GetData
 getwhyteboard2Image = whyteboard.GetImage
 getwhyteboard2Bitmap = whyteboard.GetBitmap
 getwhyteboard2Icon = whyteboard.GetIcon
-
