@@ -7,37 +7,39 @@ Sun 04 October 2009
 
 ----------------------------------------------------------------------
 
-xx Oct 2009 -- 0.38.2 
+xx Oct 2009 -- 0.38.2
 
+* Support for internationalization - Whyteboard will be available in other
+  languages once the application is translated (currently: Welsh and Italian)
 * Export all sheets (as images) functionality
 * Small UI menu improvements
-* Can rename a sheet: right click it in the Notes tree. Can also close the 
-  sheet from that pop up
+* Added right-click pop-up menus to each thumbnail / Note tree item. From here
+  you can also rename/close or export that sheet
 
 ----------------------------------------------------------------------
 
-06 Oct 2009 -- 0.38.1 
+06 Oct 2009 -- 0.38.1
 
 * Emergency Bugfix - closing any sheet would always close the first sheet
 * Bugfix - closing the current tab would not remove its Notes from the tree view
-* Improvements and fixes to renaming sheets - the note tree item and thumbnail 
+* Improvements and fixes to renaming sheets - the note tree item and thumbnail
   text are renamed
 * Hopefully (?!) fixed a bug on Windows where the same drawing would appear on
-  every sheet 
+  every sheet
 * Moved this file into CHANGELOG.txt, formatted it nicely
 
 ----------------------------------------------------------------------
 
 04 Oct 2009 -- 0.38.0
 
-* Select tool: can select shapes to alter their colour/thickness, edit text and 
-  notes, move shapes and resize them. Selected shapes are drawn with an outline 
+* Select tool: can select shapes to alter their colour/thickness, edit text and
+  notes, move shapes and resize them. Selected shapes are drawn with an outline
   "handle" at their corners
     -- Images and text can also be repositioned
     -- can double click text/notes to edit them
     -- moveable shapes are shown by the cursor changing to a hand
-    
-* Text input dialogs remembers the last font used, which is selected by default 
+
+* Text input dialogs remembers the last font used, which is selected by default
   when creating new Text/Notes
     -- the chosen font is also saved into the .wtbd save file
 
@@ -45,20 +47,20 @@ xx Oct 2009 -- 0.38.2
                 of objects as described above. Text edits can also be undone
 * Button to change colour in text input dialog, instead of always
                 drawing with the user's chosen palette colour
-                                       
+
 * Thumbnail label shows the selected thumb label in bold
-* The Pen tool now draws in response to a single mouse click; before the mouse 
+* The Pen tool now draws in response to a single mouse click; before the mouse
   needed to be moved to draw
-* Each sheet can have its own BitmapSelect at anytime. Undoing and redoing will 
+* Each sheet can have its own BitmapSelect at anytime. Undoing and redoing will
   not remove the selection; drawing a new shape will
 * Help files updated to reflect new changes and clarify any issues before
 
 * Mouse x/y position tracked in the status bar
 * Over 10 bug fixes
 * Misc existing code improvements and performance increases
-* More/better unit testing to help with adding new features, tracking down 
-  potential bugs and increased code confidence  
-  
+* More/better unit testing to help with adding new features, tracking down
+  potential bugs and increased code confidence
+
 
 ----------------------------------------------------------------------
 
@@ -66,7 +68,7 @@ xx Oct 2009 -- 0.38.2
 
 * 'Check for Updates'- Whyteboard can update itself
     -- will download an .exe / .tar.gz as appropriate
-    -- on Windows, running via source will download the tar, which is cool 
+    -- on Windows, running via source will download the tar, which is cool
        because Windows doesn't support .tar.gz by default
     -- shows progress of downloaded file
     - program restarts with new version loaded, also re-loads the current .wtbd
@@ -76,10 +78,10 @@ xx Oct 2009 -- 0.38.2
     -- if they are not present, they can be downloaded (optional)
 
 * 'About Box' standardised
-* Exit dialog more like other apps: "sure you want to save?" (yes/no/cancel), 
+* Exit dialog more like other apps: "sure you want to save?" (yes/no/cancel),
   instead of "sure you want to quit?" (yes/no)
      -- also asks when opening a new .wtbd file with an unsaved .wtbd file open
-     -- and after downloading the update, before the program restarts it will 
+     -- and after downloading the update, before the program restarts it will
         prompt for save: yes/no
 
 ----------------------------------------------------------------------
@@ -88,10 +90,10 @@ xx Oct 2009 -- 0.38.2
 
 * Memory use improved from undo closed sheet improved
 * Bugfix: paste / paste as new sheet - not updating the thumbnail
-* Backwards/forwards compability: from this version onwards,  Whyteboard will 
- not change the version inside saved .wtbd files that are created in a newer 
- version of Whyteboard. i.e. version 0.36.7 won't change the version inside a 
- file saved in 0.36.9 (before, it would). It will update the version from a file 
+* Backwards/forwards compability: from this version onwards,  Whyteboard will
+ not change the version inside saved .wtbd files that are created in a newer
+ version of Whyteboard. i.e. version 0.36.7 won't change the version inside a
+ file saved in 0.36.9 (before, it would). It will update the version from a file
  saved in < 0.36.7 to 0.36.7
 
 ----------------------------------------------------------------------
@@ -101,7 +103,7 @@ xx Oct 2009 -- 0.38.2
 * Undo closed tabs, last 10 tabs are stored
 * Bugfix: closing a sheet would make all other sheet display the  closed sheets'
  image until drawn on
-* Bugfix: Saving a document which has Notes would result in  duplicate notes 
+* Bugfix: Saving a document which has Notes would result in  duplicate notes
   being visible in the Notes tree view.
 * Windows exe filesize reduced: 14.2MB -> 4.78MB (!)
 
@@ -109,12 +111,12 @@ xx Oct 2009 -- 0.38.2
 
 08 Apr 2009 -- 0.36.5
 
-* Bugfix with drawing "outlined" shapes having inverted colours lines when 
+* Bugfix with drawing "outlined" shapes having inverted colours lines when
   drawing over other colours.
 * Bugfix with opening new window with Windows EXE
 * Bugfix: thumbnails not being drawn white initially on Windows
 * Added icon into the EXE
-              
+
 ----------------------------------------------------------------------
 
 08 Apr 2009 -- 0.36.4
@@ -140,10 +142,10 @@ xx Oct 2009 -- 0.38.2
 
 05 Apr 2009 -- 0.36.2
 
-* Paste image support. Pasted images will be saved to a temporary directory; 
+* Paste image support. Pasted images will be saved to a temporary directory;
   duplicated pasted images will be saved in one file.
 * Copy selection as bitmap with new tool: RectSelect
-* Popup menu on the sheet bar. Added "rename" option for sheets, which are saved 
+* Popup menu on the sheet bar. Added "rename" option for sheets, which are saved
   into a save file. Can also close a sheet, open a new sheet or export the
   selected one from the menu
 * Cleaner code for managing UI button enabling/disabling
@@ -164,10 +166,10 @@ xx Oct 2009 -- 0.38.2
 
 30 Mar 2009 -- 0.36.0
 
-* Windows UI improvement: change the thickness by scrolling the mousewheel on 
-  the drop-down box, no need to click it. (this is the default behaviour under 
+* Windows UI improvement: change the thickness by scrolling the mousewheel on
+  the drop-down box, no need to click it. (this is the default behaviour under
   GNOME)
-* Next/Previous sheet in the "Sheets" menu (which previously was "Image") - 
+* Next/Previous sheet in the "Sheets" menu (which previously was "Image") -
   Ctrl+Tab / Ctrl-Shift+Tab shortcut keys
 * Side panel is now "collapsible" instead of a "toggle" menu item
 * Menus renamed, organised differently
@@ -200,9 +202,9 @@ xx Oct 2009 -- 0.38.2
 
 18 Mar 2009 -- 0.35.7
 
-* Bugfix: toggling side panel on/off caused a lot of lag, should only be 
+* Bugfix: toggling side panel on/off caused a lot of lag, should only be
   noticeable now with around 65+ tabs open.
-* Drag and drop support: drop any file that Whyteboard supports into the 
+* Drag and drop support: drop any file that Whyteboard supports into the
   drawing panel to load it
 * Hold down the middle mouse button to scroll (was the right btn)
 
@@ -210,27 +212,27 @@ xx Oct 2009 -- 0.38.2
 
 18 Mar 2009 -- 0.35.6
 
-* Improved undo/redo functionality. It is now possible to undo and redo the clear 
+* Improved undo/redo functionality. It is now possible to undo and redo the clear
   all drawings/clear all tabs' drawings functionality
-* Redo is also fixed to more like other applications now: when you undo twice 
-  and then draw a new shape, your redo history is lost. Before you could redo 
+* Redo is also fixed to more like other applications now: when you undo twice
+  and then draw a new shape, your redo history is lost. Before you could redo
   the two undone shapes after the new drawing
-* The ImageMagick folder locator will only pop-up when trying to convert a file 
+* The ImageMagick folder locator will only pop-up when trying to convert a file
   and when the directory is not set, not at application start-up
 
 ----------------------------------------------------------------------
 
 17 Mar 2009 -- 0.35.5
 
-* Added dragging around Whyteboard by holding down the right button and moving 
+* Added dragging around Whyteboard by holding down the right button and moving
   the mouse
 
 ----------------------------------------------------------------------
 
-15 Mar 2009 -- 0.35.4 
+15 Mar 2009 -- 0.35.4
 
-* Big bugfix on Windows: ImageMagick's convert program not being found. 
-  Whyteboard prompts for its installed location and remembers it. (will also 
+* Big bugfix on Windows: ImageMagick's convert program not being found.
+  Whyteboard prompts for its installed location and remembers it. (will also
   notify Linux users if ImageMagick isn't installed)
 
 ----------------------------------------------------------------------
@@ -250,18 +252,18 @@ xx Oct 2009 -- 0.38.2
 
 ----------------------------------------------------------------------
 
-09 Mar 2009 -- 0.35.1 
+09 Mar 2009 -- 0.35.1
 
 * Bugfix: thumbnails not updating on file load
 
 ----------------------------------------------------------------------
 
-08 Mar 2009 -- 0.35.0 
+08 Mar 2009 -- 0.35.0
 
-* Bugfix: a thumbnail's text label not being removed when the thumbnail was 
+* Bugfix: a thumbnail's text label not being removed when the thumbnail was
   removed.
-  
-* Side panel is now tabbed to select between thumbnails and a "tree" view of all 
+
+* Side panel is now tabbed to select between thumbnails and a "tree" view of all
   Notes (new feature) for each tab.
 
 Notes are similar to how text is input, except a light yellow background is
@@ -271,42 +273,42 @@ be double clicked upon to bring up the text input dialog to change a note's text
 
 ----------------------------------------------------------------------
 
-04 Mar 2009 -- 0.34.6 
+04 Mar 2009 -- 0.34.6
 
 * Bugfix under Windows: toggling thumbnails would cause an error.
 
 ----------------------------------------------------------------------
 
-22 Feb 2009 -- 0.34.5 
+22 Feb 2009 -- 0.34.5
 
 * Bugfix with drawing 'outlined' shapes. Began work on text 'notes'.
-* F5 will refresh all thumbnails since they're not refreshed upon loading a save, 
+* F5 will refresh all thumbnails since they're not refreshed upon loading a save,
   PDF or PostScript file.
 
 ----------------------------------------------------------------------
 
-21 Feb 2009 -- 0.34.0 
+21 Feb 2009 -- 0.34.0
 
 * Export current tab's view as an image.
 * Live thumbnails, get updated when the selected tab is drawn upon
 * Thumbnail panel toggleable on/off
-* Drawing Preview window now shows a preview of the actual shape instead of 
+* Drawing Preview window now shows a preview of the actual shape instead of
   always showing a line.
 
 ----------------------------------------------------------------------
 
-21 Feb 2009 -- 0.33.0 
+21 Feb 2009 -- 0.33.0
 
-* Text input overhaul, before the text was rendered as a wxPython  widget - now 
-  it's a drawing of a String, with a custom dialog for inputting the text and 
-  selecting a font. This new method fixes many problems with having the text as 
+* Text input overhaul, before the text was rendered as a wxPython  widget - now
+  it's a drawing of a String, with a custom dialog for inputting the text and
+  selecting a font. This new method fixes many problems with having the text as
   widget, such as text being un-undoable and drawings not overwriting the text
-  
+
 * Long text updates the scrollbars, vertically or horizontally
 * Program maximises on startup.
 * History improvements: draw all shapes back in the correct order
-* Save files store the version number; loading an older save file into a newer 
-  Whteboard version which has added save data will say the older save file's 
+* Save files store the version number; loading an older save file into a newer
+  Whteboard version which has added save data will say the older save file's
   version
     ...only problem with that is that the previous version's savefile
        versions aren't known since only know they're being stored
@@ -315,16 +317,16 @@ be double clicked upon to bring up the text input dialog to change a note's text
 
 20 Feb 2009 -- 0.32.6
 
-* Small fix of a silly bug introduced below on accident where a pen would not 
+* Small fix of a silly bug introduced below on accident where a pen would not
   render in its selected colour/thickness.
 
 ----------------------------------------------------------------------
 
 19 Feb 2009 -- 0.32.5
 
-* Added GPL.txt + fixed a bug with multiple images loaded into one  tab. 
-* Fixed 'sure you want to open this file?' message dialog so that it only 
-  appears if you're loading in a Whyteboard file, not a PDF or PNG, for instance 
+* Added GPL.txt + fixed a bug with multiple images loaded into one  tab.
+* Fixed 'sure you want to open this file?' message dialog so that it only
+  appears if you're loading in a Whyteboard file, not a PDF or PNG, for instance
 * Fixed a bug on Windows involving rectangles/circles, yet another persists.
 
 ----------------------------------------------------------------------
@@ -339,12 +341,12 @@ be double clicked upon to bring up the text input dialog to change a note's text
 
 ----------------------------------------------------------------------
 
-12 Feb 2009 -- 0.31.0 
+12 Feb 2009 -- 0.31.0
 
-* Fixed saving/loading text controls, scrollbars adjust to screen resolution on 
-resize. 
+* Fixed saving/loading text controls, scrollbars adjust to screen resolution on
+resize.
 * Fixed undo/redo visual & clear/clear all. Change clear/clear all to 4 options
- 
+
         * remove all drawings from current tab, keeping images
         * from all from current tab
         * remove all drawings from all tabs, keeping images
@@ -352,62 +354,62 @@ resize.
 
 ----------------------------------------------------------------------
 
-12 Feb 2009 -- 0.30.0 
+12 Feb 2009 -- 0.30.0
 
-* Scrolling works properly. Loading an image will expand the scroll bars to the 
-  image size if the image is too big. Improvements to the history replaying, 
+* Scrolling works properly. Loading an image will expand the scroll bars to the
+  image size if the image is too big. Improvements to the history replaying,
   rewrote most of the drawing code again.
 
 ----------------------------------------------------------------------
 
-11 Feb 2009 -- 0.29.0 
+11 Feb 2009 -- 0.29.0
 
-* Saving/loading working. Currently keeping tmp files from PDF/PS conversions to 
-  make loading a saved file faster (would need to convert any 'linked' PDF/PS 
+* Saving/loading working. Currently keeping tmp files from PDF/PS conversions to
+  make loading a saved file faster (would need to convert any 'linked' PDF/PS
   files for every .wtdb load) Saving text works, program also saves its settings
 
 ----------------------------------------------------------------------
 
-11 Feb 2009 -- 0.28.0 
+11 Feb 2009 -- 0.28.0
 
 * Fixed history replaying, added pause/ stop the replay.
-* Fixed a bug with the converting progress where the bar increased in response 
+* Fixed a bug with the converting progress where the bar increased in response
 mouse movement - now it's increased by a timer.
-              
+
 ----------------------------------------------------------------------
 
-10 Feb 2009 -- 0.27.0 
+10 Feb 2009 -- 0.27.0
 
 * Converting PDF/PS pops up a "converting" progress bar
 
 ----------------------------------------------------------------------
 
-10 Feb 2009 -- 0.26.0 
+10 Feb 2009 -- 0.26.0
 
-* More code unification, cleaner code, deleting tmp files, loading multiple 
+* More code unification, cleaner code, deleting tmp files, loading multiple
 PDF/PS/SVG files
 
 ----------------------------------------------------------------------
 
-09 Feb 2009 -- 0.25.0 
+09 Feb 2009 -- 0.25.0
 
 * Code refactored, performance increased ten-fold, some bug fixes
 
 ----------------------------------------------------------------------
 
-03 Feb 2009 -- 0.20.5 
+03 Feb 2009 -- 0.20.5
 
 * Minor code cleanup
 
 ----------------------------------------------------------------------
 
-02 Feb 2009 -- 0.20.0 
+02 Feb 2009 -- 0.20.0
 
 * Added a toolbar, each whyteboard tab has its own undo/redo history
 
 ----------------------------------------------------------------------
 
-31 Jan 2009 -- 0.15.0 
+31 Jan 2009 -- 0.15.0
 
 * Closing the program removes temporary PNG files from PDF convert
 

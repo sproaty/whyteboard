@@ -107,11 +107,11 @@ class Utility(object):
         self.backup_ext = ".blah5bl8ah123bla6h"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
-        
+
         path = os.path.join(get_home_dir(), "user.pref")
         self.config = ConfigObj(path)
         if not os.path.exists(path):
-            self.write_blank_config()       
+            self.write_blank_config()
         self.library = os.path.join(get_home_dir(), "library.known")
 
         # Make wxPython wildcard filter. Add a new item - new type supported!
@@ -512,7 +512,7 @@ class Utility(object):
 #            else:
 #                self.im_location = imagick = "convert"
 #        elif os.name == "nt":
-     
+
         if not self.config['section1'].has_key('path'):
             print 'hih'
             dlg = FindIM(self, self.gui)
@@ -520,7 +520,7 @@ class Utility(object):
             if self.im_location:
                 # save the ImageMagick directory location
                 loc = self.im_location.replace("convert.exe", "")
-                self.config['section1']['path'] = loc 
+                self.config['section1']['path'] = loc
                 self.config.write()
         else:
             # verify loaded file's IM directory is valid
@@ -529,10 +529,10 @@ class Utility(object):
             #    self.check_im_path(pref.split("=")[1])
 
 
- 
+
     def write_blank_config(self):
         self.config['section1'] = 'imagemagick'
-        self.config.write()   
+        self.config.write()
 
     def check_im_path(self, path):
         """

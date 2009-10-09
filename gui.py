@@ -4,17 +4,18 @@
 #
 # GNU General Public Licence (GPL)
 #
-s = """Whyteboard is free software; you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by the Free 
-Software Foundation; either version 3 of the License, or (at your option) any 
+s = """Whyteboard is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 3 of the License, or (at your option) any
 later version.
-Whyteboard is distributed in the hope that it will be useful, but WITHOUT ANY 
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+Whyteboard is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 Place, Suite 330, Boston, MA  02111-1307  USA"""
+
 
 """
 This module implements the Whteboard application.  It takes a Whyteboard class
@@ -23,12 +24,15 @@ clear the workspace, undo, redo, a simple history "replayer", allowing you to
 have a replay of what you have drawn played back to you.
 
 Also on the GUI is a panel for setting color and line thickness, with an
-indicator that shows an example of the drawing-to-be
+indicator that shows a drawing preview. On the right is a tabbed panel, allowing
+the user to switch between viewing Thumbnails of each drawing's tab, or a Tree
+of Notes that the user has inputted.
 """
 
 
 import os
 import sys
+import locale
 import wx
 import wx.lib.newevent
 from wx.html import HtmlHelpController
@@ -40,11 +44,6 @@ from utility import Utility, FileDropTarget
 from dialogs import  History, ProgressDialog, Resize, UpdateDialog
 from panels import ControlPanel, SidePanel, SheetsPopup
 
-# Define a translation string
-_ = wx.GetTranslation
-
-
-#----------------------------------------------------------------------
 
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
@@ -60,16 +59,21 @@ ID_PASTE_NEW = wx.NewId()         # paste as new selection
 ID_PDF = wx.NewId()               # import->PDF
 ID_PREV = wx.NewId()              # previous sheet
 ID_PS = wx.NewId()                # import->PS
+ID_RENAME = wx.NewId()            # rename sheet
 ID_RESIZE = wx.NewId()            # resize dialog
 ID_UNDO_SHEET = wx.NewId()        # undo close sheet
 ID_UPDATE = wx.NewId()            # update self
 #ID_EXP_IMG = wx.NewId()           # export->Image
 #ID_EXP_PDF = wx.NewId()           # export->PDF
 
+_ = wx.GetTranslation            # Define a translation string
+
+#----------------------------------------------------------------------
+
 
 class GUI(wx.Frame):
     """
-    This class contains a Whyteboard frame, a ControlPanel and a Thumbnail Panel
+    This class contains a ControlPanel, a Whyteboard frame and a SidePanel
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
@@ -110,7 +114,7 @@ class GUI(wx.Frame):
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
-        self.tabs.AddPage(self.board, "Sheet 1")
+        self.tabs.AddPage(self.board, _("Sheet")+" 1")
         self.box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         self.box.Add(self.control, 0, wx.EXPAND)
         self.box.Add(self.tabs, 2, wx.EXPAND)
@@ -189,10 +193,12 @@ class GUI(wx.Frame):
         sheets.AppendSeparator()
         sheets.Append(ID_CLEAR_SHEETS, _("Clear All Sheets' &Drawings"), _("Clear all sheets' drawings (keep images)"))
         sheets.Append(ID_CLEAR_ALL_SHEETS, _("Clear &All Sheets"), _("Clear all sheets"))
+        sheets.AppendSeparator()
+        sheets.Append(ID_RENAME, _("&Rename Sheet..."), _("Rename the current sheet"))
 
         _help.Append(wx.ID_HELP, _("&Contents")+"\tF1", _("View information about Whyteboard"))
         _help.AppendSeparator()
-        _help.Append(ID_UPDATE, _("Check for &Updates")+"\tF12", _("Search for updates to Whyteboard"))
+        _help.Append(ID_UPDATE, _("Check for &Updates...")+"\tF12", _("Search for updates to Whyteboard"))
         _help.Append(wx.ID_ABOUT, _("&About"), _("View information about Whyteboard"))
         self.menu.Append(_file, _("&File"))
         self.menu.Append(edit, _("&Edit"))
@@ -222,11 +228,11 @@ class GUI(wx.Frame):
                     id=ids[key]) for key in ids]
 
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new",
-                  "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "help", "update", "about"]
+                  "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "rename", "help", "update", "about"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
-               wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
-               ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, wx.ID_HELP, ID_UPDATE, wx.ID_ABOUT]
+               wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS,
+               ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, wx.ID_ABOUT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -335,13 +341,13 @@ class GUI(wx.Frame):
         filename = self.export_prompt()
         if filename:
             self.util.export(filename)
-        
-        
+
+
     def on_export_all(self, event=None):
         """
         Iterate over the chosen filename, add a numeric value to each path to
         separate each sheet's image.
-        """ 
+        """
         filename = self.export_prompt()
         if filename:
             name = os.path.splitext(filename)
@@ -358,7 +364,7 @@ class GUI(wx.Frame):
         val = None  # return balue
         wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
                "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
-        
+
         dlg = wx.FileDialog(self, _("Export data to..."), style=wx.SAVE |
                              wx.OVERWRITE_PROMPT, wildcard=wc)
         if dlg.ShowModal() == wx.ID_OK:
@@ -371,15 +377,15 @@ class GUI(wx.Frame):
                 filename += "." + _name
                 val = filename
             if not _name in self.util.types[2:]:
-                wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % _name, 
+                wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % _name,
                               _("Invalid filetype"))
             else:
                 val = filename
-                
+
         dlg.Destroy()
         return val
-        
-        
+
+
     def on_new_win(self, event=None):
         """Fires up a new Whyteboard window"""
         frame = GUI(None)
@@ -492,9 +498,26 @@ class GUI(wx.Frame):
             if isinstance(shape, Note):
                 self.notes.add_note(shape)
 
-        wx.SafeYield()  # doesn't draw thumbnail otherwise...
+        wx.Yield()  # doesn't draw thumbnail otherwise...
         self.board.redraw_all(True)
 
+
+    def on_rename(self, event=None, sheet=None):
+        if not sheet:
+            sheet = self.current_tab
+        dlg = wx.TextEntryDialog(self, _("Rename this sheet to:"),
+                                                        _("Rename sheet"))
+        dlg.SetValue(self.tabs.GetPageText(sheet))
+
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            dlg.Destroy()
+        else:
+            val = dlg.GetValue()
+            if val:
+                self.tabs.SetPageText(sheet, val)
+                self.tabs.GetPage(sheet).renamed = True
+                self.thumbs.update_name(sheet, val)
+                self.notes.update_name(sheet, val)
 
     def update_menus(self, event):
         """
@@ -683,36 +706,41 @@ class GUI(wx.Frame):
                     self.on_help()  # show newly downloaded files
 
 
-    def on_about(self, event=None):        
+    def on_about(self, event=None):
         inf = wx.AboutDialogInfo()
         inf.Name = "Whyteboard"
         inf.Version = self.version
         inf.Description = _("A simple whiteboard and PDF annotator")
-        inf.Developers = inf.DocWriters = ["Steven Sproat <sproaty@gmail.com>"] 
+        inf.Developers = inf.DocWriters = ["Steven Sproat <sproaty@gmail.com>"]
+        inf.Translators = ["Roberto Bondi <bondi@isicast.org> (Italian)",
+                           "Steven Sproat <sproaty@gmail.com> (Welsh)"]
         inf.Copyright = "(C) 2009 Steven Sproat"
         if os.name == "posix":
-            x = "http://www.launchpad.net/whyteboard"   
-            inf.WebSite = (x, x)    
-            inf.Licence = s                            
+            x = "http://www.launchpad.net/whyteboard"
+            inf.WebSite = (x, x)
+            inf.Licence = s
         wx.AboutBox(inf)
 
 
 #----------------------------------------------------------------------
 
 class WhyteboardApp(wx.App):
-    def OnInit(self): 
-        nolog = wx.LogNull()            
-        locale = wx.Locale(wx.LANGUAGE_ENGLISH, wx.LOCALE_LOAD_DEFAULT)
-        del nolog  
-        if not wx.Locale.IsOk(locale):            
-            locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
-             
+    def OnInit(self):
+        #nolog = wx.LogNull()
+        self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
+        #del nolog
+        #if not wx.Locale.IsOk(locale):
+        #    locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
+        #self.locale = wx.Locale()
+        #self.locale.Init("MyLocale", "cy", "cy_GB.utf8")
+
         path = os.path.dirname(sys.argv[0])
-        langdir = os.path.join(path, 'locale')   
-         
-        locale.AddCatalogLookupPathPrefix(langdir)
-        locale.AddCatalog("Whyteboard")
-                    
+        langdir = os.path.join(path, 'locale')
+        locale.setlocale(locale.LC_ALL, '')
+
+        self.locale.AddCatalogLookupPathPrefix(langdir)
+        self.locale.AddCatalog("Whyteboard")
+
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
         self.frame = GUI(None)
         self.frame.Show(True)

@@ -39,7 +39,7 @@ class History(wx.Dialog):
     Creates a history replaying dialog and methods for its functionality
     """
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui, _(title="History Player"), size=(400, 200),
+        wx.Dialog.__init__(self, gui, title=_("History Player"), size=(400, 200),
                            style=wx.CLOSE_BOX | wx.CAPTION)
         self.gui = gui
         self.looping = False
@@ -296,7 +296,7 @@ class UpdateDialog(wx.Dialog):
                 size = _all[i].findNext('a').renderContents().strip()
 
                 if version != self.gui.version:
-                    s = _(" There is a new version available, %s\n File: %s\n" 
+                    s = (_(" There is a new version available")+", %s\n File: %s\n"+
                         " Size: %s") % (version, _file, size)
                     self.text.SetLabel(s)
                     self.btn.Enable(True)

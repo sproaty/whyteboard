@@ -17,7 +17,7 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
-This module contains classes for the GUI side panels.
+This module contains classes for the GUI side panels and pop-up menus.
 """
 
 import wx
@@ -26,7 +26,9 @@ from copy import copy
 
 _ = wx.GetTranslation
 
+
 #----------------------------------------------------------------------
+
 
 class ControlPanel(wx.Panel):
     """
@@ -57,11 +59,11 @@ class ControlPanel(wx.Panel):
         toolsizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
 
         # Get list of class names as strings for each drawable tool
-        items = [i.__name__ for i in gui.util.items]
+        items = [i.name for i in gui.util.items]
 
         for x, name in enumerate(items):
             b = wx.ToggleButton(pane, x + 1, name)
-            b.SetToolTipString(gui.util.items[x].tooltip)
+            b.SetToolTipString(_(gui.util.items[x].tooltip))
             b.Bind(wx.EVT_TOGGLEBUTTON, self.change_tool, id=x + 1)
             toolsizer.Add(b, 0, wx.EXPAND)
             self.tools[x + 1] = b
@@ -70,7 +72,7 @@ class ControlPanel(wx.Panel):
         width = wx.StaticText(pane, label=_("Thickness:"))
         prev = wx.StaticText(pane, label=_("Preview:"))
         self.colour = wx.ColourPickerCtrl(pane)
-        self.colour.SetToolTipString(_("Select a custom colour"))
+        self.colour.SetToolTipString(_("Select a custom color"))
 
         self.colour_list = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
                             'Cyan', 'Orange', 'Light Grey']
@@ -102,7 +104,6 @@ class ControlPanel(wx.Panel):
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
         csizer.Add(box, 1, wx.EXPAND)
         sizer.Add(self.cp, 1, wx.EXPAND)
-
 
         self.SetSizer(sizer)
         self.cp.GetPane().SetSizer(csizer)
@@ -166,7 +167,7 @@ class ControlPanel(wx.Panel):
 
 
     def change_colour(self, event=None, colour=None):
-        """Event can also be a string representing a colour for the grid"""
+        """Event can also be a string representing a colour (from the grid)"""
         if event and not colour:
             colour = event.GetColour()  # from the colour button
         self.colour.SetColour(colour)
@@ -177,7 +178,7 @@ class ControlPanel(wx.Panel):
 
 
     def update(self, value, var_name):
-        """Updates the given utility variable and the select object"""
+        """Updates the given utility variable and the selected shape"""
         setattr(self.gui.util, var_name, value)
 
         if self.gui.board.selected:
@@ -186,6 +187,7 @@ class ControlPanel(wx.Panel):
             self.gui.board.redraw_all(True)
         self.gui.board.select_tool()
         self.preview.Refresh()
+
 
 #----------------------------------------------------------------------
 
@@ -225,10 +227,11 @@ class DrawingPreview(wx.Window):
 
 #----------------------------------------------------------------------
 
+
 class SidePanel(wx.Panel):
     """
-    The side panel contains a tabbed window, allowing the user to switch
-    between thumbnails and notes. It can be toggled on and off.
+    The side panel is a tabbed window, allowing the user to switch between
+    thumbnails and notes. It can be toggled on and off via CollapsiblePane
     """
     def __init__(self, gui):
         wx.Panel.__init__(self, gui, style=wx.RAISED_BORDER)
@@ -264,8 +267,14 @@ class SidePanel(wx.Panel):
 
 class Notes(wx.Panel):
     """
-    Contains a Tree which shows an overview of all tabs' notes.
-    Notes can be clicked upon to be edited
+    Contains a Tree which shows an overview of all sheets' notes.
+    Each sheet is a child of the tree, with each Note a child of a sheet.
+    Sheets can be right click  to pop-up a menu; or double clicked to change
+    to that sheet.  Notes can be double/right clicked upon to be edited.
+
+    Sheet names are stored in a list: any that are "" are sheets that have not
+    been renamed, used when closing a sheet to ensure the sheets are numbered
+    correctly.
     """
     def __init__(self, parent, gui):
         wx.Panel.__init__(self, parent, size=(170, -1), style=wx.RAISED_BORDER)
@@ -303,8 +312,8 @@ class Notes(wx.Panel):
     def add_note(self, note, _id=None):
         """
         Adds a note to the current tab tree element. The notes' text is the
-        element's text is the tree, newlines are replaced to stop the tree's
-        formatting being messed up.
+        element's text in the tree - newlines are replaced to stop the tree's
+        formatting becoming too wide.
         """
         text = note.text.replace("\n", " ")[:15]
         if not _id:
@@ -333,6 +342,7 @@ class Notes(wx.Panel):
 
 
     def update_name(self, _id, name):
+        """Renames a given sheet"""
         self.names[_id] = name
         self.tree.SetItemText(self.tabs[_id], name)
 
@@ -345,8 +355,8 @@ class Notes(wx.Panel):
 
     def on_click(self, event):
         """
-        Changes to the selected tab is a tab node is double clicked upon,
-        otherwise pops up the text edit dialog, passing it the note object.
+        Changes to the selected tab if a tab node is double clicked upon,
+        otherwise we're editing the note.
         """
         item = self.tree.GetPyData(event.GetItem())
 
@@ -362,6 +372,7 @@ class Notes(wx.Panel):
         if self.tree.GetPyData(event.GetItem()) is not None:
             self.PopupMenu(NotesPopup(self, event))
 
+
 #----------------------------------------------------------------------
 
 class NotesPopup(wx.Menu):
@@ -369,14 +380,19 @@ class NotesPopup(wx.Menu):
     A context pop-up menu for notes, allowing the editing of a note or switching
     the tab selection to a particular sheet. The event is passed around, coming
     from a TreeCtrlEvent. No popup menu happens for the root node.
+
+    The thumbnail's popup subclasses this, but the methods here apply to it too
     """
     def __init__(self, parent, event):
         wx.Menu.__init__(self)
         self.parent = parent
         self.item = parent.tree.GetPyData(event.GetItem())
+        self.make_menu(event)
+
+
+    def make_menu(self, event):
         ID = wx.NewId()
         do = False
-
         if self.item is None:
             return  # root node
         if isinstance(self.item, int):  # sheet node
@@ -386,34 +402,53 @@ class NotesPopup(wx.Menu):
             menu = wx.MenuItem(self, ID, _("Edit Note..."))
 
         self.AppendItem(menu)
-        method = lambda x: parent.on_click(event)
+        method = lambda x: self.parent.on_click(event)
+        if isinstance(self, ThumbsPopup):
+            method = lambda x: self.parent.gui.tabs.SetSelection(event)
         self.Bind(wx.EVT_MENU, method, id=ID)
-        
-        if do:            
-            ID2, ID3 = wx.NewId(), wx.NewId()
-            menu = wx.MenuItem(self, ID2, _("Close"))       
-            self.AppendItem(menu)
-            self.Bind(wx.EVT_MENU, self.close, id=ID2)
 
-            menu = wx.MenuItem(self, ID3, _("Rename..."))            
-            self.AppendItem(menu)
-            self.Bind(wx.EVT_MENU, self.rename, id=ID3)            
-                    
-                    
-    def rename(self, event):
-        """Bit of a hack to call the sheet popup rename"""
-        sheets = SheetsPopup(self.parent.gui, (0, 0))        
-        sheets.sheet = self.item
-        sheets.rename()
-        
-        
+        if do:
+            ID2, ID3 = wx.NewId(), wx.NewId()
+            self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Close Sheet")))
+            self.AppendSeparator()
+            self.AppendItem(wx.MenuItem(self, ID2, _("Rename Sheet...")))
+            self.AppendItem(wx.MenuItem(self, ID3, _("Export Sheet...")))
+
+            self.Bind(wx.EVT_MENU, self.rename, id=ID2)
+            self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
+            self.Bind(wx.EVT_MENU, self.export, id=ID3)
+
+
     def close(self, event):
-        sheets = SheetsPopup(self.parent.gui, (0, 0))        
-        sheets.sheet = self.item
-        sheets.close()
-        
-        
+        gui = self.parent.gui
+        gui.current_tab = self.item
+        gui.board = gui.tabs.GetPage(self.item)
+        gui.on_close_tab()
+
+    def export(self, event=None):
+        board = self.parent.gui.board
+        self.parent.gui.board = self.parent.gui.tabs.GetPage(self.item)
+        self.parent.gui.on_export()
+        self.parent.gui.board = board
+
+    def rename(self, event):
+        self.parent.gui.on_rename(sheet=self.item)
+
+
 #----------------------------------------------------------------------
+
+
+class ThumbsPopup(NotesPopup):
+    """Just need to set the item to the current tab number"""
+    def __init__(self, parent, thumb):
+        wx.Menu.__init__(self)
+        self.parent = parent
+        self.item = thumb
+        self.make_menu(thumb)  # for the Select Sheet menu item
+
+
+#----------------------------------------------------------------------
+
 
 class SheetsPopup(wx.Menu):
     """
@@ -445,19 +480,7 @@ class SheetsPopup(wx.Menu):
 
     def rename(self, event=None):
         """Rename the selected sheet"""
-        dlg = wx.TextEntryDialog(self.parent, _("Rename this sheet to:"),
-                                                        _("Rename sheet"))
-        dlg.SetValue(self.parent.tabs.GetPageText(self.sheet))
-
-        if dlg.ShowModal() == wx.ID_CANCEL:
-            dlg.Destroy()
-        else:
-            val = dlg.GetValue()
-            if val:
-                self.parent.tabs.SetPageText(self.sheet, val)
-                self.parent.tabs.GetPage(self.sheet).renamed = True
-                self.parent.thumbs.update_name(self.sheet, val)
-                self.parent.notes.update_name(self.sheet, val)
+        self.parent.on_rename(sheet=self.sheet)
 
     def close(self, event=None):
         """
@@ -478,6 +501,7 @@ class SheetsPopup(wx.Menu):
 
 
 #----------------------------------------------------------------------
+
 
 class Thumbs(scrolled.ScrolledPanel):
     """
@@ -622,7 +646,9 @@ class Thumbs(scrolled.ScrolledPanel):
         for x in range(0, len(self.thumbs)):
             self.update(x)
 
+
 #----------------------------------------------------------------------
+
 
 class ThumbButton(wx.BitmapButton):
     """
@@ -638,7 +664,11 @@ class ThumbButton(wx.BitmapButton):
         self.current = False  # active thumb?
         self.Bind(wx.EVT_BUTTON, self.on_press)
         self.SetBackgroundColour(wx.WHITE)
+        self.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
 
+    def tab_popup(self, event):
+        """ Pops up the tab context menu. """
+        self.PopupMenu(ThumbsPopup(self.parent, self.thumb_id))
 
     def on_press(self, event):
         """
