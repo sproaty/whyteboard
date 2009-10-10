@@ -59,7 +59,7 @@ class ControlPanel(wx.Panel):
         toolsizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
 
         # Get list of class names as strings for each drawable tool
-        items = [i.name for i in gui.util.items]
+        items = [_(i.name) for i in gui.util.items]
 
         for x, name in enumerate(items):
             b = wx.ToggleButton(pane, x + 1, name)
@@ -74,11 +74,11 @@ class ControlPanel(wx.Panel):
         self.colour = wx.ColourPickerCtrl(pane)
         self.colour.SetToolTipString(_("Select a custom color"))
 
-        self.colour_list = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
-                            'Cyan', 'Orange', 'Light Grey']
+        #self.colour_list = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
+        #                    'Cyan', 'Orange', 'Light Grey']
 
         grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
-        for colour in self.colour_list:
+        for colour in self.gui.util.colours:
             bmp = self.make_bitmap(colour)
             b = wx.BitmapButton(pane, bitmap=bmp)
             method = lambda evt, col = colour: self.change_colour(evt, col)
@@ -370,137 +370,125 @@ class Notes(wx.Panel):
     def pop_up(self, event):
         """Brings up the context menu on right click (except on root node)"""
         if self.tree.GetPyData(event.GetItem()) is not None:
-            self.PopupMenu(NotesPopup(self, event))
+            self.PopupMenu(NotesPopup(self, self.gui, event))
 
 
 #----------------------------------------------------------------------
 
-class NotesPopup(wx.Menu):
-    """
-    A context pop-up menu for notes, allowing the editing of a note or switching
-    the tab selection to a particular sheet. The event is passed around, coming
-    from a TreeCtrlEvent. No popup menu happens for the root node.
 
-    The thumbnail's popup subclasses this, but the methods here apply to it too
+class Popup(wx.Menu):
     """
-    def __init__(self, parent, event):
+    A general pop-up menum providing default menu items. Easy to subclass to add
+    new functionality. The "extra" (of type wx.Event*) variable must be passed
+    around a lot as different subclasses access different functions of different
+    events
+    """
+    def __init__(self, parent, gui, extra):
         wx.Menu.__init__(self)
         self.parent = parent
-        self.item = parent.tree.GetPyData(event.GetItem())
-        self.make_menu(event)
+        self.gui = gui
+        self.item = None
+        self.set_item(extra)
+        self.make_menu(extra)
 
+    def make_menu(self, extra):
+        ID, ID2, ID3 = wx.NewId(),  wx.NewId(), wx.NewId()
+        method = self.select_tab_method(extra)
 
-    def make_menu(self, event):
-        ID = wx.NewId()
-        do = False
-        if self.item is None:
-            return  # root node
-        if isinstance(self.item, int):  # sheet node
-            menu = wx.MenuItem(self, ID, _("Select"))
-            do = True
-        else:
-            menu = wx.MenuItem(self, ID, _("Edit Note..."))
+        self.AppendItem(wx.MenuItem(self, ID, _("Select")))
+        self.AppendSeparator()
+        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, _("New")+"\tCtrl-T"))
+        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Close")))
+        self.AppendSeparator()
+        self.AppendItem(wx.MenuItem(self, ID2, _("Rename...")))
+        self.AppendItem(wx.MenuItem(self, ID3, _("Export...")+"\tCtrl-E"))
 
-        self.AppendItem(menu)
-        method = lambda x: self.parent.on_click(event)
-        if isinstance(self, ThumbsPopup):
-            method = lambda x: self.parent.gui.tabs.SetSelection(event)
         self.Bind(wx.EVT_MENU, method, id=ID)
-
-        if do:
-            ID2, ID3 = wx.NewId(), wx.NewId()
-            self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Close Sheet")))
-            self.AppendSeparator()
-            self.AppendItem(wx.MenuItem(self, ID2, _("Rename Sheet...")))
-            self.AppendItem(wx.MenuItem(self, ID3, _("Export Sheet...")))
-
-            self.Bind(wx.EVT_MENU, self.rename, id=ID2)
-            self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
-            self.Bind(wx.EVT_MENU, self.export, id=ID3)
+        self.Bind(wx.EVT_MENU, self.rename, id=ID2)
+        self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
+        self.Bind(wx.EVT_MENU, self.export, id=ID3)
 
 
     def close(self, event):
-        gui = self.parent.gui
-        gui.current_tab = self.item
-        gui.board = gui.tabs.GetPage(self.item)
-        gui.on_close_tab()
-
-    def export(self, event=None):
-        board = self.parent.gui.board
-        self.parent.gui.board = self.parent.gui.tabs.GetPage(self.item)
-        self.parent.gui.on_export()
-        self.parent.gui.board = board
-
-    def rename(self, event):
-        self.parent.gui.on_rename(sheet=self.item)
-
-
-#----------------------------------------------------------------------
-
-
-class ThumbsPopup(NotesPopup):
-    """Just need to set the item to the current tab number"""
-    def __init__(self, parent, thumb):
-        wx.Menu.__init__(self)
-        self.parent = parent
-        self.item = thumb
-        self.make_menu(thumb)  # for the Select Sheet menu item
-
-
-#----------------------------------------------------------------------
-
-
-class SheetsPopup(wx.Menu):
-    """
-    A context pop-up menu for sheets, allowing to close and rename sheets.
-    """
-    def __init__(self, parent, pos):
-        wx.Menu.__init__(self)
-
-        self.parent = parent
-        sheet = self.parent.tabs.HitTest(pos)
-        rename = wx.NewId()
-        export = wx.NewId()
-
-        if sheet[0] < 0:
-            self.sheet = self.parent.current_tab
-        else:
-            self.sheet = sheet[0]
-
-        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, _("New Sheet")))
-        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Close Sheet")))
-        self.AppendSeparator()
-        self.AppendItem(wx.MenuItem(self, rename, _("Rename Sheet...")))
-        self.AppendItem(wx.MenuItem(self, export, _("Export Sheet...")))
-
-        self.Bind(wx.EVT_MENU, self.rename, id=rename)
-        self.Bind(wx.EVT_MENU, self.export, id=export)
-        self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
-
-
-    def rename(self, event=None):
-        """Rename the selected sheet"""
-        self.parent.on_rename(sheet=self.sheet)
-
-    def close(self, event=None):
-        """
-        The close event uses current_tab to know which sheet to close, so set
-        it to the selected tab from the menu
-        """
-        self.parent.current_tab = self.sheet
-        self.parent.board = self.parent.tabs.GetPage(self.sheet)
-        self.parent.on_close_tab()
-
+        self.gui.current_tab = self.item
+        self.gui.board = gui.tabs.GetPage(self.item)
+        self.gui.on_close_tab()
 
     def export(self, event):
-        """Export the selected tab"""
-        board = self.parent.board
-        self.parent.board = self.parent.tabs.GetPage(self.sheet)
-        self.parent.on_export()
-        self.parent.board = board
+        board = self.gui.board
+        self.gui.board = self.gui.tabs.GetPage(self.item)
+        self.gui.on_export()
+        self.gui.board = board
+
+    def rename(self, event):
+        self.gui.on_rename(sheet=self.item)
+
+    def select_tab_method(self, extra):
+        pass
+
+    def set_item(self, extra):
+        pass
 
 
 #----------------------------------------------------------------------
+
+
+class NotesPopup(Popup):
+    """
+    Parent = Notes panel - needs access to tree's events and methods. Overwrites
+    the menu for a note
+    """
+    def make_menu(self, extra):
+        if self.item is None:  # root node
+            return
+        if isinstance(self.item, int):  # sheet node
+            super(NotesPopup, self).make_menu(extra)
+        else:
+            ID = wx.NewId()
+            menu = wx.MenuItem(self, ID, _("Edit Note..."))
+            self.AppendItem(menu)
+            method = lambda x: self.parent.on_click(event)
+            self.Bind(wx.EVT_MENU, method, id=ID)
+
+    def select_tab_method(self, extra):
+        return lambda x: self.parent.on_click(extra)
+
+    def set_item(self, extra):
+        self.item = self.parent.tree.GetPyData(extra.GetItem())
+
+#----------------------------------------------------------------------
+
+
+class SheetsPopup(Popup):
+    """
+    Brought up by right-clicking the tab list. Its parent is the GUI
+    """
+    def set_item(self, extra):
+        """Hit test on the tab bar"""
+        sheet = self.parent.tabs.HitTest(extra)
+        self.item = sheet[0]
+        if sheet[0] < 0:
+            self.item = self.parent.current_tab
+
+
+    def select_tab_method(self, extra):
+        return lambda x: self.parent.tabs.SetSelection(self.item)
+
+#----------------------------------------------------------------------
+
+
+class ThumbsPopup(Popup):
+    """
+    Just need to set the item to the current tab number, parent: tab number
+    """
+    def set_item(self, extra):
+        self.item = extra
+
+    def select_tab_method(self, extra):
+        return lambda x: self.parent.gui.tabs.SetSelection(extra)
+
+#----------------------------------------------------------------------
+
 
 
 class Thumbs(scrolled.ScrolledPanel):
@@ -668,7 +656,7 @@ class ThumbButton(wx.BitmapButton):
 
     def tab_popup(self, event):
         """ Pops up the tab context menu. """
-        self.PopupMenu(ThumbsPopup(self.parent, self.thumb_id))
+        self.PopupMenu(ThumbsPopup(self.parent, self.parent.gui, self.thumb_id))
 
     def on_press(self, event):
         """

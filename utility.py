@@ -71,6 +71,7 @@ except ImportError:
     import pickle
 
 from configobj import ConfigObj
+from validate import Validator 
 from dialogs import ProgressDialog, FindIM
 import tools
 
@@ -99,6 +100,8 @@ class Utility(object):
         self.saved = True
         self.colour = "Black"
         self.thickness = 1
+        self.colours = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
+                            'Cyan', 'Orange', 'Light Grey']
         self.font = None  # default font for text input
         self.tool = 1  # Current tool ID that is being drawn with
         self.items = tools.items  # shortcut
@@ -108,10 +111,13 @@ class Utility(object):
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
 
+        
         path = os.path.join(get_home_dir(), "user.pref")
-        self.config = ConfigObj(path)
-        if not os.path.exists(path):
-            self.write_blank_config()
+        spec = os.path.join(get_home_dir(), "spec.ini")
+        self.config = ConfigObj(path, configspec=spec, create_empty=True,
+                                encoding='UTF8')
+        #if not os.path.exists(path):
+        self.write_blank_config()
         self.library = os.path.join(get_home_dir(), "library.known")
 
         # Make wxPython wildcard filter. Add a new item - new type supported!
@@ -513,7 +519,7 @@ class Utility(object):
 #                self.im_location = imagick = "convert"
 #        elif os.name == "nt":
 
-        if not self.config['section1'].has_key('path'):
+        if not self.config.has_key('im_path'):
             print 'hih'
             dlg = FindIM(self, self.gui)
             dlg.ShowModal()
@@ -531,9 +537,17 @@ class Utility(object):
 
 
     def write_blank_config(self):
-        self.config['section1'] = 'imagemagick'
-        self.config.write()
-
+#        self.config['im_path'] = None
+#        self.config['colours'] = self.colours
+#        self.config['language'] = 'english'
+#        self.config['toolbar'] = 'on'
+#        self.config['statusbar'] = 'on'
+#        self.config['covert_quality'] = 'standard'
+        #self.config.write()
+        validator = Validator()
+        result = self.config.validate(validator)
+        print self.config['attributes']
+        
     def check_im_path(self, path):
         """
         Checks the ImageMagick path before getting/setting the string to ensure

@@ -33,10 +33,12 @@ of Notes that the user has inputted.
 import os
 import sys
 import locale
+import webbrowser
 import wx
 import wx.lib.newevent
 from wx.html import HtmlHelpController
 
+sys.path.append("lib")
 import icon
 from whyteboard import Whyteboard
 from tools import Image, Note
@@ -60,7 +62,11 @@ ID_PDF = wx.NewId()               # import->PDF
 ID_PREV = wx.NewId()              # previous sheet
 ID_PS = wx.NewId()                # import->PS
 ID_RENAME = wx.NewId()            # rename sheet
+ID_REPORT_BUG = wx.NewId()        # report a problem
 ID_RESIZE = wx.NewId()            # resize dialog
+ID_STATUSBAR = wx.NewId()         # toggle statusbar
+ID_TOOLBAR = wx.NewId()           # toggle toolbar
+ID_TRANSLATE = wx.NewId()         # open translation URL
 ID_UNDO_SHEET = wx.NewId()        # undo close sheet
 ID_UPDATE = wx.NewId()            # update self
 #ID_EXP_IMG = wx.NewId()           # export->Image
@@ -85,14 +91,14 @@ class GUI(wx.Frame):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
-        wx.Frame.__init__(self, parent, title="Untitled - " + self.title)
+        wx.Frame.__init__(self, parent, title=_("Untitled")+" - " + self.title)
         ico = icon.whyteboard.getIcon()
         self.SetIcon(ico)
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
         self.util = Utility(self)
         self.file_drop = FileDropTarget(self)
         self.SetDropTarget(self.file_drop)
-        self.CreateStatusBar()
+        self.statusbar = self.CreateStatusBar()
 
         self.can_paste = False
         if self.util.get_clipboard():
@@ -143,24 +149,24 @@ class GUI(wx.Frame):
         sheets = wx.Menu()
         _help = wx.Menu()
         _import = wx.Menu()
+        _import.Append(ID_IMG, _('&Image...'))
         _import.Append(ID_PDF, '&PDF...')
         _import.Append(ID_PS, 'Post&Script...')
-        _import.Append(ID_IMG, _('&Image...'))
         #_export = wx.Menu()
         #_export.Append(ID_EXP_PDF, '&PDF')
         #_export.Append(ID_EXP_IMG, 'Current Sheet as &Image')
 
-        new = wx.MenuItem(_file, ID_NEW, _("&New Window")+"\tCtrl-N", _("Opens a new Whyteboard instance"))
+        new = wx.MenuItem(_file, ID_NEW, _("New &Window")+"\tCtrl-N", _("Opens a new Whyteboard instance"))
         new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
 
         pnew = wx.MenuItem(edit, ID_PASTE_NEW, _("Paste to a &New Sheet")+"\tCtrl+Shift-V", _("Paste from your clipboard into a new sheet"))
         pnew.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_PASTE, wx.ART_MENU))
 
-        undo_sheet = wx.MenuItem(edit, ID_UNDO_SHEET, _("Undo Last Closed Sheet")+"\tCtrl+Shift-T", _("Undo the last closed sheet"))
+        undo_sheet = wx.MenuItem(edit, ID_UNDO_SHEET, _("&Undo Last Closed Sheet")+"\tCtrl+Shift-T", _("Undo the last closed sheet"))
         undo_sheet.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_UNDO, wx.ART_MENU))
 
-        _file.AppendItem(new)
         _file.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T", _("Add a new sheet"))
+        _file.AppendItem(new)
         _file.Append(wx.ID_OPEN, _("&Open...")+"\tCtrl-O", _("Load a Whyteboard save file, an image or convert a PDF/PS document"))
         _file.Append(wx.ID_CLOSE, _("&Remove Sheet")+"\tCtrl+W", _("Close the current sheet"))
         _file.AppendSeparator()
@@ -169,7 +175,7 @@ class GUI(wx.Frame):
         _file.AppendMenu(+1, _('&Import File'), _import)
         #_file.AppendMenu(+1, '&Export File', _export)
         _file.Append(ID_EXPORT, _("&Export Sheet...")+"\tCtrl+E", _("Export the current sheet to an image file"))
-        _file.Append(ID_EXPORT_ALL, _("&Export All Sheets...")+"\tCtrl+A",_( "Export every sheet to a series of image file"))
+        _file.Append(ID_EXPORT_ALL, _("Export &All Sheets...")+"\tCtrl+Shift+E", _("Export every sheet to a series of image files"))
         _file.AppendSeparator()
         _file.Append(wx.ID_EXIT, _("&Quit")+"\tAlt+F4", _("Quit Whyteboard"))
 
@@ -181,11 +187,16 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste an image from your clipboard into Whyteboard"))
         edit.AppendItem(pnew)
 
-        view.Append(ID_FULLSCREEN, _(" &Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
         view.Append(ID_HISTORY, _("&History Viewer...")+"\tCtrl+H", _("View and replay your drawing history"))
+        view.AppendSeparator()
+        self.showtool = view.Append(ID_TOOLBAR," "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
+        self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
+        view.Check(ID_TOOLBAR, True)
+        view.Check(ID_STATUSBAR, True)
+        view.Append(ID_FULLSCREEN, " "+_("&Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
 
-        sheets.Append(ID_NEXT, _("&Next Sheet")+"\tCtrl+Tab", _("Go to the next sheet"))
-        sheets.Append(ID_PREV, _("&Previous Sheet")+"\tCtrl+Shift+Tab", _("Go to the previous sheet"))
+        self.next = sheets.Append(ID_NEXT, _("&Next Sheet")+"\tCtrl+Tab", _("Go to the next sheet"))
+        self.prev = sheets.Append(ID_PREV, _("&Previous Sheet")+"\tCtrl+Shift+Tab", _("Go to the previous sheet"))
         sheets.AppendItem(undo_sheet)
         sheets.AppendSeparator()
         sheets.Append(wx.ID_CLEAR, _("&Clear Sheets' Drawings"), _("Clear drawings on the current sheet (keep images)"))
@@ -199,6 +210,9 @@ class GUI(wx.Frame):
         _help.Append(wx.ID_HELP, _("&Contents")+"\tF1", _("View information about Whyteboard"))
         _help.AppendSeparator()
         _help.Append(ID_UPDATE, _("Check for &Updates...")+"\tF12", _("Search for updates to Whyteboard"))
+        _help.Append(ID_TRANSLATE, _("&Translate Whyteboard"), _("Translate Whyteboard to your language"))
+        _help.Append(ID_REPORT_BUG, _("&Report a Problem"), _("Report any bugs or issues with Wwhyteboard"))
+        _help.AppendSeparator()
         _help.Append(wx.ID_ABOUT, _("&About"), _("View information about Whyteboard"))
         self.menu.Append(_file, _("&File"))
         self.menu.Append(edit, _("&Edit"))
@@ -223,16 +237,23 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_UNDO_SHEET)
         self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
 
+        ac = [(wx.ACCEL_CTRL, ord('\t'), self.next.GetId()),
+              (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId()) ]
+        tbl = wx.AcceleratorTable(ac)
+        self.SetAcceleratorTable(tbl)
+
+
         ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }  # file->import
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new",
-                  "history", "resize", "fullscreen", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "rename", "help", "update", "about"]
+                  "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "rename", "help", "update",
+                  "translate", "report_bug", "about"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
-               wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS,
-               ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, wx.ID_ABOUT]
+               wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
+               ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -539,9 +560,10 @@ class GUI(wx.Frame):
                 self.count = 0
                 try:
                     event.Enable(self.can_paste)
+                    self.menu.Enable(ID_PASTE_NEW, self.can_paste)
                 except wx.PyDeadObjectError:
                     pass
-                self.menu.Enable(ID_PASTE_NEW, self.can_paste)
+
             return
 
         do = False
@@ -596,6 +618,20 @@ class GUI(wx.Frame):
                wx.FULLSCREEN_NOSTATUSBAR)
         self.ShowFullScreen(not self.IsFullScreen(), flag)
 
+    def on_toolbar(self, event=None):
+        """ Toggles the toolbar """
+        if self.showtool.IsChecked():
+            self.toolbar.Show()
+        else:
+            self.toolbar.Hide()
+        self.SendSizeEvent()
+
+    def on_statusbar(self, event=None):
+        if self.showstat.IsChecked():
+            self.statusbar.Show()
+        else:
+            self.statusbar.Hide()
+
     def convert_dialog(self, cmd):
         """
         Called when the convert process begins, executes the process call and
@@ -627,7 +663,7 @@ class GUI(wx.Frame):
 
     def tab_popup(self, event):
         """ Pops up the tab context menu. """
-        self.PopupMenu(SheetsPopup(self, (event.GetX(), event.GetY())))
+        self.PopupMenu(SheetsPopup(self, self, (event.GetX(), event.GetY())))
 
     def on_undo(self, event=None):
         """ Calls undo on the active tab and updates the menus """
@@ -666,6 +702,16 @@ class GUI(wx.Frame):
     def on_refresh(self):
         """Refresh all thumbnails."""
         self.thumbs.update_all()
+
+    def on_translate(self, event):
+        wx.BeginBusyCursor()
+        webbrowser.open_new_tab("https://translations.launchpad.net/whyteboard")
+        wx.CallAfter(wx.EndBusyCursor)
+
+    def on_report_bug(self, event):
+        wx.BeginBusyCursor()
+        webbrowser.open_new_tab("https://bugs.launchpad.net/whyteboard")
+        wx.CallAfter(wx.EndBusyCursor)
 
     def on_resize(self, event=None):
         dlg = Resize(self)
@@ -739,7 +785,7 @@ class WhyteboardApp(wx.App):
         locale.setlocale(locale.LC_ALL, '')
 
         self.locale.AddCatalogLookupPathPrefix(langdir)
-        self.locale.AddCatalog("Whyteboard")
+        self.locale.AddCatalog("whyteboard")
 
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
         self.frame = GUI(None)

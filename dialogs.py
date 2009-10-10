@@ -256,10 +256,18 @@ class UpdateDialog(wx.Dialog):
         sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
         self.SetSizer(sizer)
 
+        aTable = wx.AcceleratorTable([ (wx.ACCEL_NORMAL,  wx.WXK_ESCAPE, wx.ID_CANCEL) ])
+        self.SetAcceleratorTable(aTable)
+        self.Bind(wx.EVT_MENU, self.on_close, id=wx.ID_CANCEL)
+        self.Bind(wx.EVT_CHAR, self.on_close, id=wx.ID_CANCEL)
+
         self.btn.Bind(wx.EVT_BUTTON, self.update)
+
         wx.CallAfter(self.check)  # we want to show the dialog then fetch URL
 
-
+    def on_close(self, event):
+        """Leaves dialog.ShowModal() == wx.ID_CANCEL to handle closing"""
+        self.Destroy()
 
     def check(self):
         """

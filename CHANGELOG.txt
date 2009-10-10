@@ -12,9 +12,10 @@ xx Oct 2009 -- 0.38.2
 * Support for internationalization - Whyteboard will be available in other
   languages once the application is translated (currently: Welsh and Italian)
 * Export all sheets (as images) functionality
-* Small UI menu improvements
 * Added right-click pop-up menus to each thumbnail / Note tree item. From here
   you can also rename/close or export that sheet
+* Shift+Tab / Shift+Ctrl+Tab shortcuts now work on Linux (GTK at least)
+* Misc user interface improvements
 
 ----------------------------------------------------------------------
 

@@ -87,7 +87,8 @@ class Whyteboard(wx.ScrolledWindow):
     def left_motion(self, event):
         """Updates the shape. Indicate shape may be changed using Select tool"""
         x, y = self.convert_coords(event)
-        self.gui.SetStatusText(" %s, %s" % (x, y))
+        if self.gui.showstat.IsChecked():
+            self.gui.SetStatusText(" %s, %s" % (x, y))
 
         if self.drawing:
             self.shape.motion(x, y)
@@ -170,14 +171,13 @@ class Whyteboard(wx.ScrolledWindow):
         else:
             self.gui.util.tool = new
 
-        items = self.gui.util.items
         colour = self.gui.util.colour
         thickness = self.gui.util.thickness
         params = [self, colour, thickness]  # Object constructor parameters
-        self.shape = None
-        self.shape = items[new - 1](*params)  # create new Tool object
+        self.shape = self.gui.util.items[new - 1](*params)  # create new Tool
         self.change_cursor()
         self.gui.control.preview.Refresh()
+
 
     def change_cursor(self):
         if isinstance(self.shape.cursor, wx.Cursor):
