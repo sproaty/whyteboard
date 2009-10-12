@@ -24,6 +24,8 @@ import wx
 from wx.lib import scrolledpanel as scrolled
 from copy import copy
 
+from utility import make_bitmap
+
 _ = wx.GetTranslation
 
 
@@ -65,7 +67,7 @@ class ControlPanel(wx.Panel):
             b = wx.ToggleButton(pane, x + 1, name)
             b.SetToolTipString(_(gui.util.items[x].tooltip))
             b.Bind(wx.EVT_TOGGLEBUTTON, self.change_tool, id=x + 1)
-            toolsizer.Add(b, 0, wx.EXPAND)
+            toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             self.tools[x + 1] = b
 
         self.tools[self.toggled].SetValue(True)
@@ -78,12 +80,12 @@ class ControlPanel(wx.Panel):
         #                    'Cyan', 'Orange', 'Light Grey']
 
         grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
-        for colour in self.gui.util.colours:
-            bmp = self.make_bitmap(colour)
-            b = wx.BitmapButton(pane, bitmap=bmp)
+        for colour in gui.util.colours:
             method = lambda evt, col = colour: self.change_colour(evt, col)
+            b = wx.BitmapButton(pane, bitmap=make_bitmap(colour))  
+            grid.Add(b, 0)          
             b.Bind(wx.EVT_BUTTON, method)
-            grid.Add(b, 0)
+
 
         choices = ''.join(str(i) + " " for i in range(1, 26) ).split()
 
@@ -134,16 +136,6 @@ class ControlPanel(wx.Panel):
         box.SetSelection(val)
         self.change_thickness()
 
-
-    def make_bitmap(self, colour):
-        """Draws a small coloured bitmap for a colour grid button"""
-        bmp = wx.EmptyBitmap(15, 15)
-        dc = wx.MemoryDC()
-        dc.SelectObject(bmp)
-        dc.SetBackground(wx.Brush(colour))
-        dc.Clear()
-        dc.SelectObject(wx.NullBitmap)
-        return bmp
 
     def change_tool(self, event=None, _id=None):
         """

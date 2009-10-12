@@ -45,6 +45,7 @@ from tools import Image, Note
 from utility import Utility, FileDropTarget
 from dialogs import  History, ProgressDialog, Resize, UpdateDialog
 from panels import ControlPanel, SidePanel, SheetsPopup
+from preferences import Preferences
 
 
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
@@ -186,6 +187,8 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_COPY, _("&Copy")+"\tCtrl+C", _("Copy a Bitmap Selection region"))
         edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste an image from your clipboard into Whyteboard"))
         edit.AppendItem(pnew)
+        edit.AppendSeparator()
+        edit.Append(wx.ID_PREFERENCES, _("Prefere&nces"), _("Change your preferences"))
 
         view.Append(ID_HISTORY, _("&History Viewer...")+"\tCtrl+H", _("View and replay your drawing history"))
         view.AppendSeparator()
@@ -247,12 +250,12 @@ class GUI(wx.Frame):
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "exit", "undo", "redo", "undo_tab", "copy", "paste", "paste_new",
+        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "exit", "undo", "redo", "undo_tab", "copy", "paste", "preferences", "paste_new",
                   "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "rename", "help", "update",
                   "translate", "report_bug", "about"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
-               wx.ID_COPY, wx.ID_PASTE, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
+               wx.ID_COPY, wx.ID_PASTE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
                ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT]
 
         for name, _id in zip(functs, IDs):
@@ -540,6 +543,7 @@ class GUI(wx.Frame):
                 self.thumbs.update_name(sheet, val)
                 self.notes.update_name(sheet, val)
 
+
     def update_menus(self, event):
         """
         Enables/disables the undo/redo/next/prev button as appropriate.
@@ -607,16 +611,19 @@ class GUI(wx.Frame):
         shape.left_down(0, 0)
         self.board.redraw_all(True)
 
+
     def on_paste_new(self, event):
         """ Pastes the image into a new tab """
         self.on_new_tab()
         self.on_paste()
+
 
     def on_fullscreen(self, event=None):
         """ Toggles fullscreen """
         flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION |
                wx.FULLSCREEN_NOSTATUSBAR)
         self.ShowFullScreen(not self.IsFullScreen(), flag)
+
 
     def on_toolbar(self, event=None):
         """ Toggles the toolbar """
@@ -626,11 +633,13 @@ class GUI(wx.Frame):
             self.toolbar.Hide()
         self.SendSizeEvent()
 
+
     def on_statusbar(self, event=None):
         if self.showstat.IsChecked():
             self.statusbar.Show()
         else:
             self.statusbar.Hide()
+
 
     def convert_dialog(self, cmd):
         """
@@ -642,11 +651,13 @@ class GUI(wx.Frame):
         self.dialog = ProgressDialog(self, _("Converting..."))
         self.dialog.ShowModal()
 
+
     def on_end_process(self, event):
         """ Destroy the progress process after convert returns """
         self.process.Destroy()
         self.dialog.Destroy()
         del self.process
+
 
     def on_done_load(self, event=None):
         """ Refreshes thumbnails, destroys progress dialog after loading """
@@ -661,72 +672,94 @@ class GUI(wx.Frame):
         """ Ask to save, quit or cancel if the user hasn't saved. """
         self.util.prompt_for_save(self.Destroy)
 
+
     def tab_popup(self, event):
         """ Pops up the tab context menu. """
         self.PopupMenu(SheetsPopup(self, self, (event.GetX(), event.GetY())))
+
 
     def on_undo(self, event=None):
         """ Calls undo on the active tab and updates the menus """
         self.board.undo()
 
+
     def on_redo(self, event=None):
         """ Calls redo on the active tab and updates the menus """
         self.board.redo()
+
 
     def on_prev(self, event=None):
         """ Changes to the previous sheet """
         self.tabs.SetSelection(self.current_tab - 1)
 
+
     def on_next(self, event=None):
         """ Changes to the next sheet """
         self.tabs.SetSelection(self.current_tab + 1)
+
 
     def on_clear(self, event=None):
         """ Clears current sheet's drawings, except images. """
         self.board.clear(keep_images=True)
 
+
     def on_clear_all(self, event=None):
         """ Clears current sheet """
         self.board.clear()
+
 
     def on_clear_sheets(self, event=None):
         """ Clears all sheets' drawings, except images. """
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear(keep_images=True)
 
+
     def on_clear_all_sheets(self, event=None):
         """ Clears all sheets ***"""
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear()
 
+
     def on_refresh(self):
         """Refresh all thumbnails."""
         self.thumbs.update_all()
+
 
     def on_translate(self, event):
         wx.BeginBusyCursor()
         webbrowser.open_new_tab("https://translations.launchpad.net/whyteboard")
         wx.CallAfter(wx.EndBusyCursor)
 
+
     def on_report_bug(self, event):
         wx.BeginBusyCursor()
         webbrowser.open_new_tab("https://bugs.launchpad.net/whyteboard")
         wx.CallAfter(wx.EndBusyCursor)
+
 
     def on_resize(self, event=None):
         dlg = Resize(self)
         dlg.ShowModal()
         dlg.Destroy()
 
+
+    def on_preferences(self, event=None):
+        """ Checks for new versions of the program ***"""
+        dlg = Preferences(self)
+        dlg.Show()
+
+
     def on_update(self, event=None):
         """ Checks for new versions of the program ***"""
         dlg = UpdateDialog(self)
         dlg.ShowModal()
 
+
     def on_history(self, event=None):
         dlg = History(self)
         dlg.ShowModal()
         dlg.Destroy()
+
 
     def on_help(self, event=None):
         """
@@ -757,9 +790,16 @@ class GUI(wx.Frame):
         inf.Name = "Whyteboard"
         inf.Version = self.version
         inf.Description = _("A simple whiteboard and PDF annotator")
-        inf.Developers = inf.DocWriters = ["Steven Sproat <sproaty@gmail.com>"]
-        inf.Translators = ["Roberto Bondi <bondi@isicast.org> (Italian)",
-                           "Steven Sproat <sproaty@gmail.com> (Welsh)"]
+        inf.Developers = ["Steven Sproat <sproaty@gmail.com>"]
+        t = ['"Dennis" https://launchpad.net/~dlinn83 (German)',
+             'Medina Colpaca https://launchpad.net/~medina-colpaca (Spanish)',
+             '"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
+             'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
+             'Roberto Bondi https://launchpad.net/~bondi (Italian)',
+             'Steven Sproat https://launchpad.net/~sproaty (Welsh)',
+             '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)']
+
+        inf.Translators = t
         inf.Copyright = "(C) 2009 Steven Sproat"
         if os.name == "posix":
             x = "http://www.launchpad.net/whyteboard"
@@ -794,6 +834,7 @@ class WhyteboardApp(wx.App):
         self.delete_temp_files()
         return True
 
+
     def parse_args(self):
         """Forward the first command-line arg to gui.do_open()"""
         try:
@@ -802,6 +843,7 @@ class WhyteboardApp(wx.App):
                 self.frame.do_open(_file)
         except IndexError:
             pass
+
 
     def delete_temp_files(self):
         """

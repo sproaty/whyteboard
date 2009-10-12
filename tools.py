@@ -580,7 +580,7 @@ class Eyedrop(Tool):
     """
     Selects the colour at the specified x,y coords
     """
-    tooltip = _("Picks a colour from the selected pixel")
+    tooltip = _("Picks a color from the selected pixel")
     name = _("Eyedropper")
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)

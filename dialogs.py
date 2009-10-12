@@ -46,29 +46,29 @@ class History(wx.Dialog):
         self.paused = False
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        #_max = len(gui.board.shapes)+50
-        #self.slider = wx.Slider(self, minValue=1, maxValue=_max, size=(200,50),
-        #            style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL )
+        _max = len(gui.board.shapes)+50
+        #self.slider = wx.Slider(self, minValue=1, maxValue=_max,
+        #                        style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL )
         #self.slider.SetTickFreq(5, 1)
 
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
-        btn_stop = wx.Button(self, label=_("Stop"), size=(45, 30) )
-        btn_pause = wx.Button(self, label=_("Pause"), size=(50, 30) )
-        btn_play = wx.Button(self, label=_("Play"), size=(45, 30) )
+        btn_stop = wx.Button(self, label=_("Stop"))
+        btn_pause = wx.Button(self, label=_("Pause"))
+        btn_play = wx.Button(self, label=_("Play"))
         historySizer.Add(btn_play, 0,  wx.ALL, 2)
         historySizer.Add(btn_pause, 0,  wx.ALL, 2)
         historySizer.Add(btn_stop, 0,  wx.ALL, 2)
 
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        self.cancelButton.SetDefault()
-
+        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        cancelButton.SetDefault()
 
         btnSizer = wx.StdDialogButtonSizer()
-        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
+        btnSizer.AddButton(cancelButton)
+        btnSizer.Realize()
 
-        #sizer.Add(self.slider, 0, wx.ALL, 5)
+        #sizer.Add(self.slider, 0, wx.EXPAND | wx.ALL, 10)
         sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
-        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE, 5)
+        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 8)
 
         self.SetSizer(sizer)
         sizer.Fit(self)
@@ -78,7 +78,7 @@ class History(wx.Dialog):
         btn_pause.Bind(wx.EVT_BUTTON, self.pause)
         btn_stop.Bind(wx.EVT_BUTTON, self.stop)
         self.Bind(wx.EVT_CLOSE, self.on_close)
-        self.cancelButton.Bind(wx.EVT_BUTTON, self.on_close)
+        cancelButton.Bind(wx.EVT_BUTTON, self.on_close)
         #self.slider.Bind(wx.EVT_SCROLL, self.scroll)
 
 
@@ -224,50 +224,45 @@ class UpdateDialog(wx.Dialog):
     program accordingly
     """
     def __init__(self, gui):
-        """Defines a gauge and a timer which updates the gauge."""
+        """
+        Builds the UI - then wx.CallAfter()s the update check to the server
+        """
         wx.Dialog.__init__(self, gui, title=_("Updates"), size=(350, 200))
         self.gui = gui
         self.downloaded = 0
         self.version = None
         self._file = None
         self._type = None
-        gap = wx.LEFT | wx.TOP | wx.RIGHT
 
-        self.text = wx.StaticText(self, label=_("Connecting to server..."))
-        self.text2 = wx.StaticText(self, label="")
+        self.text = wx.StaticText(self, label=_("Connecting to server..."),
+                                  size=(300, 80))
+        self.text2 = wx.StaticText(self, label="")  # show download progress
         font = self.text.GetClassDefaultAttributes().font
         font.SetPointSize(11)
         self.text.SetFont(font)
         self.text2.SetFont(font)
 
-        self.btn = wx.Button(self, label=_("Update"))
-        self.btn.Enable(False)
-
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        self.cancelButton.SetDefault()
+        self.btn = wx.Button(self, wx.ID_OK, _("Update"))
+        cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        self.btn.Enable(False)        
+        cancel.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
-        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 2)
+        btnSizer.AddButton(cancel)
+        btnSizer.AddButton(self.btn)
+        btnSizer.SetCancelButton(cancel)
+        btnSizer.Realize()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.text, 0, gap, 10)
-        sizer.Add(self.text2, 0, wx.TOP | wx.LEFT, 10)
-        sizer.Add(self.btn, 0, wx.TOP | wx.ALIGN_CENTRE, 30)
-        sizer.Add((10, 10)) # Spacer.
-        sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
+        sizer.Add(self.text, 0, wx.LEFT | wx.TOP | wx.RIGHT, 10)
+        sizer.Add(self.text2, 0, wx.LEFT | wx.RIGHT, 10)
+        sizer.Add((10, 20)) # Spacer.
+        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE)
         self.SetSizer(sizer)
-
-        aTable = wx.AcceleratorTable([ (wx.ACCEL_NORMAL,  wx.WXK_ESCAPE, wx.ID_CANCEL) ])
-        self.SetAcceleratorTable(aTable)
-        self.Bind(wx.EVT_MENU, self.on_close, id=wx.ID_CANCEL)
-        self.Bind(wx.EVT_CHAR, self.on_close, id=wx.ID_CANCEL)
+        self.SetFocus()
 
         self.btn.Bind(wx.EVT_BUTTON, self.update)
-
         wx.CallAfter(self.check)  # we want to show the dialog then fetch URL
 
-    def on_close(self, event):
-        """Leaves dialog.ShowModal() == wx.ID_CANCEL to handle closing"""
-        self.Destroy()
 
     def check(self):
         """
@@ -337,26 +332,27 @@ class UpdateDialog(wx.Dialog):
             self.text.SetLabel(_("Could not connect to server."))
             self.btn.SetLabel(_("Retry"))
             return
-
-        if self.gui.util.is_exe():
-            # rename current exe, rename temp to current
-            if os.name == "nt":
-                os.rename(path[1], "wtbd-bckup.exe")
-                os.rename("tmp-wb-.exe", "whyteboard.exe")
-                args = [sys.argv[0], [sys.argv[0]]]
-        else:
-            if os.name == "posix":
-                os.system("tar -xf "+ tmp[0] +" --strip-components=1")
-            else:
-                p = os.path.abspath(tmp[0])
-                self.gui.util.extract_tar(p, self.version)
-            os.remove(tmp[0])
-            args = ['python', ['python', sys.argv[0]]]  # for os.execvp
-
-        if self.gui.util.filename:
-            name = '"%s"' % self.gui.util.filename  # gotta escape for Windows
-            args[1].append(name)  # restart, load .wtbd
-        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)
+        return
+#
+#        if self.gui.util.is_exe():
+#            # rename current exe, rename temp to current
+#            if os.name == "nt":
+#                os.rename(path[1], "wtbd-bckup.exe")
+#                os.rename("tmp-wb-.exe", "whyteboard.exe")
+#                args = [sys.argv[0], [sys.argv[0]]]
+#        else:
+#            if os.name == "posix":
+#                os.system("tar -xf "+ tmp[0] +" --strip-components=1")
+#            else:
+#                p = os.path.abspath(tmp[0])
+#                self.gui.util.extract_tar(p, self.version)
+#            os.remove(tmp[0])
+#            args = ['python', ['python', sys.argv[0]]]  # for os.execvp
+#
+#        if self.gui.util.filename:
+#            name = '"%s"' % self.gui.util.filename  # gotta escape for Windows
+#            args[1].append(name)  # restart, load .wtbd
+#        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)
 
 
     def reporter(self, count, block, total):
@@ -372,7 +368,7 @@ class UpdateDialog(wx.Dialog):
             total /= 1024
             _type2 = "MB"
 
-        self.text2.SetLabel(_("Downloaded")+" %s" % done + "KB of %s" % total +
+        self.text2.SetLabel(" "+_("Downloaded")+" %s" % done + "KB of %s" % total +
                                           rem + _type2)
 
 
@@ -389,7 +385,7 @@ class TextInput(wx.Dialog):
         Standard constructor - sets text to supplied text variable, if present.
         """
         wx.Dialog.__init__(self, gui, title=_("Enter text"),
-              style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER, size=(330, 250))
+              style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER, size=(350, 280))
 
         self.ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(300, 120))
         self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
@@ -426,13 +422,15 @@ class TextInput(wx.Dialog):
         _sizer.Add(fontBtn, 0, wx.RIGHT, 5)
         _sizer.Add(self.colourBtn, 0)
         btnSizer = wx.StdDialogButtonSizer()
-        btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
-        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
+        btnSizer.AddButton(self.okButton)
+        btnSizer.AddButton(self.cancelButton)
+        btnSizer.Realize()
+        
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 7)
         sizer.Add(_sizer, 0, gap | wx.ALIGN_RIGHT, 5)
         sizer.Add((10, 10))  # Spacer.
-        sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
+        sizer.Add(btnSizer, 0, wx.BOTTOM | wx.ALIGN_CENTRE, 6)
         self.SetSizer(sizer)
 
         self.set_focus()

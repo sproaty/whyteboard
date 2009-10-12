@@ -10,12 +10,30 @@ Sun 04 October 2009
 xx Oct 2009 -- 0.38.2
 
 * Support for internationalization - Whyteboard will be available in other
-  languages once the application is translated (currently: Welsh and Italian)
+  languages once translated. Currently fully supports:
+   - Dutch
+   - English
+   - Italian
+   - Welsh
+
+  and, partially:
+   - Czech
+   - German
+   - Spanish
+
+* User preferences, allowing customisation of the program:
+   - Language
+   - Preferred default font
+   - Your 9 colours in the left-hand panel
+   - PDF conversion quality options
+   - How many tabs to remember for "undo closed tab"
+   - Toggle toolbar / statusbar
+
 * Export all sheets (as images) functionality
 * Added right-click pop-up menus to each thumbnail / Note tree item. From here
-  you can also rename/close or export that sheet
-* Shift+Tab / Shift+Ctrl+Tab shortcuts now work on Linux (GTK at least)
-* Misc user interface improvements
+  you can also rename, close or export that sheet
+* User Interface improvements
+* Shift + Tab / Shift + Ctrl + Tab shortcuts now work on Linux (GTK at least)
 
 ----------------------------------------------------------------------
 

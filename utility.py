@@ -75,6 +75,9 @@ from validate import Validator
 from dialogs import ProgressDialog, FindIM
 import tools
 
+DEFAULT_COLOURS = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple', 'Cyan', 
+                   'Orange', 'Light Grey']
+
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -100,8 +103,7 @@ class Utility(object):
         self.saved = True
         self.colour = "Black"
         self.thickness = 1
-        self.colours = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
-                            'Cyan', 'Orange', 'Light Grey']
+        self.colours = DEFAULT_COLOURS
         self.font = None  # default font for text input
         self.tool = 1  # Current tool ID that is being drawn with
         self.items = tools.items  # shortcut
@@ -548,6 +550,7 @@ class Utility(object):
         result = self.config.validate(validator)
         print self.config['attributes']
         
+        
     def check_im_path(self, path):
         """
         Checks the ImageMagick path before getting/setting the string to ensure
@@ -626,6 +629,7 @@ class Utility(object):
         except AttributeError:
             return False
 
+
     def get_clipboard(self):
         """Checks the clipboard for any valid image data to paste"""
         bmp = wx.BitmapDataObject()
@@ -635,6 +639,7 @@ class Utility(object):
         if success:
             return bmp
         return False
+
 
     def set_clipboard(self, rect):
         """Sets the clipboard with a bitmap image data of a selection"""
@@ -660,6 +665,7 @@ class FileDropTarget(wx.FileDropTarget):
         self.gui.do_open(filenames[0])
 
 #----------------------------------------------------------------------
+
 
 def save_pasted_images(shapes):
     """
@@ -689,6 +695,7 @@ def save_pasted_images(shapes):
 
                     data[shape.path] = img1.GetData()
 
+
 def load_image(path, board):
     """
     Loads an image into the given Whyteboard tab. bitmap is the path to an
@@ -697,6 +704,19 @@ def load_image(path, board):
     image = wx.Bitmap(path)
     shape = tools.Image(board, image, path)
     shape.left_down(0, 0)  # renders, updates scrollbars
+
+
+def make_bitmap(colour):
+    """
+    Draws a small coloured bitmap for a colour grid button
+    """
+    bmp = wx.EmptyBitmap(19, 19)
+    dc = wx.MemoryDC()
+    dc.SelectObject(bmp)
+    dc.SetBackground(wx.Brush(colour))
+    dc.Clear()
+    dc.SelectObject(wx.NullBitmap)
+    return bmp 
 
 
 def make_filename():
@@ -711,7 +731,7 @@ def make_filename():
 
     string = "".join(_list)
     return string +"-temp-%s" % (random.randrange(0, 999999))
-
+ 
 
 def get_home_dir(extra_path=None):
     """
