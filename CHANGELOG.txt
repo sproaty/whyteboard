@@ -25,14 +25,15 @@ xx Oct 2009 -- 0.38.2
    - Language
    - Preferred default font
    - Your 9 colours in the left-hand panel
-   - PDF conversion quality options
-   - How many tabs to remember for "undo closed tab"
+   - PDF conversion quality options (normal/high/highest)
+   - How many sheets to remember for "undo closed sheets"
    - Toggle toolbar / statusbar
 
 * Export all sheets (as images) functionality
 * Added right-click pop-up menus to each thumbnail / Note tree item. From here
   you can also rename, close or export that sheet
 * User Interface improvements
+* Eraser now erases a larger surface
 * Shift + Tab / Shift + Ctrl + Tab shortcuts now work on Linux (GTK at least)
 
 ----------------------------------------------------------------------

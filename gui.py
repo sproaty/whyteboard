@@ -166,13 +166,12 @@ class GUI(wx.Frame):
         undo_sheet = wx.MenuItem(edit, ID_UNDO_SHEET, _("&Undo Last Closed Sheet")+"\tCtrl+Shift-T", _("Undo the last closed sheet"))
         undo_sheet.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_UNDO, wx.ART_MENU))
 
-        _file.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T", _("Add a new sheet"))
         _file.AppendItem(new)
         _file.Append(wx.ID_OPEN, _("&Open...")+"\tCtrl-O", _("Load a Whyteboard save file, an image or convert a PDF/PS document"))
-        _file.Append(wx.ID_CLOSE, _("&Remove Sheet")+"\tCtrl+W", _("Close the current sheet"))
         _file.AppendSeparator()
         _file.Append(wx.ID_SAVE, _("&Save")+"\tCtrl+S", _("Save the Whyteboard data"))
         _file.Append(wx.ID_SAVEAS, _("Save &As...")+"\tCtrl+Shift+S", _("Save the Whyteboard data in a new file"))
+        _file.AppendSeparator()
         _file.AppendMenu(+1, _('&Import File'), _import)
         #_file.AppendMenu(+1, '&Export File', _export)
         _file.Append(ID_EXPORT, _("&Export Sheet...")+"\tCtrl+E", _("Export the current sheet to an image file"))
@@ -194,10 +193,12 @@ class GUI(wx.Frame):
         view.AppendSeparator()
         self.showtool = view.Append(ID_TOOLBAR," "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
         self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
-        view.Check(ID_TOOLBAR, True)
-        view.Check(ID_STATUSBAR, True)
         view.Append(ID_FULLSCREEN, " "+_("&Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
 
+        sheets.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T", _("Add a new sheet"))
+        sheets.Append(wx.ID_CLOSE, _("&Remove Sheet")+"\tCtrl+W", _("Close the current sheet"))
+        sheets.Append(ID_RENAME, _("&Rename Sheet..."), _("Rename the current sheet"))
+        sheets.AppendSeparator()
         self.next = sheets.Append(ID_NEXT, _("&Next Sheet")+"\tCtrl+Tab", _("Go to the next sheet"))
         self.prev = sheets.Append(ID_PREV, _("&Previous Sheet")+"\tCtrl+Shift+Tab", _("Go to the previous sheet"))
         sheets.AppendItem(undo_sheet)
@@ -207,8 +208,6 @@ class GUI(wx.Frame):
         sheets.AppendSeparator()
         sheets.Append(ID_CLEAR_SHEETS, _("Clear All Sheets' &Drawings"), _("Clear all sheets' drawings (keep images)"))
         sheets.Append(ID_CLEAR_ALL_SHEETS, _("Clear &All Sheets"), _("Clear all sheets"))
-        sheets.AppendSeparator()
-        sheets.Append(ID_RENAME, _("&Rename Sheet..."), _("Rename the current sheet"))
 
         _help.Append(wx.ID_HELP, _("&Contents")+"\tF1", _("View information about Whyteboard"))
         _help.AppendSeparator()
@@ -225,6 +224,16 @@ class GUI(wx.Frame):
         self.SetMenuBar(self.menu)
         self.menu.Enable(ID_PASTE_NEW, self.can_paste)
         self.menu.Enable(ID_UNDO_SHEET, False)
+
+
+        if self.util.config['toolbar']:
+            view.Check(ID_TOOLBAR, True)
+        else:
+            self.on_toolbar(None, False)
+        if self.util.config['statusbar']:
+            view.Check(ID_STATUSBAR, True)
+        else:
+            self.on_statusbar(None, False)
 
 
     def do_bindings(self):
@@ -470,8 +479,8 @@ class GUI(wx.Frame):
         """
         if not self.tab_count - 1:  # must have at least one sheet open
             return
-        if len(self.closed_tabs) == 10:
-            del self.closed_tabs[9]
+        if len(self.closed_tabs) == self.util.config['undo_sheets']:
+            del self.closed_tabs[self.util.config['undo_sheets'] - 1]
 
         # doesn't remove the notes if called earlier
         self.notes.remove_tab(self.current_tab)
@@ -625,20 +634,31 @@ class GUI(wx.Frame):
         self.ShowFullScreen(not self.IsFullScreen(), flag)
 
 
-    def on_toolbar(self, event=None):
+    def on_toolbar(self, event=None, force=None):
         """ Toggles the toolbar """
-        if self.showtool.IsChecked():
+        if self.showtool.IsChecked() or force:
             self.toolbar.Show()
+            self.showtool.Check(True)
         else:
             self.toolbar.Hide()
+            self.showtool.Check(False)
+        if force is False:
+            self.toolbar.Hide()
+            self.showtool.Check(False)
         self.SendSizeEvent()
 
 
-    def on_statusbar(self, event=None):
-        if self.showstat.IsChecked():
+    def on_statusbar(self, event=None, force=None):
+        if self.showstat.IsChecked() or force:
             self.statusbar.Show()
+            self.showstat.Check(True)
         else:
             self.statusbar.Hide()
+            self.showstat.Check(False)
+        if force is False:
+            self.statusbar.Hide()
+            self.showstat.Check(False)
+        self.SendSizeEvent()
 
 
     def convert_dialog(self, cmd):
@@ -746,7 +766,7 @@ class GUI(wx.Frame):
     def on_preferences(self, event=None):
         """ Checks for new versions of the program ***"""
         dlg = Preferences(self)
-        dlg.Show()
+        dlg.ShowModal()
 
 
     def on_update(self, event=None):

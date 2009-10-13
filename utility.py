@@ -71,12 +71,33 @@ except ImportError:
     import pickle
 
 from configobj import ConfigObj
-from validate import Validator 
+from validate import Validator
 from dialogs import ProgressDialog, FindIM
 import tools
 
-DEFAULT_COLOURS = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple', 'Cyan', 
+DEFAULT_COLOURS = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple', 'Cyan',
                    'Orange', 'Light Grey']
+
+
+cfg = """
+colour1 = list(min=3, max=3, default=list('280', '0', '0'))
+colour2 = list(min=3, max=3, default=list('255', '255', '0'))
+colour3 = list(min=3, max=3, default=list('0', '255', '0'))
+colour4 = list(min=3, max=3, default=list('255', '0', '0'))
+colour5 = list(min=3, max=3, default=list('0', '0', '255'))
+colour6 = list(min=3, max=3, default=list('160', '32', '240'))
+colour7 = list(min=3, max=3, default=list('0', '255', '255'))
+colour8 = list(min=3, max=3, default=list('255', '165', '0'))
+colour9 = list(min=3, max=3, default=list('211', '211', '211'))
+convert_quality = option('highest', 'high', 'normal', default='normal')
+default_font = string
+imagemagick_path = string
+handle_size = integer(min=3, max=15, default=6)
+language = option('English', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
+statusbar = boolean(default=True)
+toolbar = boolean(default=True)
+undo_sheets = integer(min=5, max=50, default=10)
+"""
 
 _ = wx.GetTranslation
 
@@ -112,15 +133,17 @@ class Utility(object):
         self.backup_ext = ".blah5bl8ah123bla6h"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
-
-        
-        path = os.path.join(get_home_dir(), "user.pref")
-        spec = os.path.join(get_home_dir(), "spec.ini")
-        self.config = ConfigObj(path, configspec=spec, create_empty=True,
-                                encoding='UTF8')
-        #if not os.path.exists(path):
-        self.write_blank_config()
         self.library = os.path.join(get_home_dir(), "library.known")
+
+        path = os.path.join(get_home_dir(), "user.pref")
+        self.config = ConfigObj(path, configspec=cfg.split("\n"))
+        validator = Validator()
+        self.config.validate(validator)
+
+        tools.HANDLE_SIZE = self.config['handle_size']
+        if self.config.has_key('default_font'):
+            self.font = wx.FFont(0, 0)
+            self.font.SetNativeFontInfoFromString(self.config['default_font'])
 
         # Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
@@ -378,23 +401,16 @@ class Utility(object):
             _file = self.temp_file
 
         self.library_lookup(_file)
-
         path = get_home_dir("wtbd-tmp")
-        tmp_file = make_filename()  #
+        tmp_file = make_filename()
 
         index = len(self.to_convert)
         self.to_convert[index] = { 0: str(_file) }
         before = os.walk(path).next()[2]  # file count before convert
 
-        # convert "[file path]" "[destination-folder]" -- quotes for Windows
         full_path = os.path.join(path + tmp_file + ".png")
-        #cmd = '"%s" -density 294 "%s" -resample 108 -unsharp 0x.5 -trim +repage -bordercolor white -border 7 "%s"' % (self.im_location, _file, full_path)
-
-        # ------------------------------------------------
-        # better PDF quality, but takes longer to convert
-        # ------------------------------------------------
-
-        cmd = '"%s" "%s" "%s"' % (self.im_location, _file, full_path)
+        quality = self.config['convert_quality']
+        cmd = convert_quality(quality, self.im_location, _file, full_path)
 
         self.gui.convert_dialog(cmd)  # show progress bar
         after = os.walk(path).next()[2]
@@ -511,55 +527,34 @@ class Utility(object):
         Prompts a Windows user for ImageMagick's directory location on
         initialisation. Save location to config file.
         """
-        imagick = None  # imagemagick location
-#        if os.name == "posix":
-#            value = os.system("which convert")
-#            if value == 256:
-#                wx.MessageBox(_("ImageMagick was not found. You will be unable " +
-#                              "to load PDF and PS files until it is installed."))
-#            else:
-#                self.im_location = imagick = "convert"
-#        elif os.name == "nt":
+        if os.name == "posix":
+            value = os.system("which convert")
+            if value == 256:
+                wx.MessageBox(_("ImageMagick was not found. You will be unable " +
+                              "to load PDF and PS files until it is installed."))
+            else:
+                self.im_location = "convert"
+        elif os.name == "nt":
 
-        if not self.config.has_key('im_path'):
-            print 'hih'
-            dlg = FindIM(self, self.gui)
-            dlg.ShowModal()
-            if self.im_location:
-                # save the ImageMagick directory location
-                loc = self.im_location.replace("convert.exe", "")
-                self.config['section1']['path'] = loc
-                self.config.write()
-        else:
-            # verify loaded file's IM directory is valid
-            self.check_im_path(self.config['section1']['path'])
-            #for pref in open(path, "r"):
-            #    self.check_im_path(pref.split("=")[1])
+            if not self.config.has_key('imagemagick_path'):
+                dlg = FindIM(self, self.gui)
+                dlg.ShowModal()
+                if self.im_location:
+                    self.config['imagemagick_path'] = self.im_location
+                    self.config.write()
+            else:
+                self.check_im_path(self.config['imagemagick_path'])
 
 
-
-    def write_blank_config(self):
-#        self.config['im_path'] = None
-#        self.config['colours'] = self.colours
-#        self.config['language'] = 'english'
-#        self.config['toolbar'] = 'on'
-#        self.config['statusbar'] = 'on'
-#        self.config['covert_quality'] = 'standard'
-        #self.config.write()
-        validator = Validator()
-        result = self.config.validate(validator)
-        print self.config['attributes']
-        
-        
     def check_im_path(self, path):
         """
         Checks the ImageMagick path before getting/setting the string to ensure
         convert.exe exists
         """
         _file = os.path.join(path, "convert.exe")
-        if not os.path.exists(_file):
-            wx.MessageBox(path + " does not contain convert.exe")
-            return False
+        #if not os.path.exists(_file):
+        #    wx.MessageBox(path + " does not contain convert.exe")
+        #    return False
 
         self.im_location = _file
         return True
@@ -708,7 +703,8 @@ def load_image(path, board):
 
 def make_bitmap(colour):
     """
-    Draws a small coloured bitmap for a colour grid button
+    Draws a small coloured bitmap for a colour grid button. Can take a name,
+    RGB tupple or RGB-packed int.
     """
     bmp = wx.EmptyBitmap(19, 19)
     dc = wx.MemoryDC()
@@ -716,7 +712,20 @@ def make_bitmap(colour):
     dc.SetBackground(wx.Brush(colour))
     dc.Clear()
     dc.SelectObject(wx.NullBitmap)
-    return bmp 
+    return bmp
+
+
+def convert_quality(quality, im_location, _file, path):
+    """
+    Returns a string for controlling the convert quality
+    """
+    cmd = '"%s" -density 200 "%s" -resample 88 -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"' % (im_location, _file, path)
+
+    if quality == 'highest':
+        cmd = '"%s" -density 300 "%s" -resample 120 -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"' % (im_location, _file, path)
+    if quality == 'high':
+        cmd = '"%s" -density 250 "%s" -resample 100 -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"' % (im_location, _file, path)
+    return cmd
 
 
 def make_filename():
@@ -731,7 +740,7 @@ def make_filename():
 
     string = "".join(_list)
     return string +"-temp-%s" % (random.randrange(0, 999999))
- 
+
 
 def get_home_dir(extra_path=None):
     """

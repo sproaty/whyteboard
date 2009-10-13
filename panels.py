@@ -50,10 +50,10 @@ class ControlPanel(wx.Panel):
 
         self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
-        pane = self.cp.GetPane()  # every widget's parent
+        self.pane = self.cp.GetPane()  # every widget's parent
         self.gui = gui
         self.toggled = 1  # Pen, initallly
-        self.preview = DrawingPreview(pane, self.gui)
+        self.preview = DrawingPreview(self.pane, self.gui)
         self.tools = {}
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -64,32 +64,25 @@ class ControlPanel(wx.Panel):
         items = [_(i.name) for i in gui.util.items]
 
         for x, name in enumerate(items):
-            b = wx.ToggleButton(pane, x + 1, name)
+            b = wx.ToggleButton(self.pane, x + 1, name)
             b.SetToolTipString(_(gui.util.items[x].tooltip))
             b.Bind(wx.EVT_TOGGLEBUTTON, self.change_tool, id=x + 1)
             toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             self.tools[x + 1] = b
 
         self.tools[self.toggled].SetValue(True)
-        width = wx.StaticText(pane, label=_("Thickness:"))
-        prev = wx.StaticText(pane, label=_("Preview:"))
-        self.colour = wx.ColourPickerCtrl(pane)
+        width = wx.StaticText(self.pane, label=_("Thickness:"))
+        prev = wx.StaticText(self.pane, label=_("Preview:"))
+        self.colour = wx.ColourPickerCtrl(self.pane)
         self.colour.SetToolTipString(_("Select a custom color"))
 
-        #self.colour_list = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple',
-        #                    'Cyan', 'Orange', 'Light Grey']
-
-        grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
-        for colour in gui.util.colours:
-            method = lambda evt, col = colour: self.change_colour(evt, col)
-            b = wx.BitmapButton(pane, bitmap=make_bitmap(colour))  
-            grid.Add(b, 0)          
-            b.Bind(wx.EVT_BUTTON, method)
+        self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
+        self.make_colour_grid()
 
 
         choices = ''.join(str(i) + " " for i in range(1, 26) ).split()
 
-        self.thickness = wx.ComboBox(pane, choices=choices, size=(25, 25),
+        self.thickness = wx.ComboBox(self.pane, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
         self.thickness.SetToolTipString(_("Sets the drawing thickness"))
@@ -98,7 +91,7 @@ class ControlPanel(wx.Panel):
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(toolsizer, 0, wx.ALL, spacing)
         box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add(grid, 0, wx.EXPAND | wx.ALL, spacing)
+        box.Add(self.grid, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(self.colour, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(width, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.thickness, 0, wx.EXPAND | wx.ALL, spacing)
@@ -114,6 +107,20 @@ class ControlPanel(wx.Panel):
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
+
+
+    def make_colour_grid(self):
+        colours = []
+        for x in range(1, 10):
+            col= self.gui.util.config["colour"+str(x)]
+            colours.append([int(c) for c in col])
+
+        for x, colour in enumerate(colours):
+            method = lambda evt, col = colour: self.change_colour(evt, col)
+
+            b = wx.BitmapButton(self.pane, bitmap=make_bitmap(colour))
+            self.grid.Add(b, 0)
+            b.Bind(wx.EVT_BUTTON, method)
 
 
     def toggle(self, evt):
@@ -352,8 +359,8 @@ class Notes(wx.Panel):
         """
         item = self.tree.GetPyData(event.GetItem())
 
-        if item is None:
-            return  # clicked on the root node
+        if item is None:  # clicked on the root node
+            return
         if isinstance(item, int):
             self.gui.tabs.SetSelection(item)
         else:
@@ -403,7 +410,7 @@ class Popup(wx.Menu):
 
     def close(self, event):
         self.gui.current_tab = self.item
-        self.gui.board = gui.tabs.GetPage(self.item)
+        self.gui.board = self.gui.tabs.GetPage(self.item)
         self.gui.on_close_tab()
 
     def export(self, event):
@@ -439,7 +446,7 @@ class NotesPopup(Popup):
             ID = wx.NewId()
             menu = wx.MenuItem(self, ID, _("Edit Note..."))
             self.AppendItem(menu)
-            method = lambda x: self.parent.on_click(event)
+            method = self.select_tab_method(extra)
             self.Bind(wx.EVT_MENU, method, id=ID)
 
     def select_tab_method(self, extra):

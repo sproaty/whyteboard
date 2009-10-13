@@ -35,7 +35,7 @@ _ = wx.GetTranslation
 #----------------------------------------------------------------------
 
 # constants for selection handles
-HANDLE_SIZE   = 6  # pixels
+HANDLE_SIZE   = 6
 TOP_LEFT      = 1
 TOP_RIGHT     = 2
 BOTTOM_LEFT   = 3
@@ -49,7 +49,6 @@ CENTER_LEFT   = 8
 class Tool(object):
     """ Abstract class representing a tool: Drawing board/colour/thickness """
     tooltip = ""
-
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
         self.board = board
         self.colour = colour
@@ -539,11 +538,11 @@ class Eraser(Pen):
     name = _("Eraser")
     def __init__(self, board, colour, thickness):
         cursor = self.make_cursor(thickness)
-        Pen.__init__(self, board, (255, 255, 255), thickness + 1, cursor)
+        Pen.__init__(self, board, (255, 255, 255), thickness + 6, cursor)
 
 
     def make_cursor(self, thickness):
-        cursor = wx.EmptyBitmap(thickness + 2, thickness + 2)
+        cursor = wx.EmptyBitmap(thickness + 7, thickness + 7)
         memory = wx.MemoryDC()
         memory.SelectObject(cursor)
 
@@ -554,21 +553,22 @@ class Eraser(Pen):
             memory.SetPen(wx.Pen((0, 0, 0), 1))  # border
             memory.SetBrush(wx.Brush((255, 255, 255)))
 
-        memory.DrawRectangle(0, 0, thickness + 2, thickness + 2)
+        memory.DrawRectangle(0, 0, thickness + 7, thickness + 7)
         memory.SelectObject(wx.NullBitmap)
         img = wx.ImageFromBitmap(cursor)
         cursor = wx.CursorFromImage(img)
         return cursor
 
+
     def preview(self, dc, width, height):
         thickness = self.thickness + 1
         dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
-        dc.DrawRectangle(15, 7, 5 + thickness, 5 + thickness)
+        dc.DrawRectangle(15, 7, thickness + 1,  thickness + 1)
 
     def make_pen(self, dc=None):
         """ Creates a pen, usually after loading in a save file """
         super(Eraser, self).make_pen()
-        self.pen = wx.Pen(self.colour, self.thickness + 1, wx.SOLID)
+        self.pen = wx.Pen(self.colour, self.thickness + 4, wx.SOLID)
 
     def save(self):
         super(Eraser, self).save()
@@ -681,7 +681,6 @@ class Text(OverlayShape):
                 self.text = text  # don't want a blank item
                 return False
             self.update_scroll()
-
             return True
 
 
@@ -706,16 +705,19 @@ class Text(OverlayShape):
         dc.SetTextForeground(self.colour)
         super(Text, self).draw(dc, replay, "Label")
 
+
     def restore_font(self):
         """Updates the text's font to the saved font data"""
         self.font = wx.FFont(0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
+
 
     def find_extent(self):
         """Finds the width/height of the object's text"""
         dc = wx.WindowDC(self.board.gui)
         x = dc.GetMultiLineTextExtent(self.text, self.font)
         self.extent = x[0], x[1]
+
 
     def get_handles(self):
         x, y, w, h = self.x, self.y, self.extent[0], self.extent[1]
@@ -727,6 +729,7 @@ class Text(OverlayShape):
         w = self.x + self.extent[0]
         h = self.y + self.extent[1]
         return [self.text, wx.Rect(self.x, self.y, w, h)]
+
 
     def hit_test(self, x, y):
         width = self.x + self.extent[0]
@@ -741,9 +744,11 @@ class Text(OverlayShape):
         dc.SetTextForeground(self.colour)
         dc.DrawText("abcdef", 15, height / 2 - 10)
 
+
     def save(self):
         super(Text, self).save()
         self.font = None
+
 
     def load(self):
         super(Text, self).load()

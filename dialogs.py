@@ -236,15 +236,10 @@ class UpdateDialog(wx.Dialog):
 
         self.text = wx.StaticText(self, label=_("Connecting to server..."),
                                   size=(300, 80))
-        self.text2 = wx.StaticText(self, label="")  # show download progress
-        font = self.text.GetClassDefaultAttributes().font
-        font.SetPointSize(11)
-        self.text.SetFont(font)
-        self.text2.SetFont(font)
-
+        self.text2 = wx.StaticText(self, label="")  # for download progress
         self.btn = wx.Button(self, wx.ID_OK, _("Update"))
         cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        self.btn.Enable(False)        
+        self.btn.Enable(False)
         cancel.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(cancel)
@@ -332,27 +327,26 @@ class UpdateDialog(wx.Dialog):
             self.text.SetLabel(_("Could not connect to server."))
             self.btn.SetLabel(_("Retry"))
             return
-        return
-#
-#        if self.gui.util.is_exe():
-#            # rename current exe, rename temp to current
-#            if os.name == "nt":
-#                os.rename(path[1], "wtbd-bckup.exe")
-#                os.rename("tmp-wb-.exe", "whyteboard.exe")
-#                args = [sys.argv[0], [sys.argv[0]]]
-#        else:
-#            if os.name == "posix":
-#                os.system("tar -xf "+ tmp[0] +" --strip-components=1")
-#            else:
-#                p = os.path.abspath(tmp[0])
-#                self.gui.util.extract_tar(p, self.version)
-#            os.remove(tmp[0])
-#            args = ['python', ['python', sys.argv[0]]]  # for os.execvp
-#
-#        if self.gui.util.filename:
-#            name = '"%s"' % self.gui.util.filename  # gotta escape for Windows
-#            args[1].append(name)  # restart, load .wtbd
-#        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)
+
+        if self.gui.util.is_exe():
+            # rename current exe, rename temp to current
+            if os.name == "nt":
+                os.rename(path[1], "wtbd-bckup.exe")
+                os.rename("tmp-wb-.exe", "whyteboard.exe")
+                args = [sys.argv[0], [sys.argv[0]]]
+        else:
+            if os.name == "posix":
+                os.system("tar -xf "+ tmp[0] +" --strip-components=1")
+            else:
+                p = os.path.abspath(tmp[0])
+                self.gui.util.extract_tar(p, self.version)
+            os.remove(tmp[0])
+            args = ['python', ['python', sys.argv[0]]]  # for os.execvp
+
+        if self.gui.util.filename:
+            name = '"%s"' % self.gui.util.filename  # gotta escape for Windows
+            args[1].append(name)  # restart, load .wtbd
+        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)
 
 
     def reporter(self, count, block, total):
@@ -425,7 +419,7 @@ class TextInput(wx.Dialog):
         btnSizer.AddButton(self.okButton)
         btnSizer.AddButton(self.cancelButton)
         btnSizer.Realize()
-        
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 7)
         sizer.Add(_sizer, 0, gap | wx.ALIGN_RIGHT, 5)
@@ -507,15 +501,15 @@ class FindIM(wx.Dialog):
     """
     Asks a user for the location of ImageMagick (Windows-only)
     """
-    t = ("Whyteboard uses ImageMagick to load PDF, SVG and PS files. \n"
-    "Please select its installed location.")
+
 
     def __init__(self, parent, gui):
         wx.Dialog.__init__(self, gui, title=_("ImageMagick Notification"))
-        self.parent = parent  # utility class
+        self.gui = gui
         self.path = "C:/Program Files/"
 
-        text = wx.StaticText(self, label=self.t)
+        t = (_("Whyteboard uses ImageMagick to load PDF, SVG and PS files. \nPlease select its installed location."))
+        text = wx.StaticText(self, label=t)
         btn = wx.Button(self, label=_("Find location..."))
         gap = wx.LEFT | wx.TOP | wx.RIGHT
 
@@ -523,17 +517,18 @@ class FindIM(wx.Dialog):
         self.okButton.SetDefault()
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         btnSizer = wx.StdDialogButtonSizer()
-        btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
-        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
+        btnSizer.AddButton(self.okButton)
+        btnSizer.AddButton(self.cancelButton)
+        btnSizer.Realize()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(text, 1, gap | wx.EXPAND, 10)
         sizer.Add(btn, 0, gap | wx.ALIGN_CENTRE, 20)
-        sizer.Add((10, 10)) # Spacer.
-        btnSizer.Realize()
-        sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
+        sizer.Add((10, 20)) # Spacer.
+        sizer.Add(btnSizer, 0, wx.BOTTOM | wx.ALIGN_CENTRE, 12)
         self.SetSizer(sizer)
         sizer.Fit(self)
+        self.SetFocus()
 
         btn.Bind(wx.EVT_BUTTON, self.browse)
         self.okButton.Bind(wx.EVT_BUTTON, self.ok)
@@ -549,7 +544,7 @@ class FindIM(wx.Dialog):
             dlg.Destroy()
 
     def ok(self, event=None):
-        if self.parent.check_im_path(self.path):
+        if self.gui.util.check_im_path(self.path):
             self.Close()
 
     def cancel(self, event=None):
