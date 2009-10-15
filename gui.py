@@ -39,10 +39,13 @@ import wx.lib.newevent
 from wx.html import HtmlHelpController
 
 sys.path.append("lib")
+from configobj import ConfigObj
+from validate import Validator
+
 import icon
 from whyteboard import Whyteboard
 from tools import Image, Note
-from utility import Utility, FileDropTarget
+from utility import Utility, FileDropTarget, languages, cfg, get_home_dir
 from dialogs import  History, ProgressDialog, Resize, UpdateDialog
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
@@ -88,7 +91,7 @@ class GUI(wx.Frame):
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
-    def __init__(self, parent):
+    def __init__(self, parent, config):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
@@ -96,7 +99,7 @@ class GUI(wx.Frame):
         ico = icon.whyteboard.getIcon()
         self.SetIcon(ico)
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
-        self.util = Utility(self)
+        self.util = Utility(self, config)
         self.file_drop = FileDropTarget(self)
         self.SetDropTarget(self.file_drop)
         self.statusbar = self.CreateStatusBar()
@@ -574,9 +577,9 @@ class GUI(wx.Frame):
                 try:
                     event.Enable(self.can_paste)
                     self.menu.Enable(ID_PASTE_NEW, self.can_paste)
+                    self.menu.Enable(wx.ID_PASTE, self.can_paste)
                 except wx.PyDeadObjectError:
                     pass
-
             return
 
         do = False
@@ -832,23 +835,38 @@ class GUI(wx.Frame):
 
 class WhyteboardApp(wx.App):
     def OnInit(self):
-        #nolog = wx.LogNull()
-        self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
-        #del nolog
-        #if not wx.Locale.IsOk(locale):
-        #    locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
-        #self.locale = wx.Locale()
-        #self.locale.Init("MyLocale", "cy", "cy_GB.utf8")
+        """
+        Load config file, apply translation, parse arguments and delete any
+        temporary filse left over from an update
+        """
+        path = os.path.join(get_home_dir(), "user.pref")
+        config = ConfigObj(path, configspec=cfg.split("\n"))
+        validator = Validator()
+        config.validate(validator)
+                
+        for x in languages:
+            if config['language'] == 'Welsh':
+                self.locale = wx.Locale()
+                self.locale.Init("Cymraeg", "cy", "cy_GB.utf8")                
+            elif config['language'] == x[0]:
+                nolog = wx.LogNull()
+                self.locale = wx.Locale(x[1], wx.LOCALE_LOAD_DEFAULT)  
+                del nolog   
+
+        if not wx.Locale.IsOk(self.locale):
+            wx.MessageBox("Error setting language to %s - reverting to English" % config['language'])
+            config['language'] = 'English'
+            config.write()
+            self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
 
         path = os.path.dirname(sys.argv[0])
         langdir = os.path.join(path, 'locale')
         locale.setlocale(locale.LC_ALL, '')
-
         self.locale.AddCatalogLookupPathPrefix(langdir)
         self.locale.AddCatalog("whyteboard")
 
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
-        self.frame = GUI(None)
+        self.frame = GUI(None, config)
         self.frame.Show(True)
         self.parse_args()
         self.delete_temp_files()

@@ -35,6 +35,7 @@ xx Oct 2009 -- 0.38.2
 * User Interface improvements
 * Eraser now erases a larger surface
 * Shift + Tab / Shift + Ctrl + Tab shortcuts now work on Linux (GTK at least)
+* Bugfix: "Paste" menu always active, even with nothing to paste
 
 ----------------------------------------------------------------------
 

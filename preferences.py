@@ -29,7 +29,7 @@ from copy import copy
 import tools
 
 from dialogs import FindIM
-from utility import make_bitmap
+from utility import make_bitmap, languages
 
 _ = wx.GetTranslation
 
@@ -54,10 +54,12 @@ class Preferences(wx.Dialog):
 
         okay = wx.Button(self, wx.ID_OK, _("&OK"))
         cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        help = wx.Button(self, wx.ID_HELP, _("&Help"))
         cancel.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okay)
         btnSizer.AddButton(cancel)
+        btnSizer.Add(help, 0, wx.ALIGN_LEFT | wx.LEFT, 10)
         btnSizer.SetCancelButton(cancel)
         btnSizer.Realize()
 
@@ -70,6 +72,7 @@ class Preferences(wx.Dialog):
 
         cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
         okay.Bind(wx.EVT_BUTTON, self.on_okay)
+        help.Bind(wx.EVT_BUTTON, self.on_help)
 
     def on_okay(self, event):
         """
@@ -77,15 +80,20 @@ class Preferences(wx.Dialog):
         Just updates all the GUI instead of figuring out which parts actually
         need updating -- laziness!
         """
-        if self.config['language'] != self.gui.util.config['language']:
-            print self.config['language']
+        old = self.gui.util.config
+        if self.config['language'] != old['language']:
             wx.MessageBox(_("Whyteboard will be translated into %s when restarted")
-                          % self.config['language'])
+                          % self.config['language'])                                 
 
-        if self.config['handle_size'] != self.gui.util.config['handle_size']:
+        if self.config['handle_size'] != old['handle_size']:
             tools.HANDLE_SIZE = self.config['handle_size']
             self.gui.board.redraw_all()
 
+        if self.config.has_key('default_font'):
+            if self.config['default_font'] and not self.gui.util.font:
+                self.gui.util.font = wx.FFont(0, 0)
+                self.gui.util.font.SetNativeFontInfoFromString(self.config['default_font'])            
+                
 
         self.config.write()
         self.gui.util.config = self.config
@@ -106,6 +114,10 @@ class Preferences(wx.Dialog):
         self.Destroy()
 
 
+    def on_help(self, event):
+        pass
+        
+        
     def on_cancel(self, event):
         self.Destroy()
 
@@ -138,19 +150,7 @@ class General(wx.Panel):
         undo.SetFont(font)
         handle.SetFont(font)
 
-        welsh = wx.LANGUAGE_WELSH
-        if os.name == "posix":
-            welsh = wx.LANGUAGE_WELSH
-
-        self.choices = [ ["English", wx.LANGUAGE_ENGLISH],
-                         [ "Dutch" , wx.LANGUAGE_DUTCH ],
-                         [ "German" , wx.LANGUAGE_GERMAN ],
-                         [ "Spanish" , wx.LANGUAGE_SPANISH ],
-                         [ "Welsh" , welsh ],
-                         [ "Czech" , wx.LANGUAGE_CZECH ],
-                         [ "Italian" , wx.LANGUAGE_ITALIAN ] ]
-
-        options = [_(i[0]) for i in self.choices]
+        options = [_(i[0]) for i in languages]
         options.sort()
         self.lang = wx.ComboBox(self, choices=options, style=wx.CB_READONLY)
 
@@ -183,7 +183,7 @@ class General(wx.Panel):
 
 
     def on_lang(self, event):
-        for x in self.choices:
+        for x in languages:
             if self.lang.GetValue() == x[0]:
                 self.config['language'] = x[0]
 

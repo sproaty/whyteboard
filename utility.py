@@ -70,13 +70,8 @@ try:
 except ImportError:
     import pickle
 
-from configobj import ConfigObj
-from validate import Validator
 from dialogs import ProgressDialog, FindIM
 import tools
-
-DEFAULT_COLOURS = ['Black', 'Yellow', 'Green', 'Red', 'Blue', 'Purple', 'Cyan',
-                   'Orange', 'Light Grey']
 
 
 cfg = """
@@ -93,11 +88,20 @@ convert_quality = option('highest', 'high', 'normal', default='normal')
 default_font = string
 imagemagick_path = string
 handle_size = integer(min=3, max=15, default=6)
-language = option('English', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
+language = option('English', 'English (United Kingdom)', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
 statusbar = boolean(default=True)
 toolbar = boolean(default=True)
 undo_sheets = integer(min=5, max=50, default=10)
 """
+
+languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
+              (_("English (United Kingdom))", wx.LANGUAGE_ENGLISH_UK),
+              (_("Dutch"), wx.LANGUAGE_DUTCH),
+              (_("German"), wx.LANGUAGE_GERMAN),
+              (_("Spanish"), wx.LANGUAGE_SPANISH),
+              (_("Welsh"), wx.LANGUAGE_WELSH),
+              (_("Czech"), wx.LANGUAGE_CZECH),
+              (_("Italian"), wx.LANGUAGE_ITALIAN) )
 
 _ = wx.GetTranslation
 
@@ -112,7 +116,7 @@ class Utility(object):
     Trying to achieve a data-driven system, focusing on "don't repeat yourself"
     """
 
-    def __init__(self, gui):
+    def __init__(self, gui, config):
         """
         Initialise "shared" variables, and set up a wxPython wildcard from the
         supported filetypes.
@@ -124,7 +128,6 @@ class Utility(object):
         self.saved = True
         self.colour = "Black"
         self.thickness = 1
-        self.colours = DEFAULT_COLOURS
         self.font = None  # default font for text input
         self.tool = 1  # Current tool ID that is being drawn with
         self.items = tools.items  # shortcut
@@ -134,11 +137,7 @@ class Utility(object):
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
         self.library = os.path.join(get_home_dir(), "library.known")
-
-        path = os.path.join(get_home_dir(), "user.pref")
-        self.config = ConfigObj(path, configspec=cfg.split("\n"))
-        validator = Validator()
-        self.config.validate(validator)
+        self.config = config
 
         tools.HANDLE_SIZE = self.config['handle_size']
         if self.config.has_key('default_font'):
@@ -530,8 +529,7 @@ class Utility(object):
         if os.name == "posix":
             value = os.system("which convert")
             if value == 256:
-                wx.MessageBox(_("ImageMagick was not found. You will be unable " +
-                              "to load PDF and PS files until it is installed."))
+                wx.MessageBox(_("ImageMagick was not found. You will be unable to load PDF and PS files until it is installed."))
             else:
                 self.im_location = "convert"
         elif os.name == "nt":
@@ -552,10 +550,10 @@ class Utility(object):
         convert.exe exists
         """
         _file = os.path.join(path, "convert.exe")
-        #if not os.path.exists(_file):
-        #    wx.MessageBox(path + " does not contain convert.exe")
-        #    return False
-
+        if not os.path.exists(_file):
+            wx.MessageBox(path + " does not contain convert.exe")
+            return False
+        
         self.im_location = _file
         return True
 
