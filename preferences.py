@@ -83,7 +83,7 @@ class Preferences(wx.Dialog):
         old = self.gui.util.config
         if self.config['language'] != old['language']:
             wx.MessageBox(_("Whyteboard will be translated into %s when restarted")
-                          % self.config['language'])                                 
+                          % self.config['language'])
 
         if self.config['handle_size'] != old['handle_size']:
             tools.HANDLE_SIZE = self.config['handle_size']
@@ -92,8 +92,8 @@ class Preferences(wx.Dialog):
         if self.config.has_key('default_font'):
             if self.config['default_font'] and not self.gui.util.font:
                 self.gui.util.font = wx.FFont(0, 0)
-                self.gui.util.font.SetNativeFontInfoFromString(self.config['default_font'])            
-                
+                self.gui.util.font.SetNativeFontInfoFromString(self.config['default_font'])
+
 
         self.config.write()
         self.gui.util.config = self.config
@@ -114,10 +114,10 @@ class Preferences(wx.Dialog):
         self.Destroy()
 
 
-    def on_help(self, event):
-        pass
-        
-        
+    def on_help(self, event=None):
+        self.gui.on_help(page="preferences")
+
+
     def on_cancel(self, event):
         self.Destroy()
 
@@ -150,7 +150,7 @@ class General(wx.Panel):
         undo.SetFont(font)
         handle.SetFont(font)
 
-        options = [_(i[0]) for i in languages]
+        options = [i[0] for i in languages]
         options.sort()
         self.lang = wx.ComboBox(self, choices=options, style=wx.CB_READONLY)
 
@@ -184,6 +184,7 @@ class General(wx.Panel):
 
     def on_lang(self, event):
         for x in languages:
+            print x
             if self.lang.GetValue() == x[0]:
                 self.config['language'] = x[0]
 

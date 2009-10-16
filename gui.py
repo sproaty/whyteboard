@@ -87,7 +87,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.38.2"
+    version = "0.38.5"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -110,10 +110,13 @@ class GUI(wx.Frame):
         self.toolbar = None
         self.menu = None
         self.process = None
+        self.pid = None
         self.dialog = None
+        self.convert_cancelled = False
         self.help = None
         self.make_toolbar()
         self.make_menu()
+        self.find_help()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.current_tab = 0
         self.closed_tabs = []  # [shapes - undo - redo - canvas_size] per tab
@@ -424,8 +427,9 @@ class GUI(wx.Frame):
 
     def on_new_win(self, event=None):
         """Fires up a new Whyteboard window"""
-        frame = GUI(None)
+        frame = GUI(None, self.util.config)
         frame.Show(True)
+
 
     def on_new_tab(self, event=None, name=None, wb=None):
         """Opens a new tab, selects it, creates a new thumbnail and tree item"""
@@ -447,17 +451,22 @@ class GUI(wx.Frame):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
         self.update_panels(False)
+        #if self.tabs.GetSelection() > self.current_tab:
+        #    self.thumbs.Scroll(-1, self.current_tab)
+        #else:
+        #    self.thumbs.Scroll(-1, self.current_tab)
         self.current_tab = self.tabs.GetSelection()
         if event:
             self.current_tab = event.GetSelection()
 
         self.update_panels(True)
-        #self.thumbs.Scroll(-1, self.current_tab)
+        self.thumbs.Scroll(-1, self.current_tab)
         self.control.change_tool()
 
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
+
 
     def update_panels(self, select):
         """Updates thumbnails and notes to indicate current tab"""
@@ -670,8 +679,8 @@ class GUI(wx.Frame):
         shows the convert dialog
         """
         self.process = wx.Process(self)
-        wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
-        self.dialog = ProgressDialog(self, _("Converting..."))
+        self.pid = wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
+        self.dialog = ProgressDialog(self, _("Converting..."), cancellable=True)
         self.dialog.ShowModal()
 
 
@@ -680,6 +689,7 @@ class GUI(wx.Frame):
         self.process.Destroy()
         self.dialog.Destroy()
         del self.process
+        self.pid = None
 
 
     def on_done_load(self, event=None):
@@ -784,28 +794,44 @@ class GUI(wx.Frame):
         dlg.Destroy()
 
 
-    def on_help(self, event=None):
-        """
-        Shows the help file, if it exists, otherwise prompts the user to
-        download it.
-        """
+    def find_help(self):
+        """Locate the help files, update self.help var"""
         path = self.util.path[0]
         _file = os.path.join(path, 'whyteboard-help', 'whyteboard.hhp')
 
         if os.path.exists(_file):
             self.help = HtmlHelpController()
             self.help.AddBook(_file)
-            self.help.DisplayContents()
         else:
-            msg = _("Help files not found, do you want to download them?")
-            d = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)
-            if d.ShowModal() == wx.ID_YES:
-                try:
-                    self.util.download_help_files()
-                except IOError:
-                    pass
-                else:
-                    self.on_help()  # show newly downloaded files
+            self.help = None
+
+
+    def on_help(self, event=None, page=None):
+        """
+        Shows the help file, if it exists, otherwise prompts the user to
+        download it.
+        """
+        if self.help:
+            if page:
+                self.help.Display(page)
+            else:
+                self.help.DisplayContents()
+        else:
+            if self.download_help():
+                self.on_help(page=page)
+
+
+    def download_help(self):
+        """Downloads the help files"""
+        msg = _("Help files not found, do you want to download them?")
+        d = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)
+        if d.ShowModal() == wx.ID_YES:
+            try:
+                self.util.download_help_files()
+                self.find_help()
+                return True
+            except IOError:
+                return False
 
 
     def on_about(self, event=None):
@@ -815,11 +841,12 @@ class GUI(wx.Frame):
         inf.Description = _("A simple whiteboard and PDF annotator")
         inf.Developers = ["Steven Sproat <sproaty@gmail.com>"]
         t = ['"Dennis" https://launchpad.net/~dlinn83 (German)',
-             'Medina Colpaca https://launchpad.net/~medina-colpaca (Spanish)',
              '"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
+             '"Lauren" https://launchpad.net/~lewakefi (French)',
+             'Medina Colpaca https://launchpad.net/~medina-colpaca (Spanish)',
              'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
              'Roberto Bondi https://launchpad.net/~bondi (Italian)',
-             'Steven Sproat https://launchpad.net/~sproaty (Welsh)',
+             'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
              '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)']
 
         inf.Translators = t
@@ -843,15 +870,17 @@ class WhyteboardApp(wx.App):
         config = ConfigObj(path, configspec=cfg.split("\n"))
         validator = Validator()
         config.validate(validator)
-                
+
         for x in languages:
             if config['language'] == 'Welsh':
+                print 'ya'
                 self.locale = wx.Locale()
-                self.locale.Init("Cymraeg", "cy", "cy_GB.utf8")                
+                self.locale.Init("Cymraeg", "cy", "cy_GB.utf8")
+                break
             elif config['language'] == x[0]:
                 nolog = wx.LogNull()
-                self.locale = wx.Locale(x[1], wx.LOCALE_LOAD_DEFAULT)  
-                del nolog   
+                self.locale = wx.Locale(x[1], wx.LOCALE_LOAD_DEFAULT)
+                del nolog
 
         if not wx.Locale.IsOk(self.locale):
             wx.MessageBox("Error setting language to %s - reverting to English" % config['language'])

@@ -103,7 +103,7 @@ class History(wx.Dialog):
             self.looping = True
             self.draw(shapes)
         else:
-            wx.MessageBox("There was nothing to draw.", "Nothing to draw")
+            wx.MessageBox(_("There was nothing to draw."), _("Nothing to draw"))
 
 
     def draw(self, shapes):
@@ -185,25 +185,37 @@ class History(wx.Dialog):
 
 class ProgressDialog(wx.Dialog):
     """
-    Shows a Progres Gauge while an operation is taking place.
+    Shows a Progres Gauge while an operation is taking place. May be cancellable
+    which is possible when converting pdf/ps
     """
-    def __init__(self, gui, title, to_add=1):
+    def __init__(self, gui, title, to_add=1, cancellable=False):
         """Defines a gauge and a timer which updates the gauge."""
-        wx.Dialog.__init__(self, gui, title=title,  size=(325, 120),
+        wx.Dialog.__init__(self, gui, title=title,
                           style=wx.CAPTION)
+        self.gui = gui
         self.count = 0
         self.to_add = to_add
         self.timer = wx.Timer(self)
         self.gauge = wx.Gauge(self, range=100, size=(180, 30))
-
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.gauge, 0, wx.ALL, 3)
+        sizer.Add(self.gauge, 0, wx.ALL, 10)
+                
+        if cancellable:
+            cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+            cancel.SetDefault()
+            cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
+            btnSizer = wx.StdDialogButtonSizer()
+            btnSizer.AddButton(cancel)
+            btnSizer.Realize()
+            sizer.Add(btnSizer, 0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
+        
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
 
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
-        self.timer.Start(20)
+        self.timer.Start(30)
+
 
     def on_timer(self, event):
         """Increases the gauge's progress."""
@@ -211,6 +223,12 @@ class ProgressDialog(wx.Dialog):
         self.gauge.SetValue(self.count)
         if self.count == 100:
             self.count = 0
+
+
+    def on_cancel(self, event):
+        """Cancels the conversion process"""
+        self.gui.convert_cancelled = True
+        wx.Kill(self.gui.pid)
 
 
 #----------------------------------------------------------------------

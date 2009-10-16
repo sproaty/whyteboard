@@ -1,4 +1,4 @@
-Whyteboard 0.38.2 - To do list
+Whyteboard 0.38.5 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Tue 06 October 2009
 
@@ -10,10 +10,9 @@ see: https://blueprints.launchpad.net/whyteboard
 - Improvements for whiteboard pen usage: accepting certain commands to perform
   program shortcuts (sent via a tool like ZScreen)
 - Adding all whiteboard-related resources (pasted images, exported sheets, etc)
-  into a single folder where all the relevant data is saved together (like 
+  into a single folder where all the relevant data is saved together (like
   saving a web page)
 - Paste text, essentially creating Text objects.
-- User preferences, covering: colours, fonts, PDF conversion quality, language
 
 Eventually, long term:
 

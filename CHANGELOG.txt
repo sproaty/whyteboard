@@ -30,12 +30,13 @@ xx Oct 2009 -- 0.38.2
    - Toggle toolbar / statusbar
 
 * Export all sheets (as images) functionality
+* Cancel button added to the PDF conversion progress bar
 * Added right-click pop-up menus to each thumbnail / Note tree item. From here
   you can also rename, close or export that sheet
 * User Interface improvements
 * Eraser now erases a larger surface
 * Shift + Tab / Shift + Ctrl + Tab shortcuts now work on Linux (GTK at least)
-* Bugfix: "Paste" menu always active, even with nothing to paste
+* Bugfix: The "Paste" menu was always active, even with nothing to paste - fixed
 
 ----------------------------------------------------------------------
 

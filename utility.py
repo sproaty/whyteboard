@@ -88,22 +88,23 @@ convert_quality = option('highest', 'high', 'normal', default='normal')
 default_font = string
 imagemagick_path = string
 handle_size = integer(min=3, max=15, default=6)
-language = option('English', 'English (United Kingdom)', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
+language = option('English', 'English (United Kingdom)', 'French', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
 statusbar = boolean(default=True)
 toolbar = boolean(default=True)
 undo_sheets = integer(min=5, max=50, default=10)
 """
 
+_ = wx.GetTranslation
+
 languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
-              (_("English (United Kingdom))", wx.LANGUAGE_ENGLISH_UK),
+              (_("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
               (_("Dutch"), wx.LANGUAGE_DUTCH),
               (_("German"), wx.LANGUAGE_GERMAN),
               (_("Spanish"), wx.LANGUAGE_SPANISH),
+              (_("French"), wx.LANGUAGE_FRENCH),
               (_("Welsh"), wx.LANGUAGE_WELSH),
               (_("Czech"), wx.LANGUAGE_CZECH),
               (_("Italian"), wx.LANGUAGE_ITALIAN) )
-
-_ = wx.GetTranslation
 
 #----------------------------------------------------------------------
 
@@ -409,9 +410,11 @@ class Utility(object):
 
         full_path = os.path.join(path + tmp_file + ".png")
         quality = self.config['convert_quality']
-        cmd = convert_quality(quality, self.im_location, _file, full_path)
-
-        self.gui.convert_dialog(cmd)  # show progress bar
+        cmd = convert_quality(quality, self.im_location, _file, full_path)        
+        self.gui.convert_dialog(cmd)  # show progress bar, kick off convert  
+        
+        if self.gui.convert_cancelled:  # note: no imgs are created when canceld   
+            return            
         after = os.walk(path).next()[2]
         count = len(after) - len(before)
 
@@ -553,7 +556,7 @@ class Utility(object):
         if not os.path.exists(_file):
             wx.MessageBox(path + " does not contain convert.exe")
             return False
-        
+
         self.im_location = _file
         return True
 
@@ -563,7 +566,7 @@ class Utility(object):
         Downloads the help files to the user's directory and shows them
         """
         _file = os.path.join(self.path[0], "whyteboard-help.tar.gz")
-        url = "http://whyteboard.googlecode.com/files/helpfiles.tar.gz"
+        url = "http://whyteboard.googlecode.com/files/help-files.tar.gz"
         tmp = None
         try:
             tmp = urllib.urlretrieve(url, _file)
