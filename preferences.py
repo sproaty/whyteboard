@@ -184,7 +184,6 @@ class General(wx.Panel):
 
     def on_lang(self, event):
         for x in languages:
-            print x
             if self.lang.GetValue() == x[0]:
                 self.config['language'] = x[0]
 
@@ -280,7 +279,6 @@ class FontAndColours(wx.Panel):
         """
         data = wx.FontData()
         data.SetInitialFont(self.font)
-        print self.font.GetPointSize()
         dlg = wx.FontDialog(self, data)
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -311,8 +309,6 @@ class FontAndColours(wx.Panel):
         """
         dlg = wx.ColourDialog(self)
         if dlg.ShowModal() == wx.ID_OK:
-
-            #print
             string = "colour%s" % (id + 1)
             self.config[string] = list(dlg.GetColourData().Colour.Get())
 
@@ -325,7 +321,6 @@ class FontAndColours(wx.Panel):
             method = lambda evt, x=id: self.on_colour(evt, x)
             self.buttons[id].Bind(wx.EVT_BUTTON, method)
             self.grid.Layout()
-
 
         dlg.Destroy()
 

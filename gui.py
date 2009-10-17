@@ -451,16 +451,13 @@ class GUI(wx.Frame):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
         self.update_panels(False)
-        #if self.tabs.GetSelection() > self.current_tab:
-        #    self.thumbs.Scroll(-1, self.current_tab)
-        #else:
-        #    self.thumbs.Scroll(-1, self.current_tab)
+        
         self.current_tab = self.tabs.GetSelection()
         if event:
             self.current_tab = event.GetSelection()
 
         self.update_panels(True)
-        self.thumbs.Scroll(-1, self.current_tab)
+        #self.thumbs.Scroll(-1, self.current_tab)
         self.control.change_tool()
 
         if self.notes.tabs:
@@ -630,6 +627,7 @@ class GUI(wx.Frame):
             return
         shape = Image(self.board, bmp.GetBitmap(), None)
         shape.left_down(0, 0)
+        wx.Yield()
         self.board.redraw_all(True)
 
 
@@ -873,7 +871,6 @@ class WhyteboardApp(wx.App):
 
         for x in languages:
             if config['language'] == 'Welsh':
-                print 'ya'
                 self.locale = wx.Locale()
                 self.locale.Init("Cymraeg", "cy", "cy_GB.utf8")
                 break

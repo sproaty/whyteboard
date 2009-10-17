@@ -7,10 +7,10 @@ Sun 04 October 2009
 
 ----------------------------------------------------------------------
 
-xx Oct 2009 -- 0.38.2
+xx Oct 2009 -- 0.38.5
 
 * Support for internationalization - Whyteboard will be available in other
-  languages once translated. Currently fully supports:
+  languages once translated. Currently (almost) fully translated into:
    - Dutch
    - English
    - Italian
@@ -18,6 +18,7 @@ xx Oct 2009 -- 0.38.2
 
   and, partially:
    - Czech
+   - French
    - German
    - Spanish
 
@@ -29,14 +30,17 @@ xx Oct 2009 -- 0.38.2
    - How many sheets to remember for "undo closed sheets"
    - Toggle toolbar / statusbar
 
-* Export all sheets (as images) functionality
+* Whyteboard remembers your converted PDF files' image locations, so when you
+  load that PDF again, it will not need to convert it.  
+* Export all sheets (as a series of images) functionality
 * Cancel button added to the PDF conversion progress bar
 * Added right-click pop-up menus to each thumbnail / Note tree item. From here
   you can also rename, close or export that sheet
 * User Interface improvements
+* Help Files improvements
 * Eraser now erases a larger surface
 * Shift + Tab / Shift + Ctrl + Tab shortcuts now work on Linux (GTK at least)
-* Bugfix: The "Paste" menu was always active, even with nothing to paste - fixed
+* Bugfix: the "Paste" menu was always active, even with nothing to paste (fixed)
 
 ----------------------------------------------------------------------
 

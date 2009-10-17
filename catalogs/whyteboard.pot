@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-10-16 07:52+0100\n"
+"POT-Creation-Date: 2009-10-17 03:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,14 +20,14 @@ msgstr ""
 msgid " There is a new version available"
 msgstr ""
 
-#: whyteboard/utility.py:507
+#: whyteboard/utility.py:503
 #, python-format
 msgid ""
 "\"%s\" has been modified.\n"
 "Do you want to save your changes?"
 msgstr ""
 
-#: whyteboard/utility.py:269
+#: whyteboard/utility.py:268
 #, python-format
 msgid "\"%s\" has corrupt Whyteboard data. No action taken."
 msgstr ""
@@ -168,7 +168,7 @@ msgstr ""
 msgid "A preview of your drawing"
 msgstr ""
 
-#: whyteboard/gui.py:841
+#: whyteboard/gui.py:839
 msgid "A simple whiteboard and PDF annotator"
 msgstr ""
 
@@ -188,7 +188,7 @@ msgstr ""
 msgid "Check for &Updates..."
 msgstr ""
 
-#: whyteboard/preferences.py:250
+#: whyteboard/preferences.py:249
 msgid "Choose Your Custom Colors:"
 msgstr ""
 
@@ -244,11 +244,11 @@ msgstr ""
 msgid "Connecting to server..."
 msgstr ""
 
-#: whyteboard/preferences.py:349
+#: whyteboard/preferences.py:344
 msgid "Conversion Quality:"
 msgstr ""
 
-#: whyteboard/gui.py:683
+#: whyteboard/gui.py:681
 msgid "Converting..."
 msgstr ""
 
@@ -261,7 +261,7 @@ msgid "Copy a Bitmap Selection region"
 msgstr ""
 
 #: whyteboard/dialogs.py:289 whyteboard/dialogs.py:345
-#: whyteboard/utility.py:574
+#: whyteboard/utility.py:570
 msgid "Could not connect to server."
 msgstr ""
 
@@ -269,7 +269,7 @@ msgstr ""
 msgid "Czech"
 msgstr ""
 
-#: whyteboard/preferences.py:251
+#: whyteboard/preferences.py:250
 msgid "Default Font:"
 msgstr ""
 
@@ -333,7 +333,7 @@ msgstr ""
 msgid "Eraser"
 msgstr ""
 
-#: whyteboard/utility.py:574
+#: whyteboard/utility.py:570
 msgid "Error"
 msgstr ""
 
@@ -341,11 +341,11 @@ msgstr ""
 msgid "Error getting file list from the server."
 msgstr ""
 
-#: whyteboard/utility.py:216
+#: whyteboard/utility.py:215
 msgid "Error saving file data"
 msgstr ""
 
-#: whyteboard/utility.py:234
+#: whyteboard/utility.py:233
 msgid "Error saving file data - no data to save"
 msgstr ""
 
@@ -377,7 +377,7 @@ msgstr ""
 msgid "Find location..."
 msgstr ""
 
-#: whyteboard/preferences.py:371
+#: whyteboard/preferences.py:366
 msgid "Find..."
 msgstr ""
 
@@ -409,15 +409,15 @@ msgstr ""
 msgid "Height:"
 msgstr ""
 
-#: whyteboard/gui.py:826
+#: whyteboard/gui.py:824
 msgid "Help files not found, do you want to download them?"
 msgstr ""
 
-#: whyteboard/preferences.py:352
+#: whyteboard/preferences.py:347
 msgid "High"
 msgstr ""
 
-#: whyteboard/preferences.py:351
+#: whyteboard/preferences.py:346
 msgid "Highest"
 msgstr ""
 
@@ -429,11 +429,11 @@ msgstr ""
 msgid "ImageMagick Notification"
 msgstr ""
 
-#: whyteboard/utility.py:535
+#: whyteboard/utility.py:531
 msgid "ImageMagick was not found. You will be unable to load PDF and PS files until it is installed."
 msgstr ""
 
-#: whyteboard/preferences.py:369
+#: whyteboard/preferences.py:364
 msgid "ImageMagick's Location:"
 msgstr ""
 
@@ -465,7 +465,7 @@ msgstr ""
 msgid "Load a Whyteboard save file, an image or convert a PDF/PS document"
 msgstr ""
 
-#: whyteboard/utility.py:276 whyteboard/utility.py:442
+#: whyteboard/utility.py:275 whyteboard/utility.py:434
 msgid "Loading..."
 msgstr ""
 
@@ -481,7 +481,7 @@ msgstr ""
 msgid "New Sheet"
 msgstr ""
 
-#: whyteboard/preferences.py:353
+#: whyteboard/preferences.py:348
 msgid "Normal"
 msgstr ""
 
@@ -489,7 +489,7 @@ msgstr ""
 msgid "Note"
 msgstr ""
 
-#: whyteboard/preferences.py:350
+#: whyteboard/preferences.py:345
 msgid "Note: Higher quality takes longer to convert"
 msgstr ""
 
@@ -581,7 +581,7 @@ msgstr ""
 msgid "Redo the last undone operation"
 msgstr ""
 
-#: whyteboard/gui.py:554
+#: whyteboard/gui.py:551
 msgid "Rename sheet"
 msgstr ""
 
@@ -589,7 +589,7 @@ msgstr ""
 msgid "Rename the current sheet"
 msgstr ""
 
-#: whyteboard/gui.py:553
+#: whyteboard/gui.py:550
 msgid "Rename this sheet to:"
 msgstr ""
 
@@ -621,7 +621,7 @@ msgstr ""
 msgid "Save Drawing"
 msgstr ""
 
-#: whyteboard/utility.py:509
+#: whyteboard/utility.py:505
 msgid "Save File?"
 msgstr ""
 
@@ -645,7 +645,7 @@ msgstr ""
 msgid "Select"
 msgstr ""
 
-#: whyteboard/dialogs.py:407 whyteboard/preferences.py:229
+#: whyteboard/dialogs.py:407 whyteboard/preferences.py:228
 msgid "Select Font"
 msgstr ""
 
@@ -677,7 +677,7 @@ msgstr ""
 msgid "Shape Select "
 msgstr ""
 
-#: whyteboard/gui.py:130 whyteboard/gui.py:444 whyteboard/gui.py:519
+#: whyteboard/gui.py:130 whyteboard/gui.py:444 whyteboard/gui.py:516
 #: whyteboard/panels.py:304 whyteboard/panels.py:340 whyteboard/panels.py:533
 #: whyteboard/panels.py:571
 msgid "Sheet"
@@ -731,7 +731,7 @@ msgstr ""
 msgid "Undo the last operation"
 msgstr ""
 
-#: whyteboard/gui.py:98 whyteboard/utility.py:504
+#: whyteboard/gui.py:98 whyteboard/utility.py:500
 msgid "Untitled"
 msgstr ""
 
@@ -743,7 +743,7 @@ msgstr ""
 msgid "Updates"
 msgstr ""
 
-#: whyteboard/gui.py:697
+#: whyteboard/gui.py:695
 msgid "Updating Thumbnails"
 msgstr ""
 
@@ -771,7 +771,7 @@ msgstr ""
 msgid "Welsh"
 msgstr ""
 
-#: whyteboard/utility.py:257
+#: whyteboard/utility.py:256
 msgid "Whyteboard doesn't support the filetype"
 msgstr ""
 

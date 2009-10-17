@@ -60,7 +60,6 @@ class Whyteboard(wx.ScrolledWindow):
         self.shape = None  # currently selected shape *to draw with*
         self.selected = None  # selected shape *with Select tool*
         self.text  = None  # current Text object for redraw all
-        self.scrolling = False
         self.copy = None  # BitmapSelect instance
         self.undo_list = []
         self.redo_list = []
@@ -90,9 +89,6 @@ class Whyteboard(wx.ScrolledWindow):
         x, y = self.convert_coords(event)
         if self.gui.showstat.IsChecked():
             self.gui.SetStatusText(" %s, %s" % (x, y))
-
-        if self.scrolling:
-            return
 
         if self.drawing:
             self.shape.motion(x, y)
@@ -263,7 +259,6 @@ class Whyteboard(wx.ScrolledWindow):
 
     def middle_up(self, event):
         """ Stop dragging the scroller. """
-        self.scrolling = not self.scrolling
         self.scroller.Stop()
         self.change_cursor()  # bugfix with custom cursor
 

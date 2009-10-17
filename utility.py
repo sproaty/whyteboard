@@ -123,7 +123,6 @@ class Utility(object):
         supported filetypes.
         """
         self.gui = gui
-        self.to_convert = {}   # list of files
         self.filename = None   # ACTIVE .wtbd file
         self.temp_file = None  # selected file (.wtdb/png/pdf - doesn't matter)
         self.saved = True
@@ -203,7 +202,7 @@ class Utility(object):
                 _file = { 0: [self.colour, self.thickness, self.tool, tab,
                               version, font],
                           1: temp,
-                          2: self.to_convert,
+                          2: None,  # was self.to_convert, but wasn't used.
                           3: names,
                           4: canvas_sizes }
 
@@ -281,7 +280,6 @@ class Utility(object):
         self.colour = temp[0][0]
         self.thickness = temp[0][1]
         self.tool = temp[0][2]
-        self.to_convert = temp[2]
         self.gui.control.change_tool(_id = self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
@@ -352,41 +350,41 @@ class Utility(object):
             f.close()
 
 
-    def library_lookup(self, _file):
+    def library_lookup(self, _file, quality):
         """Check whether a file is inside our known file library"""
         self.library_create()
         f = open(self.library)
         files = pickle.load(f)
         f.close()
-
         for x, key in files.items():
-            if os.path.basename(files[x]['file']) == _file:
+            if files[x]['file'] == _file and files[x]['quality'] == quality:
                 return files[x]['images']
         else:
             return False
-        #self.gui.util.library_write('/blah/blah/file.pdf', ['/loc/1/img1.png', '/loc2/img1.png'])
 
 
-    def library_write(self, location, images):
+    def library_write(self, location, images, quality):
         """Adds a newly converted file to the library"""
         self.library_create()
         f = open(self.library)
         files = pickle.load(f)
         f.close()
-        files[len(files)] = {'file': location, 'images': images}
+        files[len(files)] = {'file': location, 'images': images,
+                             'quality': quality}
 
-        f = open(path, "w")
+        f = open(self.library, "w")
         pickle.dump(files, f)
         f.close()
 
 
     def convert(self, _file=None):
         """
-        If the filetype is PDF/PS, convert to a (temporary) image and loads it.
-        Find out the directory length before/after the conversion to know how
-        many 'pages' were converted - used then to iterate over the temporary
-        images, creating new Whyteboard tabs for each page, and storing the
-        results in a dictionary, to_convert.
+        If the filetype is PDF/PS, convert to a (temporary) series of images and
+        loads them. Find out the directory length before/after the conversion to
+        know how many 'pages' were converted - used then to create a new
+        Whyteboard tabs for each page. The PDF's file location, convert quality
+        and converted images are written into a "library" file, effectively
+        caching the conversion.
 
         An attempt at randomising the temp. file name is made using alphanumeric
         characters to help minimise conflict.
@@ -394,54 +392,64 @@ class Utility(object):
         if not self.im_location:
             self.prompt_for_im()
 
-        # above will have changed this value if the user selected IM's dir.
-        if not self.im_location:
+        if not self.im_location:  # above will have changed this if IM exists
             return
         if _file is None:
             _file = self.temp_file
 
-        self.library_lookup(_file)
-        path = get_home_dir("wtbd-tmp")
-        tmp_file = make_filename()
-
-        index = len(self.to_convert)
-        self.to_convert[index] = { 0: str(_file) }
-        before = os.walk(path).next()[2]  # file count before convert
-
-        full_path = os.path.join(path + tmp_file + ".png")
         quality = self.config['convert_quality']
-        cmd = convert_quality(quality, self.im_location, _file, full_path)        
-        self.gui.convert_dialog(cmd)  # show progress bar, kick off convert  
-        
-        if self.gui.convert_cancelled:  # note: no imgs are created when canceld   
-            return            
-        after = os.walk(path).next()[2]
-        count = len(after) - len(before)
-
-        if count == 1:
-            temp_path = path + tmp_file + ".png"
-            load_image(temp_path, self.gui.board)
-            self.to_convert[index][1] = temp_path
+        cached = self.library_lookup(_file, quality)
+        if cached:
+            self.display_converted(_file, cached)
         else:
-            # remove single tab with no drawings
-            if self.gui.tab_count == 1 and not self.gui.board.shapes:
-                self.remove_all_sheets()
+            path = get_home_dir("wtbd-tmp")  # directory to store the images
+            tmp_file = make_filename()
+            before = os.walk(path).next()[2]  # file count before convert
 
-            for x in range(0, count):
-                name = os.path.split(_file)[1][:15] + " - %s" % (x + 1)
-                self.gui.on_new_tab(name=name)
-                self.gui.board.renamed = True
+            full_path = os.path.join(path + tmp_file + ".png")
 
-                # store the temp file path for this file in the dictionary
-                temp_file = path + tmp_file + "-%s" % (x) + ".png"
-                load_image(temp_file, self.gui.board)
-                self.to_convert[index][x + 1] = temp_file
-            self.gui.board.redraw_all()
+            cmd = convert_quality(quality, self.im_location, _file, full_path)
+            self.gui.convert_dialog(cmd)  # show progress bar, kick off convert
+
+            if self.gui.convert_cancelled:
+                return
+            after = os.walk(path).next()[2]
+            count = len(after) - len(before)
+
+            if count == 1:
+                temp_path = path + tmp_file + ".png"
+                load_image(temp_path, self.gui.board)
+            else:
+
+                images = []
+                for x in range(0, count):
+                    # store the temp file path for this file in the dictionary
+                    temp_file = path + tmp_file + "-%s" % (x) + ".png"
+                    images.append(temp_file)
+
+                self.display_converted(_file, images)
+                self.gui.util.library_write(_file, images, quality)
 
         # Just in case it's a file with many pages
         self.gui.dialog = ProgressDialog(self.gui, _("Loading..."), 30)
         self.gui.dialog.Show()
         self.gui.on_done_load()
+
+
+    def display_converted(self, _file, images):
+        """
+        Display converted items. _file: PDF/PS. count: Images: list of files
+        """
+        if self.gui.tab_count == 1 and not self.gui.board.shapes:
+            self.remove_all_sheets()
+
+        for x in range(0, len(images)):
+            name = os.path.split(_file)[1][:15] + " - %s" % (x + 1)
+            self.gui.on_new_tab(name=name)
+            self.gui.board.renamed = True
+            load_image(images[x], self.gui.board)
+
+        self.gui.board.redraw_all()
 
 
     def export(self, filename):
@@ -465,18 +473,6 @@ class Utility(object):
         memory.Blit(0, 0, x, y, context, 0, 0)
         memory.SelectObject(wx.NullBitmap)
         bitmap.SaveFile(filename, const)  # write to disk
-
-
-    def cleanup(self):
-        """
-        Cleans up any temporarily png files from conversions.
-        Element 0 in y is the filename, so we don't want to remove that :)
-        """
-        if self.to_convert:
-            for x in self.to_convert.keys():
-                for y in self.to_convert[x].keys():
-                    if y is not 0:
-                        os.remove(self.to_convert[x][y])
 
 
     def remove_all_sheets(self):
@@ -717,15 +713,17 @@ def make_bitmap(colour):
 
 
 def convert_quality(quality, im_location, _file, path):
-    """
-    Returns a string for controlling the convert quality
-    """
-    cmd = '"%s" -density 200 "%s" -resample 88 -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"' % (im_location, _file, path)
+    """Returns a string for controlling the convert quality"""
+    density = 200
+    resample = 88
 
     if quality == 'highest':
-        cmd = '"%s" -density 300 "%s" -resample 120 -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"' % (im_location, _file, path)
+        density = 300
+        resample = 120
     if quality == 'high':
-        cmd = '"%s" -density 250 "%s" -resample 100 -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"' % (im_location, _file, path)
+        density = 250
+        resample = 100
+    cmd = '"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"' % (im_location, density, _file, resample, path)
     return cmd
 
 
