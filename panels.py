@@ -20,8 +20,11 @@
 This module contains classes for the GUI side panels and pop-up menus.
 """
 
+import os
+
 import wx
 from wx.lib import scrolledpanel as scrolled
+from wx.lib.buttons import GenBitmapToggleButton
 from copy import copy
 
 from utility import make_bitmap
@@ -58,17 +61,13 @@ class ControlPanel(wx.Panel):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
-        toolsizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
 
-        # Get list of class names as strings for each drawable tool
-        items = [_(i.name) for i in gui.util.items]
+        cols = 1
+        if gui.util.config['toolbox'] == 'icon':
+            cols = 2
 
-        for x, name in enumerate(items):
-            b = wx.ToggleButton(self.pane, x + 1, name)
-            b.SetToolTipString(_(gui.util.items[x].tooltip))
-            b.Bind(wx.EVT_TOGGLEBUTTON, self.change_tool, id=x + 1)
-            toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
-            self.tools[x + 1] = b
+        self.toolsizer = wx.GridSizer(cols=cols, hgap=1, vgap=2)
+        self.make_toolbox(gui.util.config['toolbox'])        
 
         self.tools[self.toggled].SetValue(True)
         width = wx.StaticText(self.pane, label=_("Thickness:"))
@@ -79,7 +78,6 @@ class ControlPanel(wx.Panel):
         self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
         self.make_colour_grid()
 
-
         choices = ''.join(str(i) + " " for i in range(1, 26) ).split()
 
         self.thickness = wx.ComboBox(self.pane, choices=choices, size=(25, 25),
@@ -89,7 +87,7 @@ class ControlPanel(wx.Panel):
 
         spacing = 4
         box = wx.BoxSizer(wx.VERTICAL)
-        box.Add(toolsizer, 0, wx.ALL, spacing)
+        box.Add(self.toolsizer, 0, wx.ALIGN_CENTER | wx.ALL, spacing)
         box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(self.grid, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(self.colour, 0, wx.EXPAND | wx.ALL, spacing)
@@ -107,6 +105,27 @@ class ControlPanel(wx.Panel):
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.change_colour)
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
+
+
+    def make_toolbox(self, type="text"):
+        items = [_(i.name) for i in self.gui.util.items]
+        if type == "icon":
+            items = [_(i.icon) for i in self.gui.util.items]
+
+        for x, val in enumerate(items):
+            if type == "icon":
+                path = os.path.join(self.gui.util.path[0], "images", "tools",
+                                    val + ".png")
+                b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path))
+                evt = wx.EVT_BUTTON
+            else:
+                b = wx.ToggleButton(self.pane, x + 1, val)
+                evt = wx.EVT_TOGGLEBUTTON 
+
+            b.SetToolTipString(_(self.gui.util.items[x].tooltip))
+            b.Bind(evt, self.change_tool, id=x + 1)
+            self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
+            self.tools[x + 1] = b
 
 
     def make_colour_grid(self):

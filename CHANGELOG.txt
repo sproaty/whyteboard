@@ -1,4 +1,4 @@
-Whyteboard 0.38.2 - A simple image, PDF and postscript file annotator
+Whyteboard 0.38.6 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Sun 04 October 2009
 
@@ -7,7 +7,16 @@ Sun 04 October 2009
 
 ----------------------------------------------------------------------
 
-xx Oct 2009 -- 0.38.5
+xx Oct 2009 -- 0.38.6
+
+* The toolbox in the left-hand pane can be viewed as images instead of text
+  buttons (default: icon view)
+* Additional preference tab: "View". Moved statusbar/toolbar options here, as
+  well as allowing the user to change between text/icon views
+
+----------------------------------------------------------------------
+
+17 Oct 2009 -- 0.38.5
 
 * Support for internationalization - Whyteboard will be available in other
   languages once translated. Currently (almost) fully translated into:
@@ -31,7 +40,7 @@ xx Oct 2009 -- 0.38.5
    - Toggle toolbar / statusbar
 
 * Whyteboard remembers your converted PDF files' image locations, so when you
-  load that PDF again, it will not need to convert it.  
+  load that PDF again, it will not need to convert it.
 * Export all sheets (as a series of images) functionality
 * Cancel button added to the PDF conversion progress bar
 * Added right-click pop-up menus to each thumbnail / Note tree item. From here

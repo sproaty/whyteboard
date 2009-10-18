@@ -24,6 +24,7 @@ a list of undo/redo actions for itself; thus each Whyteboard tab on the GUI has
 its own undo/redo.
 """
 
+import os
 import copy
 import wx
 import wx.lib.dragscroller
@@ -44,12 +45,13 @@ class Whyteboard(wx.ScrolledWindow):
         style = wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN
         wx.ScrolledWindow.__init__(self, tab, style=style)
         self.canvas_size = (1000, 1000)
-        self.area = (1000, 1000)
+        self.area = (990, 990)
         self.SetVirtualSizeHints(2, 2)
         self.SetVirtualSize(self.canvas_size)
         self.SetScrollRate(3, 3)
-        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Windows!
-        self.SetBackgroundColour('White')
+        if os.name == "nt":
+            self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
+        self.SetBackgroundColour('Grey')
         self.ClearBackground()
 
         self.scroller = wx.lib.dragscroller.DragScroller(self)
@@ -80,19 +82,27 @@ class Whyteboard(wx.ScrolledWindow):
 
     def left_down(self, event):
         """Starts drawing"""
-        self.shape.left_down(*self.convert_coords(event))
+        x, y = self.convert_coords(event)
+        if self.check_canvas_resize(x, y):  # don't draw outside canvas
+            return      
+          
+        self.shape.left_down(x, y)
         if not isinstance(self.shape, Text):  #  Crashes without the Text check
             self.drawing = True
+
 
     def left_motion(self, event):
         """Updates the shape. Indicate shape may be changed using Select tool"""
         x, y = self.convert_coords(event)
         if self.gui.showstat.IsChecked():
             self.gui.SetStatusText(" %s, %s" % (x, y))
-
+            
+        if self.check_canvas_resize(x, y):
+            return
+        
         if self.drawing:
             self.shape.motion(x, y)
-            self.draw_shape(self.shape)
+            self.draw_shape(self.shape)                      
         elif isinstance(self.shape, Select):
 
             for shape in reversed(self.shapes):
@@ -112,6 +122,7 @@ class Whyteboard(wx.ScrolledWindow):
             else:
                 self.change_cursor()
 
+
     def left_up(self, event):
         """
         Called when the left mouse button is released.
@@ -125,11 +136,29 @@ class Whyteboard(wx.ScrolledWindow):
                 self.update_thumb()
             self.drawing = False
 
+
     def left_double(self, event):
         """Double click for the Select tool - edit text"""
         x, y = self.convert_coords(event)
         if isinstance(self.shape, Select):
             self.shape.double_click(x, y)
+
+
+    def check_canvas_resize(self, x, y):
+        rtn = True
+        if x > self.area[0] and y > self.area[1]:
+            print 'in both!'
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
+        elif x > self.area[0]:
+            print 'in x!'
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))
+        elif y > self.area[1]:
+            print 'in y!'
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS)) 
+        else:
+            rtn = False
+        return rtn
+            
 
     def redraw_dirty(self, dc):
         """ Figure out what part of the window to refresh. """

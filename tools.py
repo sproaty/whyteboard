@@ -49,6 +49,7 @@ CENTER_LEFT   = 8
 class Tool(object):
     """ Abstract class representing a tool: Drawing board/colour/thickness """
     tooltip = ""
+    icon = ""
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
         self.board = board
         self.colour = colour
@@ -107,6 +108,7 @@ class Pen(Tool):
     """ A free-hand pen. """
     tooltip = _("Draw strokes with a brush")
     name = _("Pen")
+    icon = "pen"
 
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
         Tool.__init__(self, board, colour, thickness, cursor)
@@ -270,6 +272,7 @@ class Rectangle(OverlayShape):
     """
     tooltip = _("Draw a rectangle")
     name = _("Rectangle")
+    icon = "rectangle"
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness)
         self.width = 0
@@ -361,6 +364,7 @@ class Ellipse(Rectangle):
     """
     tooltip = _("Draw an oval shape")
     name = _("Ellipse")
+    icon = "ellipse"
     def draw(self, dc, replay=False):
         super(Ellipse, self).draw(dc, replay, "Ellipse")
 
@@ -384,6 +388,7 @@ class Circle(OverlayShape):
     """
     tooltip = _("Draw a circle")
     name = _("Circle")
+    icon = "circle"
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness)
         self.radius = 1
@@ -423,6 +428,7 @@ class RoundedRect(Rectangle):
     """
     tooltip = _("Draw a rectangle with rounded edges")
     name = _("Rounded Rect")
+    icon = "rounded-rect"
     def draw(self, dc, replay=False):
         super(RoundedRect, self).draw(dc, replay, "RoundedRectangle")
 
@@ -443,6 +449,7 @@ class Line(OverlayShape):
     """
     tooltip = _("Draw a straight line")
     name = _("Line")
+    icon = "line"
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness)
         self.x2 = 0
@@ -536,6 +543,7 @@ class Eraser(Pen):
     """
     tooltip = _("Erase a drawing to the background")
     name = _("Eraser")
+    icon = "eraser"
     def __init__(self, board, colour, thickness):
         cursor = self.make_cursor(thickness)
         Pen.__init__(self, board, (255, 255, 255), thickness + 6, cursor)
@@ -582,6 +590,7 @@ class Eyedrop(Tool):
     """
     tooltip = _("Picks a color from the selected pixel")
     name = _("Eyedropper")
+    icon = "eyedrop"
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
 
@@ -609,6 +618,7 @@ class Text(OverlayShape):
     """
     tooltip = _("Input text")
     name = _("Text")
+    icon = "text"
     def __init__(self, board, colour, thickness):
         OverlayShape.__init__(self, board, colour, thickness, wx.CURSOR_IBEAM)
         self.font = None
@@ -769,6 +779,7 @@ class Note(Text):
     """
     tooltip = _("Insert a note")
     name = _("Note")
+    icon = "note"
     def __init__(self, board, colour, thickness):
         Text.__init__(self, board, colour, thickness)
         self.tree_id = None
@@ -846,13 +857,18 @@ class Image(OverlayShape):
         self.board.add_shape(self)
         size = (self.image.GetWidth(), self.image.GetHeight())
         self.board.update_scrollbars(size)
+        self.sort_handles()
 
         dc = wx.BufferedDC(None, self.board.buffer)
         self.draw(dc)
         self.board.redraw_dirty(dc)
 
-    def handle_hit_test(self, x, y):
-        pass
+    #def handle_hit_test(self, x, y):
+    #    pass
+    
+    def resize(self, x, y, direction=None):
+        self.image.Rotate(1, (x, y))
+
 
     def draw(self, dc, replay=False):
         super(Image, self).draw(dc, replay, "Bitmap")
@@ -903,6 +919,7 @@ class Select(Tool):
     """
     tooltip = _("Select a shape to move and resize it")
     name = _("Shape Select ")
+    icon = "select"
     def __init__(self, board, image, path):
         Tool.__init__(self, board, (0, 0, 0), 1, wx.CURSOR_ARROW)
         self.shape = None
@@ -998,6 +1015,7 @@ class BitmapSelect(Rectangle):
     """
     tooltip = _("Select a rectangle region to copy as a bitmap")
     name = _("Bitmap Select")
+    icon = "select-rectangular"
     def __init__(self, board, image, path):
         Rectangle.__init__(self, board, (0, 0, 0), 2)
 

@@ -92,6 +92,7 @@ language = option('English', 'English (United Kingdom)', 'French', 'Dutch', 'Ger
 statusbar = boolean(default=True)
 toolbar = boolean(default=True)
 undo_sheets = integer(min=5, max=50, default=10)
+toolbox = option('icon', 'text', default='icon')
 """
 
 _ = wx.GetTranslation
@@ -537,7 +538,7 @@ class Utility(object):
                 dlg = FindIM(self, self.gui)
                 dlg.ShowModal()
                 if self.im_location:
-                    self.config['imagemagick_path'] = self.im_location
+                    self.config['imagemagick_path'] = os.path.dirname(self.im_location)
                     self.config.write()
             else:
                 self.check_im_path(self.config['imagemagick_path'])

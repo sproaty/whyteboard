@@ -38,11 +38,10 @@ import wx
 import wx.lib.newevent
 from wx.html import HtmlHelpController
 
-sys.path.append("lib")
-from configobj import ConfigObj
-from validate import Validator
+from lib.configobj import ConfigObj
+from lib.validate import Validator
 
-import icon
+import lib.icon
 from whyteboard import Whyteboard
 from tools import Image, Note
 from utility import Utility, FileDropTarget, languages, cfg, get_home_dir
@@ -87,7 +86,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.38.5"
+    version = "0.38.6"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -96,7 +95,7 @@ class GUI(wx.Frame):
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
         wx.Frame.__init__(self, parent, title=_("Untitled")+" - " + self.title)
-        ico = icon.whyteboard.getIcon()
+        ico = lib.icon.whyteboard.getIcon()
         self.SetIcon(ico)
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
         self.util = Utility(self, config)
@@ -451,7 +450,7 @@ class GUI(wx.Frame):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
         self.update_panels(False)
-        
+
         self.current_tab = self.tabs.GetSelection()
         if event:
             self.current_tab = event.GetSelection()
@@ -836,6 +835,7 @@ class GUI(wx.Frame):
         inf = wx.AboutDialogInfo()
         inf.Name = "Whyteboard"
         inf.Version = self.version
+        inf.Copyright = "(C) 2009 Steven Sproat"
         inf.Description = _("A simple whiteboard and PDF annotator")
         inf.Developers = ["Steven Sproat <sproaty@gmail.com>"]
         t = ['"Dennis" https://launchpad.net/~dlinn83 (German)',
@@ -848,15 +848,14 @@ class GUI(wx.Frame):
              '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)']
 
         inf.Translators = t
-        inf.Copyright = "(C) 2009 Steven Sproat"
-        if os.name == "posix":
-            x = "http://www.launchpad.net/whyteboard"
-            inf.WebSite = (x, x)
-            inf.Licence = s
+        x = "http://www.launchpad.net/whyteboard"
+        inf.WebSite = (x, x)
+        inf.Licence = s
         wx.AboutBox(inf)
 
 
 #----------------------------------------------------------------------
+
 
 class WhyteboardApp(wx.App):
     def OnInit(self):
@@ -864,6 +863,8 @@ class WhyteboardApp(wx.App):
         Load config file, apply translation, parse arguments and delete any
         temporary filse left over from an update
         """
+        self.SetAppName("whyteboard")  # used to identify app in $HOME/
+
         path = os.path.join(get_home_dir(), "user.pref")
         config = ConfigObj(path, configspec=cfg.split("\n"))
         validator = Validator()
@@ -891,7 +892,6 @@ class WhyteboardApp(wx.App):
         self.locale.AddCatalogLookupPathPrefix(langdir)
         self.locale.AddCatalog("whyteboard")
 
-        self.SetAppName("whyteboard")  # used to identify app in $HOME/
         self.frame = GUI(None, config)
         self.frame.Show(True)
         self.parse_args()
@@ -926,7 +926,7 @@ class WhyteboardApp(wx.App):
 #----------------------------------------------------------------------
 
 def main():
-    app = WhyteboardApp()
+    app = WhyteboardApp(redirect=False)
     app.MainLoop()
 
 if __name__ == '__main__':

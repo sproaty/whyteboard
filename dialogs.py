@@ -25,7 +25,7 @@ import sys
 import wx
 
 from copy import copy
-from BeautifulSoup import BeautifulSoup
+from lib.BeautifulSoup import BeautifulSoup
 from urllib import urlopen, urlretrieve
 
 import tools
@@ -199,7 +199,7 @@ class ProgressDialog(wx.Dialog):
         self.gauge = wx.Gauge(self, range=100, size=(180, 30))
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.gauge, 0, wx.ALL, 10)
-                
+
         if cancellable:
             cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
             cancel.SetDefault()
@@ -208,7 +208,7 @@ class ProgressDialog(wx.Dialog):
             btnSizer.AddButton(cancel)
             btnSizer.Realize()
             sizer.Add(btnSizer, 0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
-        
+
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
@@ -372,16 +372,24 @@ class UpdateDialog(wx.Dialog):
         self.downloaded += block
         done = self.downloaded / 1024
 
+        _type = "KB"
+        rem = ""
+        if done >= 1024:
+            rem = ".%s" % (done % 1024)
+            done /= 1024
+            _type = "MB"
+
+
         _type2 = "KB"
         total /= 1024
-        rem = ""
+        rem2 = ""
         if total >= 1024:
-            rem = ".%s" % (total % 1024)
+            rem2 = ".%s" % (total % 1024)
             total /= 1024
             _type2 = "MB"
 
-        self.text2.SetLabel(" "+_("Downloaded")+" %s" % done + "KB of %s" % total +
-                                          rem + _type2)
+        self.text2.SetLabel(" "+_("Downloaded")+" %s%s%s" % (done, rem, _type) +
+                            " of %s%s%s" % (total, rem2, _type2))
 
 
 #----------------------------------------------------------------------

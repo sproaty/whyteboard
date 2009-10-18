@@ -48,14 +48,16 @@ class Preferences(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.tabs = wx.Notebook(self)
-        self.tabs.AddPage(General(self.tabs, gui, self.config), _("General"))
-        self.tabs.AddPage(FontAndColours(self.tabs, gui, self.config), _("Fonts and Color"))
-        self.tabs.AddPage(PDF(self.tabs, gui, self.config), _("PDF Conversion"))
+        params = [self.tabs, gui, self.config]
+        self.tabs.AddPage(General(*params), _("General"))
+        self.tabs.AddPage(FontAndColours(*params), _("Fonts and Color"))
+        self.tabs.AddPage(View(*params), _("View"))
+        self.tabs.AddPage(PDF(*params), _("PDF Conversion"))
 
         okay = wx.Button(self, wx.ID_OK, _("&OK"))
         cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         help = wx.Button(self, wx.ID_HELP, _("&Help"))
-        cancel.SetDefault()
+        okay.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okay)
         btnSizer.AddButton(cancel)
@@ -73,6 +75,7 @@ class Preferences(wx.Dialog):
         cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
         okay.Bind(wx.EVT_BUTTON, self.on_okay)
         help.Bind(wx.EVT_BUTTON, self.on_help)
+
 
     def on_okay(self, event):
         """
@@ -94,23 +97,32 @@ class Preferences(wx.Dialog):
                 self.gui.util.font = wx.FFont(0, 0)
                 self.gui.util.font.SetNativeFontInfoFromString(self.config['default_font'])
 
-
-        self.config.write()
-        self.gui.util.config = self.config
-
         if self.config['statusbar']:
-            self.gui.on_statusbar( None, True)
+            self.gui.on_statusbar(None, True)
         else:
             self.gui.on_statusbar(None, False)
         if self.config['toolbar']:
             self.gui.on_toolbar(None, True)
         else:
             self.gui.on_toolbar(None, False)
-
+            
+        self.config.write()
+        self.gui.util.config = self.config 
         ctrl = self.gui.control
+           
+        if self.config['toolbox'] != old['toolbox']:
+            ctrl.toolsizer.Clear(True)
+            if self.config['toolbox'] == 'text':
+                ctrl.toolsizer.SetCols(1)
+            else:
+                ctrl.toolsizer.SetCols(2)
+            ctrl.make_toolbox(self.config['toolbox'])
+            ctrl.toolsizer.Layout()
+                    
+        #  too lazy to check if each colour has changed        
         ctrl.grid.Clear(True)
         ctrl.make_colour_grid()
-        ctrl.grid.Layout()
+        ctrl.grid.Layout()            
         self.Destroy()
 
 
@@ -132,7 +144,8 @@ class General(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.config = config
         self.gui = gui
-        self.SetBackgroundColour("White")
+        if os.name == "posix":
+            self.SetBackgroundColour("White")
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
 
@@ -142,8 +155,6 @@ class General(wx.Panel):
         self.handlectrl = wx.SpinCtrl(self, min=3, max=15)
 
         langText = wx.StaticText(self, label=_("Choose Your Language:"))
-        statusbar = wx.CheckBox(self, label=_("View the status bar"))
-        toolbar = wx.CheckBox(self, label=_("View the toolbar"))
         font = langText.GetClassDefaultAttributes().font
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         langText.SetFont(font)
@@ -154,10 +165,6 @@ class General(wx.Panel):
         options.sort()
         self.lang = wx.ComboBox(self, choices=options, style=wx.CB_READONLY)
 
-        if self.config['statusbar']:
-            statusbar.SetValue(True)
-        if self.config['toolbar']:
-            toolbar.SetValue(True)
         if self.config['handle_size']:
             self.handlectrl.SetValue(self.config['handle_size'])
         if self.config['undo_sheets']:
@@ -166,8 +173,6 @@ class General(wx.Panel):
             self.lang.SetValue(self.config['language'])
 
         self.lang.Bind(wx.EVT_COMBOBOX, self.on_lang)
-        statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
-        toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)
         self.undoctrl.Bind(wx.EVT_SPINCTRL, self.on_undo)
         self.handlectrl.Bind(wx.EVT_SPINCTRL, self.on_handle)
 
@@ -177,23 +182,12 @@ class General(wx.Panel):
         sizer.Add(self.undoctrl, 0, wx.LEFT, 30)
         sizer.Add(handle, 0, wx.ALL, 15)
         sizer.Add(self.handlectrl, 0, wx.LEFT, 30)
-        sizer.Add((10, 8))
-        sizer.Add(statusbar, 0, wx.ALL, 10)
-        sizer.Add(toolbar, 0, wx.LEFT, 10)
 
 
     def on_lang(self, event):
         for x in languages:
             if self.lang.GetValue() == x[0]:
                 self.config['language'] = x[0]
-
-
-    def on_statusbar(self, event):
-        self.config['statusbar'] = event.Checked()
-
-
-    def on_toolbar(self, event):
-        self.config['toolbar'] = event.Checked()
 
 
     def on_undo(self, event):
@@ -216,7 +210,8 @@ class FontAndColours(wx.Panel):
     """
     def __init__(self, parent, gui, config):
         wx.Panel.__init__(self, parent)
-        self.SetBackgroundColour("White")
+        if os.name == "posix":
+            self.SetBackgroundColour("White")
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.gui = gui
         self.parent = parent
@@ -238,11 +233,14 @@ class FontAndColours(wx.Panel):
             self.font = f
             self.button.SetFont(f)
             self.button.SetLabel(self.config['default_font'])
-
+            if os.name == "nt":
+                self.font_label(f) 
+                               
             f = wx.FFont(0, 0)
             f.SetNativeFontInfoFromString(self.config['default_font'])
             f.SetPointSize(self.size)
             self.button.SetFont(f)
+           
         else:
             self.button.SetLabel(self.button.GetFont().GetNativeFontInfoDesc())
 
@@ -283,12 +281,10 @@ class FontAndColours(wx.Panel):
 
         if dlg.ShowModal() == wx.ID_OK:
             font = dlg.GetFontData().GetChosenFont()
-            #if os.name == "nt":
-            #w = font.GetWeightString()
-            #if w == wx.FONTST
-            #    name = font.GetFaceName() + " " + font.GetWeight(), font.GetPointSize()
-            #else:
-            self.button.SetLabel(font.GetNativeFontInfoDesc())
+            if os.name == "nt":
+                self.font_label(font)
+            else:
+                self.button.SetLabel(font.GetNativeFontInfoDesc())
             self.font = font
 
             font2 = dlg.GetFontData().GetChosenFont()
@@ -301,16 +297,38 @@ class FontAndColours(wx.Panel):
         dlg.Destroy()
 
 
+    def font_label(self, font):
+        """Sets the font label on Windows"""
+        size = font.GetPointSize()
+        weight = font.GetWeightString()
+        style = font.GetStyle()
+        w = s = ""
+
+        if weight == "wxBOLD":
+            w = "Bold" 
+        elif weight == "wxLIGHT":
+            w = "Light"
+        if style == wx.ITALIC:
+            s = "Italic"
+        
+        self.button.SetLabel("%s %s %s %s" % (font.GetFaceName() , w, s, size))
+        
+
     def on_colour(self, event, id):
         """
         Change the colour of the selected button. We need to remove the current
         button, create a new one with the newly selected colour, Bind this
         method to that new button and re-layout the sizer
         """
-        dlg = wx.ColourDialog(self)
+        pref = "colour%s" % (id + 1)
+        colour = ([int(c) for c in self.config[pref]])
+        data = wx.ColourData()
+        data.SetColour(colour)
+        dlg = wx.ColourDialog(self, data)
+        
         if dlg.ShowModal() == wx.ID_OK:
-            string = "colour%s" % (id + 1)
-            self.config[string] = list(dlg.GetColourData().Colour.Get())
+            
+            self.config[pref] = list(dlg.GetColourData().Colour.Get())
 
             self.grid.Remove(self.buttons[id])
             col = make_bitmap(dlg.GetColourData().Colour)
@@ -325,7 +343,70 @@ class FontAndColours(wx.Panel):
         dlg.Destroy()
 
 
-##----------------------------------------------------------------------
+#----------------------------------------------------------------------
+
+
+class View(wx.Panel):
+    """
+    Select language and toolbar/status bar visiblity
+    """
+    def __init__(self, parent, gui, config):
+        wx.Panel.__init__(self, parent)
+        self.config = config
+        self.gui = gui
+        if os.name == "posix":
+            self.SetBackgroundColour("White")
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(sizer)
+
+        statusbar = wx.CheckBox(self, label=_("View the status bar"))
+        toolbar = wx.CheckBox(self, label=_("View the toolbar"))
+        radio1 = wx.RadioButton(self, label=" " + _("Icons"))
+        radio2 = wx.RadioButton(self, label=" " + _("Text"))
+        label = wx.StaticText(self, label=_("Toolbox View:"))        
+        font = label.GetFont()
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        label.SetFont(font)       
+        sizer.Add(label, 0, wx.ALL, 15)
+         
+        if self.config['toolbox'] == 'icon':
+            radio1.SetValue(True)
+        else:
+            radio2.SetValue(True)        
+        if self.config['statusbar']:
+            statusbar.SetValue(True)
+        if self.config['toolbar']:
+            toolbar.SetValue(True)
+                    
+        for x, btn in enumerate([radio1, radio2]):
+           sizer.Add(btn, 0, wx.LEFT, 30)
+           sizer.Add((10, 5))
+           method = lambda evt, id=x: self.on_view(evt, id)
+           btn.Bind(wx.EVT_RADIOBUTTON, method)
+           
+        sizer.Add((10, 15))
+        sizer.Add(statusbar, 0, wx.ALL, 10)
+        sizer.Add(toolbar, 0, wx.LEFT, 10)
+        statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
+        toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)                        
+
+
+    def on_statusbar(self, event):
+        self.config['statusbar'] = event.Checked()
+
+
+    def on_toolbar(self, event):
+        self.config['toolbar'] = event.Checked()
+        
+        
+    def on_view(self, event, id):
+        if id == 0:
+            self.config['toolbox'] = 'icon'
+        else:
+            self.config['toolbox'] = 'text'
+
+
+#----------------------------------------------------------------------
 
 
 class PDF(wx.Panel):
@@ -336,8 +417,8 @@ class PDF(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.config = config
         self.gui = gui
-        self.buttons = []  # radio buttons
-        self.SetBackgroundColour("White")
+        if os.name == "posix":
+            self.SetBackgroundColour("White")
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
 
@@ -356,31 +437,16 @@ class PDF(wx.Panel):
            sizer.Add((10, 5))
            method = lambda evt, id=x: self.on_quality(evt, id)
            btn.Bind(wx.EVT_RADIOBUTTON, method)
-           self.buttons.append(btn)
         sizer.Add((10, 5))
         sizer.Add(note, 0, wx.LEFT, 30)
 
-        #if os.name == "nt":
-        im_label = wx.StaticText(self, label=_("ImageMagick's Location:"))
-        im_label.SetFont(font)
-        im_button = wx.Button(self, label=_("Find..."))
-        im_button.Bind(wx.EVT_BUTTON, self.find_imagemagick)
-        sizer.Add((10, 5))
-        sizer.Add(im_label, 0, wx.ALL | wx.TOP, 15)
-        sizer.Add(im_button, 0, wx.LEFT, 30)
-
         if self.config['convert_quality'] == 'highest':
-            self.buttons[0].SetValue(True)
+            radio1.SetValue(True)
         if self.config['convert_quality'] == 'high':
-            self.buttons[1].SetValue(True)
+            radio2.SetValue(True)
         if self.config['convert_quality'] == 'normal':
-            self.buttons[2].SetValue(True)
+            radio3.SetValue(True)
 
-
-    def find_imagemagick(self, event):
-        dlg = FindIM(self, self.gui)
-        dlg.ShowModal()
-        #self.gui.util.prompt_for_im()
 
     def on_quality(self, event, id):
         if id == 0:
