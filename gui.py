@@ -102,6 +102,7 @@ class GUI(wx.Frame):
         self.file_drop = FileDropTarget(self)
         self.SetDropTarget(self.file_drop)
         self.statusbar = self.CreateStatusBar()
+        self.bar_shown = True  # slight performance optimisation
 
         self.can_paste = False
         if self.util.get_clipboard():
@@ -187,7 +188,7 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_UNDO, _("&Undo")+"\tCtrl+Z", _("Undo the last operation"))
         edit.Append(wx.ID_REDO, _("&Redo")+"\tCtrl+Y", _("Redo the last undone operation"))
         edit.AppendSeparator()
-        #edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
+        edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
         edit.Append(wx.ID_COPY, _("&Copy")+"\tCtrl+C", _("Copy a Bitmap Selection region"))
         edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste an image from your clipboard into Whyteboard"))
         edit.AppendItem(pnew)
@@ -661,12 +662,15 @@ class GUI(wx.Frame):
         if self.showstat.IsChecked() or force:
             self.statusbar.Show()
             self.showstat.Check(True)
+            self.bar_shown = True
         else:
             self.statusbar.Hide()
             self.showstat.Check(False)
+            self.bar_shown = False
         if force is False:
             self.statusbar.Hide()
             self.showstat.Check(False)
+            self.bar_shown = False
         self.SendSizeEvent()
 
 

@@ -850,6 +850,7 @@ class Image(OverlayShape):
         OverlayShape.__init__(self, board, "Black", 1)
         self.image = image
         self.path = path  # used to restore image on load
+        self.resizing = False
 
     def left_down(self, x, y):
         self.x = x
@@ -865,9 +866,19 @@ class Image(OverlayShape):
 
     #def handle_hit_test(self, x, y):
     #    pass
-    
+    def sort_handles(self):
+        super(Image, self).sort_handles()
+        if not self.resizing:
+            print 'to image'
+            self.img = wx.Bitmap.ConvertToImage(self.image)
+            self.resizing = True
+        else:
+            print 'from image'
+            self.image = wx.BitmapFromImage(self.img)
+
+
     def resize(self, x, y, direction=None):
-        self.image.Rotate(1, (x, y))
+        self.img.Rotate(1, (x, y))
 
 
     def draw(self, dc, replay=False):
@@ -925,7 +936,7 @@ class Select(Tool):
         self.shape = None
         self.dragging = False
         self.undone = False  # Adds an undo point once per class
-        self.anchored = False  # Anchor shape's x point once when resizing
+        self.anchored = False  # Anchor shape's x point -once-, when resizing
         self.direction = None
         self.count = 0
         self.offset = (0, 0)

@@ -592,10 +592,11 @@ class Resize(wx.Dialog):
         self.gui = gui
         gap = wx.LEFT | wx.TOP | wx.RIGHT
         width, height = self.gui.board.buffer.GetSize()
-
+        self.size = (width, height)
         csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
-        self.hctrl = wx.TextCtrl(self, validator = IntValidator())
-        self.wctrl = wx.TextCtrl(self, validator = IntValidator())
+        self.hctrl = wx.SpinCtrl(self, min=1, max=12000)
+        self.wctrl = wx.SpinCtrl(self, min=1, max=12000)
+
         csizer.Add(wx.StaticText(self, label=_("Width:")), 0, wx.TOP |
                                                             wx.ALIGN_RIGHT, 10)
         csizer.Add(self.wctrl, 1, gap, 7)
@@ -603,82 +604,40 @@ class Resize(wx.Dialog):
                                                              wx.ALIGN_RIGHT, 7)
         csizer.Add(self.hctrl, 1, gap, 7)
 
-        self.hctrl.SetValue(str(height))
-        self.wctrl.SetValue(str(width))
-        self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
-        self.okButton.SetDefault()
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        self.hctrl.SetValue(height)
+        self.wctrl.SetValue(width)
+        okButton = wx.Button(self, wx.ID_OK, _("&OK"))
+        okButton.SetDefault()
+        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
 
         order = (self.wctrl, self.hctrl)  # sort out tab order
         for i in xrange(len(order) - 1):
             order[i+1].MoveAfterInTabOrder(order[i])
 
         btnSizer = wx.StdDialogButtonSizer()
-        btnSizer.Add(self.okButton, 0, wx.BOTTOM | wx.RIGHT, 5)
-        btnSizer.Add(self.cancelButton, 0, wx.BOTTOM | wx.LEFT, 5)
+        btnSizer.AddButton(okButton)
+        btnSizer.AddButton(cancelButton)
+        btnSizer.Realize()
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(csizer, 0, gap, 7)
         sizer.Add((10, 10)) # Spacer.
-        sizer.Add(btnSizer, 0, gap | wx.ALIGN_CENTRE, 5)
+        sizer.Add(btnSizer, 0, gap | wx.BOTTOM | wx.ALIGN_CENTRE, 5)
         self.SetSizer(sizer)
+        self.SetFocus()
         sizer.Fit(self)
-        self.okButton.Bind(wx.EVT_BUTTON, self.ok)
+        cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
+        okButton.Bind(wx.EVT_BUTTON, self.ok)
 
 
     def ok(self, event):
-        """
-        Set the virtual canvas size
-        """
-        value = (int(self.wctrl.GetValue()), int(self.hctrl.GetValue()))
-        self.gui.board.update_scrollbars(value, True)
-        #board = self.gui.board
-        #board.buffer = wx.EmptyBitmap(*value)
-        #board.SetVirtualSize(value)
-        #board.redraw_all()
-        #board.SetVirtualSize(value)
-        #board.SetSize(value)
-        #board.SetBackgroundColour("Grey")
-        #board.ClearBackground()
+        """Set the virtual canvas size"""
+        value = (self.wctrl.GetValue(), self.hctrl.GetValue())
+        self.gui.board.resize_canvas(value)
         self.Close()
 
-#----------------------------------------------------------------------
-
-class IntValidator(wx.PyValidator):
-    """
-    Only allows integer input for the resize text boxes
-    """
-    def __init__(self):
-        wx.PyValidator.__init__(self)
-        self.Bind(wx.EVT_CHAR, self.on_char)
-
-    def Clone(self):
-        return IntValidator()
-
-    def TransferFromWindow(self):
-        """ Need to override to stop a message box popping up """
-        return True
-
-    def TransferToWindow(self):
-        """ Need to override to stop a message box popping up """
-        return True
-
-    def Validate(self, win):
-        """ The actual validation method called on the input """
-        tc = self.GetWindow()
-        val = tc.GetValue()
-
-        for x in val:
-            if not x.isdigit:
-                return False
-        return True
-
-    def on_char(self, event):
-        """ Ensure a keypress is a digit """
-        key = event.GetKeyCode()
-
-        if (key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255 or
-            chr(key) in '0123456789'):
-            event.Skip()
-        return
+               
+    def cancel(self, event):
+        self.gui.board.resize_canvas(self.size)
+        self.Close()
 
 #----------------------------------------------------------------------
