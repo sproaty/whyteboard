@@ -28,6 +28,14 @@ $ python whyteboard.py
 see what error occurred and let me know at, <sproaty@gmail.com>,
 or report a bug at Lunchpad at the link below
 
+If you are getting an error on Windows, 
+"Application failed to start because the application configuration is incorrect. 
+Reinstalling the application may fix the problem."
+
+
+http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2 OR
+http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14-157CFDFFEE4E (64 bit version if you have win64)
+
 ---- KNOWN BUGS ----
 
 Currently none for this version; see up to date reports at:

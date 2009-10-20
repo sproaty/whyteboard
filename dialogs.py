@@ -25,6 +25,7 @@ import sys
 import wx
 
 from copy import copy
+import lib.errdlg
 from lib.BeautifulSoup import BeautifulSoup
 from urllib import urlopen, urlretrieve
 
@@ -641,3 +642,100 @@ class Resize(wx.Dialog):
         self.Close()
 
 #----------------------------------------------------------------------
+
+
+class MyPrintout(wx.Printout):
+    def __init__(self, gui):
+        title = _("Untitled")
+        if gui.util.filename:
+            title = gui.util.filename
+            print title
+        wx.Printout.__init__(self, title)
+        self.gui = gui
+
+    def OnBeginDocument(self, start, end):
+        return super(MyPrintout, self).OnBeginDocument(start, end)
+
+    def OnEndDocument(self):
+        super(MyPrintout, self).OnEndDocument()
+
+    def OnBeginPrinting(self):
+        super(MyPrintout, self).OnBeginPrinting()
+
+    def OnEndPrinting(self):
+        super(MyPrintout, self).OnEndPrinting()
+
+    def OnPreparePrinting(self):
+        super(MyPrintout, self).OnPreparePrinting()
+
+    def HasPage(self, page):
+        return page <= self.gui.tab_count
+
+    def GetPageInfo(self):
+        return (1, self.gui.tab_count, 1, self.gui.tab_count)
+
+    def OnPrintPage(self, page):
+        dc = self.GetDC()   
+        board = self.gui.tabs.GetPage(page - 1)     
+        maxX = board.buffer.GetWidth()
+        maxY = board.buffer.GetHeight()
+        marginX = 50
+        marginY = 50
+        maxX = maxX + (2 * marginX)
+        maxY = maxY + (2 * marginY)
+
+        (w, h) = dc.GetSizeTuple()
+        scaleX = float(w) / maxX
+        scaleY = float(h) / maxY
+        actualScale = min(scaleX, scaleY)
+        posX = (w - (board.buffer.GetWidth() * actualScale)) / 2.0
+        posY = (h - (board.buffer.GetHeight() * actualScale)) / 2.0
+
+        dc.SetUserScale(actualScale, actualScale)
+        dc.SetDeviceOrigin(int(posX), int(posY))
+        dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY-marginY)        
+        board.redraw_all(dc=dc)
+        return True
+    
+ 
+#----------------------------------------------------------------------
+
+
+class ErrorDialog(lib.errdlg.ErrorDialog):
+    def __init__(self, msg):
+        lib.errdlg.ErrorDialog.__init__(self, None, title="Error Report", message=msg)
+        self.SetDescriptionLabel("Error: An Error has occured read below")
+
+    def Abort(self):
+        """Abort the application"""
+        wx.MessageBox("Abort Clicked", "Abort Callback")
+        TestErrorDialog.ABORT = False # HACK for testing to keep app from being aborted for real
+
+    def GetProgramName(self):
+        """Get the program name to display in error report"""
+        return "Whyteboard"
+
+    def Send(self):
+        """Send the error report"""
+        wx.MessageBox("Send Clicked", "Send Callback")   
+    
+    
+ #----------------------------------------------------------------------
+ 
+def ExceptionHook(exctype, value, trace):
+    """
+    Handler for all unhandled exceptions
+    """
+
+    ftrace = ErrorDialog.FormatTrace(exctype, value, trace)
+
+    print ftrace
+
+    if ErrorDialog.ABORT:
+        os._exit(1)
+    if not ErrorDialog.REPORTER_ACTIVE and not ErrorDialog.ABORT:
+        dlg = ErrorDialog(ftrace)
+        dlg.ShowModal()
+        dlg.Destroy()
+            
+#----------------------------------------------------------------------        

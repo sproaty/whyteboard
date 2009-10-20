@@ -6,7 +6,6 @@ Tue 06 October 2009
 
 see: https://blueprints.launchpad.net/whyteboard
 
-- "Databasing" converted PDF files to avoid re-converting a converted PDF
 - Improvements for whiteboard pen usage: accepting certain commands to perform
   program shortcuts (sent via a tool like ZScreen)
 - Adding all whiteboard-related resources (pasted images, exported sheets, etc)

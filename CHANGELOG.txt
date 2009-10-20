@@ -9,10 +9,14 @@ Sun 04 October 2009
 
 xx Oct 2009 -- 0.38.6
 
+* Resize canvas through a menu dialog, or by dragging the edges of the canvas
+  to resize (like in ms paint)
+* Support for printing
 * The toolbox in the left-hand pane can be viewed as images instead of text
   buttons (default: icon view)
 * Additional preference tab: "View". Moved statusbar/toolbar options here, as
   well as allowing the user to change between text/icon views
+* More translations, now complete in Spanish. Thanks to all contributors!
 
 ----------------------------------------------------------------------
 

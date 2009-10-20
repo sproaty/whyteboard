@@ -105,11 +105,11 @@ class Preferences(wx.Dialog):
             self.gui.on_toolbar(None, True)
         else:
             self.gui.on_toolbar(None, False)
-            
+
         self.config.write()
-        self.gui.util.config = self.config 
+        self.gui.util.config = self.config
         ctrl = self.gui.control
-           
+
         if self.config['toolbox'] != old['toolbox']:
             ctrl.toolsizer.Clear(True)
             if self.config['toolbox'] == 'text':
@@ -118,11 +118,11 @@ class Preferences(wx.Dialog):
                 ctrl.toolsizer.SetCols(2)
             ctrl.make_toolbox(self.config['toolbox'])
             ctrl.toolsizer.Layout()
-                    
-        #  too lazy to check if each colour has changed        
+
+        #  too lazy to check if each colour has changed
         ctrl.grid.Clear(True)
         ctrl.make_colour_grid()
-        ctrl.grid.Layout()            
+        ctrl.grid.Layout()
         self.Destroy()
 
 
@@ -234,13 +234,13 @@ class FontAndColours(wx.Panel):
             self.button.SetFont(f)
             self.button.SetLabel(self.config['default_font'])
             if os.name == "nt":
-                self.font_label(f) 
-                               
+                self.font_label(f)
+
             f = wx.FFont(0, 0)
             f.SetNativeFontInfoFromString(self.config['default_font'])
             f.SetPointSize(self.size)
             self.button.SetFont(f)
-           
+
         else:
             self.button.SetLabel(self.button.GetFont().GetNativeFontInfoDesc())
 
@@ -305,14 +305,14 @@ class FontAndColours(wx.Panel):
         w = s = ""
 
         if weight == "wxBOLD":
-            w = "Bold" 
+            w = "Bold"
         elif weight == "wxLIGHT":
             w = "Light"
         if style == wx.ITALIC:
             s = "Italic"
-        
+
         self.button.SetLabel("%s %s %s %s" % (font.GetFaceName() , w, s, size))
-        
+
 
     def on_colour(self, event, id):
         """
@@ -325,9 +325,9 @@ class FontAndColours(wx.Panel):
         data = wx.ColourData()
         data.SetColour(colour)
         dlg = wx.ColourDialog(self, data)
-        
+
         if dlg.ShowModal() == wx.ID_OK:
-            
+
             self.config[pref] = list(dlg.GetColourData().Colour.Get())
 
             self.grid.Remove(self.buttons[id])
@@ -363,32 +363,32 @@ class View(wx.Panel):
         toolbar = wx.CheckBox(self, label=_("View the toolbar"))
         radio1 = wx.RadioButton(self, label=" " + _("Icons"))
         radio2 = wx.RadioButton(self, label=" " + _("Text"))
-        label = wx.StaticText(self, label=_("Toolbox View:"))        
+        label = wx.StaticText(self, label=_("Toolbox View:"))
         font = label.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
-        label.SetFont(font)       
+        label.SetFont(font)
         sizer.Add(label, 0, wx.ALL, 15)
-         
+
         if self.config['toolbox'] == 'icon':
             radio1.SetValue(True)
         else:
-            radio2.SetValue(True)        
+            radio2.SetValue(True)
         if self.config['statusbar']:
             statusbar.SetValue(True)
         if self.config['toolbar']:
             toolbar.SetValue(True)
-                    
+
         for x, btn in enumerate([radio1, radio2]):
            sizer.Add(btn, 0, wx.LEFT, 30)
            sizer.Add((10, 5))
            method = lambda evt, id=x: self.on_view(evt, id)
            btn.Bind(wx.EVT_RADIOBUTTON, method)
-           
+
         sizer.Add((10, 15))
         sizer.Add(statusbar, 0, wx.ALL, 10)
         sizer.Add(toolbar, 0, wx.LEFT, 10)
         statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
-        toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)                        
+        toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)
 
 
     def on_statusbar(self, event):
@@ -397,8 +397,8 @@ class View(wx.Panel):
 
     def on_toolbar(self, event):
         self.config['toolbar'] = event.Checked()
-        
-        
+
+
     def on_view(self, event, id):
         if id == 0:
             self.config['toolbox'] = 'icon'

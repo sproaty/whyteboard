@@ -95,6 +95,7 @@ class Whyteboard(wx.ScrolledWindow):
         if self.check_canvas_resize(x, y):  # don't draw outside canvas
             self.resizing = True
             return
+        #print t
 
         self.shape.left_down(x, y)
         if not isinstance(self.shape, Text):  #  Crashes without the Text check
@@ -111,7 +112,7 @@ class Whyteboard(wx.ScrolledWindow):
         if direction:
             if not self.resize_direction:
                 self.resize_direction = direction
-            if( (not self.cursor_control and not self.resizing) 
+            if( (not self.cursor_control and not self.resizing)
                     or direction != self.resize_direction):
                 self.resize_direction = direction
                 self.cursor_control = True
@@ -212,14 +213,15 @@ class Whyteboard(wx.ScrolledWindow):
         self.RefreshRect(rect.Inflate(2, 2))
 
 
-    def redraw_all(self, update_thumb=False):
+    def redraw_all(self, update_thumb=False, dc=None):
         """
         Redraws all shapes that have been drawn. self.text is used to show text
         characters as they're being typed, as new Text/Note objects have not
         been added to self.shapes at this point.
         """
-        dc = wx.BufferedDC(None, self.buffer)
-        dc.Clear()
+        if not dc:
+            dc = wx.BufferedDC(None, self.buffer)
+            dc.Clear()
 
         for s in self.shapes:
             s.draw(dc, True)

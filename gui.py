@@ -45,7 +45,8 @@ import lib.icon
 from whyteboard import Whyteboard
 from tools import Image, Note
 from utility import Utility, FileDropTarget, languages, cfg, get_home_dir
-from dialogs import  History, ProgressDialog, Resize, UpdateDialog
+from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
+                     ExceptionHook)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
@@ -102,7 +103,12 @@ class GUI(wx.Frame):
         self.file_drop = FileDropTarget(self)
         self.SetDropTarget(self.file_drop)
         self.statusbar = self.CreateStatusBar()
-        self.bar_shown = True  # slight performance optimisation
+        self.printData = wx.PrintData()
+        self.printData.SetPaperId(wx.PAPER_LETTER)
+        self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
+
+        self._oldhook = sys.excepthook
+        sys.excepthook = ExceptionHook
 
         self.can_paste = False
         if self.util.get_clipboard():
@@ -116,6 +122,7 @@ class GUI(wx.Frame):
         self.help = None
         self.make_toolbar()
         self.make_menu()
+        self.bar_shown = True  # slight performance optimisation
         self.find_help()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.current_tab = 0
@@ -142,6 +149,10 @@ class GUI(wx.Frame):
         self.do_bindings()
         self.update_panels(True)  # bold first items
         self.UpdateWindowUI()
+
+
+    def __del__(self):
+        sys.excepthook = self._oldhook
 
 
     def make_menu(self):
@@ -183,12 +194,16 @@ class GUI(wx.Frame):
         _file.Append(ID_EXPORT, _("&Export Sheet...")+"\tCtrl+E", _("Export the current sheet to an image file"))
         _file.Append(ID_EXPORT_ALL, _("Export &All Sheets...")+"\tCtrl+Shift+E", _("Export every sheet to a series of image files"))
         _file.AppendSeparator()
+        _file.Append(wx.ID_PRINT_SETUP, _("Page Set&up"), _("Set up the page for printing"))
+        _file.Append(wx.ID_PREVIEW_PRINT, _("Print Pre&view"), _("View a preview of the page to be printed"))
+        _file.Append(wx.ID_PRINT, _("&Print...")+"\tCtrl+P", _("Print the current page"))
+        _file.AppendSeparator()
         _file.Append(wx.ID_EXIT, _("&Quit")+"\tAlt+F4", _("Quit Whyteboard"))
 
         edit.Append(wx.ID_UNDO, _("&Undo")+"\tCtrl+Z", _("Undo the last operation"))
         edit.Append(wx.ID_REDO, _("&Redo")+"\tCtrl+Y", _("Redo the last undone operation"))
         edit.AppendSeparator()
-        edit.Append(ID_RESIZE, "Re&size Canvas\tCtrl+R", "Change the canvas' size")
+        edit.Append(ID_RESIZE, _("Re&size Canvas")+"\tCtrl+R", _("Change the canvas' size"))
         edit.Append(wx.ID_COPY, _("&Copy")+"\tCtrl+C", _("Copy a Bitmap Selection region"))
         edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste an image from your clipboard into Whyteboard"))
         edit.AppendItem(pnew)
@@ -218,8 +233,8 @@ class GUI(wx.Frame):
         _help.Append(wx.ID_HELP, _("&Contents")+"\tF1", _("View information about Whyteboard"))
         _help.AppendSeparator()
         _help.Append(ID_UPDATE, _("Check for &Updates...")+"\tF12", _("Search for updates to Whyteboard"))
-        _help.Append(ID_TRANSLATE, _("&Translate Whyteboard"), _("Translate Whyteboard to your language"))
         _help.Append(ID_REPORT_BUG, _("&Report a Problem"), _("Report any bugs or issues with Wwhyteboard"))
+        _help.Append(ID_TRANSLATE, _("&Translate Whyteboard"), _("Translate Whyteboard to your language"))
         _help.AppendSeparator()
         _help.Append(wx.ID_ABOUT, _("&About"), _("View information about Whyteboard"))
         self.menu.Append(_file, _("&File"))
@@ -265,13 +280,13 @@ class GUI(wx.Frame):
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "exit", "undo", "redo", "undo_tab", "copy", "paste", "preferences", "paste_new",
-                  "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",  "clear_sheets", "clear_all_sheets", "rename", "help", "update",
-                  "translate", "report_bug", "about"]
+        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
+                  "copy", "paste", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",  "clear_sheets",
+                  "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about"]
 
-        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_EXIT, wx.ID_UNDO, wx.ID_REDO, ID_UNDO_SHEET,
-               wx.ID_COPY, wx.ID_PASTE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR, ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL,
-               ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT]
+        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
+               wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR, ID_PREV, ID_NEXT,
+               wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -759,6 +774,46 @@ class GUI(wx.Frame):
         self.thumbs.update_all()
 
 
+    def on_page_setup(self, evt):
+        psdd = wx.PageSetupDialogData(self.printData)
+        psdd.CalculatePaperSizeFromId()
+        dlg = wx.PageSetupDialog(self, psdd)
+        dlg.ShowModal()
+        self.printData = wx.PrintData( dlg.GetPageSetupData().GetPrintData() )
+        dlg.Destroy()
+
+
+    def on_print_preview(self, event):
+        data = wx.PrintDialogData(self.printData)
+        printout = MyPrintout(self)
+        printout2 = MyPrintout(self)
+        self.preview = wx.PrintPreview(printout, printout2, data)
+
+        if not self.preview.Ok():
+            return
+
+        pfrm = wx.PreviewFrame(self.preview, self, _("Print Preview"))
+        pfrm.Initialize()
+        pfrm.SetPosition(self.GetPosition())
+        pfrm.SetSize(self.GetSize())
+        pfrm.Show(True)
+
+
+    def on_print(self, event):
+        pdd = wx.PrintDialogData(self.printData)
+        pdd.SetToPage(2)
+        printer = wx.Printer(pdd)
+        printout = MyPrintout(self)
+
+        if not printer.Print(self.board, printout, True):
+            if printer.GetLastError() is not wx.PRINTER_CANCELLED:
+                wx.MessageBox(_("There was a problem printing.\nPerhaps your current printer is not set correctly?"),
+                              _("Printing Error"), wx.OK)
+        else:
+            self.printData = wx.PrintData( printer.GetPrintDialogData().GetPrintData() )
+        printout.Destroy()
+
+
     def on_translate(self, event):
         wx.BeginBusyCursor()
         webbrowser.open_new_tab("https://translations.launchpad.net/whyteboard")
@@ -843,13 +898,17 @@ class GUI(wx.Frame):
         inf.Description = _("A simple whiteboard and PDF annotator")
         inf.Developers = ["Steven Sproat <sproaty@gmail.com>"]
         t = ['"Dennis" https://launchpad.net/~dlinn83 (German)',
+             'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
              '"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
              '"Lauren" https://launchpad.net/~lewakefi (French)',
+             'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese)',
              'Medina Colpaca https://launchpad.net/~medina-colpaca (Spanish)',
              'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
+             '"Rarulis" https://launchpad.net/~rarulis (French)',
              'Roberto Bondi https://launchpad.net/~bondi (Italian)',
              'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
-             '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)']
+             '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
+             'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']
 
         inf.Translators = t
         x = "http://www.launchpad.net/whyteboard"

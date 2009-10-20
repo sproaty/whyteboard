@@ -88,7 +88,7 @@ convert_quality = option('highest', 'high', 'normal', default='normal')
 default_font = string
 imagemagick_path = string
 handle_size = integer(min=3, max=15, default=6)
-language = option('English', 'English (United Kingdom)', 'French', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
+language = option('English', 'English (United Kingdom)', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
 statusbar = boolean(default=True)
 toolbar = boolean(default=True)
 undo_sheets = integer(min=5, max=50, default=10)
@@ -104,6 +104,7 @@ languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
               (_("Spanish"), wx.LANGUAGE_SPANISH),
               (_("French"), wx.LANGUAGE_FRENCH),
               (_("Welsh"), wx.LANGUAGE_WELSH),
+              (_("Traditional Chinese"), wx.LANGUAGE_CHINESE_TRADITIONAL),
               (_("Czech"), wx.LANGUAGE_CZECH),
               (_("Italian"), wx.LANGUAGE_ITALIAN) )
 
@@ -659,6 +660,9 @@ class FileDropTarget(wx.FileDropTarget):
 
 #----------------------------------------------------------------------
 
+
+
+#----------------------------------------------------------------------
 
 def save_pasted_images(shapes):
     """
