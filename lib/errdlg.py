@@ -117,7 +117,7 @@ class ErrorReporter(object):
         """
         if len(self._sessionerr):
             return self._sessionerr[-1]
-        
+
 #-----------------------------------------------------------------------------#
 
 class ErrorDialog(wx.Dialog):
@@ -138,20 +138,21 @@ class ErrorDialog(wx.Dialog):
         """
         ErrorDialog.REPORTER_ACTIVE = True
         wx.Dialog.__init__(self, parent, id, title, pos, size, style, name)
-        
+
         # Give message to ErrorReporter
         ErrorReporter().AddMessage(message)
 
         # Attributes
         self.err_msg = os.linesep.join((self.GetEnvironmentInfo(),
-                                        "#---- Traceback Info ----#",
+                                        "#---- Traceback Info ----#\n",
                                         ErrorReporter().GetErrorStack(),
-                                        "#---- End Traceback Info ----#"))
+                                        "#---- End Traceback Info ----#\n"))
 
         # Layout
         self._panel = ErrorPanel(self, self.err_msg)
         self._DoLayout()
         self.SetMinSize(wx.Size(450, 300))
+        self.parent = parent
 
         # Event Handlers
         self.Bind(wx.EVT_BUTTON, self.OnButton)
@@ -185,10 +186,6 @@ class ErrorDialog(wx.Dialog):
 
         """
         info = list()
-        info.append("#---- Notes ----#")
-        info.append("Please provide additional information about the crash here")
-        info.extend(["", ""])
-        info.append("#---- System Information ----#")
         info.append(self.GetProgramName())
         info.append("Operating System: %s" % wx.GetOsDescription())
         if sys.platform == 'darwin':
@@ -204,6 +201,7 @@ class ErrorDialog(wx.Dialog):
         info.append("Byte order: %s" % sys.byteorder)
         info.append("Frozen: %s" % str(getattr(sys, 'frozen', 'False')))
         info.append("#---- End System Information ----#")
+        info.append("")
         info.append("")
         return os.linesep.join(info)
 
@@ -312,10 +310,13 @@ class ErrorPanel(wx.Panel):
 
     def __DoLayout(self):
         """Layout the control"""
-        icon = wx.StaticBitmap(self, 
+        icon = wx.StaticBitmap(self,
                                bitmap=wx.ArtProvider.GetBitmap(wx.ART_ERROR))
+        d = _("Description of what you was doing before this error appeared")
+
         t_lbl = wx.StaticText(self, label=_("Error Traceback:"))
-        tctrl = wx.TextCtrl(self, value=self.err_msg, style=wx.TE_MULTILINE | 
+        self.action = wx.TextCtrl(self, value=d, style=wx.TE_MULTILINE)
+        tctrl = wx.TextCtrl(self, value=self.err_msg, style=wx.TE_MULTILINE |
                                                             wx.TE_READONLY)
 
         abort_b = wx.Button(self, wx.ID_ABORT, _("Abort"))
@@ -324,15 +325,23 @@ class ErrorPanel(wx.Panel):
         send_b.SetDefault()
         close_b = wx.Button(self, wx.ID_CLOSE)
 
+        font = t_lbl.GetClassDefaultAttributes().font
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font.SetPointSize(font.GetPointSize() + 1)
+        self.desc.SetFont(font)
+
         # Layout
         vsizer = wx.BoxSizer(wx.VERTICAL)
-
         hsizer1 = wx.BoxSizer(wx.HORIZONTAL)
-        hsizer1.AddMany([((5, 5), 0), (icon, 0, wx.ALIGN_CENTER_VERTICAL),
-                         ((12, 5), 0), (self.desc, 0, wx.EXPAND), ((5, 5), 0)])
+        hsizer1.AddMany([((5, 40), 0), (icon, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10),
+                         ((12, 10), 0), (self.desc, 0, wx.ALIGN_CENTER_VERTICAL), ((5, 20), 0)])
 
         hsizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        hsizer2.AddMany([((5, 5), 0), (tctrl, 1, wx.EXPAND), ((5, 5), 0)])
+        hsizer2.AddMany([((5, 150), 0), (tctrl, 1, wx.EXPAND | wx.BOTTOM, 10)])
+
+        hsizer3 = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer3.AddMany([((5, 80), 0), (self.action, 1, wx.EXPAND), ((5, 20), 0)])
+
 
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         bsizer.AddMany([((5, 5), 0), (abort_b, 0), ((-1, -1), 1, wx.EXPAND),
@@ -341,9 +350,11 @@ class ErrorPanel(wx.Panel):
         vsizer.AddMany([((5, 5), 0),
                         (hsizer1, 0),
                         ((10, 10), 0),
-                        (t_lbl, 0, wx.ALIGN_LEFT|wx.LEFT, 5),
+                        (t_lbl, 0, wx.ALIGN_LEFT | wx.LEFT | wx.BOTTOM, 5),
                         ((3, 3), 0),
                         (hsizer2, 1, wx.EXPAND),
+                        ((8, 8), 0),
+                        (hsizer3, 0, wx.EXPAND),
                         ((8, 8), 0),
                         (bsizer, 0, wx.EXPAND),
                         ((8, 8), 0)])

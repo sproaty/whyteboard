@@ -22,8 +22,11 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import os
 import sys
+import time
 import wx
 
+
+from ftplib import FTP
 from copy import copy
 import lib.errdlg
 from lib.BeautifulSoup import BeautifulSoup
@@ -636,7 +639,7 @@ class Resize(wx.Dialog):
         self.gui.board.resize_canvas(value)
         self.Close()
 
-               
+
     def cancel(self, event):
         self.gui.board.resize_canvas(self.size)
         self.Close()
@@ -675,8 +678,8 @@ class MyPrintout(wx.Printout):
         return (1, self.gui.tab_count, 1, self.gui.tab_count)
 
     def OnPrintPage(self, page):
-        dc = self.GetDC()   
-        board = self.gui.tabs.GetPage(page - 1)     
+        dc = self.GetDC()
+        board = self.gui.tabs.GetPage(page - 1)
         maxX = board.buffer.GetWidth()
         maxY = board.buffer.GetHeight()
         marginX = 50
@@ -693,43 +696,51 @@ class MyPrintout(wx.Printout):
 
         dc.SetUserScale(actualScale, actualScale)
         dc.SetDeviceOrigin(int(posX), int(posY))
-        dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY-marginY)        
+        dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY-marginY)
         board.redraw_all(dc=dc)
         return True
-    
- 
+
+
 #----------------------------------------------------------------------
 
 
 class ErrorDialog(lib.errdlg.ErrorDialog):
     def __init__(self, msg):
-        lib.errdlg.ErrorDialog.__init__(self, None, title="Error Report", message=msg)
-        self.SetDescriptionLabel("Error: An Error has occured read below")
+        lib.errdlg.ErrorDialog.__init__(self, None, title=_("Error Report"), message=msg)
+        self.SetDescriptionLabel(_("An error has occured - please report it"))
 
     def Abort(self):
-        """Abort the application"""
-        wx.MessageBox("Abort Clicked", "Abort Callback")
-        TestErrorDialog.ABORT = False # HACK for testing to keep app from being aborted for real
+        pass
 
     def GetProgramName(self):
-        """Get the program name to display in error report"""
-        return "Whyteboard"
+        return "Whyteboard " + wx.GetTopLevelWindows()[0].version
 
     def Send(self):
         """Send the error report"""
-        wx.MessageBox("Send Clicked", "Send Callback")   
-    
-    
+        now = time.localtime(time.time())
+        name = time.asctime(now)
+        name += ".txt"
+        f = open(name, "w")
+        f.write(self._panel.err_msg + "\n\n\n" + self._panel.action.GetValue())
+        f.close()
+        f = open(name, "r")
+
+        ftp = FTP('ftp.quillz.net')
+        ftp.login("steven@quillz.net", "steven")
+        ftp.storlines("stor "+name , f)
+        f.close()
+        os.remove(name)
+        ftp.quit()
+
  #----------------------------------------------------------------------
- 
+
 def ExceptionHook(exctype, value, trace):
     """
     Handler for all unhandled exceptions
     """
-
     ftrace = ErrorDialog.FormatTrace(exctype, value, trace)
 
-    print ftrace
+    print ftrace  # show in console
 
     if ErrorDialog.ABORT:
         os._exit(1)
@@ -737,5 +748,5 @@ def ExceptionHook(exctype, value, trace):
         dlg = ErrorDialog(ftrace)
         dlg.ShowModal()
         dlg.Destroy()
-            
-#----------------------------------------------------------------------        
+
+#----------------------------------------------------------------------

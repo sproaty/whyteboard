@@ -21,6 +21,18 @@ This module contains a class which implements Whyteboard's preference dialog.
 It has been separated from the dialog module as it may become rather large.
 """
 
+"""
+
+NOTE: A ConfigObj is stored inside my gui class, so the module first creates its
+own copy of the obj, so any changes made don't affect the original.
+
+All changes are then written to this object. Only when the user presses ok on
+the preferences dialog window will be updated configobj be written to disk and
+updates the GUI's config too. The on_okay() method of Preferences updates the
+GUI too.
+
+"""
+
 import os
 import sys
 import wx
