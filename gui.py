@@ -142,6 +142,8 @@ class GUI(wx.Frame):
         self.SetSizer(self.box)
         self.SetSizeWH(800, 600)
         self.Maximize(True)
+        print t
+
 
         self.count = 4  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(65)

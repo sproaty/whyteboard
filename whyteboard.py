@@ -48,13 +48,13 @@ class Whyteboard(wx.ScrolledWindow):
         Initalise the window, class variables and bind mouse/paint events
         """
         style = wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN
-        wx.ScrolledWindow.__init__(self, tab, size=(-1, -1), style=style)
+        wx.ScrolledWindow.__init__(self, tab, style=style)
         self.canvas_size = (1000, 1000)
         self.area = (self.canvas_size[0] - 300, self.canvas_size[1] - 300)
         self.SetVirtualSizeHints(2, 2)
         #self.SetClientSize((self.area))
         self.SetVirtualSize(self.canvas_size)
-        self.SetScrollRate(3, 3)
+        self.SetScrollRate(1, 1)
         if os.name == "nt":
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
         self.SetBackgroundColour('Grey')
@@ -95,7 +95,6 @@ class Whyteboard(wx.ScrolledWindow):
         if self.check_canvas_resize(x, y):  # don't draw outside canvas
             self.resizing = True
             return
-        #print t
 
         self.shape.left_down(x, y)
         if not isinstance(self.shape, Text):  #  Crashes without the Text check
@@ -105,26 +104,32 @@ class Whyteboard(wx.ScrolledWindow):
     def left_motion(self, event):
         """Updates the shape. Indicate shape may be changed using Select tool"""
         x, y = self.convert_coords(event)
+
+        if self.resizing:
+            self.resize_canvas((x, y), self.resize_direction)
+            return
+        else:
+            direction = self.check_canvas_resize(x, y)
+
+            if direction:
+                if not self.resize_direction:
+                    self.resize_direction = direction
+                if( not self.cursor_control or direction != self.resize_direction):
+                    self.resize_direction = direction
+                    self.cursor_control = True
+                    self.resize_cursor(direction) # change cursor
+                if self.resizing:
+                    self.resize_canvas((x, y), direction)
+
+                return
+            else:
+                if self.cursor_control:
+                    self.change_cursor()
+                    self.cursor_control = False
+                    return
+
         if self.gui.bar_shown:
             self.gui.SetStatusText(" %s, %s" % (x, y))
-
-        direction = self.check_canvas_resize(x, y)
-        if direction:
-            if not self.resize_direction:
-                self.resize_direction = direction
-            if( (not self.cursor_control and not self.resizing)
-                    or direction != self.resize_direction):
-                self.resize_direction = direction
-                self.cursor_control = True
-                self.resize_cursor(direction) # change cursor
-            if self.resizing:
-                self.resize_canvas((x, y), direction)
-                self.Scroll(x, y)
-            return
-        elif not self.resizing:
-            if self.cursor_control:
-                self.change_cursor()
-                self.cursor_control = False
 
         if self.drawing:
             self.shape.motion(x, y)
@@ -194,12 +199,22 @@ class Whyteboard(wx.ScrolledWindow):
 
     def resize_canvas(self, size, direction=None):
         """ Resizes the canvas. Size = (w, h) tuple """
+        if size[0] < 1 or size[1] < 1:
+            return
+
+        if direction == RIGHT:
+            size = (size[0] + CANVAS_BORDER, self.area[1])
+            self.Scroll(size[0], -1)
+        elif direction == BOTTOM:
+            size = (self.area[0], size[1])
+            self.Scroll(-1, size[1] + CANVAS_BORDER)
+        else:
+            self.Scroll(*size)
 
         self.buffer = wx.EmptyBitmap(*size)
-
-        if size[0] > self.area[0] or size[1] > self.area[1]:
-            size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)
         self.area = size
+
+        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)
         self.SetVirtualSize(size)
         self.redraw_all()
 
@@ -218,6 +233,7 @@ class Whyteboard(wx.ScrolledWindow):
         Redraws all shapes that have been drawn. self.text is used to show text
         characters as they're being typed, as new Text/Note objects have not
         been added to self.shapes at this point.
+        dc is used as the DC for printing.
         """
         if not dc:
             dc = wx.BufferedDC(None, self.buffer)

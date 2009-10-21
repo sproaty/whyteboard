@@ -88,7 +88,7 @@ convert_quality = option('highest', 'high', 'normal', default='normal')
 default_font = string
 imagemagick_path = string
 handle_size = integer(min=3, max=15, default=6)
-language = option('English', 'English (United Kingdom)', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
+language = option('English', 'English (United Kingdom)', 'Portugese', 'Japanese', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
 statusbar = boolean(default=True)
 toolbar = boolean(default=True)
 undo_sheets = integer(min=5, max=50, default=10)
@@ -99,6 +99,8 @@ _ = wx.GetTranslation
 
 languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
               (_("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
+              (_("Japanese"), wx.LANGUAGE_JAPANESE),
+              (_("Portugese"), wx.LANGUAGE_PORTUGUESE),
               (_("Dutch"), wx.LANGUAGE_DUTCH),
               (_("German"), wx.LANGUAGE_GERMAN),
               (_("Spanish"), wx.LANGUAGE_SPANISH),

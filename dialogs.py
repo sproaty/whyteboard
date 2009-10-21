@@ -22,12 +22,17 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import os
 import sys
+import time
 import wx
 
+
+from ftplib import FTP
 from copy import copy
 import lib.errdlg
 from lib.BeautifulSoup import BeautifulSoup
-from urllib import urlopen, urlretrieve
+from urllib import urlopen, urlretrieve, urlencode
+
+
 
 import tools
 
@@ -636,7 +641,7 @@ class Resize(wx.Dialog):
         self.gui.board.resize_canvas(value)
         self.Close()
 
-               
+
     def cancel(self, event):
         self.gui.board.resize_canvas(self.size)
         self.Close()
@@ -675,8 +680,8 @@ class MyPrintout(wx.Printout):
         return (1, self.gui.tab_count, 1, self.gui.tab_count)
 
     def OnPrintPage(self, page):
-        dc = self.GetDC()   
-        board = self.gui.tabs.GetPage(page - 1)     
+        dc = self.GetDC()
+        board = self.gui.tabs.GetPage(page - 1)
         maxX = board.buffer.GetWidth()
         maxY = board.buffer.GetHeight()
         marginX = 50
@@ -693,43 +698,56 @@ class MyPrintout(wx.Printout):
 
         dc.SetUserScale(actualScale, actualScale)
         dc.SetDeviceOrigin(int(posX), int(posY))
-        dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY-marginY)        
+        dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY-marginY)
+
+        filename = "Untitled"
+        if self.gui.util.filename:
+            filename = self.gui.util.filename
+        font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+
+        dc2 = wx.WindowDC(self.gui)
+        x = dc2.GetMultiLineTextExtent(filename, font)
+        extent = x[0], x[1]
+        #blah = wx.StaticText(self.gui, label=filename)
+        #b = blah.GetSize()
+
+        dc.DrawText(filename, marginX + x[0], marginY - x[1])
+
+        dc.SetDeviceOrigin(int(posX), int(posY))
         board.redraw_all(dc=dc)
         return True
-    
- 
+
+
 #----------------------------------------------------------------------
 
 
 class ErrorDialog(lib.errdlg.ErrorDialog):
     def __init__(self, msg):
-        lib.errdlg.ErrorDialog.__init__(self, None, title="Error Report", message=msg)
-        self.SetDescriptionLabel("Error: An Error has occured read below")
+        lib.errdlg.ErrorDialog.__init__(self, None, title=_("Error Report"), message=msg)
+        self.SetDescriptionLabel(_("An error has occured - please report it"))
 
     def Abort(self):
-        """Abort the application"""
-        wx.MessageBox("Abort Clicked", "Abort Callback")
-        TestErrorDialog.ABORT = False # HACK for testing to keep app from being aborted for real
+        pass
 
     def GetProgramName(self):
-        """Get the program name to display in error report"""
-        return "Whyteboard"
+        return "Whyteboard " + wx.GetTopLevelWindows()[0].version
 
     def Send(self):
         """Send the error report"""
-        wx.MessageBox("Send Clicked", "Send Callback")   
-    
-    
+        params = urlencode({'submitted': 'fgdg', 'message': self._panel.err_msg,
+                         'desc': self._panel.action.GetValue()})
+        f = urlopen("http://www.basicrpg.com/bug_submit.php", params)
+
+
  #----------------------------------------------------------------------
- 
+
 def ExceptionHook(exctype, value, trace):
     """
     Handler for all unhandled exceptions
     """
-
     ftrace = ErrorDialog.FormatTrace(exctype, value, trace)
 
-    print ftrace
+    print ftrace  # show in console
 
     if ErrorDialog.ABORT:
         os._exit(1)
@@ -737,5 +755,5 @@ def ExceptionHook(exctype, value, trace):
         dlg = ErrorDialog(ftrace)
         dlg.ShowModal()
         dlg.Destroy()
-            
-#----------------------------------------------------------------------        
+
+#----------------------------------------------------------------------
