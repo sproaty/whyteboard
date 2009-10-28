@@ -639,6 +639,15 @@ class Utility(object):
             return False
 
 
+    def get_path(self):
+        """Fetch the correct resource"""
+        path = self.path[0]
+        if path == "/usr/bin":
+            path = "/usr/lib/whyteboard"
+        return path
+
+
+
     def get_clipboard(self):
         """Checks the clipboard for any valid image data to paste"""
         bmp = wx.BitmapDataObject()

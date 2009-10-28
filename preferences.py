@@ -54,7 +54,7 @@ class Preferences(wx.Dialog):
     Contains a tabbed bar corresponding to each "page" of different options
     """
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui, title=_("Preferences"), size=(400, 420),
+        wx.Dialog.__init__(self, gui, title=_("Preferences"), size=(400, 450),
                            style=wx.CLOSE_BOX | wx.CAPTION)
         self.gui = gui
         self.config = copy(gui.util.config)

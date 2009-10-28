@@ -113,8 +113,8 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             if type == "icon":
-                path = os.path.join(self.gui.util.path[0], "images", "tools",
-                                    val + ".png")
+                path = os.path.join(self.gui.util.get_path(), "images", 
+                                    "tools", val + ".png")
                 b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path))
                 evt = wx.EVT_BUTTON
             else:

@@ -888,8 +888,7 @@ class GUI(wx.Frame):
 
     def find_help(self):
         """Locate the help files, update self.help var"""
-        path = self.util.path[0]
-        _file = os.path.join(path, 'whyteboard-help', 'whyteboard.hhp')
+        _file = os.path.join(self.util.get_path(), 'whyteboard-help', 'whyteboard.hhp')
 
         if os.path.exists(_file):
             self.help = HtmlHelpController()
@@ -1028,7 +1027,7 @@ class WhyteboardApp(wx.App):
         if self.frame.util.is_exe() and os.path.exists("wtbd-bckup.exe"):
             os.remove("wtbd-bckup.exe")
         else:
-            path = self.frame.util.path[0]
+            path = self.frame.util.get_path()
             for f in os.listdir(path):
                 if f.find(self.frame.util.backup_ext) is not -1:
                     os.remove(os.path.join(path, f))

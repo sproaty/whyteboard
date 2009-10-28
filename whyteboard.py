@@ -149,7 +149,7 @@ class Whyteboard(wx.ScrolledWindow):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
                     break
                 if res and isinstance(shape, Image):
-                    img = wx.Image(os.path.join(self.gui.util.path[0], "images", 
+                    img = wx.Image(os.path.join(self.gui.util.get_path(), "images", 
                                                 "cursors", "") + "rotate.png")
                     self.SetCursor(wx.CursorFromImage(img))
                     break                

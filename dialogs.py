@@ -350,6 +350,7 @@ class UpdateDialog(wx.Dialog):
         save or not)
         """
         path = self.gui.util.path
+        path[0] = self.gui.util.get_path()
         args = []  # args to reload running program, may include filename
         tmp = None
         tmp_file = os.path.join(path[0], 'tmp-wb-' + self._type)
