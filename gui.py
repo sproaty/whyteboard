@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/python
 
 # Copyright (c) 2009 by Steven Sproat
@@ -37,6 +38,7 @@ import webbrowser
 import wx
 import wx.lib.newevent
 from wx.html import HtmlHelpController
+from wx.lib.wordwrap import wordwrap
 
 from lib.configobj import ConfigObj
 from lib.validate import Validator
@@ -45,8 +47,8 @@ import lib.icon
 from whyteboard import Whyteboard
 from tools import Image, Note
 from utility import Utility, FileDropTarget, languages, cfg, get_home_dir
-from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
-                     ExceptionHook)
+from dialogs import (History, ProgressDialog, Resize, Rotate, UpdateDialog,
+                     MyPrintout, ExceptionHook)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
@@ -68,6 +70,7 @@ ID_PS = wx.NewId()                # import->PS
 ID_RENAME = wx.NewId()            # rename sheet
 ID_REPORT_BUG = wx.NewId()        # report a problem
 ID_RESIZE = wx.NewId()            # resize dialog
+ID_ROTATE = wx.NewId()            # rotate dialog for image 90/180/270
 ID_STATUSBAR = wx.NewId()         # toggle statusbar
 ID_TOOLBAR = wx.NewId()           # toggle toolbar
 ID_TRANSLATE = wx.NewId()         # open translation URL
@@ -87,7 +90,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.38.6"
+    version = "0.38.8"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -135,15 +138,13 @@ class GUI(wx.Frame):
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
         self.tabs.AddPage(self.board, _("Sheet")+" 1")
-        self.box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
-        self.box.Add(self.control, 0, wx.EXPAND)
-        self.box.Add(self.tabs, 2, wx.EXPAND)
-        self.box.Add(self.panel, 0, wx.EXPAND)
-        self.SetSizer(self.box)
+        box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
+        box.Add(self.control, 0, wx.EXPAND)
+        box.Add(self.tabs, 2, wx.EXPAND)
+        box.Add(self.panel, 0, wx.EXPAND)
+        self.SetSizer(box)
         self.SetSizeWH(800, 600)
         self.Maximize(True)
-        print t
-
 
         self.count = 4  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(65)
@@ -205,7 +206,10 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_UNDO, _("&Undo")+"\tCtrl+Z", _("Undo the last operation"))
         edit.Append(wx.ID_REDO, _("&Redo")+"\tCtrl+Y", _("Redo the last undone operation"))
         edit.AppendSeparator()
-        edit.Append(ID_RESIZE, _("Re&size Canvas")+"\tCtrl+R", _("Change the canvas' size"))
+        edit.Append(ID_RESIZE, _("Re&size Canvas...")+"\tCtrl+R", _("Change the canvas' size"))
+        edit.Append(ID_ROTATE, _("R&otate Image..."), _("Rotate the selected image"))
+        edit.Append(wx.ID_DELETE, _("&Delete Shape")+"\tDelete", _("Delete the currently selected shape"))        
+        edit.AppendSeparator()
         edit.Append(wx.ID_COPY, _("&Copy")+"\tCtrl+C", _("Copy a Bitmap Selection region"))
         edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste an image from your clipboard into Whyteboard"))
         edit.AppendItem(pnew)
@@ -235,7 +239,7 @@ class GUI(wx.Frame):
         _help.Append(wx.ID_HELP, _("&Contents")+"\tF1", _("View information about Whyteboard"))
         _help.AppendSeparator()
         _help.Append(ID_UPDATE, _("Check for &Updates...")+"\tF12", _("Search for updates to Whyteboard"))
-        _help.Append(ID_REPORT_BUG, _("&Report a Problem"), _("Report any bugs or issues with Wwhyteboard"))
+        _help.Append(ID_REPORT_BUG, _("&Report a Problem"), _("Report any bugs or issues with Whyteboard"))
         _help.Append(ID_TRANSLATE, _("&Translate Whyteboard"), _("Translate Whyteboard to your language"))
         _help.AppendSeparator()
         _help.Append(wx.ID_ABOUT, _("&About"), _("View information about Whyteboard"))
@@ -270,10 +274,12 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_NEXT)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_PREV)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_UNDO_SHEET)
+        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=wx.ID_DELETE)
+        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_ROTATE)
         self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
 
         ac = [(wx.ACCEL_CTRL, ord('\t'), self.next.GetId()),
-              (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId()) ]
+              (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId()) ]        
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
 
@@ -283,12 +289,12 @@ class GUI(wx.Frame):
                     id=ids[key]) for key in ids]
 
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
-                  "copy", "paste", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",  "clear_sheets",
-                  "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about"]
+                  "copy", "paste", "rotate", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
+                  "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
-               wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR, ID_PREV, ID_NEXT,
-               wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT]
+               wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR, 
+               ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -302,12 +308,12 @@ class GUI(wx.Frame):
         self.toolbar = self.CreateToolBar()
 
         ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_COPY, wx.ID_PASTE,
-               wx.ID_UNDO, wx.ID_REDO]
+               wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE]
         arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_COPY,
-                wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO]
-        tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap "),
-                _("Selection"), _("Paste Image"), _("Undo the Last Action"),
-                _("Redo the Last Undone Action")]
+                wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO, wx.ART_DELETE]
+        tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"), 
+                _("Paste Image"), _("Undo the Last Action"), _("Redo the Last Undone Action"), 
+                _("Delete the currently selected shape")]
 
         # add tools, add a separator and bind paste/undo/redo for UI updating
         x = 0
@@ -315,7 +321,7 @@ class GUI(wx.Frame):
             art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
             self.toolbar.AddSimpleTool(_id, art, tip)
 
-            if x == 2:
+            if x == 2 or x == 6:
                 self.toolbar.AddSeparator()
             if x >= 3:
                 self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=_id)
@@ -517,7 +523,7 @@ class GUI(wx.Frame):
         if board.renamed:
             name = self.tabs.GetPageText(self.current_tab)
         item = [board.shapes, board.undo_list, board.redo_list,
-                board.canvas_size, name]
+                board.area, name]
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
@@ -541,16 +547,15 @@ class GUI(wx.Frame):
         #self.board.redraw_all()
         if not self.closed_tabs:
             return
-        shape = self.closed_tabs.pop()
+        board = self.closed_tabs.pop()
 
-        if shape[4]:
-            self.on_new_tab(name=shape[4])
+        if board[4]:
+            self.on_new_tab(name=board[4])
         else:
             self.on_new_tab()
-        self.board.shapes = shape[0]
-        self.board.undo_list = shape[1]
-        self.board.redo_list = shape[2]
-        self.board.canvas_size = shape[3]
+        self.board.shapes = board[0]
+        self.board.undo_list = board[1]
+        self.board.redo_list = board[2]
 
         for shape in self.board.shapes:
             shape.board = self.board
@@ -558,6 +563,7 @@ class GUI(wx.Frame):
                 self.notes.add_note(shape)
 
         wx.Yield()  # doesn't draw thumbnail otherwise...
+        self.board.resize_canvas(board[3])
         self.board.redraw_all(True)
 
 
@@ -578,7 +584,9 @@ class GUI(wx.Frame):
                 self.thumbs.update_name(sheet, val)
                 self.notes.update_name(sheet, val)
 
-
+    def on_delete_shape(self, event=None):
+        self.board.delete_selected()
+                
     def update_menus(self, event):
         """
         Enables/disables the undo/redo/next/prev button as appropriate.
@@ -620,6 +628,11 @@ class GUI(wx.Frame):
                 do = True
             elif _id == ID_UNDO_SHEET and len(self.closed_tabs) >= 1:
                 do = True
+            elif _id == wx.ID_DELETE and self.board.selected:
+                do = True   
+            elif (_id == ID_ROTATE and self.board.selected 
+                  and isinstance(self.board.selected, Image)): 
+                do = True                                
         elif self.board:
             if self.board.copy:
                 do = True
@@ -627,12 +640,24 @@ class GUI(wx.Frame):
 
 
     def on_copy(self, event):
-        """ If a rectangle selection is made, copy the selection as a bitmap """
-        self.board.copy.update_rect()
-        rect = self.board.copy.rect
+        """
+        If a rectangle selection is made, copy the selection as a bitmap. 
+        NOTE: The bitmap selection can be larger than the actual canvas bitmap,
+        so we must only selection the region of the selection that is on the 
+        canvas
+        """        
+        self.board.copy.update_rect()  # ensure w, h are correct
+        bmp = self.board.copy
+
+        if bmp.x + bmp.width > self.board.area[0]:
+            bmp.rect.SetWidth(self.board.area[0] - bmp.x)
+            
+        if bmp.y + bmp.height > self.board.area[1]:
+            bmp.rect.SetHeight(self.board.area[1] - bmp.y)
+                
         self.board.copy = None
         self.board.redraw_all()
-        self.util.set_clipboard(rect)
+        self.util.set_clipboard(bmp.rect)
         self.count = 4
         self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)
 
@@ -643,7 +668,10 @@ class GUI(wx.Frame):
         if not bmp:
             return
         shape = Image(self.board, bmp.GetBitmap(), None)
-        shape.left_down(0, 0)
+        
+        x, y = self.board.ScreenToClient(wx.GetMousePosition())
+        x, y = self.board.CalcUnscrolledPosition(x, y)
+        shape.left_down(x, y)
         wx.Yield()
         self.board.redraw_all(True)
 
@@ -792,6 +820,8 @@ class GUI(wx.Frame):
         self.preview = wx.PrintPreview(printout, printout2, data)
 
         if not self.preview.Ok():
+            wx.MessageBox(_("There was a problem printing.\nPerhaps your current printer is not set correctly?"),
+              _("Printing Error"))
             return
 
         pfrm = wx.PreviewFrame(self.preview, self, _("Print Preview"))
@@ -831,9 +861,13 @@ class GUI(wx.Frame):
     def on_resize(self, event=None):
         dlg = Resize(self)
         dlg.ShowModal()
-        dlg.Destroy()
+        
 
-
+    def on_rotate(self, event=None):
+        dlg = Rotate(self)
+        dlg.ShowModal()
+        
+        
     def on_preferences(self, event=None):
         """ Checks for new versions of the program ***"""
         dlg = Preferences(self)
@@ -899,13 +933,21 @@ class GUI(wx.Frame):
         inf.Copyright = "(C) 2009 Steven Sproat"
         inf.Description = _("A simple whiteboard and PDF annotator")
         inf.Developers = ["Steven Sproat <sproaty@gmail.com>"]
-        t = ['"Dennis" https://launchpad.net/~dlinn83 (German)',
+        t = ['A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
+             'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
+             '"Amy" https://launchpad.net/~anthropofobe (German)',
+             'David Aller https://launchpad.net/~niclamus (Italian)', 
+             '"Dennis" https://launchpad.net/~dlinn83 (German)',
              'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
+             'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',
+             'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
              '"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
              '"Lauren" https://launchpad.net/~lewakefi (French)',
+             'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
              'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese)',
              'Medina Colpaca https://launchpad.net/~medina-colpaca (Spanish)',
              'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
+             '"MixCool" https://launchpad.net/~mixcool (German)',
              '"Rarulis" https://launchpad.net/~rarulis (French)',
              'Roberto Bondi https://launchpad.net/~bondi (Italian)',
              'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
@@ -951,7 +993,10 @@ class WhyteboardApp(wx.App):
             config.write()
             self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
 
+
         path = os.path.dirname(sys.argv[0])
+        if path == "/usr/bin":
+            path = "/usr/lib/whyteboard"  # simple workaround...
         langdir = os.path.join(path, 'locale')
         locale.setlocale(locale.LC_ALL, '')
         self.locale.AddCatalogLookupPathPrefix(langdir)

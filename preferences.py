@@ -39,6 +39,7 @@ import wx
 from copy import copy
 
 import tools
+import whyteboard
 
 from dialogs import FindIM
 from utility import make_bitmap, languages
@@ -98,11 +99,14 @@ class Preferences(wx.Dialog):
         old = self.gui.util.config
         if self.config['language'] != old['language']:
             wx.MessageBox(_("Whyteboard will be translated into %s when restarted")
-                          % self.config['language'])
+                          % _(self.config['language']))
 
         if self.config['handle_size'] != old['handle_size']:
-            tools.HANDLE_SIZE = self.config['handle_size']
-            self.gui.board.redraw_all()
+            tools.HANDLE_SIZE = self.config['handle_size']              
+                      
+        if self.config['canvas_border'] != old['canvas_border']:
+            whyteboard.CANVAS_BORDER = self.config['canvas_border']  
+            self.gui.board.resize_canvas(self.gui.board.area)          
 
         if self.config.has_key('default_font'):
             if self.config['default_font'] and not self.gui.util.font:
@@ -132,6 +136,7 @@ class Preferences(wx.Dialog):
             ctrl.toolsizer.Layout()
 
         #  too lazy to check if each colour has changed
+        self.gui.board.redraw_all()
         ctrl.grid.Clear(True)
         ctrl.make_colour_grid()
         ctrl.grid.Layout()
@@ -161,32 +166,40 @@ class General(wx.Panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
 
+        # we want to show the translated messages, but keep them in the same
+        # order as the English ones, to set the config in English
+        self.options = [i[0] for i in languages]
+        self.options.sort()
+        self.translated = [_(i) for i in self.options]
+        translated = list(self.translated)
+        translated.sort()        
+        self.lang = wx.ComboBox(self, choices=translated, style=wx.CB_READONLY)
+        
         undo = wx.StaticText(self, label=_("Number of Recently Closed Sheets"))
         self.undoctrl = wx.SpinCtrl(self, min=5, max=50)
         handle = wx.StaticText(self, label=_("Selection Handle Size"))
         self.handlectrl = wx.SpinCtrl(self, min=3, max=15)
-
+        
+        border = wx.StaticText(self, label=_("Canvas Border"))
+        self.borderctrl = wx.SpinCtrl(self, min=10, max=35)
+        
         langText = wx.StaticText(self, label=_("Choose Your Language:"))
         font = langText.GetClassDefaultAttributes().font
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         langText.SetFont(font)
         undo.SetFont(font)
         handle.SetFont(font)
+        border.SetFont(font)
 
-        options = [i[0] for i in languages]
-        options.sort()
-        self.lang = wx.ComboBox(self, choices=options, style=wx.CB_READONLY)
-
-        if self.config['handle_size']:
-            self.handlectrl.SetValue(self.config['handle_size'])
-        if self.config['undo_sheets']:
-            self.undoctrl.SetValue(self.config['undo_sheets'])
-        if self.config['language']:
-            self.lang.SetValue(self.config['language'])
+        self.handlectrl.SetValue(self.config['handle_size'])
+        self.undoctrl.SetValue(self.config['undo_sheets'])
+        self.lang.SetValue(_(self.config['language']))
+        self.borderctrl.SetValue(self.config['canvas_border'])
 
         self.lang.Bind(wx.EVT_COMBOBOX, self.on_lang)
         self.undoctrl.Bind(wx.EVT_SPINCTRL, self.on_undo)
         self.handlectrl.Bind(wx.EVT_SPINCTRL, self.on_handle)
+        self.borderctrl.Bind(wx.EVT_SPINCTRL, self.on_border)
 
         sizer.Add(langText, 0, wx.ALL, 15)
         sizer.Add(self.lang, 0, wx.LEFT, 30)
@@ -194,21 +207,23 @@ class General(wx.Panel):
         sizer.Add(self.undoctrl, 0, wx.LEFT, 30)
         sizer.Add(handle, 0, wx.ALL, 15)
         sizer.Add(self.handlectrl, 0, wx.LEFT, 30)
-
+        sizer.Add(border, 0, wx.ALL, 15)
+        sizer.Add(self.borderctrl, 0, wx.LEFT, 30)
 
     def on_lang(self, event):
-        for x in languages:
-            if self.lang.GetValue() == x[0]:
-                self.config['language'] = x[0]
-
+        for x, lang in enumerate(self.translated):
+            if self.lang.GetValue() == lang:
+                self.config['language'] = self.options[x]  # english
+            
 
     def on_undo(self, event):
         self.config['undo_sheets'] = self.undoctrl.GetValue()
 
-
     def on_handle(self, event):
         self.config['handle_size'] = self.handlectrl.GetValue()
 
+    def on_border(self, event):
+        self.config['canvas_border'] = self.borderctrl.GetValue()
 
 #----------------------------------------------------------------------
 
@@ -230,14 +245,33 @@ class FontAndColours(wx.Panel):
         self.config = config
         self.SetSizer(sizer)
         self.buttons = []
-
         self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
+        
+        colours = []
+        for x in range(1, 10):
+            col= self.config["colour"+str(x)]
+            colours.append([int(c) for c in col])
+
+        for x, colour in enumerate(colours):
+            method = lambda evt, id=x: self.on_colour(evt, id)
+            b = wx.BitmapButton(self, bitmap=make_bitmap(colour))
+            self.buttons.append(b)
+            self.grid.Add(b, 0)
+            b.Bind(wx.EVT_BUTTON, method)
+        
         self.button = wx.Button(self, label=_("Select Font"))
         self.button.Bind(wx.EVT_BUTTON, self.on_font)
-
         font = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
         self.font = font  # the correct font, w/ right size
         self.size = font.GetPointSize()  # size to use regardless of font
+        
+        labCol = wx.StaticText(self, label=_("Choose Your Custom Colors:"))
+        labFont = wx.StaticText(self, label=_("Default Font:"))
+        
+        new_font = labFont.GetClassDefaultAttributes().font
+        new_font.SetWeight(wx.FONTWEIGHT_BOLD)                        
+        labCol.SetFont(new_font)
+        labFont.SetFont(new_font)
 
         if self.config.has_key('default_font'):
             f = wx.FFont(0, 0)
@@ -252,24 +286,8 @@ class FontAndColours(wx.Panel):
             f.SetNativeFontInfoFromString(self.config['default_font'])
             f.SetPointSize(self.size)
             self.button.SetFont(f)
-
         else:
             self.button.SetLabel(self.button.GetFont().GetNativeFontInfoDesc())
-
-        labCol = wx.StaticText(self, label=_("Choose Your Custom Colors:"))
-        labFont = wx.StaticText(self, label=_("Default Font:"))
-
-        colours = []
-        for x in range(1, 10):
-            col= self.config["colour"+str(x)]
-            colours.append([int(c) for c in col])
-
-        for x, colour in enumerate(colours):
-            method = lambda evt, id=x: self.on_colour(evt, id)
-            b = wx.BitmapButton(self, bitmap=make_bitmap(colour))
-            self.buttons.append(b)
-            self.grid.Add(b, 0)
-            b.Bind(wx.EVT_BUTTON, method)
 
         sizer.Add(labCol, 0, wx.ALL, 15)
         sizer.Add(self.grid, 0, wx.LEFT | wx.BOTTOM, 30)
@@ -277,9 +295,6 @@ class FontAndColours(wx.Panel):
         sizer.Add((10, 15))
         sizer.Add(self.button, 0, wx.LEFT, 30)
 
-        font = wx.Font(self.size, font.GetFamily(), font.GetStyle(), wx.FONTWEIGHT_BOLD)
-        labCol.SetFont(font)
-        labFont.SetFont(font)
 
 
     def on_font(self, event):
@@ -376,9 +391,17 @@ class View(wx.Panel):
         radio1 = wx.RadioButton(self, label=" " + _("Icons"))
         radio2 = wx.RadioButton(self, label=" " + _("Text"))
         label = wx.StaticText(self, label=_("Toolbox View:"))
+        
+        width = wx.StaticText(self, label=_("Default Canvas Width"))
+        self.width = wx.SpinCtrl(self, min=1, max=12000)
+        height = wx.StaticText(self, label=_("Default Canvas Height"))
+        self.height = wx.SpinCtrl(self, min=1, max=12000)        
+        
         font = label.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         label.SetFont(font)
+        width.SetFont(font)
+        height.SetFont(font)
         sizer.Add(label, 0, wx.ALL, 15)
 
         if self.config['toolbox'] == 'icon':
@@ -389,28 +412,41 @@ class View(wx.Panel):
             statusbar.SetValue(True)
         if self.config['toolbar']:
             toolbar.SetValue(True)
+        self.width.SetValue(self.config['default_width'])
+        self.height.SetValue(self.config['default_height'])
 
         for x, btn in enumerate([radio1, radio2]):
            sizer.Add(btn, 0, wx.LEFT, 30)
            sizer.Add((10, 5))
            method = lambda evt, id=x: self.on_view(evt, id)
            btn.Bind(wx.EVT_RADIOBUTTON, method)
-
+           
+        sizer.Add(width, 0, wx.ALL, 15)
+        sizer.Add(self.width, 0, wx.LEFT, 30)
+        sizer.Add(height, 0, wx.ALL, 15)
+        sizer.Add(self.height, 0, wx.LEFT, 30)
         sizer.Add((10, 15))
         sizer.Add(statusbar, 0, wx.ALL, 10)
         sizer.Add(toolbar, 0, wx.LEFT, 10)
         statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
         toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)
+        self.width.Bind(wx.EVT_SPINCTRL, self.on_width)
+        self.height.Bind(wx.EVT_SPINCTRL, self.on_height)
 
 
     def on_statusbar(self, event):
         self.config['statusbar'] = event.Checked()
 
-
     def on_toolbar(self, event):
         self.config['toolbar'] = event.Checked()
 
-
+    def on_width(self, event):
+        self.config['default_width'] = self.width.GetValue()
+        
+    def on_height(self, event):
+        self.config['default_height'] = self.height.GetValue()
+                
+                
     def on_view(self, event, id):
         if id == 0:
             self.config['toolbox'] = 'icon'

@@ -1,6 +1,6 @@
-Whyteboard 0.38.6 - A simple image, PDF and postscript file annotator
+Whyteboard 0.38.8 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Tue 06 October 2009
+Wed 28 Oct October 2009
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -9,8 +9,8 @@ start menu.
 
 Otherwise, here are the requirements:
 
-* Python - 2.5.4 or 2.6.3 (untested on others, but probably should work)
-* wxPython - latest version is recommended (currently 2.8.10.1)
+* Python - 2.5.4 or 2.6.3 (untested on other major versions; should work on 2.4)
+* wxPython - latest version is -always- recommended (currently 2.8.10.1)
 * ImageMagick, possibly GhostScript for Windows users (optional)
 
 http://python.org/download/
@@ -25,18 +25,24 @@ If nothing happens, try launching one of the scripts from the console:
 
 $ python whyteboard.py
 
-see what error occurred and let me know at, <sproaty@gmail.com>,
-or report a bug at Lunchpad at the link below
+see what error occurred and let me know at, <sproaty@gmail.com>, report a bug at 
+Launchpad at the link below.
+
+You can also use the built-in error reporter to send me an e-mail directly, 
+containing relevant system information and a log of the error. This is the best
+method to report errors.
+ 
 
 If you are getting an error on Windows, 
 "Application failed to start because the application configuration is incorrect. 
 Reinstalling the application may fix the problem."
 
-
-http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2 OR
+then download the C++ Runtime (4.0 MB) at:
+http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2
 http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14-157CFDFFEE4E (64 bit version if you have win64)
+
 
 ---- KNOWN BUGS ----
 
-Currently none for this version; see up to date reports at:
-https://bugs.launchpad.net/whyteboard
+See up to date reports at https://bugs.launchpad.net/whyteboard
+Identified and confirmed bugs are always fixed before a new release.

@@ -315,6 +315,7 @@ class ErrorPanel(wx.Panel):
         d = _("Description of what you was doing before this error appeared")
 
         t_lbl = wx.StaticText(self, label=_("Error Traceback:"))
+        email_label = wx.StaticText(self, label=_("E-mail Address (Optional)"))
         self.action = wx.TextCtrl(self, value=d, style=wx.TE_MULTILINE)
         tctrl = wx.TextCtrl(self, value=self.err_msg, style=wx.TE_MULTILINE |
                                                             wx.TE_READONLY)
@@ -324,12 +325,17 @@ class ErrorPanel(wx.Panel):
         send_b = wx.Button(self, ErrorDialog.ID_SEND, _("Report Error"))
         send_b.SetDefault()
         close_b = wx.Button(self, wx.ID_CLOSE)
+        self.email = wx.TextCtrl(self)
 
         font = t_lbl.GetClassDefaultAttributes().font
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         font.SetPointSize(font.GetPointSize() + 1)
         self.desc.SetFont(font)
 
+        order = (self.action, self.email, send_b, close_b, abort_b)  # tab order
+        for i in xrange(len(order) - 1):
+            order[i+1].MoveAfterInTabOrder(order[i])        
+        
         # Layout
         vsizer = wx.BoxSizer(wx.VERTICAL)
         hsizer1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -342,7 +348,10 @@ class ErrorPanel(wx.Panel):
         hsizer3 = wx.BoxSizer(wx.HORIZONTAL)
         hsizer3.AddMany([((5, 80), 0), (self.action, 1, wx.EXPAND), ((5, 20), 0)])
 
-
+        hsizer4 = wx.BoxSizer(wx.VERTICAL)
+        hsizer4.AddMany([((5, 5), 0), (email_label, 0,wx.BOTTOM | wx.LEFT, 10),
+                         (self.email, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 5), ((5, 20), 0)])
+        
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         bsizer.AddMany([((5, 5), 0), (abort_b, 0), ((-1, -1), 1, wx.EXPAND),
                         (send_b, 0), ((5, 5), 0), (close_b, 0), ((5, 5), 0)])
@@ -356,6 +365,8 @@ class ErrorPanel(wx.Panel):
                         ((8, 8), 0),
                         (hsizer3, 0, wx.EXPAND),
                         ((8, 8), 0),
+                        (hsizer4, 0, wx.EXPAND),
+                        ((8, 4), 0),                        
                         (bsizer, 0, wx.EXPAND),
                         ((8, 8), 0)])
 

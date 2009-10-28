@@ -120,6 +120,7 @@ class Pen(Tool):
         self.y = y
         self.motion(x, y)
 
+
     def left_up(self, x, y):
         if self.points:
             self.board.add_shape(self)
@@ -128,9 +129,10 @@ class Pen(Tool):
 
     def motion(self, x, y):
         self.points.append( [self.x, self.y, x, y] )
-        self.time.append(time.time() )
+        self.time.append(time.time())
         self.x = x
         self.y = y  # swap for the next call to this function
+
 
     def draw(self, dc, replay=True):
         if not self.pen:
@@ -405,9 +407,6 @@ class Circle(OverlayShape):
     def get_args(self):
         return [self.x, self.y, self.radius]
 
-    def resize(self, x, y, direction=None):
-        self.motion(x, y)
-
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
         x, y, r = self.get_args()
@@ -564,6 +563,10 @@ class Eraser(Pen):
         memory.DrawRectangle(0, 0, thickness + 7, thickness + 7)
         memory.SelectObject(wx.NullBitmap)
         img = wx.ImageFromBitmap(cursor)
+        
+        img.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_X, (thickness + 7) / 2)
+        img.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, (thickness + 7) / 2)
+                    
         cursor = wx.CursorFromImage(img)
         return cursor
 
@@ -658,7 +661,6 @@ class Text(OverlayShape):
 
         if self.text:
             self.board.add_shape(self)
-            self.update_scroll()
             return True
         self.board.text = None
         return False
@@ -690,27 +692,12 @@ class Text(OverlayShape):
             if not self.text:
                 self.text = text  # don't want a blank item
                 return False
-            self.update_scroll()
             return True
-
-
-    def update_scroll(self, redraw=True):
-        """
-        Updates the scrollbars of a Whyteboard if the entered text plus its
-        position is vertically or horizontally larger than its current size.
-        """
-        self.find_extent()
-        width, height = self.extent
-
-        size = (width + self.x, height + self.y)
-        if self.board and not self.board.update_scrollbars(size) and redraw:
-            self.board.redraw_all()  # force render if they don't update
 
 
     def draw(self, dc, replay=False):
         if not self.font:
             self.restore_font()
-            self.update_scroll()
         dc.SetFont(self.font)
         dc.SetTextForeground(self.colour)
         super(Text, self).draw(dc, replay, "Label")
@@ -763,7 +750,6 @@ class Text(OverlayShape):
     def load(self):
         super(Text, self).load()
         self.restore_font()
-        self.update_scroll(False)
 
 
 #----------------------------------------------------------------------
@@ -851,34 +837,47 @@ class Image(OverlayShape):
         self.image = image
         self.path = path  # used to restore image on load
         self.resizing = False
+        self.angle = 0  # for rotating
+        self.img = None  # rotated wx.Image
+
 
     def left_down(self, x, y):
         self.x = x
         self.y = y
         self.board.add_shape(self)
-        size = (self.image.GetWidth(), self.image.GetHeight())
-        self.board.update_scrollbars(size)
+        self.board.check_resize((self.image.GetWidth(), self.image.GetHeight()))
         self.sort_handles()
 
         dc = wx.BufferedDC(None, self.board.buffer)
         self.draw(dc)
         self.board.redraw_dirty(dc)
 
-    #def handle_hit_test(self, x, y):
-    #    pass
+
     def sort_handles(self):
+        """Sets the internal image that will be used to rotate, and its mask"""
         super(Image, self).sort_handles()
-        if not self.resizing:
-            print 'to image'
-            self.img = wx.Bitmap.ConvertToImage(self.image)
-            self.resizing = True
-        else:
-            print 'from image'
-            self.image = wx.BitmapFromImage(self.img)
+        if not self.img:
+            self.img = wx.ImageFromBitmap(self.image)
 
-
+        if not self.img.HasAlpha():  # black background otherwise
+            self.img.InitAlpha()
+        
+        
     def resize(self, x, y, direction=None):
-        self.img.Rotate(1, (x, y))
+        """Rotate the image"""
+        self.angle += 1
+        if self.angle > 360:
+            self.angle = 0
+        self.rotate()
+        
+
+    def rotate(self, angle=None):  
+                      
+        rad = (2 * math.pi * self.angle) / 360 
+        if angle:
+            rad = (2 * math.pi * angle) / 360
+        img = self.img.Rotate(rad, (0, 0))
+        self.image = wx.BitmapFromImage(img)
 
 
     def draw(self, dc, replay=False):
@@ -896,13 +895,13 @@ class Image(OverlayShape):
     def save(self):
         super(Image, self).save()
         self.image = None
+        self.img = None
 
     def load(self):
         super(Image, self).load()
         if os.path.exists(self.path):
             self.image = wx.Bitmap(self.path)
-            size = (self.image.GetWidth(), self.image.GetHeight())
-            self.board.update_scrollbars(size)
+            self.img = wx.ImageFromBitmap(self.image)
             self.colour = "Black"
         else:
             self.image = wx.EmptyBitmap(0, 0)
@@ -964,8 +963,6 @@ class Select(Tool):
                 self.dragging = True
                 self.count = count
                 self.offset = self.shape.offset(x, y)
-                self.x = shape.x
-                self.y = shape.y
                 if self.board.selected:
                     self.board.deselect()
                 self.board.selected = shape
@@ -1005,15 +1002,7 @@ class Select(Tool):
     def left_up(self, x, y):
         if self.dragging:
             self.shape.sort_handles()
-
-            if isinstance(self.shape, Image):
-                image = self.shape.image
-                size = (x + image.GetWidth(), y + image.GetHeight())
-                self.board.update_scrollbars(size)
-            elif isinstance(self.shape, Text):
-                self.shape.update_scroll(False)
-
-        self.board.redraw_all(update_thumb=True)
+        self.board.update_thumb()
         self.board.select_tool()
 
 
@@ -1050,6 +1039,26 @@ class BitmapSelect(Rectangle):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         dc.DrawRectangle(10, 10, width - 20, height - 20)
 
+
+#----------------------------------------------------------------------
+
+class Zoom(Tool):
+    """
+    Zooms in and out on the canvas, by setting the user scale in the Whyteboard
+    tab
+    """
+    tooltip = _("Zoom in and out of the canvas")
+    name = _("Zoom")
+    icon = "zoom"
+    def __init__(self, board, colour, thickness, cursor=wx.CURSOR_MAGNIFIER):
+        Tool.__init__(self, board, (0, 0, 0), 1, cursor)
+        
+
+    def button_down(self, x, y):
+        x = self.board.scale
+        new = (x[0] + 0.1, x[1] + 0.1)
+        self.board.scale = new
+        
 #---------------------------------------------------------------------
 
 def find_inverse(colour):
@@ -1057,7 +1066,10 @@ def find_inverse(colour):
     if not isinstance(colour, wx.Colour):
         c = colour
         colour = wx.Colour()
-        colour.SetFromName(c)
+        try:
+            colour.SetFromName(c)
+        except TypeError:
+            colour.Set(*c)
     r = 255 - colour.Red()
     g = 255 - colour.Green()
     b = 255 - colour.Blue()

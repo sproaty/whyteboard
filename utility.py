@@ -29,8 +29,8 @@ The saved .wtbd file structure is:
                            ..
                            N: [shape1, shape2, .. shapeN]
                          }
-               2: files  { 0: { 0: filename,                  - converted files
-                                1: temp-file-1.png,           - linked tmp file
+               2: files  { 0: { 0: filename,       ----------- not used any more
+                                1: temp-file-1.png,
                                 2: temp-file-2.png,
                                 ...
                               },
@@ -72,9 +72,11 @@ except ImportError:
 
 from dialogs import ProgressDialog, FindIM
 import tools
+import whyteboard
 
 
 cfg = """
+canvas_border = integer(min=10, max=35, default=15)
 colour1 = list(min=3, max=3, default=list('280', '0', '0'))
 colour2 = list(min=3, max=3, default=list('255', '255', '0'))
 colour3 = list(min=3, max=3, default=list('0', '255', '0'))
@@ -86,13 +88,15 @@ colour8 = list(min=3, max=3, default=list('255', '165', '0'))
 colour9 = list(min=3, max=3, default=list('211', '211', '211'))
 convert_quality = option('highest', 'high', 'normal', default='normal')
 default_font = string
+default_width = integer(min=1, max=12000, default=640)
+default_height = integer(min=1, max=12000, default=480)
 imagemagick_path = string
 handle_size = integer(min=3, max=15, default=6)
-language = option('English', 'English (United Kingdom)', 'Portugese', 'Japanese', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
+language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', 'Portugese', 'Japanese', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
 statusbar = boolean(default=True)
 toolbar = boolean(default=True)
-undo_sheets = integer(min=5, max=50, default=10)
 toolbox = option('icon', 'text', default='icon')
+undo_sheets = integer(min=5, max=50, default=10)
 """
 
 _ = wx.GetTranslation
@@ -103,6 +107,8 @@ languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
               (_("Portugese"), wx.LANGUAGE_PORTUGUESE),
               (_("Dutch"), wx.LANGUAGE_DUTCH),
               (_("German"), wx.LANGUAGE_GERMAN),
+              (_("Russian"), wx.LANGUAGE_RUSSIAN),
+              (_("Hindi"), wx.LANGUAGE_HINDI),
               (_("Spanish"), wx.LANGUAGE_SPANISH),
               (_("French"), wx.LANGUAGE_FRENCH),
               (_("Welsh"), wx.LANGUAGE_WELSH),
@@ -144,6 +150,7 @@ class Utility(object):
         self.config = config
 
         tools.HANDLE_SIZE = self.config['handle_size']
+        whyteboard.CANVAS_BORDER = self.config['canvas_border']
         if self.config.has_key('default_font'):
             self.font = wx.FFont(0, 0)
             self.font.SetNativeFontInfoFromString(self.config['default_font'])
@@ -163,6 +170,8 @@ class Utility(object):
         self.wildcard = '|'.join(wc_list)
 
 
+
+
     def save_file(self):
         """
         Saves the file if there is any drawn data to save. Any loaded Image
@@ -180,7 +189,7 @@ class Utility(object):
                 board = self.gui.tabs.GetPage(x)
                 save_pasted_images(board.shapes)
                 temp[x] = list(board.shapes)
-                canvas_sizes.append(board.canvas_size)
+                canvas_sizes.append(board.area)
                 text = None
                 if board.renamed:
                     text = self.gui.tabs.GetPageText(x)
@@ -300,13 +309,17 @@ class Utility(object):
             if name:
                 self.gui.board.renamed = True
 
+            try:
+                self.gui.board.resize_canvas(temp[4][x])
+            except KeyError:
+                pass
 
             for shape in temp[1][x]:
                 shape.board = self.gui.board#wb  # restore board
                 shape.load()  # restore unpickleable settings
                 self.gui.board.add_shape(shape)
-                # note: restore saved canvas sizes
-            self.gui.board.redraw_all()
+
+            self.gui.board.redraw_all(True)
 
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())

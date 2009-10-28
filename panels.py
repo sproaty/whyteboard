@@ -69,7 +69,6 @@ class ControlPanel(wx.Panel):
         self.toolsizer = wx.GridSizer(cols=cols, hgap=1, vgap=2)
         self.make_toolbox(gui.util.config['toolbox'])        
 
-        self.tools[self.toggled].SetValue(True)
         width = wx.StaticText(self.pane, label=_("Thickness:"))
         prev = wx.StaticText(self.pane, label=_("Preview:"))
         self.colour = wx.ColourPickerCtrl(self.pane)
@@ -126,6 +125,7 @@ class ControlPanel(wx.Panel):
             b.Bind(evt, self.change_tool, id=x + 1)
             self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             self.tools[x + 1] = b
+        self.tools[self.toggled].SetValue(True)
 
 
     def make_colour_grid(self):
@@ -583,7 +583,6 @@ class Thumbs(scrolled.ScrolledPanel):
         # now ensure all thumbnail classes are pointing to the right tab
         count = self.gui.current_tab
         for x in range(self.gui.current_tab, len(self.thumbs)):
-
             self.thumbs[x].thumb_id = x
             if not self.names[x]:
                 count += 1
@@ -617,7 +616,7 @@ class Thumbs(scrolled.ScrolledPanel):
         board = self.gui.tabs.GetPage(_id)
         context = wx.BufferedDC(None, board.buffer)
         memory = wx.MemoryDC()
-        x, y = board.GetClientSizeTuple()
+        x, y = board.area#GetClientSizeTuple()
         bitmap = wx.EmptyBitmap(x, y)
         memory.SelectObject(bitmap)
         memory.Blit(0, 0, x, y, context, 0, 0)

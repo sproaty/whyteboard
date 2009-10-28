@@ -1,28 +1,42 @@
-Whyteboard 0.38.6 - A simple image, PDF and postscript file annotator
+Whyteboard 0.38.8 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Sun 04 October 2009
+Wed 28 Oct October 2009
 
 ---- VERSION HISTORY ----
 
 
 ----------------------------------------------------------------------
 
-xx Oct 2009 -- 0.38.6
+28 Oct 2009 -- 0.38.8
 
 * Resize canvas through a menu dialog, or by dragging the edges of the canvas
-  to resize (like in ms paint)
-* Support for printing
+  to resize (like in ms paint). Many thanks to Michael H.
+* Support for printing, print preview, page setup
+* Rotate an image via its selection handles, or through a dialog
+
 * An error handler, which will gracefully handle any errors, and allow them
-  to be submitted to me via FTP
+  to be submitted to me by loading a simple website
 * The toolbox in the left-hand pane can be viewed as images instead of text
   buttons (default: icon view)
+* Delete shape functionality (select a shape with Select tool, press Delete), or
+  Edit->Delete Shape, or via the new toolbar icon
 * Additional preference tab: "View". Moved statusbar/toolbar options here, as
   well as allowing the user to change between text/icon views
-* More translations, pratically complete in Spanish and Dutch. Thanks to all 
-  contributors! New languages:
+  
+* Bugfix: Preferences' "Select Language" list was always shown in English
+* Bugfix: Bold headings in "Font/Colour" preferences had a large font in Windows
+* Bugfix: Eraser's cursor was offset slightly, and erasing the wrong area 
+* Bugfix: Pasting now pastes the image under the cursor, not at the top-left
+* Bugfix: Translations not loading on all versions!
+* Bugfix: Select tool causing "flickering" when deselecting
+
+* More translations; now complete in Russian, Spanish, Italian and Welsh. Over 
+  85% done in Dutch and German. Thanks to all contributors! New languages:
    - Traditional Chinese
    - Portugese
    - Japanese
+   - Russian
+   - Hindi
 
 ----------------------------------------------------------------------
 
@@ -38,7 +52,7 @@ xx Oct 2009 -- 0.38.6
   and, partially:
    - Czech
    - French
-   - German
+   - German 
    - Spanish
 
 * User preferences, allowing customisation of the program:
@@ -88,10 +102,10 @@ xx Oct 2009 -- 0.38.6
   when creating new Text/Notes
     -- the chosen font is also saved into the .wtbd save file
 
-* Improved undo/redo to support editing, moving and resizing
-                of objects as described above. Text edits can also be undone
-* Button to change colour in text input dialog, instead of always
-                drawing with the user's chosen palette colour
+* Improved undo/redo to support editing, moving and resizing of objects as 
+  described above. Text edits can also be undone
+* Button to change colour in text input dialog, instead of always drawing with 
+  the user's chosen palette colour
 
 * Thumbnail label shows the selected thumb label in bold
 * The Pen tool now draws in response to a single mouse click; before the mouse

@@ -118,7 +118,16 @@ class History(wx.Dialog):
         The loop can be paused/unpaused by the user.
         """
         dc = wx.ClientDC(self.gui.board)
-        dc.Clear()
+        #dc.SetBrush(wx.WHITE_BRUSH)
+        dc.SetBackground(wx.WHITE_BRUSH)
+
+        cli = self.gui.board.GetClientSize()
+        buff = self.gui.board.buffer
+        bkgregion = wx.Region(0, 0, buff.GetWidth(), buff.GetHeight())#cli.x, cli.y)
+        
+        #bkgregion.SubtractRect(wx.Rect(0, 0, buff.GetWidth(), buff.GetHeight()))
+        dc.SetClippingRegionAsRegion(bkgregion)
+        dc.Clear()                
         self.gui.board.PrepareDC(dc)
 
         #  paint any images first
@@ -633,18 +642,112 @@ class Resize(wx.Dialog):
         sizer.Fit(self)
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
-
+        self.hctrl.Bind(wx.EVT_SPINCTRL, self.resize)
+        self.wctrl.Bind(wx.EVT_SPINCTRL, self.resize)
+        
 
     def ok(self, event):
-        """Set the virtual canvas size"""
+        self.resize()
+        self.Close()
+        
+    def resize(self, event=None):
         value = (self.wctrl.GetValue(), self.hctrl.GetValue())
         self.gui.board.resize_canvas(value)
-        self.Close()
-
-
+        
     def cancel(self, event):
         self.gui.board.resize_canvas(self.size)
         self.Close()
+
+#----------------------------------------------------------------------
+
+
+class Rotate(wx.Dialog):
+    """
+    Allows the user to rotate the select image by a given amount. An image
+    must be selected before calling this dialog
+    """
+    def __init__(self, gui):
+        """
+        Show 4 radio buttons, allowing 90/180/270 or custom degree rotation
+        """
+        wx.Dialog.__init__(self, gui, title=_("Rotate Image"))
+
+        self.gui = gui
+        self.image = gui.board.selected
+        self.bmp = self.image.image
+        gap = wx.LEFT | wx.TOP | wx.RIGHT        
+        #self.size = self.gui.board.selected.GetSize()
+        label = wx.StaticText(self, label=_("Rotate by angle"))        
+        font = label.GetFont()
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        label.SetFont(font)
+        
+        radio1 = wx.RadioButton(self, label=" 90")
+        radio2 = wx.RadioButton(self, label=" 180")
+        radio3 = wx.RadioButton(self, label=" 270")
+        radio4 = wx.RadioButton(self, label=" " + _("Custom:"))                        
+        self.custom = wx.SpinCtrl(self, min=-365, max=359)
+        self.custom.SetValue(self.image.angle)
+        radio4.SetValue(True)
+        
+        okButton = wx.Button(self, wx.ID_OK, _("&OK"))
+        okButton.SetDefault()
+        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+
+        btnSizer = wx.StdDialogButtonSizer()
+        btnSizer.AddButton(okButton)
+        btnSizer.AddButton(cancelButton)
+        btnSizer.Realize()        
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(label, 0, wx.ALL, 15)
+        
+        for x, btn in enumerate([radio1, radio2, radio3, radio4]):
+           sizer.Add(btn, 0, wx.LEFT, 30)
+           sizer.Add((10, 5))
+           method = lambda evt, id=x: self.on_rotate(evt, id)
+           btn.Bind(wx.EVT_RADIOBUTTON, method)        
+        
+        hsizer = wx.BoxSizer(wx.HORIZONTAL)
+        hsizer.Add((45, 10))        
+        hsizer.Add(self.custom, 0)
+        
+        sizer.Add(hsizer, 0, wx.RIGHT, 15)        
+        sizer.Add((10, 5))
+        sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
+        self.SetSizer(sizer)
+        self.SetFocus()
+        sizer.Fit(self)
+        
+        cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
+        okButton.Bind(wx.EVT_BUTTON, self.ok)
+        #self.custom.Bind(wx.EVT_SPINCTRL, self.rotate)
+        
+
+    def ok(self, event):
+        self.image.rotate(self.custom.GetValue())
+        self.gui.board.draw_shape(self.image)        
+        self.Close()
+        
+    def cancel(self, event=None):
+        self.gui.board.selected.image = self.bmp
+        self.gui.board.draw_shape(self.gui.board.selected)                        
+        self.Close()
+        
+        
+    def on_rotate(self, event, id):
+        """ Radio buttons """
+        if id == 3:
+            self.custom.Enable()
+            self.rotate()
+        else:
+            self.custom.Disable()
+            self.image.rotate((id + 1) * 90)
+            self.gui.board.draw_shape(self.image)
+            
+    
+    def rotate(self, event=None):
+        self.image.rotate(self.custom.GetValue())
+        self.gui.board.draw_shape(self.image)
 
 #----------------------------------------------------------------------
 
@@ -700,7 +803,7 @@ class MyPrintout(wx.Printout):
         dc.SetDeviceOrigin(int(posX), int(posY))
         dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY-marginY)
 
-        filename = "Untitled"
+        filename = _("Untitled")
         if self.gui.util.filename:
             filename = self.gui.util.filename
         font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
@@ -708,10 +811,8 @@ class MyPrintout(wx.Printout):
         dc2 = wx.WindowDC(self.gui)
         x = dc2.GetMultiLineTextExtent(filename, font)
         extent = x[0], x[1]
-        #blah = wx.StaticText(self.gui, label=filename)
-        #b = blah.GetSize()
 
-        dc.DrawText(filename, marginX + x[0], marginY - x[1])
+        dc.DrawText(_(filename), marginX + x[0], marginY - x[1])
 
         dc.SetDeviceOrigin(int(posX), int(posY))
         board.redraw_all(dc=dc)
@@ -725,17 +826,20 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
     def __init__(self, msg):
         lib.errdlg.ErrorDialog.__init__(self, None, title=_("Error Report"), message=msg)
         self.SetDescriptionLabel(_("An error has occured - please report it"))
+        self.gui = wx.GetTopLevelWindows()[0]
 
     def Abort(self):
-        pass
+        self.gui.util.prompt_for_save(self.gui.Destroy)
 
     def GetProgramName(self):
         return "Whyteboard " + wx.GetTopLevelWindows()[0].version
 
     def Send(self):
-        """Send the error report"""
-        params = urlencode({'submitted': 'fgdg', 'message': self._panel.err_msg,
-                         'desc': self._panel.action.GetValue()})
+        """Send the error report. PHP script calls isset($_POST['submitted'])"""
+        params = urlencode({'submitted': 'fgdg', 
+                            'message': self._panel.err_msg,
+                            'desc': self._panel.action.GetValue(),
+                            'email': self._panel.email.GetValue()})
         f = urlopen("http://www.basicrpg.com/bug_submit.php", params)
 
 
@@ -746,7 +850,6 @@ def ExceptionHook(exctype, value, trace):
     Handler for all unhandled exceptions
     """
     ftrace = ErrorDialog.FormatTrace(exctype, value, trace)
-
     print ftrace  # show in console
 
     if ErrorDialog.ABORT:
