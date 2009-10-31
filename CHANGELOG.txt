@@ -22,15 +22,15 @@ Wed 28 Oct October 2009
   Edit->Delete Shape, or via the new toolbar icon
 * Additional preference tab: "View". Moved statusbar/toolbar options here, as
   well as allowing the user to change between text/icon views
-  
+
 * Bugfix: Preferences' "Select Language" list was always shown in English
 * Bugfix: Bold headings in "Font/Colour" preferences had a large font in Windows
-* Bugfix: Eraser's cursor was offset slightly, and erasing the wrong area 
+* Bugfix: Eraser's cursor was offset slightly, and erasing the wrong area
 * Bugfix: Pasting now pastes the image under the cursor, not at the top-left
 * Bugfix: Translations not loading on all versions!
 * Bugfix: Select tool causing "flickering" when deselecting
 
-* More translations; now complete in Russian, Spanish, Italian and Welsh. Over 
+* More translations; now complete in Russian, Spanish, Italian and Welsh. Over
   85% done in Dutch and German. Thanks to all contributors! New languages:
    - Traditional Chinese
    - Portugese
@@ -52,7 +52,7 @@ Wed 28 Oct October 2009
   and, partially:
    - Czech
    - French
-   - German 
+   - German
    - Spanish
 
 * User preferences, allowing customisation of the program:
@@ -102,9 +102,9 @@ Wed 28 Oct October 2009
   when creating new Text/Notes
     -- the chosen font is also saved into the .wtbd save file
 
-* Improved undo/redo to support editing, moving and resizing of objects as 
+* Improved undo/redo to support editing, moving and resizing of objects as
   described above. Text edits can also be undone
-* Button to change colour in text input dialog, instead of always drawing with 
+* Button to change colour in text input dialog, instead of always drawing with
   the user's chosen palette colour
 
 * Thumbnail label shows the selected thumb label in bold

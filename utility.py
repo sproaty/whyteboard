@@ -641,10 +641,9 @@ class Utility(object):
 
     def get_path(self):
         """Fetch the correct resource"""
-        path = self.path[0]
-        if path == "/usr/bin":
-            path = "/usr/lib/whyteboard"
-        return path
+        if self.path[0] == "/usr/bin":
+            return "/usr/lib/whyteboard"
+        return self.path[0]
 
 
 

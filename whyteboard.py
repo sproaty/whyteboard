@@ -26,7 +26,7 @@ its own undo/redo.
 The canvas to be drawn on is managed by a buffer bitmap, and the rest of the
 area is flooded with a grey, to indicate it is the background. This background
 can be grabbed with the mouse to resize the canvas' size. If the canvas is
-larger than the client size, then scrollbars are displayed, and a slight 
+larger than the client size, then scrollbars are displayed, and a slight
 "border" is shown around the canvas - this can be grabbed to resize.
 """
 
@@ -35,7 +35,7 @@ import copy
 import wx
 import wx.lib.dragscroller
 
-from tools import (Image, Text, Line,Note, Select, OverlayShape, TOP_LEFT,
+from tools import (Image, Text, Line, Note, Select, OverlayShape, TOP_LEFT,
                    TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT)
 
 #----------------------------------------------------------------------
@@ -59,7 +59,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.area = (gui.util.config['default_width'], gui.util.config['default_height'])#(640, 480)
         self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
-        self.SetBackgroundColour('Grey')        
+        self.SetBackgroundColour('Grey')
         if os.name == "nt":
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
         if os.name == "posix":
@@ -67,7 +67,7 @@ class Whyteboard(wx.ScrolledWindow):
 
         self.scroller = wx.lib.dragscroller.DragScroller(self)
         self.overlay = wx.Overlay()
-        self.buffer = wx.EmptyBitmap(*self.area)     
+        self.buffer = wx.EmptyBitmap(*self.area)
         self.gui = gui
         self.tab = tab
         self.scale = (1.0, 1.0)
@@ -82,10 +82,10 @@ class Whyteboard(wx.ScrolledWindow):
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
-        self.renamed = False  # used by GUI   
+        self.renamed = False  # used by GUI
         self.select_tool()
         self.redraw_all()
-                
+
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
@@ -129,7 +129,7 @@ class Whyteboard(wx.ScrolledWindow):
                     self.cursor_control = True
                     self.resize_cursor(direction) # change cursor
                 return
-            else:                
+            else:
                 if self.cursor_control:
                     self.change_cursor()
                     self.cursor_control = False
@@ -149,10 +149,10 @@ class Whyteboard(wx.ScrolledWindow):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
                     break
                 if res and isinstance(shape, Image):
-                    img = wx.Image(os.path.join(self.gui.util.get_path(), "images", 
+                    img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
                                                 "cursors", "") + "rotate.png")
                     self.SetCursor(wx.CursorFromImage(img))
-                    break                
+                    break
                 elif res in [TOP_LEFT, BOTTOM_RIGHT]:
                     self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
                     break
@@ -185,7 +185,7 @@ class Whyteboard(wx.ScrolledWindow):
                 self.select_tool()
                 self.update_thumb()
             self.drawing = False
-        
+
 
     def left_double(self, event):
         """Double click for the Select tool - edit text"""
@@ -229,10 +229,10 @@ class Whyteboard(wx.ScrolledWindow):
 
         self.buffer = wx.EmptyBitmap(*size)
         self.area = size
-        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)        
+        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)
         self.SetVirtualSize(size)
         self.redraw_all()
-     
+
 
     def redraw_dirty(self, dc):
         """ Figure out what part of the window to refresh. """
@@ -372,24 +372,24 @@ class Whyteboard(wx.ScrolledWindow):
         self.change_cursor()  # bugfix with custom cursor
 
     def on_paint(self, event=None):
-        """ 
+        """
         Called when the window is exposed. Paint the buffer, and then create a
-        region, remove the buffer rectangle then clear it with grey 
+        region, remove the buffer rectangle then clear it with grey
         """
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
 
-        if os.name == "nt":            
+        if os.name == "nt":
             relbuf = wx.Size(*self.CalcScrolledPosition(*self.buffer.GetSize()))
-            cli = self.GetClientSize()  
-                      
+            cli = self.GetClientSize()
+
             if cli.x > relbuf.x or cli.y > relbuf.y:
                 bkgregion = wx.Region(0, 0, cli.x, cli.y)
                 bkgregion.SubtractRect(wx.Rect(0, 0, relbuf.x, relbuf.y))
                 dc = wx.ClientDC(self)
                 dc.SetClippingRegionAsRegion(bkgregion)
-                dc.Clear()        
-        
-        
+                dc.Clear()
+
+
     def delete_selected(self):
         """Deletes the selected shape"""
         if not self.selected:
@@ -400,16 +400,16 @@ class Whyteboard(wx.ScrolledWindow):
                 self.shapes.remove(x)
                 self.selected = None
                 self.redraw_all(True)
-                
-                                    
+
+
     def deselect(self):
         """Deselects the selected shape"""
         for x in self.shapes:
             if isinstance(x, OverlayShape):
                 x.selected = False
         if self.selected:
-            self.draw_shape(self.selected, True)
             self.selected = None
+            self.redraw_all()
 
 
     def get_dc(self):
@@ -439,15 +439,15 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def check_resize(self, size):
-        """ Check whether the canvas should be resized (for large images) """                
+        """ Check whether the canvas should be resized (for large images) """
         if size[0] > self.area[0] or size[1] > self.area[1]:
             self.resize_canvas(size)
-            
-            
+
+
     def on_size(self, event):
         """ Updates the scrollbars when the window is resized. """
         size = self.GetClientSize()
-        
+
         if size[0] < self.area[0] or size[1] < self.area[1]:
             self.SetVirtualSize((self.area[0] + 20, self.area[1] + 20))
 

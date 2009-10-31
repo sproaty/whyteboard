@@ -67,7 +67,7 @@ class ControlPanel(wx.Panel):
             cols = 2
 
         self.toolsizer = wx.GridSizer(cols=cols, hgap=1, vgap=2)
-        self.make_toolbox(gui.util.config['toolbox'])        
+        self.make_toolbox(gui.util.config['toolbox'])
 
         width = wx.StaticText(self.pane, label=_("Thickness:"))
         prev = wx.StaticText(self.pane, label=_("Preview:"))
@@ -106,20 +106,20 @@ class ControlPanel(wx.Panel):
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
 
 
-    def make_toolbox(self, type="text"):
+    def make_toolbox(self, _type="text"):
         items = [_(i.name) for i in self.gui.util.items]
-        if type == "icon":
+        if _type == "icon":
             items = [_(i.icon) for i in self.gui.util.items]
 
         for x, val in enumerate(items):
-            if type == "icon":
-                path = os.path.join(self.gui.util.get_path(), "images", 
+            if _type == "icon":
+                path = os.path.join(self.gui.util.get_path(), "images",
                                     "tools", val + ".png")
                 b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path))
                 evt = wx.EVT_BUTTON
             else:
                 b = wx.ToggleButton(self.pane, x + 1, val)
-                evt = wx.EVT_TOGGLEBUTTON 
+                evt = wx.EVT_TOGGLEBUTTON
 
             b.SetToolTipString(_(self.gui.util.items[x].tooltip))
             b.Bind(evt, self.change_tool, id=x + 1)

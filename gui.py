@@ -38,7 +38,6 @@ import webbrowser
 import wx
 import wx.lib.newevent
 from wx.html import HtmlHelpController
-from wx.lib.wordwrap import wordwrap
 
 from lib.configobj import ConfigObj
 from lib.validate import Validator
@@ -208,7 +207,7 @@ class GUI(wx.Frame):
         edit.AppendSeparator()
         edit.Append(ID_RESIZE, _("Re&size Canvas...")+"\tCtrl+R", _("Change the canvas' size"))
         edit.Append(ID_ROTATE, _("R&otate Image..."), _("Rotate the selected image"))
-        edit.Append(wx.ID_DELETE, _("&Delete Shape")+"\tDelete", _("Delete the currently selected shape"))        
+        edit.Append(wx.ID_DELETE, _("&Delete Shape")+"\tDelete", _("Delete the currently selected shape"))
         edit.AppendSeparator()
         edit.Append(wx.ID_COPY, _("&Copy")+"\tCtrl+C", _("Copy a Bitmap Selection region"))
         edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste an image from your clipboard into Whyteboard"))
@@ -218,7 +217,7 @@ class GUI(wx.Frame):
 
         view.Append(ID_HISTORY, _("&History Viewer...")+"\tCtrl+H", _("View and replay your drawing history"))
         view.AppendSeparator()
-        self.showtool = view.Append(ID_TOOLBAR," "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
+        self.showtool = view.Append(ID_TOOLBAR, " "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
         self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
         view.Append(ID_FULLSCREEN, " "+_("&Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
 
@@ -279,7 +278,7 @@ class GUI(wx.Frame):
         self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
 
         ac = [(wx.ACCEL_CTRL, ord('\t'), self.next.GetId()),
-              (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId()) ]        
+              (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId()) ]
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
 
@@ -293,7 +292,7 @@ class GUI(wx.Frame):
                   "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
-               wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR, 
+               wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
                ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT]
 
         for name, _id in zip(functs, IDs):
@@ -311,8 +310,8 @@ class GUI(wx.Frame):
                wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE]
         arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_COPY,
                 wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO, wx.ART_DELETE]
-        tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"), 
-                _("Paste Image"), _("Undo the Last Action"), _("Redo the Last Undone Action"), 
+        tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"),
+                _("Paste Image"), _("Undo the Last Action"), _("Redo the Last Undone Action"),
                 _("Delete the currently selected shape")]
 
         # add tools, add a separator and bind paste/undo/redo for UI updating
@@ -586,7 +585,7 @@ class GUI(wx.Frame):
 
     def on_delete_shape(self, event=None):
         self.board.delete_selected()
-                
+
     def update_menus(self, event):
         """
         Enables/disables the undo/redo/next/prev button as appropriate.
@@ -629,10 +628,10 @@ class GUI(wx.Frame):
             elif _id == ID_UNDO_SHEET and len(self.closed_tabs) >= 1:
                 do = True
             elif _id == wx.ID_DELETE and self.board.selected:
-                do = True   
-            elif (_id == ID_ROTATE and self.board.selected 
-                  and isinstance(self.board.selected, Image)): 
-                do = True                                
+                do = True
+            elif (_id == ID_ROTATE and self.board.selected
+                  and isinstance(self.board.selected, Image)):
+                do = True
         elif self.board:
             if self.board.copy:
                 do = True
@@ -641,20 +640,20 @@ class GUI(wx.Frame):
 
     def on_copy(self, event):
         """
-        If a rectangle selection is made, copy the selection as a bitmap. 
+        If a rectangle selection is made, copy the selection as a bitmap.
         NOTE: The bitmap selection can be larger than the actual canvas bitmap,
-        so we must only selection the region of the selection that is on the 
+        so we must only selection the region of the selection that is on the
         canvas
-        """        
+        """
         self.board.copy.update_rect()  # ensure w, h are correct
         bmp = self.board.copy
 
         if bmp.x + bmp.width > self.board.area[0]:
             bmp.rect.SetWidth(self.board.area[0] - bmp.x)
-            
+
         if bmp.y + bmp.height > self.board.area[1]:
             bmp.rect.SetHeight(self.board.area[1] - bmp.y)
-                
+
         self.board.copy = None
         self.board.redraw_all()
         self.util.set_clipboard(bmp.rect)
@@ -668,7 +667,7 @@ class GUI(wx.Frame):
         if not bmp:
             return
         shape = Image(self.board, bmp.GetBitmap(), None)
-        
+
         x, y = self.board.ScreenToClient(wx.GetMousePosition())
         x, y = self.board.CalcUnscrolledPosition(x, y)
         shape.left_down(x, y)
@@ -817,14 +816,14 @@ class GUI(wx.Frame):
         data = wx.PrintDialogData(self.printData)
         printout = MyPrintout(self)
         printout2 = MyPrintout(self)
-        self.preview = wx.PrintPreview(printout, printout2, data)
+        preview = wx.PrintPreview(printout, printout2, data)
 
-        if not self.preview.Ok():
+        if not preview.Ok():
             wx.MessageBox(_("There was a problem printing.\nPerhaps your current printer is not set correctly?"),
               _("Printing Error"))
             return
 
-        pfrm = wx.PreviewFrame(self.preview, self, _("Print Preview"))
+        pfrm = wx.PreviewFrame(preview, self, _("Print Preview"))
         pfrm.Initialize()
         pfrm.SetPosition(self.GetPosition())
         pfrm.SetSize(self.GetSize())
@@ -861,13 +860,13 @@ class GUI(wx.Frame):
     def on_resize(self, event=None):
         dlg = Resize(self)
         dlg.ShowModal()
-        
+
 
     def on_rotate(self, event=None):
         dlg = Rotate(self)
         dlg.ShowModal()
-        
-        
+
+
     def on_preferences(self, event=None):
         """ Checks for new versions of the program ***"""
         dlg = Preferences(self)
@@ -935,7 +934,7 @@ class GUI(wx.Frame):
         t = ['A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
              'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
              '"Amy" https://launchpad.net/~anthropofobe (German)',
-             'David Aller https://launchpad.net/~niclamus (Italian)', 
+             'David Aller https://launchpad.net/~niclamus (Italian)',
              '"Dennis" https://launchpad.net/~dlinn83 (German)',
              'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
              'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',

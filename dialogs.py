@@ -22,17 +22,12 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 import os
 import sys
-import time
 import wx
 
-
-from ftplib import FTP
 from copy import copy
 import lib.errdlg
 from lib.BeautifulSoup import BeautifulSoup
 from urllib import urlopen, urlretrieve, urlencode
-
-
 
 import tools
 
@@ -118,16 +113,12 @@ class History(wx.Dialog):
         The loop can be paused/unpaused by the user.
         """
         dc = wx.ClientDC(self.gui.board)
-        #dc.SetBrush(wx.WHITE_BRUSH)
         dc.SetBackground(wx.WHITE_BRUSH)
-
-        cli = self.gui.board.GetClientSize()
         buff = self.gui.board.buffer
-        bkgregion = wx.Region(0, 0, buff.GetWidth(), buff.GetHeight())#cli.x, cli.y)
-        
-        #bkgregion.SubtractRect(wx.Rect(0, 0, buff.GetWidth(), buff.GetHeight()))
+        bkgregion = wx.Region(0, 0, buff.GetWidth(), buff.GetHeight())
+
         dc.SetClippingRegionAsRegion(bkgregion)
-        dc.Clear()                
+        dc.Clear()
         self.gui.board.PrepareDC(dc)
 
         #  paint any images first
@@ -350,11 +341,10 @@ class UpdateDialog(wx.Dialog):
         save or not)
         """
         path = self.gui.util.path
-        path[0] = self.gui.util.get_path()
         args = []  # args to reload running program, may include filename
         tmp = None
         tmp_file = os.path.join(path[0], 'tmp-wb-' + self._type)
-
+        wx.MessageBox(tmp_file)
         try:
             tmp = urlretrieve(self._file, tmp_file, self.reporter)
         except IOError:
@@ -645,16 +635,16 @@ class Resize(wx.Dialog):
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         self.hctrl.Bind(wx.EVT_SPINCTRL, self.resize)
         self.wctrl.Bind(wx.EVT_SPINCTRL, self.resize)
-        
+
 
     def ok(self, event):
         self.resize()
         self.Close()
-        
+
     def resize(self, event=None):
         value = (self.wctrl.GetValue(), self.hctrl.GetValue())
         self.gui.board.resize_canvas(value)
-        
+
     def cancel(self, event):
         self.gui.board.resize_canvas(self.size)
         self.Close()
@@ -672,25 +662,23 @@ class Rotate(wx.Dialog):
         Show 4 radio buttons, allowing 90/180/270 or custom degree rotation
         """
         wx.Dialog.__init__(self, gui, title=_("Rotate Image"))
-
         self.gui = gui
         self.image = gui.board.selected
         self.bmp = self.image.image
-        gap = wx.LEFT | wx.TOP | wx.RIGHT        
-        #self.size = self.gui.board.selected.GetSize()
-        label = wx.StaticText(self, label=_("Rotate by angle"))        
+
+        label = wx.StaticText(self, label=_("Rotate by angle"))
         font = label.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         label.SetFont(font)
-        
+
         radio1 = wx.RadioButton(self, label=" 90")
         radio2 = wx.RadioButton(self, label=" 180")
         radio3 = wx.RadioButton(self, label=" 270")
-        radio4 = wx.RadioButton(self, label=" " + _("Custom:"))                        
+        radio4 = wx.RadioButton(self, label=" " + _("Custom:"))
         self.custom = wx.SpinCtrl(self, min=-365, max=359)
         self.custom.SetValue(self.image.angle)
         radio4.SetValue(True)
-        
+
         okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         okButton.SetDefault()
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
@@ -698,43 +686,43 @@ class Rotate(wx.Dialog):
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okButton)
         btnSizer.AddButton(cancelButton)
-        btnSizer.Realize()        
+        btnSizer.Realize()
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(label, 0, wx.ALL, 15)
-        
+
         for x, btn in enumerate([radio1, radio2, radio3, radio4]):
-           sizer.Add(btn, 0, wx.LEFT, 30)
-           sizer.Add((10, 5))
-           method = lambda evt, id=x: self.on_rotate(evt, id)
-           btn.Bind(wx.EVT_RADIOBUTTON, method)        
-        
+            sizer.Add(btn, 0, wx.LEFT, 30)
+            sizer.Add((10, 5))
+            method = lambda evt, id=x: self.on_rotate(evt, id)
+            btn.Bind(wx.EVT_RADIOBUTTON, method)
+
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        hsizer.Add((45, 10))        
+        hsizer.Add((45, 10))
         hsizer.Add(self.custom, 0)
-        
-        sizer.Add(hsizer, 0, wx.RIGHT, 15)        
+
+        sizer.Add(hsizer, 0, wx.RIGHT, 15)
         sizer.Add((10, 5))
         sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
         self.SetSizer(sizer)
         self.SetFocus()
         sizer.Fit(self)
-        
+
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         #self.custom.Bind(wx.EVT_SPINCTRL, self.rotate)
-        
+
 
     def ok(self, event):
         self.image.rotate(self.custom.GetValue())
-        self.gui.board.draw_shape(self.image)        
+        self.gui.board.draw_shape(self.image)
         self.Close()
-        
+
     def cancel(self, event=None):
         self.gui.board.selected.image = self.bmp
-        self.gui.board.draw_shape(self.gui.board.selected)                        
+        self.gui.board.draw_shape(self.gui.board.selected)
         self.Close()
-        
-        
+
+
     def on_rotate(self, event, id):
         """ Radio buttons """
         if id == 3:
@@ -744,8 +732,8 @@ class Rotate(wx.Dialog):
             self.custom.Disable()
             self.image.rotate((id + 1) * 90)
             self.gui.board.draw_shape(self.image)
-            
-    
+
+
     def rotate(self, event=None):
         self.image.rotate(self.custom.GetValue())
         self.gui.board.draw_shape(self.image)
@@ -837,7 +825,7 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
 
     def Send(self):
         """Send the error report. PHP script calls isset($_POST['submitted'])"""
-        params = urlencode({'submitted': 'fgdg', 
+        params = urlencode({'submitted': 'fgdg',
                             'message': self._panel.err_msg,
                             'desc': self._panel.action.GetValue(),
                             'email': self._panel.email.GetValue()})

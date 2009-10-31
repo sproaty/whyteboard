@@ -563,10 +563,10 @@ class Eraser(Pen):
         memory.DrawRectangle(0, 0, thickness + 7, thickness + 7)
         memory.SelectObject(wx.NullBitmap)
         img = wx.ImageFromBitmap(cursor)
-        
+
         img.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_X, (thickness + 7) / 2)
         img.SetOptionInt(wx.IMAGE_OPTION_CUR_HOTSPOT_Y, (thickness + 7) / 2)
-                    
+
         cursor = wx.CursorFromImage(img)
         return cursor
 
@@ -861,19 +861,19 @@ class Image(OverlayShape):
 
         if not self.img.HasAlpha():  # black background otherwise
             self.img.InitAlpha()
-        
-        
+
+
     def resize(self, x, y, direction=None):
         """Rotate the image"""
         self.angle += 1
         if self.angle > 360:
             self.angle = 0
         self.rotate()
-        
 
-    def rotate(self, angle=None):  
-                      
-        rad = (2 * math.pi * self.angle) / 360 
+
+    def rotate(self, angle=None):
+
+        rad = (2 * math.pi * self.angle) / 360
         if angle:
             rad = (2 * math.pi * angle) / 360
         img = self.img.Rotate(rad, (0, 0))
@@ -975,6 +975,7 @@ class Select(Tool):
         else:
             self.board.deselect()
 
+
     def double_click(self, x, y):
         if isinstance(self.board.selected, Text):
             self.dragging = False
@@ -1002,6 +1003,7 @@ class Select(Tool):
     def left_up(self, x, y):
         if self.dragging:
             self.shape.sort_handles()
+
         self.board.update_thumb()
         self.board.select_tool()
 
@@ -1052,13 +1054,13 @@ class Zoom(Tool):
     icon = "zoom"
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_MAGNIFIER):
         Tool.__init__(self, board, (0, 0, 0), 1, cursor)
-        
+
 
     def button_down(self, x, y):
         x = self.board.scale
         new = (x[0] + 0.1, x[1] + 0.1)
         self.board.scale = new
-        
+
 #---------------------------------------------------------------------
 
 def find_inverse(colour):
