@@ -33,12 +33,12 @@ GUI too.
 import os
 import wx
 from copy import copy
+from wx.lib.wordwrap import wordwrap as wordwrap
 
 import tools
 import whyteboard
-
-#from dialogs import FindIM
-from utility import make_bitmap, languages
+from functions import make_bitmap
+from utility import languages
 
 _ = wx.GetTranslation
 
@@ -86,7 +86,7 @@ class Preferences(wx.Dialog):
         _help.Bind(wx.EVT_BUTTON, self.on_help)
 
 
-    def on_okay(self, event):
+    def on_okay(self, event=None):
         """
         Write the config file - update the *true* config file to new prefs
         Just updates all the GUI instead of figuring out which parts actually
@@ -254,6 +254,7 @@ class FontAndColours(wx.Panel):
             self.buttons.append(b)
             self.grid.Add(b, 0)
             b.Bind(wx.EVT_BUTTON, method)
+            self.grid.Layout()
 
         self.button = wx.Button(self, label=_("Select Font"))
         self.button.Bind(wx.EVT_BUTTON, self.on_font)
@@ -283,7 +284,10 @@ class FontAndColours(wx.Panel):
             f.SetPointSize(self.size)
             self.button.SetFont(f)
         else:
-            self.button.SetLabel(self.button.GetFont().GetNativeFontInfoDesc())
+            if os.name == "nt":
+                self.font_label(self.font)
+            else:
+                self.button.SetLabel(self.button.GetFont().GetNativeFontInfoDesc())
 
         sizer.Add(labCol, 0, wx.ALL, 15)
         sizer.Add(self.grid, 0, wx.LEFT | wx.BOTTOM, 30)
@@ -353,14 +357,15 @@ class FontAndColours(wx.Panel):
 
             self.config[pref] = list(dlg.GetColourData().Colour.Get())
 
-            self.grid.Remove(self.buttons[id])
+            #self.grid.Remove(self.buttons[id])
             col = make_bitmap(dlg.GetColourData().Colour)
-            b = wx.BitmapButton(self, bitmap=col)
-            self.buttons[id] = b
-            self.grid.Insert(before=id, item=b, proportion=0)
+            self.buttons[id].SetBitmapLabel(col)
+            #b = wx.BitmapButton(self, bitmap=col)
+            #self.buttons[id] = b
+            #self.grid.Insert(before=id, item=b, proportion=0)
 
-            method = lambda evt, x=id: self.on_colour(evt, x)
-            self.buttons[id].Bind(wx.EVT_BUTTON, method)
+            #method = lambda evt, x=id: self.on_colour(evt, x)
+            #self.buttons[id].Bind(wx.EVT_BUTTON, method)
             self.grid.Layout()
 
         dlg.Destroy()
@@ -384,6 +389,7 @@ class View(wx.Panel):
 
         statusbar = wx.CheckBox(self, label=_("View the status bar"))
         toolbar = wx.CheckBox(self, label=_("View the toolbar"))
+        title = wx.CheckBox(self, label=_("Show the title when printing"))
         radio1 = wx.RadioButton(self, label=" " + _("Icons"))
         radio2 = wx.RadioButton(self, label=" " + _("Text"))
         label = wx.StaticText(self, label=_("Toolbox View:"))
@@ -408,9 +414,12 @@ class View(wx.Panel):
             statusbar.SetValue(True)
         if self.config['toolbar']:
             toolbar.SetValue(True)
+        if self.config['print_title']:
+            title.SetValue(True)
+                        
         self.width.SetValue(self.config['default_width'])
         self.height.SetValue(self.config['default_height'])
-
+        
         for x, btn in enumerate([radio1, radio2]):
             sizer.Add(btn, 0, wx.LEFT, 30)
             sizer.Add((10, 5))
@@ -423,9 +432,11 @@ class View(wx.Panel):
         sizer.Add(self.height, 0, wx.LEFT, 30)
         sizer.Add((10, 15))
         sizer.Add(statusbar, 0, wx.ALL, 10)
-        sizer.Add(toolbar, 0, wx.LEFT, 10)
+        sizer.Add(toolbar, 0, wx.LEFT | wx.BOTTOM, 10)
+        sizer.Add(title, 0, wx.LEFT, 10)
         statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
         toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)
+        title.Bind(wx.EVT_CHECKBOX, self.on_title)
         self.width.Bind(wx.EVT_SPINCTRL, self.on_width)
         self.height.Bind(wx.EVT_SPINCTRL, self.on_height)
 
@@ -435,7 +446,10 @@ class View(wx.Panel):
 
     def on_toolbar(self, event):
         self.config['toolbar'] = event.Checked()
-
+        
+    def on_title(self, event):
+        self.config['print_title'] = event.Checked()
+        
     def on_width(self, event):
         self.config['default_width'] = self.width.GetValue()
 
@@ -467,7 +481,7 @@ class PDF(wx.Panel):
         self.SetSizer(sizer)
 
         label = wx.StaticText(self, label=_("Conversion Quality:"))
-        note = wx.StaticText(self, label=_("Note: Higher quality takes longer to convert"))
+        note = wx.StaticText(self, label=wordwrap(_("Note: Higher quality takes longer to convert"), 350, wx.ClientDC(gui)))
         radio1 = wx.RadioButton(self, label=" " + _("Highest"))
         radio2 = wx.RadioButton(self, label=" " + _("High"))
         radio3 = wx.RadioButton(self, label=" " + _("Normal"))

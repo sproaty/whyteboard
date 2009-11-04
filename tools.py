@@ -50,9 +50,12 @@ class Tool(object):
     """ Abstract class representing a tool: Drawing board/colour/thickness """
     tooltip = ""
     icon = ""
-    def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
+    hotkey = ""
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT, 
+                 cursor=wx.CURSOR_PENCIL):
         self.board = board
         self.colour = colour
+        self.background = background
         self.thickness = thickness
         self.cursor = cursor
         self.pen = None
@@ -67,7 +70,10 @@ class Tool(object):
 
     def left_up(self, x, y):
         pass
-
+    
+    def right_up(self, x, y):
+        pass
+    
     def motion(self, x, y):
         pass
 
@@ -86,7 +92,10 @@ class Tool(object):
     def make_pen(self, dc=None):
         """ Creates a pen, usually after loading in a save file """
         self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
-        self.brush = wx.TRANSPARENT_BRUSH
+        if self.background == wx.TRANSPARENT:
+            self.brush = wx.TRANSPARENT_BRUSH
+        else:
+            self.brush = wx.Brush(self.background)
 
     def preview(self, dc, width, height):
         """ Tools' preview in the left-hand panel """
@@ -100,7 +109,8 @@ class Tool(object):
 
     def load(self):
         """ Defines how this class will unpickle itself """
-        pass
+        if not hasattr(self, "background"):
+            self.background = wx.TRANSPARENT
 
 #----------------------------------------------------------------------
 
@@ -109,11 +119,13 @@ class Pen(Tool):
     tooltip = _("Draw strokes with a brush")
     name = _("Pen")
     icon = "pen"
-
-    def __init__(self, board, colour, thickness, cursor=wx.CURSOR_PENCIL):
-        Tool.__init__(self, board, colour, thickness, cursor)
+    hotkey = "p"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT, 
+                 cursor=wx.CURSOR_PENCIL):
+        Tool.__init__(self, board, colour, thickness, background, cursor)
         self.points = []  # ALL x1, y1, x2, y2 coords to render
         self.time = []  # list of times for each point, for redrawing
+        self.background = None
 
     def left_down(self, x, y):
         self.x = x  # original mouse coords
@@ -161,8 +173,9 @@ class OverlayShape(Tool):
     Contains methods for drawing an overlayed shape. Has some general method
     implementations for drawing handles and drawing the shape.
     """
-    def __init__(self, board, colour, thickness, cursor=wx.CURSOR_CROSS):
-        Tool.__init__(self, board, colour, thickness, cursor)
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT, 
+                 cursor=wx.CURSOR_CROSS):
+        Tool.__init__(self, board, colour, thickness, background, cursor)
         self.handles = []
 
     def left_down(self, x, y):
@@ -214,6 +227,13 @@ class OverlayShape(Tool):
         """Being moved with Select. Offset is to keep the cursor centered"""
         self.x = x - offset[0]
         self.y = y - offset[1]
+        
+        size = self.board.GetClientSize()
+        #print self.board.CalcUnscrolledPosition(0, 0)
+
+        #if self.x < size[0] + 50:
+        #    self.board.Scroll(self.x + 50, -1)
+        
 
     def sort_handles(self):
         """Sets the shape's handles"""
@@ -224,6 +244,7 @@ class OverlayShape(Tool):
         rect3 = wx.Rect(bottom_left[0], bottom_left[1], size, size)
         rect4 = wx.Rect(bottom_right[0], bottom_right[1], size, size)
         self.handles = [rect1, rect2, rect3, rect4]
+
 
     def handle_hit_test(self, x, y):
         """Returns which handle has been clicked on"""
@@ -263,6 +284,7 @@ class OverlayShape(Tool):
         return (x - self.x, y - self.y)
 
     def load(self):
+        super(OverlayShape, self).load()
         self.selected = False
 
 #----------------------------------------------------------------------
@@ -275,8 +297,9 @@ class Rectangle(OverlayShape):
     tooltip = _("Draw a rectangle")
     name = _("Rectangle")
     icon = "rectangle"
-    def __init__(self, board, colour, thickness):
-        OverlayShape.__init__(self, board, colour, thickness)
+    hotkey = "r"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        OverlayShape.__init__(self, board, colour, thickness, background)
         self.width = 0
         self.height = 0
         self.rect = None
@@ -367,6 +390,7 @@ class Ellipse(Rectangle):
     tooltip = _("Draw an oval shape")
     name = _("Ellipse")
     icon = "ellipse"
+    hotkey = "o"
     def draw(self, dc, replay=False):
         super(Ellipse, self).draw(dc, replay, "Ellipse")
 
@@ -391,8 +415,9 @@ class Circle(OverlayShape):
     tooltip = _("Draw a circle")
     name = _("Circle")
     icon = "circle"
-    def __init__(self, board, colour, thickness):
-        OverlayShape.__init__(self, board, colour, thickness)
+    hotkey = "c"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        OverlayShape.__init__(self, board, colour, thickness, background)
         self.radius = 1
 
     def motion(self, x, y):
@@ -428,6 +453,7 @@ class RoundedRect(Rectangle):
     tooltip = _("Draw a rectangle with rounded edges")
     name = _("Rounded Rect")
     icon = "rounded-rect"
+    hotkey = "u"
     def draw(self, dc, replay=False):
         super(RoundedRect, self).draw(dc, replay, "RoundedRectangle")
 
@@ -449,8 +475,9 @@ class Line(OverlayShape):
     tooltip = _("Draw a straight line")
     name = _("Line")
     icon = "line"
-    def __init__(self, board, colour, thickness):
-        OverlayShape.__init__(self, board, colour, thickness)
+    hotkey = "l"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        OverlayShape.__init__(self, board, colour, thickness, background)
         self.x2 = 0
         self.y2 = 0
 
@@ -543,9 +570,11 @@ class Eraser(Pen):
     tooltip = _("Erase a drawing to the background")
     name = _("Eraser")
     icon = "eraser"
-    def __init__(self, board, colour, thickness):
+    hotkey = "e"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         cursor = self.make_cursor(thickness)
-        Pen.__init__(self, board, (255, 255, 255), thickness + 6, cursor)
+        Pen.__init__(self, board, (255, 255, 255), thickness + 6, background,
+                     cursor)
 
 
     def make_cursor(self, thickness):
@@ -594,8 +623,9 @@ class Eyedrop(Tool):
     tooltip = _("Picks a color from the selected pixel")
     name = _("Eyedropper")
     icon = "eyedrop"
-    def __init__(self, board, colour, thickness):
-        Tool.__init__(self, board, colour, thickness, wx.CURSOR_CROSS)
+    hotkey = "d"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        Tool.__init__(self, board, colour, thickness, background, wx.CURSOR_CROSS)
 
     def left_down(self, x, y):
         dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
@@ -622,8 +652,10 @@ class Text(OverlayShape):
     tooltip = _("Input text")
     name = _("Text")
     icon = "text"
-    def __init__(self, board, colour, thickness):
-        OverlayShape.__init__(self, board, colour, thickness, wx.CURSOR_IBEAM)
+    hotkey = "t"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        OverlayShape.__init__(self, board, colour, thickness, background,
+                              wx.CURSOR_IBEAM)
         self.font = None
         self.text = ""
         self.font_data = ""
@@ -700,6 +732,8 @@ class Text(OverlayShape):
             self.restore_font()
         dc.SetFont(self.font)
         dc.SetTextForeground(self.colour)
+        if self.background != wx.TRANSPARENT:
+            dc.SetBackground(wx.Brush(self.background))
         super(Text, self).draw(dc, replay, "Label")
 
 
@@ -766,8 +800,9 @@ class Note(Text):
     tooltip = _("Insert a note")
     name = _("Note")
     icon = "note"
-    def __init__(self, board, colour, thickness):
-        Text.__init__(self, board, colour, thickness)
+    hotkey = "n"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        Text.__init__(self, board, colour, thickness, background)
         self.tree_id = None
 
     def left_up(self, x, y,):
@@ -777,6 +812,7 @@ class Note(Text):
         else:
             self.board.redraw_all()
 
+
     def edit(self):
         """Edit a non-blank Note by changing the tree item's text"""
         if super(Note, self).edit():
@@ -784,10 +820,12 @@ class Note(Text):
             text = self.text.replace("\n", " ")[:15]
             tree.SetItemText(self.tree_id, text)
 
+
     def find_extent(self):
         """Overrides to add extra spacing to the extent for the rectangle."""
         super(Note, self).find_extent()
         self.extent = (self.extent[0] + 20, self.extent[1] + 20)
+
 
     def make_pen(self, dc=None):
         """We first must draw the Note outline"""
@@ -798,6 +836,7 @@ class Note(Text):
             dc.DrawRectangle(self.x - SIZE, self.y - SIZE, *self.extent)
         super(Note, self).make_pen()
 
+
     def hit_test(self, x, y):
         width = self.x + self.extent[0] - SIZE
         height = self.y + self.extent[1] - SIZE
@@ -806,11 +845,13 @@ class Note(Text):
             return True
         return False
 
+
     def get_handles(self):
         x, y, w, h = self.x, self.y, self.extent[0], self.extent[1]
         d = lambda x, y: (x - 2, y - 2)
         return (d(x - SIZE, y - SIZE), d(x + w - SIZE, y - SIZE),
                 d(x - SIZE, y + h - SIZE), d(x + w - SIZE, y + h - SIZE))
+
 
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush((255, 223, 120)))
@@ -819,6 +860,7 @@ class Note(Text):
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         super(Note, self).preview(dc, width, height)
 
+
     def load(self, add_note=True):
         """Recreates the note in the tree"""
         super(Note, self).load()
@@ -826,7 +868,9 @@ class Note(Text):
         if add_note:
             gui.notes.add_note(self, gui.tab_count - 1)
 
+
 #----------------------------------------------------------------------
+
 
 class Image(OverlayShape):
     """
@@ -868,11 +912,11 @@ class Image(OverlayShape):
         self.angle += 1
         if self.angle > 360:
             self.angle = 0
-        self.rotate()
+        self.rotate()       
 
 
     def rotate(self, angle=None):
-
+        """Rotate the image (in radians), turn it back into a bitmap"""
         rad = (2 * math.pi * self.angle) / 360
         if angle:
             rad = (2 * math.pi * angle) / 360
@@ -883,8 +927,10 @@ class Image(OverlayShape):
     def draw(self, dc, replay=False):
         super(Image, self).draw(dc, replay, "Bitmap")
 
+
     def get_args(self):
         return [self.image, self.x, self.y]
+
 
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
@@ -892,19 +938,23 @@ class Image(OverlayShape):
         x, y, w, h = self.x, self.y, img.GetWidth(), img.GetHeight()
         return d(x, y), d(x + w, y), d(x, y + h), d(x + w, y + h)
 
+
     def save(self):
         super(Image, self).save()
         self.image = None
         self.img = None
 
+
     def load(self):
         super(Image, self).load()
-        if os.path.exists(self.path):
+
+        if self.path and os.path.exists(self.path):
             self.image = wx.Bitmap(self.path)
             self.img = wx.ImageFromBitmap(self.image)
             self.colour = "Black"
         else:
             self.image = wx.EmptyBitmap(0, 0)
+            self.img = wx.ImageFromBitmap(self.image)
             wx.MessageBox("Path for the image %s not found." % self.path)
 
 
@@ -930,8 +980,9 @@ class Select(Tool):
     tooltip = _("Select a shape to move and resize it")
     name = _("Shape Select ")
     icon = "select"
-    def __init__(self, board, image, path):
-        Tool.__init__(self, board, (0, 0, 0), 1, wx.CURSOR_ARROW)
+    hotkey = "s"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        Tool.__init__(self, board, (0, 0, 0), 1, background, cursor=wx.CURSOR_ARROW)
         self.shape = None
         self.dragging = False
         self.undone = False  # Adds an undo point once per class
@@ -939,6 +990,7 @@ class Select(Tool):
         self.direction = None
         self.count = 0
         self.offset = (0, 0)
+
 
     def left_down(self, x, y):
         """
@@ -971,15 +1023,22 @@ class Select(Tool):
                 self.board.redraw_all()  # hide 'original'
                 self.board.shapes.insert(count, shape)
                 self.draw(self.board.get_dc())  # draw 'new'
+                
+                if shape.background == wx.TRANSPARENT:
+                    self.board.gui.control.transparent.SetValue(True)
+                else:
+                    self.board.gui.control.transparent.SetValue(False)
                 break  # breaking is vital to selecting the correct shape
         else:
             self.board.deselect()
+            
 
 
     def double_click(self, x, y):
         if isinstance(self.board.selected, Text):
             self.dragging = False
             self.board.selected.edit()
+
 
     def motion(self, x, y):
         if self.dragging:
@@ -1006,6 +1065,7 @@ class Select(Tool):
 
         self.board.update_thumb()
         self.board.select_tool()
+        self.board.redraw_all()
 
 
 #----------------------------------------------------------------------
@@ -1018,18 +1078,44 @@ class BitmapSelect(Rectangle):
     tooltip = _("Select a rectangle region to copy as a bitmap")
     name = _("Bitmap Select")
     icon = "select-rectangular"
-    def __init__(self, board, image, path):
-        Rectangle.__init__(self, board, (0, 0, 0), 2)
+    hotkey = "b"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        Rectangle.__init__(self, board, (0, 0, 0), 1)
 
     def make_pen(self, dc=None):
-        super(BitmapSelect, self).make_pen()
+        self.brush = wx.TRANSPARENT_BRUSH
         self.pen = wx.Pen(self.colour, self.thickness, wx.SHORT_DASH)
 
     def left_down(self, x, y):
         super(BitmapSelect, self).left_down(x, y)
+        self.board.deselect()
         self.board.copy = None
         self.board.redraw_all()
         self.board.copy = self
+
+
+    def draw(self, dc, replay=False):
+        if not replay:
+            odc = wx.DCOverlay(self.board.overlay, dc)
+            odc.Clear()
+
+        if not self.pen or self.selected or isinstance(self, Note):
+            self.make_pen(dc)  # Note object needs a DC to draw its outline here
+
+        
+        if not replay:
+            gcdc = wx.GCDC(dc)
+            gcdc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 50)))  # light blue
+            gcdc.SetPen(wx.Pen(self.colour, self.thickness, wx.SHORT_DASH))                    
+            gcdc.DrawRectangle(*self.get_args())
+        else:
+            dc.SetPen(self.pen)
+            dc.SetBrush(self.brush)
+            dc.DrawRectangle(*self.get_args())
+                    
+        if not replay:
+            del odc
+
 
     def left_up(self, x, y):
         """ Doesn't affect the shape list """
@@ -1052,15 +1138,53 @@ class Zoom(Tool):
     tooltip = _("Zoom in and out of the canvas")
     name = _("Zoom")
     icon = "zoom"
+    hotkey = "z"
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_MAGNIFIER):
         Tool.__init__(self, board, (0, 0, 0), 1, cursor)
 
 
-    def button_down(self, x, y):
+    def left_up(self, x, y):
+        x = self.board.scale
+        new = (x[0] - 0.1, x[1] - 0.1)
+        self.board.scale = new
+        self.board.redraw_all()
+
+    def right_up(self, x, y):
         x = self.board.scale
         new = (x[0] + 0.1, x[1] + 0.1)
         self.board.scale = new
+        self.board.redraw_all()
+        
+#---------------------------------------------------------------------
 
+class Flood(Tool):
+    """
+    Zooms in and out on the canvas, by setting the user scale in the Whyteboard
+    tab
+    """
+    tooltip = _("Flood fill an area")
+    name = _("Flood Fill")
+    icon = "flood"
+    hotkey = "f"
+    def __init__(self, board, colour, thickness):
+        Tool.__init__(self, board, colour, 1)
+
+
+    def left_down(self, x, y):
+        self.x = x
+        self.y = y
+        self.board.draw_shape(self)
+        self.board.add_shape(self)
+
+    def draw(self, dc, replay=False):
+        dc.SetPen(self.pen)
+        dc.SetBrush(wx.Brush(self.colour))
+        dc.FloodFill(self.x, self.y, dc.GetPixel(self.x, self.y), wx.FLOOD_SURFACE)
+
+    def preview(self, dc, width, height):
+        dc.SetBrush(wx.Brush(self.colour))
+        dc.DrawRectangle(10, 10, width - 20, height - 20)
+        
 #---------------------------------------------------------------------
 
 def find_inverse(colour):

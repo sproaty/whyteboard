@@ -30,6 +30,7 @@ from lib.BeautifulSoup import BeautifulSoup
 from urllib import urlopen, urlretrieve, urlencode
 
 import tools
+from functions import get_home_dir
 
 _ = wx.GetTranslation
 
@@ -203,8 +204,8 @@ class ProgressDialog(wx.Dialog):
         self.to_add = to_add
         self.timer = wx.Timer(self)
         self.gauge = wx.Gauge(self, range=100, size=(180, 30))
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.gauge, 0, wx.ALL, 10)
+        sizer = wx.BoxSizer(wx.VERTICAL)                        
+        sizer.Add(self.gauge, 0, wx.ALL, 10)                       
 
         if cancellable:
             cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
@@ -217,8 +218,8 @@ class ProgressDialog(wx.Dialog):
 
         self.SetSizer(sizer)
         sizer.Fit(self)
-        self.SetFocus()
-
+        self.SetFocus()           
+            
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         self.timer.Start(30)
 
@@ -227,14 +228,14 @@ class ProgressDialog(wx.Dialog):
         """Increases the gauge's progress."""
         self.count += self.to_add
         self.gauge.SetValue(self.count)
-        if self.count == 100:
+        if self.count > 100:
             self.count = 0
 
-
+            
     def on_cancel(self, event):
         """Cancels the conversion process"""
         self.gui.convert_cancelled = True
-        wx.Kill(self.gui.pid)
+        wx.Kill(self.gui.pid, wx.SIGKILL)
 
 
 #----------------------------------------------------------------------
@@ -599,10 +600,15 @@ class Resize(wx.Dialog):
         gap = wx.LEFT | wx.TOP | wx.RIGHT
         width, height = self.gui.board.buffer.GetSize()
         self.size = (width, height)
+                              
         csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
         self.hctrl = wx.SpinCtrl(self, min=1, max=12000)
         self.wctrl = wx.SpinCtrl(self, min=1, max=12000)
+        self.sizelabel = wx.StaticText(self, label="")
 
+        csizer.Add(self.sizelabel, 0, wx.ALIGN_RIGHT)
+        csizer.Add((10, 10))
+        
         csizer.Add(wx.StaticText(self, label=_("Width:")), 0, wx.TOP |
                                                             wx.ALIGN_RIGHT, 10)
         csizer.Add(self.wctrl, 1, gap, 7)
@@ -615,6 +621,7 @@ class Resize(wx.Dialog):
         okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         okButton.SetDefault()
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        applyButton = wx.Button(self, wx.ID_APPLY, _("&Apply"))
 
         order = (self.wctrl, self.hctrl)  # sort out tab order
         for i in xrange(len(order) - 1):
@@ -623,20 +630,40 @@ class Resize(wx.Dialog):
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okButton)
         btnSizer.AddButton(cancelButton)
+        btnSizer.AddButton(applyButton)
         btnSizer.Realize()
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(csizer, 0, gap, 7)
-        sizer.Add((10, 10)) # Spacer.
-        sizer.Add(btnSizer, 0, gap | wx.BOTTOM | wx.ALIGN_CENTRE, 5)
+        sizer.Add((10, 15))
+        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE, 5)
+        sizer.Add((10, 10))
         self.SetSizer(sizer)
         self.SetFocus()
         sizer.Fit(self)
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
+        applyButton.Bind(wx.EVT_BUTTON, self.apply)
         self.hctrl.Bind(wx.EVT_SPINCTRL, self.resize)
         self.wctrl.Bind(wx.EVT_SPINCTRL, self.resize)
+        self.update_label()
+        
+
+    def update_label(self):
+        buff = self.gui.board.buffer
+        x = buff.GetWidth() * buff.GetHeight() * buff.GetDepth() / 8 / 1024        
+        y = x % 1024    
+        if y > 1000:
+            y = 0 
+            x += 1024   
+        
+        val = _("Size")+": %i.%.3i MB" % (x / 1024, y)
+              
+        self.sizelabel.SetLabel(val)
 
 
+    def apply(self, event):        
+        self.size = self.gui.board.buffer.GetSize() 
+        
     def ok(self, event):
         self.resize()
         self.Close()
@@ -644,6 +671,8 @@ class Resize(wx.Dialog):
     def resize(self, event=None):
         value = (self.wctrl.GetValue(), self.hctrl.GetValue())
         self.gui.board.resize_canvas(value)
+        self.update_label()
+
 
     def cancel(self, event):
         self.gui.board.resize_canvas(self.size)
@@ -682,10 +711,12 @@ class Rotate(wx.Dialog):
         okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         okButton.SetDefault()
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        applyButton = wx.Button(self, wx.ID_APPLY, _("&Apply"))
 
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okButton)
         btnSizer.AddButton(cancelButton)
+        btnSizer.AddButton(applyButton)
         btnSizer.Realize()
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(label, 0, wx.ALL, 15)
@@ -709,19 +740,24 @@ class Rotate(wx.Dialog):
 
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
+        applyButton.Bind(wx.EVT_BUTTON, self.apply)
         #self.custom.Bind(wx.EVT_SPINCTRL, self.rotate)
 
 
+    def apply(self, event):        
+        self.bmp = self.gui.board.selected.image 
+                
     def ok(self, event):
         self.image.rotate(self.custom.GetValue())
         self.gui.board.draw_shape(self.image)
         self.Close()
 
+
     def cancel(self, event=None):
         self.gui.board.selected.image = self.bmp
         self.gui.board.draw_shape(self.gui.board.selected)
         self.Close()
-
+        
 
     def on_rotate(self, event, id):
         """ Radio buttons """
@@ -772,8 +808,10 @@ class MyPrintout(wx.Printout):
         return (1, self.gui.tab_count, 1, self.gui.tab_count)
 
     def OnPrintPage(self, page):
-        dc = self.GetDC()
+        dc = self.GetDC()        
         board = self.gui.tabs.GetPage(page - 1)
+        board.deselect()
+        
         maxX = board.buffer.GetWidth()
         maxY = board.buffer.GetHeight()
         marginX = 50
@@ -791,17 +829,18 @@ class MyPrintout(wx.Printout):
         dc.SetUserScale(actualScale, actualScale)
         dc.SetDeviceOrigin(int(posX), int(posY))
         dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY-marginY)
-
-        filename = _("Untitled")
-        if self.gui.util.filename:
-            filename = self.gui.util.filename
-        font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
-
-        dc2 = wx.WindowDC(self.gui)
-        x = dc2.GetMultiLineTextExtent(filename, font)
-        extent = x[0], x[1]
-
-        dc.DrawText(_(filename), marginX + x[0], marginY - x[1])
+        
+        if self.gui.util.config['print_title']:
+            filename = _("Untitled")
+            if self.gui.util.filename:
+                filename = self.gui.util.filename
+            font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+    
+            dc2 = wx.WindowDC(self.gui)
+            x = dc2.GetMultiLineTextExtent(filename, font)
+            extent = x[0], x[1]
+    
+            dc.DrawText(_(filename), marginX + x[0], marginY - x[1])
 
         dc.SetDeviceOrigin(int(posX), int(posY))
         board.redraw_all(dc=dc)

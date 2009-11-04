@@ -33,39 +33,47 @@ of Notes that the user has inputted.
 
 import os
 import sys
+import time
 import locale
 import webbrowser
 import wx
 import wx.lib.newevent
+import lib.flatnotebook as fnb
 from wx.html import HtmlHelpController
 
+from shutil import copy
 from lib.configobj import ConfigObj
 from lib.validate import Validator
 
 import lib.icon
 from whyteboard import Whyteboard
 from tools import Image, Note
-from utility import Utility, FileDropTarget, languages, cfg, get_home_dir
+from utility import Utility, FileDropTarget, languages, cfg
+from functions import get_home_dir
 from dialogs import (History, ProgressDialog, Resize, Rotate, UpdateDialog,
                      MyPrintout, ExceptionHook)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
 
+ID_CHANGE_TOOL = wx.NewId()       # change tool hotkey
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
 ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
 ID_EXPORT = wx.NewId()            # export sheet to image file
 ID_EXPORT_ALL = wx.NewId()        # export every sheet to numbered image files
+ID_EXPORT_PDF = wx.NewId()        # export->PDF
+ID_EXPORT_PREF = wx.NewId()       # export->preferences
 ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
 ID_HISTORY = wx.NewId()           # history viewer
-ID_IMG = wx.NewId()               # import->Image
+ID_IMPORT_IMAGE = wx.NewId()        # import->Image
+ID_IMPORT_PDF = wx.NewId()        # import->PDF
+ID_IMPORT_PREF = wx.NewId()        # import->Preferences
+ID_IMPORT_PS = wx.NewId()         # import->PS
 ID_NEW = wx.NewId()               # new window
 ID_NEXT = wx.NewId()              # next sheet
 ID_PASTE_NEW = wx.NewId()         # paste as new selection
-ID_PDF = wx.NewId()               # import->PDF
 ID_PREV = wx.NewId()              # previous sheet
-ID_PS = wx.NewId()                # import->PS
 ID_RENAME = wx.NewId()            # rename sheet
 ID_REPORT_BUG = wx.NewId()        # report a problem
 ID_RESIZE = wx.NewId()            # resize dialog
@@ -75,10 +83,9 @@ ID_TOOLBAR = wx.NewId()           # toggle toolbar
 ID_TRANSLATE = wx.NewId()         # open translation URL
 ID_UNDO_SHEET = wx.NewId()        # undo close sheet
 ID_UPDATE = wx.NewId()            # update self
-#ID_EXP_IMG = wx.NewId()           # export->Image
-#ID_EXP_PDF = wx.NewId()           # export->PDF
 
-_ = wx.GetTranslation            # Define a translation string
+
+_ = wx.GetTranslation             # Define a translation string
 
 #----------------------------------------------------------------------
 
@@ -89,7 +96,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.38.8"
+    version = "0.39.0"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -111,7 +118,7 @@ class GUI(wx.Frame):
 
         self._oldhook = sys.excepthook
         sys.excepthook = ExceptionHook
-
+        
         self.can_paste = False
         if self.util.get_clipboard():
             self.can_paste = True
@@ -127,11 +134,13 @@ class GUI(wx.Frame):
         self.bar_shown = True  # slight performance optimisation
         self.find_help()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
+        self.tab_total = 1
         self.current_tab = 0
         self.closed_tabs = []  # [shapes - undo - redo - canvas_size] per tab
 
         self.control = ControlPanel(self)
-        self.tabs = wx.Notebook(self)
+        self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_NO_X_BUTTON  | fnb.FNB_FF2)
+        #self.tabs = wx.Notebook(self)
         self.board = Whyteboard(self.tabs, self)  # the active whiteboard tab
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
@@ -148,6 +157,7 @@ class GUI(wx.Frame):
         self.count = 4  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(65)
         wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
+        self.board.update_thumb()
         self.do_bindings()
         self.update_panels(True)  # bold first items
         self.UpdateWindowUI()
@@ -169,13 +179,16 @@ class GUI(wx.Frame):
         sheets = wx.Menu()
         _help = wx.Menu()
         _import = wx.Menu()
-        _import.Append(ID_IMG, _('&Image...'))
-        _import.Append(ID_PDF, '&PDF...')
-        _import.Append(ID_PS, 'Post&Script...')
-        #_export = wx.Menu()
-        #_export.Append(ID_EXP_PDF, '&PDF')
-        #_export.Append(ID_EXP_IMG, 'Current Sheet as &Image')
-
+        _import.Append(ID_IMPORT_IMAGE, _('&Image...'))
+        _import.Append(ID_IMPORT_PDF, '&PDF...')
+        _import.Append(ID_IMPORT_PS, 'Post&Script...')
+        _import.Append(ID_IMPORT_PREF, 'P&refences...', _("Load in a Whyteboard preferences file"))
+        _export = wx.Menu()
+        _export.Append(ID_EXPORT, _("&Export Sheet...")+"\tCtrl+E", _("Export the current sheet to an image file"))
+        _export.Append(ID_EXPORT_ALL, _("Export &All Sheets...")+"\tCtrl+Shift+E", _("Export every sheet to a series of image files"))
+        _export.Append(ID_EXPORT_PDF, 'As &PDF...', _("Export every sheet into a PDF file"))
+        _export.Append(ID_EXPORT_PREF, _('P&refences...'), _("Export your Whyteboard preferences file"))        
+         
         new = wx.MenuItem(_file, ID_NEW, _("New &Window")+"\tCtrl-N", _("Opens a new Whyteboard instance"))
         new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
 
@@ -192,9 +205,7 @@ class GUI(wx.Frame):
         _file.Append(wx.ID_SAVEAS, _("Save &As...")+"\tCtrl+Shift+S", _("Save the Whyteboard data in a new file"))
         _file.AppendSeparator()
         _file.AppendMenu(+1, _('&Import File'), _import)
-        #_file.AppendMenu(+1, '&Export File', _export)
-        _file.Append(ID_EXPORT, _("&Export Sheet...")+"\tCtrl+E", _("Export the current sheet to an image file"))
-        _file.Append(ID_EXPORT_ALL, _("Export &All Sheets...")+"\tCtrl+Shift+E", _("Export every sheet to a series of image files"))
+        _file.AppendMenu(+1, '&Export File', _export)            
         _file.AppendSeparator()
         _file.Append(wx.ID_PRINT_SETUP, _("Page Set&up"), _("Set up the page for printing"))
         _file.Append(wx.ID_PREVIEW_PRINT, _("Print Pre&view"), _("View a preview of the page to be printed"))
@@ -267,7 +278,10 @@ class GUI(wx.Frame):
         Performs event binding.
         """
         self.Bind(wx.EVT_CLOSE, self.on_exit)
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
+        #self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
+        #self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CLOSED, self.on_close_tab, self.tabs)
+        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
+        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_DROPPED, self.on_drop_tab)
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_NEXT)
@@ -275,25 +289,37 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_UNDO_SHEET)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=wx.ID_DELETE)
         self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_ROTATE)
-        self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
-
+        #self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
+        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CONTEXT_MENU, self.tab_popup, self.tabs)
+        self.Bind(wx.EVT_CHAR_HOOK, self.close_fullscreen) 
+        
         ac = [(wx.ACCEL_CTRL, ord('\t'), self.next.GetId()),
-              (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId()) ]
+              (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId())]
+        
+        # Need to bind each item's hotkey to trigger change tool, passing its ID
+        # (position + 1 in the list, basically)
+        for x, item in enumerate(self.util.items):
+            blah = lambda evt, y=x + 1: self.on_change_tool(evt, y)
+            _id = wx.NewId()
+            ac.append((wx.ACCEL_NORMAL, ord(item.hotkey.upper()), _id))
+            self.Bind(wx.EVT_MENU, blah, id=_id)
+
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
 
 
-        ids = { 'pdf': ID_PDF, 'ps': ID_PS, 'img': ID_IMG }  # file->import
+        ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
                   "copy", "paste", "rotate", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
-                  "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about"]
+                  "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
                wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
-               ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT]
+               ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
+               ID_IMPORT_PREF, ID_EXPORT_PREF]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -397,11 +423,56 @@ class GUI(wx.Frame):
             self.util.load_file()
 
 
-    def on_export(self, event=None, pdf=None):
+    def on_export_pdf(self, event=None):
+        """Exports the all the sheets as a PDF. Must first, export all as img"""
+        if not self.util.im_location:
+            self.util.prompt_for_im()
+        if not self.util.im_location: 
+            return                
+        filename = ""
+        
+        dlg = wx.FileDialog(self, _("Export data to..."), style=wx.SAVE |
+                             wx.OVERWRITE_PROMPT, wildcard="PDF (*.pdf)|*.pdf")
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+            ext = os.path.splitext(filename)[1]
+
+            if ext != ".pdf":
+                wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % ext,
+                              _("Invalid filetype"))
+                return
+
+        dlg.Destroy()
+        if filename:
+            names = []
+            board = self.board
+            for x in range(0, self.tab_count):
+                self.board = self.tabs.GetPage(x)
+                name = filename+"-tempblahhahh-%s-.jpg" % x
+                names.append(name)                
+                self.util.export(name)
+            self.board = board
+            
+            self.process = wx.Process(self)
+            files = ""
+            for x in names:
+                files += '"'+x+'" '  # quotes for windows
+
+            self.pid = wx.Execute(self.util.im_location+ ' -define pdf:use-trimbox=true '+ files +'"'+filename+'"', wx.EXEC_ASYNC, self.process)
+                            
+            self.dialog = ProgressDialog(self, _("Converting..."))
+            self.dialog.ShowModal()
+            
+            for x in names:
+                os.remove(x)
+                
+            
+            
+    def on_export(self, event=None):
         """Exports the current sheet as an image, or all as a PDF."""
         filename = self.export_prompt()
         if filename:
-            self.util.export(filename)
+                self.util.export(filename)
 
 
     def on_export_all(self, event=None):
@@ -420,9 +491,60 @@ class GUI(wx.Frame):
             self.board = board
 
 
+    def on_export_pref(self, event=None):
+        """Exports the user's preferences."""
+        if not os.path.exists(self.util.config.filename):
+            wx.MessageBox("Export Error", "You have not set any preferences")  
+            return              
+        filename = ""
+        wc = _("Whyteboard Preference Files")+" (*.pref)|*.pref"
+        
+        dlg = wx.FileDialog(self, _("Export preferences to..."), style=wx.SAVE |
+                             wx.OVERWRITE_PROMPT, wildcard=wc)
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+            ext = os.path.splitext(filename)[1]
+                    
+            if not ext:
+                filename += ".pref"                                        
+            copy(os.path.join(get_home_dir(), "user.pref"), filename)
+                
+                                
+    def on_import_pref(self, event=None):
+        """
+        Imports the preference file. Backsup the user's current prefernce file
+        into a directory, with a timestamp on the filename
+        """
+        wc =  _("Whyteboard Preference Files")+" (*.pref)|*.pref"
+
+        dlg = wx.FileDialog(self, _("Export data to..."), get_home_dir(), 
+                            "user.pref", wc, wx.OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+                 
+            config = ConfigObj(filename, configspec=cfg.split("\n"))
+            validator = Validator()
+            config.validate(validator)            
+            _dir = os.path.join(get_home_dir(), "pref-bkup")
+            
+            if not os.path.isdir(_dir):
+                os.makedirs(_dir)
+            
+            home =  os.path.join(get_home_dir(), "user.pref")
+            if os.path.exists(home):
+                stamp =  time.strftime("%d-%b-%Y_%Hh-%Mm_%Ss", time.gmtime())
+                
+                os.rename(home, os.path.join(_dir, stamp+".user.pref"))
+            pref = Preferences(self)
+            pref.config = config
+            pref.config.filename = home
+            pref.on_okay()
+            #self.SendSizeEvent()
+               
+                                
     def export_prompt(self):
         """Find out the filename to save to"""
-        val = None  # return balue
+        val = None  # return value
         wc =  ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
                "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
 
@@ -455,41 +577,97 @@ class GUI(wx.Frame):
 
     def on_new_tab(self, event=None, name=None, wb=None):
         """Opens a new tab, selects it, creates a new thumbnail and tree item"""
+        self.tab_count += 1
+        self.tab_total += 1
         if not wb:
             wb = Whyteboard(self.tabs, self)
+        if not name:
+            name = _("Sheet")+" %s" % self.tab_total
+            
         self.thumbs.new_thumb(name=name)
         self.notes.add_tab(name)
-        self.tab_count += 1
-        if name:
-            self.tabs.AddPage(wb, name)
-        else:
-            self.tabs.AddPage(wb, _("Sheet")+" %s" % self.tab_count)
-        self.update_panels(False)
+        
+        #if name:
+        #    self.tabs.AddPage(wb, name)
+        #else:
+        self.tabs.AddPage(wb, name)
+        
+        self.update_panels(False)  # unhighlight current
+        self.thumbs.thumbs[self.current_tab].current = True                         
+        
         self.current_tab = self.tab_count - 1
         self.tabs.SetSelection(self.current_tab)  # fires on_change_tab
+        self.on_change_tab()
 
 
     def on_change_tab(self, event=None):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
         self.board = self.tabs.GetCurrentPage()
-        self.update_panels(False)
-
+        self.update_panels(False) 
+                        
         self.current_tab = self.tabs.GetSelection()
-        if event:
-            self.current_tab = event.GetSelection()
+        #if event:
+        #    self.current_tab = event.GetSelection()
 
         self.update_panels(True)
-        #self.thumbs.Scroll(-1, self.current_tab)
+        self.thumbs.thumbs[self.current_tab].update()
+        #self.thumbs.Scroll(-1, self.current_tab - 1)
         self.control.change_tool()
 
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
+        
+
+    def on_drop_tab(self, event):
+        """
+        Update the thumbs/notes so that they're poiting to the new tab position
+        """        
+        ##if event.GetSelection() >= self.tab_count:
+        #    return
+        
+        for x in range(self.tab_count):
+            self.thumbs.text[x].SetLabel(self.tabs.GetPageText(x))
+
+#        old = self.thumbs.text[event.GetOldSelection()].GetLabel()
+#
+#        
+#        first = event.GetSelection()
+#        #print first
+#        last = event.GetOldSelection()
+#        
+#        if event.GetSelection() > event.GetOldSelection():  # to the right
+#            first, last = last, first    
+#            #if last >= self.current_tab:
+#            #    last = self.current_tab
+#        names = []
+#                             
+#        for x in range(first, last + 1):  # names we'll be replacing with
+#            names.append(self.thumbs.text[x].GetLabel())
+#    
+##        print names             
+#        if event.GetSelection() > event.GetOldSelection():  # to the right
+#
+#            for count, x in enumerate(range(first + 1, last + 1)):
+#                #print x, count
+#                #print self.thumbs.text[x - 1].GetLabel(), names[count + 1]
+#                #print '--------'
+#                self.thumbs.text[x - 1].SetLabel(names[count + 1]) 
+#                  
+#        else:    
+#        
+#            for count, x in enumerate(range(first + 1, last + 1)):
+#                self.thumbs.text[x].SetLabel(names[count])               
+#
+#        self.thumbs.text[event.GetSelection()].SetLabel(old)                
+        self.on_change_tab()
+
 
 
     def update_panels(self, select):
         """Updates thumbnails and notes to indicate current tab"""
         tab = self.current_tab
+
         if self.thumbs.text:
             try:
                 font = self.thumbs.text[tab].GetClassDefaultAttributes().font
@@ -518,24 +696,27 @@ class GUI(wx.Frame):
         self.thumbs.remove(self.current_tab)
 
         board = self.board
-        name = ""
-        if board.renamed:
-            name = self.tabs.GetPageText(self.current_tab)
+        #name = ""
+        #if board.renamed:
+        name = self.tabs.GetPageText(self.current_tab)
         item = [board.shapes, board.undo_list, board.redo_list,
                 board.area, name]
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
+        
         if os.name == "posix":
             self.tabs.RemovePage(self.current_tab)
         else:
             self.tabs.DeletePage(self.current_tab)
-
+        
+        #self.current_tab -= 1
+        self.tab_total -= 1
         self.on_change_tab()  # updates self.board
 
-        for x in range(self.tab_count):
-            if not self.tabs.GetPage(x).renamed:
-                self.tabs.SetPageText(x, _("Sheet")+" %s" % (x + 1))
+        #for x in range(self.tab_count):
+        #    if not self.tabs.GetPage(x).renamed:
+        #        self.tabs.SetPageText(x, _("Sheet")+" %s" % (x + 1))
 
 
     def on_undo_tab(self, event=None):
@@ -548,10 +729,10 @@ class GUI(wx.Frame):
             return
         board = self.closed_tabs.pop()
 
-        if board[4]:
-            self.on_new_tab(name=board[4])
-        else:
-            self.on_new_tab()
+        #if board[4]:
+        self.on_new_tab(name=board[4])
+        #else:
+        #    self.on_new_tab()
         self.board.shapes = board[0]
         self.board.undo_list = board[1]
         self.board.redo_list = board[2]
@@ -583,8 +764,10 @@ class GUI(wx.Frame):
                 self.thumbs.update_name(sheet, val)
                 self.notes.update_name(sheet, val)
 
+
     def on_delete_shape(self, event=None):
         self.board.delete_selected()
+
 
     def update_menus(self, event):
         """
@@ -600,9 +783,12 @@ class GUI(wx.Frame):
             self.count += 1
             if self.count == 5:
                 self.can_paste = False
-
-                if self.util.get_clipboard():
-                    self.can_paste = True
+                
+            wx.TheClipboard.Open()
+            success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
+            wx.TheClipboard.Close()
+            if success:#self.util.get_clipboard():
+                self.can_paste = True
                 self.count = 0
                 try:
                     event.Enable(self.can_paste)
@@ -661,15 +847,18 @@ class GUI(wx.Frame):
         self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)
 
 
-    def on_paste(self, event=None):
+    def on_paste(self, event=None, ignore=False):
         """ Grabs the image from the clipboard and places it on the panel """
         bmp = self.util.get_clipboard()
         if not bmp:
             return
         shape = Image(self.board, bmp.GetBitmap(), None)
 
-        x, y = self.board.ScreenToClient(wx.GetMousePosition())
-        x, y = self.board.CalcUnscrolledPosition(x, y)
+        x, y = 0, 0
+        if not ignore:
+            x, y = self.board.ScreenToClient(wx.GetMousePosition())
+            x, y = self.board.CalcUnscrolledPosition(x, y)
+        
         shape.left_down(x, y)
         wx.Yield()
         self.board.redraw_all(True)
@@ -678,7 +867,7 @@ class GUI(wx.Frame):
     def on_paste_new(self, event):
         """ Pastes the image into a new tab """
         self.on_new_tab()
-        self.on_paste()
+        self.on_paste(ignore=True)
 
 
     def on_fullscreen(self, event=None):
@@ -687,6 +876,18 @@ class GUI(wx.Frame):
                wx.FULLSCREEN_NOSTATUSBAR)
         self.ShowFullScreen(not self.IsFullScreen(), flag)
 
+    def close_fullscreen(self, event=None):
+        """ Toggles fullscreen """
+        if not event.GetKeyCode() in [wx.WXK_ESCAPE]:
+            event.Skip()  # propogate
+        else:
+            if self.IsFullScreen():
+                flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION |
+                   wx.FULLSCREEN_NOSTATUSBAR)
+                self.ShowFullScreen(False, flag)
+                menu = self.menu.FindItemById(ID_FULLSCREEN)
+                menu.Check(False)
+                
 
     def on_toolbar(self, event=None, force=None):
         """ Toggles the toolbar """
@@ -753,7 +954,7 @@ class GUI(wx.Frame):
 
     def tab_popup(self, event):
         """ Pops up the tab context menu. """
-        self.PopupMenu(SheetsPopup(self, self, (event.GetX(), event.GetY())))
+        self.PopupMenu(SheetsPopup(self, self, event.GetSelection()))# (event.GetX(), event.GetY())))
 
 
     def on_undo(self, event=None):
@@ -769,12 +970,13 @@ class GUI(wx.Frame):
     def on_prev(self, event=None):
         """ Changes to the previous sheet """
         self.tabs.SetSelection(self.current_tab - 1)
+        self.on_change_tab()
 
 
     def on_next(self, event=None):
         """ Changes to the next sheet """
         self.tabs.SetSelection(self.current_tab + 1)
-
+        self.on_change_tab()
 
     def on_clear(self, event=None):
         """ Clears current sheet's drawings, except images. """
@@ -884,6 +1086,9 @@ class GUI(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
+    def on_change_tool(self, event, _id):
+        self.control.change_tool(_id=_id)
+
 
     def find_help(self):
         """Locate the help files, update self.help var"""
@@ -957,7 +1162,6 @@ class GUI(wx.Frame):
         inf.WebSite = (x, x)
         inf.Licence = s
         wx.AboutBox(inf)
-
 
 #----------------------------------------------------------------------
 

@@ -89,12 +89,12 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
+        self.Bind(wx.EVT_RIGHT_UP, self.right_up)
         self.Bind(wx.EVT_LEFT_DCLICK, self.left_double)
         self.Bind(wx.EVT_MIDDLE_DOWN, self.middle_down)
         self.Bind(wx.EVT_MIDDLE_UP, self.middle_up)
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
-
 
 
     def left_down(self, event):
@@ -176,6 +176,8 @@ class Whyteboard(wx.ScrolledWindow):
         if self.resizing:
             self.resizing = False
             self.redraw_all(True)  # update thumb for new canvas size
+            if self.copy:
+                self.draw_shape(self.copy)  # draw back the GCDC
             return
         if self.drawing or isinstance(self.shape, Text):
             before = len(self.shapes)
@@ -187,6 +189,11 @@ class Whyteboard(wx.ScrolledWindow):
             self.drawing = False
 
 
+    def right_up(self, event):
+        """Called when the right mouse button is released - used for zoom"""
+        self.shape.right_up(*self.convert_coords(event))
+
+            
     def left_double(self, event):
         """Double click for the Select tool - edit text"""
         x, y = self.convert_coords(event)
@@ -219,8 +226,8 @@ class Whyteboard(wx.ScrolledWindow):
             return
 
         if direction == RIGHT:
-            size = (size[0] + CANVAS_BORDER, self.area[1])
-            self.Scroll(size[0], -1)
+            size = (size[0], self.area[1])            
+            self.Scroll(self.GetVirtualSizeTuple()[0], -1)
         elif direction == BOTTOM:
             size = (self.area[0], size[1])
             self.Scroll(-1, size[1])
@@ -229,10 +236,11 @@ class Whyteboard(wx.ScrolledWindow):
 
         self.buffer = wx.EmptyBitmap(*size)
         self.area = size
-        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)
+        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
         self.SetVirtualSize(size)
         self.redraw_all()
 
+        #self.Scroll(*size)
 
     def redraw_dirty(self, dc):
         """ Figure out what part of the window to refresh. """
@@ -253,7 +261,8 @@ class Whyteboard(wx.ScrolledWindow):
         if not dc:
             dc = wx.BufferedDC(None, self.buffer)
             dc.Clear()
-
+            #dc.SetUserScale(self.scale[0], self.scale[1])
+            
         for s in self.shapes:
             s.draw(dc, True)
         if self.text:
@@ -279,6 +288,10 @@ class Whyteboard(wx.ScrolledWindow):
         colour = self.gui.util.colour
         thickness = self.gui.util.thickness
         params = [self, colour, thickness]  # Object constructor parameters
+        
+        if not self.gui.util.transparent:
+            params.append(self.gui.util.background) 
+      
         self.shape = self.gui.util.items[new - 1](*params)  # create new Tool
         self.change_cursor()
         self.gui.control.preview.Refresh()
@@ -377,16 +390,18 @@ class Whyteboard(wx.ScrolledWindow):
         region, remove the buffer rectangle then clear it with grey
         """
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-
+        #dc.SetUserScale(self.scale[0], self.scale[1])
+        
         if os.name == "nt":
-            relbuf = wx.Size(*self.CalcScrolledPosition(*self.buffer.GetSize()))
+            relbuf = self.CalcScrolledPosition(self.area)
             cli = self.GetClientSize()
 
-            if cli.x > relbuf.x or cli.y > relbuf.y:
+            if cli.x > relbuf[0] or cli.y > relbuf[1]:
                 bkgregion = wx.Region(0, 0, cli.x, cli.y)
-                bkgregion.SubtractRect(wx.Rect(0, 0, relbuf.x, relbuf.y))
+                bkgregion.SubtractRect(wx.Rect(0, 0, relbuf[0], relbuf[1]))
                 dc = wx.ClientDC(self)
                 dc.SetClippingRegionAsRegion(bkgregion)
+                dc.SetBrush(wx.GREY_BRUSH)
                 dc.Clear()
 
 

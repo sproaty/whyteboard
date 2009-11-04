@@ -71,6 +71,9 @@ except ImportError:
     import pickle
 
 from dialogs import ProgressDialog, FindIM
+from functions import (save_pasted_images, get_home_dir, load_image, make_bitmap,
+                       convert_quality, make_filename)
+
 import tools
 import whyteboard
 
@@ -93,6 +96,7 @@ default_height = integer(min=1, max=12000, default=480)
 imagemagick_path = string
 handle_size = integer(min=3, max=15, default=6)
 language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', 'Portugese', 'Japanese', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
+print_title = boolean(default=True)
 statusbar = boolean(default=True)
 toolbar = boolean(default=True)
 toolbox = option('icon', 'text', default='icon')
@@ -137,6 +141,8 @@ class Utility(object):
         self.temp_file = None  # selected file (.wtdb/png/pdf - doesn't matter)
         self.saved = True
         self.colour = "Black"
+        self.background = "White" 
+        self.transparent = True  # overwrites background
         self.thickness = 1
         self.font = None  # default font for text input
         self.tool = 1  # Current tool ID that is being drawn with
@@ -158,17 +164,16 @@ class Utility(object):
         # Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
                        "bmp", "pcx"]
-        label = ["All files (*.*)", "Whyteboard files (*.wtbd)", "Image Files",
-                 "PDF/PS/SVG"]
+        label = [_("All files")+" (*.*)", _("Whyteboard files")+" (*.wtbd)", 
+                 _("Image Files"), "PDF/PS/SVG"]
 
         result1 = ';'.join('*.' + i for i in self.types[2:-2])
         result2 = ';'.join('*.' + i for i in self.types[0:2])
         wc_types = ["*.*", "*.wtbd", result1, result2]
 
-        # format: label|*.type1;*.type2|label|*.type3;*.type4|label|*...
-        wc_list = map(lambda x, y, : x + "|" + y, label, wc_types)
-        self.wildcard = '|'.join(wc_list)
+        wc_list = [x + "|" + y for x, y in zip(label, wc_types)]
 
+        self.wildcard = '|'.join(wc_list)
 
 
 
@@ -305,6 +310,7 @@ class Utility(object):
                 name = temp[3][x]
             except KeyError:
                 pass
+
             self.gui.on_new_tab(name=name)
             if name:
                 self.gui.board.renamed = True
@@ -328,6 +334,7 @@ class Utility(object):
 
         try:
             self.gui.tabs.SetSelection(temp[0][3])
+            self.gui.on_change_tab()
         except IndexError:
             pass
 
@@ -481,7 +488,9 @@ class Utility(object):
                  wx.BITMAP_TYPE_TIF, "pcx": wx.BITMAP_TYPE_PCX }
 
         const = types[_name]  # grab the right image type from dict. above
-
+        self.gui.board.deselect()
+        self.gui.board.redraw_all()
+                
         context = wx.MemoryDC(self.gui.board.buffer)
         memory = wx.MemoryDC()
         x, y = self.gui.board.buffer.GetSize()
@@ -646,7 +655,6 @@ class Utility(object):
         return self.path[0]
 
 
-
     def get_clipboard(self):
         """Checks the clipboard for any valid image data to paste"""
         bmp = wx.BitmapDataObject()
@@ -669,6 +677,8 @@ class Utility(object):
         wx.TheClipboard.Close()
 
 
+
+
 #----------------------------------------------------------------------
 
 class FileDropTarget(wx.FileDropTarget):
@@ -680,108 +690,5 @@ class FileDropTarget(wx.FileDropTarget):
     def OnDropFiles(self, x, y, filenames):
         """Passes the first file to the load file method to handle"""
         self.gui.do_open(filenames[0])
-
-#----------------------------------------------------------------------
-
-
-
-#----------------------------------------------------------------------
-
-def save_pasted_images(shapes):
-    """
-    When saving a Whyteboard file, any pasted Images (with path == None)
-    will be saved to a directory in the user's home directory, and the image
-    reference changed.
-    If the same image is pasted many times, it will be only stored once and
-    all images with that common image filepath will be updated.
-    """
-    data = {}
-    for shape in shapes:
-        if isinstance(shape, tools.Image):
-            img1 = shape.image.ConvertToImage()
-
-            if not shape.path:
-                for path in data:
-                    if path == img1.GetData():
-                        shape.path = path
-                        break
-
-                #  the above iteration didn't find any common pastes
-                if not shape.path:
-                    path = get_home_dir("pastes")
-                    tmp_file = path + make_filename() + ".jpg"
-                    shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
-                    shape.path = tmp_file
-
-                    data[shape.path] = img1.GetData()
-
-
-def load_image(path, board):
-    """
-    Loads an image into the given Whyteboard tab. bitmap is the path to an
-    image file to create a bitmap from.
-    """
-    image = wx.Bitmap(path)
-    shape = tools.Image(board, image, path)
-    shape.left_down(0, 0)  # renders, updates scrollbars
-
-
-def make_bitmap(colour):
-    """
-    Draws a small coloured bitmap for a colour grid button. Can take a name,
-    RGB tupple or RGB-packed int.
-    """
-    bmp = wx.EmptyBitmap(19, 19)
-    dc = wx.MemoryDC()
-    dc.SelectObject(bmp)
-    dc.SetBackground(wx.Brush(colour))
-    dc.Clear()
-    dc.SelectObject(wx.NullBitmap)
-    return bmp
-
-
-def convert_quality(quality, im_location, _file, path):
-    """Returns a string for controlling the convert quality"""
-    density = 200
-    resample = 88
-
-    if quality == 'highest':
-        density = 300
-        resample = 120
-    if quality == 'high':
-        density = 250
-        resample = 100
-    cmd = '"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"' % (im_location, density, _file, resample, path)
-    return cmd
-
-
-def make_filename():
-    """
-    Create a random filename using letters, numbers and other characters
-    """
-    alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@$%_ " +
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    _list = []
-    for x in random.sample(alphabet, random.randint(8, 20)):
-        _list.append(x)
-
-    string = "".join(_list)
-    return string +"-temp-%s" % (random.randrange(0, 999999))
-
-
-def get_home_dir(extra_path=None):
-    """
-    Returns the home directory for Whyteboard cross-platformally
-    If the extra path is supplied, it is appended to the home directory.
-    The directory is verified to see if it exists: if doesn't, it is created.
-    """
-    std_paths = wx.StandardPaths.Get()
-    path = wx.StandardPaths.GetUserLocalDataDir(std_paths)
-    if extra_path:
-        path = os.path.join(path, extra_path, "")   # "" forces slash at end
-
-    if not os.path.isdir(path):
-        os.makedirs(path)
-    return path
 
 #----------------------------------------------------------------------
