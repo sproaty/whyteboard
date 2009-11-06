@@ -745,7 +745,7 @@ class Text(OverlayShape):
 
     def find_extent(self):
         """Finds the width/height of the object's text"""
-        dc = wx.WindowDC(self.board.gui)
+        dc = wx.WindowDC(wx.Frame(None))
         x = dc.GetMultiLineTextExtent(self.text, self.font)
         self.extent = x[0], x[1]
 
@@ -1022,7 +1022,7 @@ class Select(Tool):
                 self.board.shapes.pop(count)
                 self.board.redraw_all()  # hide 'original'
                 self.board.shapes.insert(count, shape)
-                self.draw(self.board.get_dc())  # draw 'new'
+                shape.draw(self.board.get_dc(), False)  # draw 'new'
                 
                 if shape.background == wx.TRANSPARENT:
                     self.board.gui.control.transparent.SetValue(True)
@@ -1065,7 +1065,8 @@ class Select(Tool):
 
         self.board.update_thumb()
         self.board.select_tool()
-        self.board.redraw_all()
+        #if self.dragging:
+        #    self.shape.draw(self.board.get_dc(), False)#self.board.redraw_all()
 
 
 #----------------------------------------------------------------------

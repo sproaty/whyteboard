@@ -3980,6 +3980,7 @@ class PageContainer(wx.Panel):
                 before = self._nLeftButtonStatus
                 self._nLeftButtonStatus = FNB_BTN_PRESSED
                 self.RotateLeft()
+                print 'ok'
                 self._nLeftButtonStatus = before
             else:
                 before = self._nRightButtonStatus

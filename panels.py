@@ -355,12 +355,8 @@ class Notes(wx.Panel):
     """
     Contains a Tree which shows an overview of all sheets' notes.
     Each sheet is a child of the tree, with each Note a child of a sheet.
-    Sheets can be right click  to pop-up a menu; or double clicked to change
+    Sheets can be right clicked to pop-up a menu; or double clicked to change
     to that sheet.  Notes can be double/right clicked upon to be edited.
-
-    Sheet names are stored in a list: any that are "" are sheets that have not
-    been renamed, used when closing a sheet to ensure the sheets are numbered
-    correctly.
     """
     def __init__(self, parent, gui):
         wx.Panel.__init__(self, parent, size=(170, -1), style=wx.RAISED_BORDER)
@@ -369,7 +365,6 @@ class Notes(wx.Panel):
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
         self.notes = []
-        self.names = []
         self.add_tab()
         self.tree.Expand(self.root)
 
@@ -385,8 +380,6 @@ class Notes(wx.Panel):
         _id = len(self.tabs)
         if not _id:
             _id = 0
-        self.names.insert(_id, name)
-
         if not name:
             name = _("Sheet")+" %s" % (_id + 1)
 
@@ -402,6 +395,7 @@ class Notes(wx.Panel):
         formatting becoming too wide.
         """
         text = note.text.replace("\n", " ")[:15]
+
         if not _id:
             _id = self.tabs[self.gui.tabs.GetSelection()]
         else:
@@ -418,19 +412,14 @@ class Notes(wx.Panel):
         self.tree.Delete(item)
 
         del self.tabs[note]
-        del self.names[note]
         # now ensure all nodes are linked to the right tab
         count = self.gui.current_tab
         for x in range(self.gui.current_tab, len(self.tabs)):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
-            #if not self.names[x]:
-            #    count += 1
-            #    self.tree.SetItemText(self.tabs[x], _("Sheet")+" %s" % count)
 
 
     def update_name(self, _id, name):
         """Renames a given sheet"""
-        self.names[_id] = name
         self.tree.SetItemText(self.tabs[_id], name)
 
     def remove_all(self):
@@ -624,7 +613,6 @@ class Thumbs(scrolled.ScrolledPanel):
                 memory.DrawRectangle(0, 0, 150, 150)
             memory.SelectObject(wx.NullBitmap)
 
-        #self.names.insert(_id, name)
         btn = ThumbButton(self, _id, bmp, name)
         if not name:
             name = _("Sheet")+" %s" % (_id + 1)
@@ -632,11 +620,6 @@ class Thumbs(scrolled.ScrolledPanel):
         text = wx.StaticText(self, label=name)
         self.text.insert(_id, text)
         self.thumbs.insert(_id, btn)
-
-        #for x in self.thumbs:
-        #    if x is not btn:
-        #        x.current = False
-        #        x.SetBitmapLabel(x.buffer)
 
         self.sizer.Add(text, 0, wx.ALIGN_CENTER | wx.TOP, 13)
         self.sizer.Add(btn, 0, wx.ALIGN_CENTER | wx.TOP, 7)
@@ -654,18 +637,12 @@ class Thumbs(scrolled.ScrolledPanel):
 
         del self.thumbs[_id]  # 'physically' remove
         del self.text[_id]
-        #del self.names[_id]
         self.SetVirtualSize(self.GetBestVirtualSize())
 
         # now ensure all thumbnail classes are pointing to the right tab
         count = self.gui.current_tab
         for x in range(self.gui.current_tab, len(self.thumbs)):
             self.thumbs[x].thumb_id = x
-
-        #    if not self.thumbs[x].name:#self.names[x]:
-        #        count += 1
-        #        self.text[x].SetLabel(_("Sheet")+" %s" % count)
-
 
 
     def remove_all(self):
@@ -703,12 +680,10 @@ class Thumbs(scrolled.ScrolledPanel):
             memory.SetBrush(wx.TRANSPARENT_BRUSH)
             memory.DrawRectangle(0, 0, 150, 150)
             memory.SelectObject(wx.NullBitmap)
-
         return bitmap
 
 
     def update_name(self, _id, name):
-        self.thumbs[_id].name = name#self.names[_id] = name
         self.text[_id].SetLabel(name)
         self.Layout()
 
@@ -744,7 +719,6 @@ class ThumbButton(wx.BitmapButton):
     def __init__(self, parent, _id, bitmap, name=None):
         wx.BitmapButton.__init__(self, parent, size=(150, 150))
         self.thumb_id  = _id
-        self.name = name
         self.parent = parent
         self.SetBitmapLabel(bitmap)
         self.buffer = bitmap

@@ -82,7 +82,6 @@ class Whyteboard(wx.ScrolledWindow):
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
-        self.renamed = False  # used by GUI
         self.select_tool()
         self.redraw_all()
 
@@ -341,6 +340,7 @@ class Whyteboard(wx.ScrolledWindow):
 
     def perform(self, list_a, list_b):
         """ list_a: to remove from / list b: append to """
+
         if not list_a:
             return
         list_b.append(list(self.shapes))

@@ -20,6 +20,8 @@
 This module contains classes extended from wx.Dialog used by the GUI.
 """
 
+from __future__ import division
+
 import os
 import sys
 import wx
@@ -649,15 +651,10 @@ class Resize(wx.Dialog):
         
 
     def update_label(self):
-        buff = self.gui.board.buffer
-        x = buff.GetWidth() * buff.GetHeight() * buff.GetDepth() / 8 / 1024        
-        y = x % 1024    
-        if y > 1000:
-            y = 0 
-            x += 1024   
-        
-        val = _("Size")+": %i.%.3i MB" % (x / 1024, y)
-              
+        b = self.gui.board.buffer
+        x = (b.GetWidth() * b.GetHeight() * b.GetDepth()) / 8 / (1024 ** 2)       
+
+        val = _("Size")+": %.2f MB" % x      
         self.sizelabel.SetLabel(val)
 
 

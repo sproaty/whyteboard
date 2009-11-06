@@ -98,6 +98,7 @@ handle_size = integer(min=3, max=15, default=6)
 language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', 'Portugese', 'Japanese', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
 print_title = boolean(default=True)
 statusbar = boolean(default=True)
+tab_style = option('default', 'vc8', 'firefox2', 'fancy', default='default')
 toolbar = boolean(default=True)
 toolbox = option('icon', 'text', default='icon')
 undo_sheets = integer(min=5, max=50, default=10)
@@ -195,9 +196,7 @@ class Utility(object):
                 save_pasted_images(board.shapes)
                 temp[x] = list(board.shapes)
                 canvas_sizes.append(board.area)
-                text = None
-                if board.renamed:
-                    text = self.gui.tabs.GetPageText(x)
+                text = self.gui.tabs.GetPageText(x)
                 names.append(text)
 
             if temp:
@@ -312,8 +311,6 @@ class Utility(object):
                 pass
 
             self.gui.on_new_tab(name=name)
-            if name:
-                self.gui.board.renamed = True
 
             try:
                 self.gui.board.resize_canvas(temp[4][x])
@@ -470,7 +467,6 @@ class Utility(object):
         for x in range(0, len(images)):
             name = os.path.split(_file)[1][:15] + " - %s" % (x + 1)
             self.gui.on_new_tab(name=name)
-            self.gui.board.renamed = True
             load_image(images[x], self.gui.board)
 
         self.gui.board.redraw_all()
@@ -509,6 +505,7 @@ class Utility(object):
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
         self.gui.tab_count = 0
+        self.gui.tab_total = 0
 
 
     def prompt_for_save(self, method, style=wx.YES_NO | wx.CANCEL, args=None):
