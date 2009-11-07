@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/python
 
 # Copyright (c) 2009 by Steven Sproat
@@ -226,12 +227,12 @@ class Whyteboard(wx.ScrolledWindow):
 
         if direction == RIGHT:
             size = (size[0], self.area[1])            
-            self.Scroll(self.GetVirtualSizeTuple()[0], -1)
+        #    self.Scroll(self.GetVirtualSizeTuple()[0], -1)
         elif direction == BOTTOM:
             size = (self.area[0], size[1])
-            self.Scroll(-1, size[1])
-        elif direction is not None:
-            self.Scroll(*size)
+        #    self.Scroll(-1, size[1])
+        #elif direction is not None:
+        #    self.Scroll(*size)
 
         self.buffer = wx.EmptyBitmap(*size)
         self.area = size
@@ -239,7 +240,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetVirtualSize(size)
         self.redraw_all()
 
-        #self.Scroll(*size)
+        self.Scroll(*size)
 
     def redraw_dirty(self, dc):
         """ Figure out what part of the window to refresh. """

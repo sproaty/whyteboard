@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/python
 
 # Copyright (c) 2009 by Steven Sproat
@@ -98,7 +99,6 @@ handle_size = integer(min=3, max=15, default=6)
 language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', 'Portugese', 'Japanese', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
 print_title = boolean(default=True)
 statusbar = boolean(default=True)
-tab_style = option('default', 'vc8', 'firefox2', 'fancy', default='default')
 toolbar = boolean(default=True)
 toolbox = option('icon', 'text', default='icon')
 undo_sheets = integer(min=5, max=50, default=10)

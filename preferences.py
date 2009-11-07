@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!usr/bin/python
 
 # Copyright (c) 2009 by Steven Sproat
@@ -32,8 +33,10 @@ GUI too.
 
 import os
 import wx
+import lib.flatnotebook as fnb
 from copy import copy
 from wx.lib.wordwrap import wordwrap as wordwrap
+
 
 import tools
 import whyteboard
@@ -61,7 +64,7 @@ class Preferences(wx.Dialog):
         self.tabs.AddPage(General(*params), _("General"))
         self.tabs.AddPage(FontAndColours(*params), _("Fonts and Color"))
         self.tabs.AddPage(View(*params), _("View"))
-        self.tabs.AddPage(PDFandTabs(*params), _("PDF Conversion") + " / " +  _("Tab Appearance"))
+        self.tabs.AddPage(PDF(*params), _("PDF Conversion")) 
 
         okay = wx.Button(self, wx.ID_OK, _("&OK"))
         cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
@@ -103,6 +106,7 @@ class Preferences(wx.Dialog):
         if self.config['canvas_border'] != old['canvas_border']:
             whyteboard.CANVAS_BORDER = self.config['canvas_border']
             self.gui.board.resize_canvas(self.gui.board.area)
+
 
         if self.config.has_key('default_font'):
             if self.config['default_font'] and not self.gui.util.font:
@@ -467,9 +471,9 @@ class View(wx.Panel):
 #----------------------------------------------------------------------
 
 
-class PDFandTabs(wx.Panel):
+class PDF(wx.Panel):
     """
-    PDF conversion quality / tab style
+    PDF conversion quality
     """
     def __init__(self, parent, gui, config):
         wx.Panel.__init__(self, parent)
@@ -484,34 +488,21 @@ class PDFandTabs(wx.Panel):
         note = wx.StaticText(self, label=wordwrap(_("Note: Higher quality takes longer to convert"), 350, wx.ClientDC(gui)))
         radio1 = wx.RadioButton(self, label=" " + _("Highest"))
         radio2 = wx.RadioButton(self, label=" " + _("High"))
-        radio3 = wx.RadioButton(self, label=" " + _("Normal"))  
-              
-        style_label = wx.StaticText(self, label=_("Tab Style:"))
-        radio4 = wx.RadioButton(self, label=" " + _("Default"))
-        radio5 = wx.RadioButton(self, label=" " + _("Firefox 2"))
-        radio6 = wx.RadioButton(self, label=" " + _("VC8"))
-        radio7 = wx.RadioButton(self, label=" " + _("Fancy"))        
+        radio3 = wx.RadioButton(self, label=" " + _("Normal"))                       
 
         font = label.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         label.SetFont(font)
-        style_label.SetFont(font)
         sizer.Add(label, 0, wx.ALL, 15)
-
         
-        for x, btn in enumerate([radio1, radio2, radio3, radio4, radio5, radio6, radio7]):
+        for x, btn in enumerate([radio1, radio2, radio3]):
             sizer.Add(btn, 0, wx.LEFT, 30)
             sizer.Add((10, 5))
-            if x < 3:
-                method = lambda evt, id=x: self.on_quality(evt, id)
-            if x == 2:
-                sizer.Add((10, 5))                
-                sizer.Add(note, 0, wx.LEFT, 30)                
-                sizer.Add(style_label, 0, wx.ALL, 15)
-            if x > 3:                
-                method = lambda evt, id=x: self.change_style(evt, id)
+            method = lambda evt, id=x: self.on_quality(evt, id)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
-
+        
+        sizer.Add((10, 10))    
+        sizer.Add(note, 0, wx.ALL, 15)
 
         if self.config['convert_quality'] == 'highest':
             radio1.SetValue(True)
@@ -519,14 +510,6 @@ class PDFandTabs(wx.Panel):
             radio2.SetValue(True)
         if self.config['convert_quality'] == 'normal':
             radio3.SetValue(True)
-        if self.config['tab_style'] == 'default':
-            radio4.SetValue(True)
-        elif self.config['tab_style'] == 'firefox2':
-            radio5.SetValue(True)
-        elif self.config['tab_style'] == 'vc8':
-            radio6.SetValue(True)
-        elif self.config['tab_style'] == 'fancy':
-            radio7.SetValue(True)
             
             
 
@@ -538,16 +521,5 @@ class PDFandTabs(wx.Panel):
         else:
             self.config['convert_quality'] = 'normal'
 
-    def change_style(self, event, id):
-        if id == 0:
-            self.config['tab_style'] = 'default'
-        elif id == 1:
-            self.config['tab_style'] = 'firefox2'
-        elif id == 2:
-            self.config['tab_style'] = 'vc8'
-        elif id == 3:
-            self.config['tab_style'] = 'fancy' 
-            
-            
-#----------------------------------------------------------------------
-                     
+
+#----------------------------------------------------------------------                     
