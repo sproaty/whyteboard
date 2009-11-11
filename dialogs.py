@@ -26,6 +26,7 @@ from __future__ import division
 import os
 import sys
 import wx
+import wx.lib.mixins.listctrl as listmix
 
 from copy import copy
 import lib.errdlg
@@ -49,24 +50,24 @@ class History(wx.Dialog):
         self.gui = gui
         self.looping = False
         self.paused = False
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        _max = len(gui.board.shapes)+50
+        #_max = len(gui.board.shapes)+50
         #self.slider = wx.Slider(self, minValue=1, maxValue=_max,
         #                        style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL )
         #self.slider.SetTickFreq(5, 1)
 
+        sizer = wx.BoxSizer(wx.VERTICAL)
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
-        btn_stop = wx.Button(self, label=_("Stop"))
-        btn_pause = wx.Button(self, label=_("Pause"))
-        btn_play = wx.Button(self, label=_("Play"))
-        historySizer.Add(btn_play, 0,  wx.ALL, 2)
-        historySizer.Add(btn_pause, 0,  wx.ALL, 2)
-        historySizer.Add(btn_stop, 0,  wx.ALL, 2)
+        path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
+        icons = ["play", "pause", "stop"]
+
+        for icon in icons:
+            btn = wx.BitmapButton(self, bitmap=wx.Bitmap(path + icon + ".png"))
+            btn.SetToolTipString(icon.capitalize())
+            btn.Bind(wx.EVT_BUTTON, getattr(self, icon))
+            historySizer.Add(btn, 0,  wx.ALL, 2)
 
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         cancelButton.SetDefault()
-
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(cancelButton)
         btnSizer.Realize()
@@ -74,20 +75,16 @@ class History(wx.Dialog):
         #sizer.Add(self.slider, 0, wx.EXPAND | wx.ALL, 10)
         sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
         sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 8)
-
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
 
-        btn_play.Bind(wx.EVT_BUTTON, self.on_play)
-        btn_pause.Bind(wx.EVT_BUTTON, self.pause)
-        btn_stop.Bind(wx.EVT_BUTTON, self.stop)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         cancelButton.Bind(wx.EVT_BUTTON, self.on_close)
         #self.slider.Bind(wx.EVT_SCROLL, self.scroll)
 
 
-    def on_play(self, event):
+    def play(self, event):
         """
         Starts the replay if it's not already started, unpauses if paused
         """
@@ -207,8 +204,8 @@ class ProgressDialog(wx.Dialog):
         self.to_add = to_add
         self.timer = wx.Timer(self)
         self.gauge = wx.Gauge(self, range=100, size=(180, 30))
-        sizer = wx.BoxSizer(wx.VERTICAL)                        
-        sizer.Add(self.gauge, 0, wx.ALL, 10)                       
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.gauge, 0, wx.ALL, 10)
 
         if cancellable:
             cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
@@ -221,8 +218,8 @@ class ProgressDialog(wx.Dialog):
 
         self.SetSizer(sizer)
         sizer.Fit(self)
-        self.SetFocus()           
-            
+        self.SetFocus()
+
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         self.timer.Start(30)
 
@@ -234,7 +231,7 @@ class ProgressDialog(wx.Dialog):
         if self.count > 100:
             self.count = 0
 
-            
+
     def on_cancel(self, event):
         """Cancels the conversion process"""
         self.gui.convert_cancelled = True
@@ -603,7 +600,7 @@ class Resize(wx.Dialog):
         gap = wx.LEFT | wx.TOP | wx.RIGHT
         width, height = self.gui.board.buffer.GetSize()
         self.size = (width, height)
-                              
+
         csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
         self.hctrl = wx.SpinCtrl(self, min=1, max=12000)
         self.wctrl = wx.SpinCtrl(self, min=1, max=12000)
@@ -611,7 +608,7 @@ class Resize(wx.Dialog):
 
         csizer.Add(self.sizelabel, 0, wx.ALIGN_RIGHT)
         csizer.Add((10, 10))
-        
+
         csizer.Add(wx.StaticText(self, label=_("Width:")), 0, wx.TOP |
                                                             wx.ALIGN_RIGHT, 10)
         csizer.Add(self.wctrl, 1, gap, 7)
@@ -649,19 +646,19 @@ class Resize(wx.Dialog):
         self.hctrl.Bind(wx.EVT_SPINCTRL, self.resize)
         self.wctrl.Bind(wx.EVT_SPINCTRL, self.resize)
         self.update_label()
-        
+
 
     def update_label(self):
         b = self.gui.board.buffer
-        x = (b.GetWidth() * b.GetHeight() * b.GetDepth()) / 8 / (1024 ** 2)       
+        x = (b.GetWidth() * b.GetHeight() * b.GetDepth()) / 8 / (1024 ** 2)
 
-        val = _("Size")+": %.2f MB" % x      
+        val = _("Size")+": %.2f MB" % x
         self.sizelabel.SetLabel(val)
 
 
-    def apply(self, event):        
-        self.size = self.gui.board.buffer.GetSize() 
-        
+    def apply(self, event):
+        self.size = self.gui.board.buffer.GetSize()
+
     def ok(self, event):
         self.resize()
         self.Close()
@@ -742,9 +739,9 @@ class Rotate(wx.Dialog):
         #self.custom.Bind(wx.EVT_SPINCTRL, self.rotate)
 
 
-    def apply(self, event):        
-        self.bmp = self.gui.board.selected.image 
-                
+    def apply(self, event):
+        self.bmp = self.gui.board.selected.image
+
     def ok(self, event):
         self.image.rotate(self.custom.GetValue())
         self.gui.board.draw_shape(self.image)
@@ -755,7 +752,7 @@ class Rotate(wx.Dialog):
         self.gui.board.selected.image = self.bmp
         self.gui.board.draw_shape(self.gui.board.selected)
         self.Close()
-        
+
 
     def on_rotate(self, event, id):
         """ Radio buttons """
@@ -806,10 +803,10 @@ class MyPrintout(wx.Printout):
         return (1, self.gui.tab_count, 1, self.gui.tab_count)
 
     def OnPrintPage(self, page):
-        dc = self.GetDC()        
+        dc = self.GetDC()
         board = self.gui.tabs.GetPage(page - 1)
         board.deselect()
-        
+
         maxX = board.buffer.GetWidth()
         maxY = board.buffer.GetHeight()
         marginX = 50
@@ -827,17 +824,17 @@ class MyPrintout(wx.Printout):
         dc.SetUserScale(actualScale, actualScale)
         dc.SetDeviceOrigin(int(posX), int(posY))
         dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY-marginY)
-        
+
         if self.gui.util.config['print_title']:
             filename = _("Untitled")
             if self.gui.util.filename:
                 filename = self.gui.util.filename
             font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
-    
+
             dc2 = wx.WindowDC(self.gui)
             x = dc2.GetMultiLineTextExtent(filename, font)
             extent = x[0], x[1]
-    
+
             dc.DrawText(_(filename), marginX + x[0], marginY - x[1])
 
         dc.SetDeviceOrigin(int(posX), int(posY))
@@ -884,5 +881,129 @@ def ExceptionHook(exctype, value, trace):
         dlg = ErrorDialog(ftrace)
         dlg.ShowModal()
         dlg.Destroy()
+
+#----------------------------------------------------------------------
+
+
+class ShapeList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin,
+                listmix.ListRowHighlighter):
+
+    def __init__(self, parent, style=0):
+        wx.ListCtrl.__init__(self, parent, style=style | wx.LC_SINGLE_SEL)
+        listmix.ListCtrlAutoWidthMixin.__init__(self)
+        listmix.ListRowHighlighter.__init__(self, (206, 218, 255))
+
+
+#----------------------------------------------------------------------
+
+
+class ShapeViewer(wx.Dialog):
+    """
+    Presents a list of the current sheet's shapes, in accordance to their
+    position in the list, which is the order that the shapes are drawn in.
+    Allows the user to move shapes up/down/to top/to bottom, as well as info
+    about the shape such as its colour/thickness
+    """
+    def __init__(self, gui):
+        """
+        Initialise and populate the listbox
+        """
+        wx.Dialog.__init__(self, gui, title=_("Shape Viewer"), size=(550, 400),
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
+                           wx.RESIZE_BORDER)
+        self.gui = gui
+        self.board = gui.board
+
+        label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
+        sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.list = ShapeList(self, style=wx.LC_REPORT)
+        self.list.InsertColumn(0, _("Position"), wx.LIST_FORMAT_RIGHT, 65)
+        self.list.InsertColumn(1, _("Type"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(2, _("Thickness"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(3, _("Color"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(4, _("Properties"), wx.LIST_AUTOSIZE)
+        self.populate()
+
+        font = label.GetClassDefaultAttributes().font
+        font.SetPointSize(font.GetPointSize() + 2)
+        self.list.SetFont(font)
+        self.list.RefreshRows()
+
+        bsizer = wx.BoxSizer(wx.HORIZONTAL)
+        path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
+
+        icons = ["top", "up", "down", "bottom"]
+        tips = ["To Top", "Up", "Down", "To Bottom"]
+
+        for icon, tip in zip(icons, tips):
+            btn = wx.BitmapButton(self, bitmap=wx.Bitmap(path+"move-" + icon + ".png"))
+            btn.SetToolTipString("Move Shape "+tip)
+            btn.Bind(wx.EVT_BUTTON, getattr(self, "on_"+icon))
+            bsizer.Add(btn)
+
+
+        okButton = wx.Button(self, wx.ID_OK, _("&OK"))
+        okButton.SetDefault()
+        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        applyButton = wx.Button(self, wx.ID_APPLY, _("&Apply"))
+
+        btnSizer = wx.StdDialogButtonSizer()
+        btnSizer.AddButton(okButton)
+        btnSizer.AddButton(cancelButton)
+        btnSizer.AddButton(applyButton)
+        btnSizer.Realize()
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(label, 0, wx.ALL, 15)
+        sizer.Add((10, 5))
+        sizer.Add(bsizer, 0, wx.LEFT, 10)
+        sizer.Add((10, 5))
+        sizer.Add(self.list, 1, wx.LEFT | wx.RIGHT |wx.EXPAND, 10)
+        sizer.Add((10, 5))
+        sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
+        self.SetSizer(sizer)
+        self.SetFocus()
+
+        cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
+        okButton.Bind(wx.EVT_BUTTON, self.ok)
+        applyButton.Bind(wx.EVT_BUTTON, self.apply)
+
+
+    def populate(self):
+        if not self.board.shapes:
+            index = self.list.InsertStringItem(sys.maxint, "")
+            self.list.SetStringItem(index, 1, _("No shapes drawn"))
+        else:
+            for x, shape in enumerate(self.board.shapes):
+                index = self.list.InsertStringItem(sys.maxint, str(x))
+                self.list.SetStringItem(index, 1, shape.name)
+                self.list.SetStringItem(index, 2, str(shape.thickness))
+                self.list.SetStringItem(index, 3, str(shape.colour))
+                self.list.SetStringItem(index, 4, shape.properties())
+                #self.list.SetItemData(index, key)
+
+    def on_top(self, event):
+        pass
+
+    def on_bottom(self, event):
+        pass
+
+    def on_up(self, event):
+        pass
+
+    def on_down(self, event):
+        pass
+
+    def apply(self, event):
+        pass
+
+
+    def ok(self, event):
+        self.Close()
+
+
+    def cancel(self, event=None):
+        self.Close()
+
 
 #----------------------------------------------------------------------

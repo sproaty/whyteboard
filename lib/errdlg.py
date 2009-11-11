@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # Name: errdlg.py                                                             #
 # Purpose: Error Reporter Dialog                                              #
@@ -335,8 +334,8 @@ class ErrorPanel(wx.Panel):
 
         order = (self.action, self.email, send_b, close_b, abort_b)  # tab order
         for i in xrange(len(order) - 1):
-            order[i+1].MoveAfterInTabOrder(order[i])        
-        
+            order[i+1].MoveAfterInTabOrder(order[i])
+
         # Layout
         vsizer = wx.BoxSizer(wx.VERTICAL)
         hsizer1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -352,7 +351,7 @@ class ErrorPanel(wx.Panel):
         hsizer4 = wx.BoxSizer(wx.VERTICAL)
         hsizer4.AddMany([((5, 5), 0), (email_label, 0,wx.BOTTOM | wx.LEFT, 10),
                          (self.email, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 5), ((5, 20), 0)])
-        
+
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         bsizer.AddMany([((5, 5), 0), (abort_b, 0), ((-1, -1), 1, wx.EXPAND),
                         (send_b, 0), ((5, 5), 0), (close_b, 0), ((5, 5), 0)])
@@ -367,7 +366,7 @@ class ErrorPanel(wx.Panel):
                         (hsizer3, 0, wx.EXPAND),
                         ((8, 8), 0),
                         (hsizer4, 0, wx.EXPAND),
-                        ((8, 4), 0),                        
+                        ((8, 4), 0),
                         (bsizer, 0, wx.EXPAND),
                         ((8, 8), 0)])
 

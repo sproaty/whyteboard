@@ -7,15 +7,15 @@ Wed 28 Oct October 2009
 see: https://blueprints.launchpad.net/whyteboard
 
 - Improvements for whiteboard pen usage: accepting certain commands to perform
-  program shortcuts (e.g. new/close tab, clear sheet etc; sent via a tool like 
+  program shortcuts (e.g. new/close tab, clear sheet etc; sent via a tool like
   ZScreen)
 - Adding all whiteboard-related resources (pasted images, exported sheets, etc)
   into a single folder where all the relevant data is saved together (like
   saving a web page)
-- Paste text, essentially creating Text objects from the clipboard. May need 
+- Paste text, essentially creating Text objects from the clipboard. May need
   to modify the current text method to allow RTF, so different sections of text
   can have its own font/style/colour
-- "Zoom" capability; zoom in and out of the canvas. May be quite difficult to 
+- "Zoom" capability; zoom in and out of the canvas. May be quite difficult to
   make...
 - Adding fill to shapes (a background colour)
 - UI changes as the left panel takes up some space
@@ -24,7 +24,7 @@ Eventually, long term:
 
 - Network support w/ Twisted (a Python library)
 - Poppler support for better PDF rendering - no need to use ImageMagick.
-  Problems with Windows here though, Linux is more compatible. 
+  Problems with Windows here though, Linux is more compatible.
 - Improved drawing with anti-aliased graphics, including transparency
 - Slider bar to "move" back/forwards through a drawing's timeline in a replay,
   as well as being able to jump to the start/end

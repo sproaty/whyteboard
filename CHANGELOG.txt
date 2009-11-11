@@ -9,37 +9,56 @@ Wed 28 Oct October 2009
 
 xx Nov 2009 -- 0.39.0
 
-* Background colour added - fills in shapes with solid colour.
-* Checkbox below the colours for transparency - ignores the background 
+* Background colour added - fills in shapes with solid colour. Right click a
+  colour in the grid or with the Eyedropper to set that colour as the background
+* Checkbox below the colours for transparency - ignores the background
+* Drag and drop sheets to reposition them.
 * Export as PDF functionality (exports all sheets as images; requires Image
   Magick)
 * Import/export Whyteboard preference files
-* Bitmap Select now uses a fancy transparent blue fill (may be slow on older 
-  machines)
+* Bitmap Select now uses a fancy transparent blue fill (default is off - may be
+  slow on older machines. Toggle it on in the preferences)
 * Similarly, the currently selected tab is highlighted with the transparent fill
+
+* Move shape up / down / to top / to bottom feature
+* Shape viewer, see a list of each tab's shapes and their properties, and move
+  their drawing order around
+
 
 * Bugfix: When resizing the canvas to the right, the cursor was misaligned
 * Bugfix: Cancel button for PDF conversion on Windows would take a long time
   to actually cancel, is now practically instant
 * Bugfix: Default font preferences's label was messed up when a default font
   preference was not set (on Windows)
-* Bugfix: Some crashes when loading older .wtbd files fixed 
+* Bugfix: Some crashes when loading older .wtbd files fixed
 * Bugfix / UI: Current shape de-selects with bitmap select / export / print, so
   the handles are never copied/drawn into the PNG/print
 * Bugfix: Printout title was aligned too low on the page
 * Bugfix: Pasting to a new sheet now places the image at the top-left corner
-  
+
+* Bugfix: Select tool causing "flickering" when deselecting -- I said this was
+  fixed last release, but the problem remained. NOTE: Whyteboard will draw the
+  most recently drawn shape first. If you draw a rectangle, draw 20 other things
+  on top of it, then move the rectangle - the rectangle will still be drawn last
+  (and thus, be covered by other shapes if they're on top of it)
+
 * UI: "Apply" buttons placed where appropriate (resize canvas, rotate image)
 * UI: Resize Canvas dialog now shows the memory size of the new canvas in MBs
+* UI: Keyboard hotkeys for selecting tools - e.g. P for Pen, R for Rectangle.
+  See each item's tooltip for specifics
+* Hotkeys for navigating the canvas with keyboard: home, end, page up, page down.
+  Use to jump to the very left (home) and very right (end) of the canvas. Hold
+  Ctrl as you press the keys to jump to the top and bottom of the document.
+
 * UI: Wordwrapped texts that could become too long in different languages
-* UI: Keyboard hotkeys for selecting tools - e.g. P for Pen, R for Rectangle. 
-  See each item's tooltip for specifics 
+* UI: Repositioned some menu items; new menu category -- Shapes
 * UI: Preference to toggle the page title in a printout
 * UI: Export sub-menu in File, instead of 3 separate entries
 * UI: Escape key closes full screen view
 * UI: Black border drawn around thumbnails on Windows, looked weird without
 
-* Latest translations; no new languages
+* Latest translations. New language:
+   - Arabic
 
 ----------------------------------------------------------------------
 
@@ -245,7 +264,7 @@ xx Nov 2009 -- 0.39.0
   selected one from the menu
 * Cleaner code for managing UI button enabling/disabling
 * Bugfix: Editing a note and pressing backspace updates the note properly
-* Bugfix: drawing outlined shapes weirdness outside the default scrollbar region 
+* Bugfix: drawing outlined shapes weirdness outside the default scrollbar region
   (introduced in 0.35.8)
 * Bugfix: exporting image saves whole sheet, not just the visible area
 * Bugfix: Adding a line sometimes wasn't being actually added

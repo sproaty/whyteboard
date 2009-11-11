@@ -25,21 +25,29 @@ If nothing happens, try launching one of the scripts from the console:
 
 $ python whyteboard.py
 
-see what error occurred and let me know at, <sproaty@gmail.com>, report a bug at 
+see what error occurred and let me know at, <sproaty@gmail.com>, report a bug at
 Launchpad at the link below.
 
-You can also use the built-in error reporter to send me an e-mail directly, 
+You can also use the built-in error reporter to send me an e-mail directly,
 containing relevant system information and a log of the error. This is the best
-method to report errors.
- 
+method to report errors. Please fill in as much detail about what you was doing
+to produce the error.
+Giving your e-mail address will allow me to get back in touch with you to follow
+up on the bug, and to confirm a fix.
 
-If you are getting an error on Windows, 
-"Application failed to start because the application configuration is incorrect. 
+
+If you are getting an error on Windows,
+"Application failed to start because the application configuration is incorrect.
 Reinstalling the application may fix the problem."
 
-then download the C++ Runtime (4.0 MB) at:
+...then download the C++ Runtime (4.0 MB) at:
 http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D-3802B2AF5FC2
-http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14-157CFDFFEE4E (64 bit version if you have win64)
+
+- 64 bit version if you have Windows 64, 4.7MB:
+http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14-157CFDFFEE4E
+
+
+Icons taken from Crystal Project, http://www.everaldo.com/crystal/
 
 
 ---- KNOWN BUGS ----

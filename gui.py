@@ -51,7 +51,7 @@ from tools import Image, Note
 from utility import Utility, FileDropTarget, languages, cfg
 from functions import get_home_dir
 from dialogs import (History, ProgressDialog, Resize, Rotate, UpdateDialog,
-                     MyPrintout, ExceptionHook)
+                     MyPrintout, ExceptionHook, ShapeViewer)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
@@ -66,10 +66,14 @@ ID_EXPORT_PDF = wx.NewId()        # export->PDF
 ID_EXPORT_PREF = wx.NewId()       # export->preferences
 ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
 ID_HISTORY = wx.NewId()           # history viewer
-ID_IMPORT_IMAGE = wx.NewId()        # import->Image
+ID_IMPORT_IMAGE = wx.NewId()      # import->Image
 ID_IMPORT_PDF = wx.NewId()        # import->PDF
-ID_IMPORT_PREF = wx.NewId()        # import->Preferences
+ID_IMPORT_PREF = wx.NewId()       # import->Preferences
 ID_IMPORT_PS = wx.NewId()         # import->PS
+ID_MOVE_UP = wx.NewId()           # move shape up
+ID_MOVE_DOWN = wx.NewId()         # move shape down
+ID_MOVE_TO_TOP = wx.NewId()       # move shape to the top
+ID_MOVE_TO_BOTTOM = wx.NewId()    # move shape to the bottom
 ID_NEW = wx.NewId()               # new window
 ID_NEXT = wx.NewId()              # next sheet
 ID_PASTE_NEW = wx.NewId()         # paste as new selection
@@ -78,6 +82,7 @@ ID_RENAME = wx.NewId()            # rename sheet
 ID_REPORT_BUG = wx.NewId()        # report a problem
 ID_RESIZE = wx.NewId()            # resize dialog
 ID_ROTATE = wx.NewId()            # rotate dialog for image 90/180/270
+ID_SHAPE_VIEWER = wx.NewId()      # view/edit shapes
 ID_STATUSBAR = wx.NewId()         # toggle statusbar
 ID_TOOLBAR = wx.NewId()           # toggle toolbar
 ID_TRANSLATE = wx.NewId()         # open translation URL
@@ -139,8 +144,7 @@ class GUI(wx.Frame):
         self.closed_tabs = []  # [shapes - undo - redo - canvas_size] per tab
 
         self.control = ControlPanel(self)
-        self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_NO_X_BUTTON  | fnb.FNB_VC8)#fnb.FNB_FF2)
-        #self.tabs = wx.Notebook(self)
+        self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8)
         self.board = Whyteboard(self.tabs, self)  # the active whiteboard tab
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
@@ -176,6 +180,7 @@ class GUI(wx.Frame):
         _file = wx.Menu()
         edit = wx.Menu()
         view = wx.Menu()
+        shapes = wx.Menu()
         sheets = wx.Menu()
         _help = wx.Menu()
         _import = wx.Menu()
@@ -216,25 +221,31 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_UNDO, _("&Undo")+"\tCtrl+Z", _("Undo the last operation"))
         edit.Append(wx.ID_REDO, _("&Redo")+"\tCtrl+Y", _("Redo the last undone operation"))
         edit.AppendSeparator()
-        edit.Append(ID_RESIZE, _("Re&size Canvas...")+"\tCtrl+R", _("Change the canvas' size"))
-        edit.Append(ID_ROTATE, _("R&otate Image..."), _("Rotate the selected image"))
-        edit.Append(wx.ID_DELETE, _("&Delete Shape")+"\tDelete", _("Delete the currently selected shape"))
-        edit.AppendSeparator()
         edit.Append(wx.ID_COPY, _("&Copy")+"\tCtrl+C", _("Copy a Bitmap Selection region"))
         edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste an image from your clipboard into Whyteboard"))
         edit.AppendItem(pnew)
         edit.AppendSeparator()
         edit.Append(wx.ID_PREFERENCES, _("Prefere&nces"), _("Change your preferences"))
 
+        view.Append(ID_SHAPE_VIEWER, _("&Shape Viewer...")+"\tF3", _("View and edit the shapes' drawing order"))
         view.Append(ID_HISTORY, _("&History Viewer...")+"\tCtrl+H", _("View and replay your drawing history"))
         view.AppendSeparator()
         self.showtool = view.Append(ID_TOOLBAR, " "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
         self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
         view.Append(ID_FULLSCREEN, " "+_("&Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
 
+        shapes.Append(ID_MOVE_UP, _("Move Shape &Up")+"\tCtrl-Up", _("Moves the currently selected shape up"))
+        shapes.Append(ID_MOVE_DOWN, _("Move Shape &Down")+"\tCtrl-Down", _("Moves the currently selected shape down"))
+        shapes.Append(ID_MOVE_TO_TOP, _("Move Shape To &Top")+"\tCtrl-Shift-Up", _("Moves the currently selected shape to the top"))
+        shapes.Append(ID_MOVE_TO_BOTTOM, _("Move Shape To &Bottom")+"\tCtrl-Shift-Up", _("Moves the currently selected shape to the bottom"))
+        shapes.AppendSeparator()
+        shapes.Append(wx.ID_DELETE, _("&Delete Shape")+"\tDelete", _("Delete the currently selected shape"))
+        shapes.Append(ID_ROTATE, _("R&otate Image...")+"\tCtrl-I", _("Rotate the selected image"))
+
         sheets.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T", _("Add a new sheet"))
-        sheets.Append(wx.ID_CLOSE, _("&Remove Sheet")+"\tCtrl+W", _("Close the current sheet"))
-        sheets.Append(ID_RENAME, _("&Rename Sheet..."), _("Rename the current sheet"))
+        sheets.Append(wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl+W", _("Close the current sheet"))
+        sheets.Append(ID_RENAME, _("&Rename Sheet...")+"\tF2", _("Rename the current sheet"))
+        sheets.Append(ID_RESIZE, _("Resi&ze Canvas...")+"\tCtrl+R", _("Change the canvas' size"))
         sheets.AppendSeparator()
         self.next = sheets.Append(ID_NEXT, _("&Next Sheet")+"\tCtrl+Tab", _("Go to the next sheet"))
         self.prev = sheets.Append(ID_PREV, _("&Previous Sheet")+"\tCtrl+Shift+Tab", _("Go to the previous sheet"))
@@ -256,12 +267,12 @@ class GUI(wx.Frame):
         self.menu.Append(_file, _("&File"))
         self.menu.Append(edit, _("&Edit"))
         self.menu.Append(view, _("&View"))
+        self.menu.Append(shapes, _("Sha&pes"))
         self.menu.Append(sheets, _("&Sheets"))
         self.menu.Append(_help, _("&Help"))
         self.SetMenuBar(self.menu)
+        self.menu.Enable(wx.ID_PASTE, self.can_paste)
         self.menu.Enable(ID_PASTE_NEW, self.can_paste)
-        self.menu.Enable(ID_UNDO_SHEET, False)
-
 
         if self.util.config['toolbar']:
             view.Check(ID_TOOLBAR, True)
@@ -278,21 +289,19 @@ class GUI(wx.Frame):
         Performs event binding.
         """
         self.Bind(wx.EVT_CLOSE, self.on_exit)
-        #self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
-        #self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CLOSED, self.on_close_tab, self.tabs)
-        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.on_change_tab, self.tabs)
+        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.on_change_tab)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_DROPPED, self.on_drop_tab)
-        self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # converted
+        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CONTEXT_MENU, self.tab_popup)
+        self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # end conversion
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
-        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_NEXT)
-        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_PREV)
-        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_UNDO_SHEET)
-        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=wx.ID_DELETE)
-        self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=ID_ROTATE)
-        #self.tabs.Bind(wx.EVT_RIGHT_UP, self.tab_popup)
-        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CONTEXT_MENU, self.tab_popup, self.tabs)
-        self.Bind(wx.EVT_CHAR_HOOK, self.close_fullscreen)
+        self.Bind(wx.EVT_CHAR_HOOK, self.hotkey)
 
+        # idle event handlers
+        ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, wx.ID_DELETE, ID_ROTATE,
+               ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM]
+        [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
+
+        # hotkeys
         ac = [(wx.ACCEL_CTRL, ord('\t'), self.next.GetId()),
               (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId())]
 
@@ -307,19 +316,21 @@ class GUI(wx.Frame):
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
 
-
+        # toolbar bindings
         ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
+        # menu bindings
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
                   "copy", "paste", "rotate", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
-                  "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref"]
+                  "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
+                  "move_down", "move_top", "move_bottom"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
                wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
                ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
-               ID_IMPORT_PREF, ID_EXPORT_PREF]
+               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -634,24 +645,24 @@ class GUI(wx.Frame):
 
         # Save all Note item data to re-create it in the new Tree node
         if tree.ItemHasChildren(old_item):
-
             (child, cookie) = tree.GetFirstChild(old_item)
             while child.IsOk():
                 item = (tree.GetItemPyData(child), tree.GetItemText(child))
                 children.append(item)
-
                 (child, cookie) = tree.GetNextChild(old_item, cookie)
 
         # Remove the old tree node, re-add it
-        tree.Delete(old_item)
         before = event.GetSelection()
 
         if event.GetSelection() >= self.tab_count:
             before = event.GetSelection() - 1
+        if event.GetOldSelection() < event.GetSelection():  # drag to the right
+            before += 1
         if before < 0:
             before = 0
 
         new = tree.InsertItemBefore(self.notes.root, before, text)
+        tree.Delete(old_item)
 
         # Restore the notes to the new tree item
         for item in children:
@@ -662,19 +673,21 @@ class GUI(wx.Frame):
         item = self.notes.tabs.pop(event.GetOldSelection())
         self.notes.tabs.insert(event.GetSelection(), item)
 
-        # Update each tab's data so it is pointing to the correct tab ID
+        # Update each tree's node data so it is pointing to the correct tab ID
         (child, cookie) = tree.GetFirstChild(self.notes.root)
         count = 0
 
         while child.IsOk():
             self.notes.tabs[count] = child
             tree.SetItemData(self.notes.tabs[count], wx.TreeItemData(count))
-            (child, cookie) = tree.GetNextChild(self.notes.tabs[x], cookie)
+            (child, cookie) = tree.GetNextChild(self.notes.tabs[count], cookie)
             count += 1
 
         tree.Expand(new)
         self.on_done_load()
         self.on_change_tab()
+        wx.MilliSleep(100)  # try and stop user dragging too many tabs quickly
+        wx.SafeYield()
 
 
     def update_panels(self, select):
@@ -704,25 +717,22 @@ class GUI(wx.Frame):
         if len(self.closed_tabs) == self.util.config['undo_sheets']:
             del self.closed_tabs[self.util.config['undo_sheets'] - 1]
 
-        # doesn't remove the notes if called earlier
         self.notes.remove_tab(self.current_tab)
         self.thumbs.remove(self.current_tab)
 
         board = self.board
-        name = self.tabs.GetPageText(self.current_tab)
-        item = [board.shapes, board.undo_list, board.redo_list,
-                board.area, name]
+        n = self.tabs.GetPageText(self.current_tab)
+        item = [board.shapes, board.undo_list, board.redo_list, board.area, n]
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
+        self.tab_total -= 1
 
         if os.name == "posix":
             self.tabs.RemovePage(self.current_tab)
         else:
             self.tabs.DeletePage(self.current_tab)
 
-        #self.current_tab -= 1
-        self.tab_total -= 1
         self.on_change_tab()  # updates self.board
 
 
@@ -824,6 +834,14 @@ class GUI(wx.Frame):
                 do = True
             elif _id == wx.ID_DELETE and self.board.selected:
                 do = True
+            elif _id == ID_MOVE_UP and self.board.check_move("up"):
+                do = True
+            elif _id == ID_MOVE_DOWN and self.board.check_move("down"):
+                do = True
+            elif _id == ID_MOVE_TO_TOP and self.board.check_move("top"):
+                do = True
+            elif _id == ID_MOVE_TO_BOTTOM and self.board.check_move("bottom"):
+                do = True
             elif (_id == ID_ROTATE and self.board.selected
                   and isinstance(self.board.selected, Image)):
                 do = True
@@ -885,17 +903,42 @@ class GUI(wx.Frame):
                wx.FULLSCREEN_NOSTATUSBAR)
         self.ShowFullScreen(not self.IsFullScreen(), flag)
 
-    def close_fullscreen(self, event=None):
-        """ Toggles fullscreen """
-        if not event.GetKeyCode() in [wx.WXK_ESCAPE]:
-            event.Skip()  # propogate
-        else:
+
+    def hotkey(self, event=None):
+        """
+        Processes a hotkey (escape / home / end / page up / page down)
+        """
+        if event.GetKeyCode() == wx.WXK_ESCAPE:  # close fullscreen
             if self.IsFullScreen():
                 flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION |
                    wx.FULLSCREEN_NOSTATUSBAR)
                 self.ShowFullScreen(False, flag)
                 menu = self.menu.FindItemById(ID_FULLSCREEN)
                 menu.Check(False)
+        elif event.GetKeyCode() == wx.WXK_HOME:
+            if event.ControlDown():
+                self.board.Scroll(-1, 0)
+            else:
+                self.board.Scroll(0, -1)
+        elif event.GetKeyCode() == wx.WXK_END:
+            if event.ControlDown():
+                self.board.Scroll(-1, self.board.area[1])
+            else:
+                self.board.Scroll(self.board.area[1], -1)
+        elif event.GetKeyCode() == wx.WXK_PAGEUP:
+            x, y = self.board.GetViewStart()
+            x2, y2 = self.board.GetClientSizeTuple()
+
+            size = y - y2
+            self.board.Scroll(-1, size)
+        elif event.GetKeyCode() == wx.WXK_PAGEDOWN:
+            x, y = self.board.GetViewStart()
+            x2, y2 = self.board.GetClientSizeTuple()
+
+            size = y + y2
+            self.board.Scroll(-1, size)
+        else:
+            event.Skip()   # propogate
 
 
     def on_toolbar(self, event=None, force=None):
@@ -975,6 +1018,21 @@ class GUI(wx.Frame):
         """ Calls redo on the active tab and updates the menus """
         self.board.redo()
 
+    def on_move_top(self, event=None):
+        """ Moves shape to top """
+        self.board.move_top(self.board.selected)
+
+    def on_move_bottom(self, event=None):
+        """ Moves shape to top """
+        self.board.move_bottom(self.board.selected)
+
+    def on_move_up(self, event=None):
+        """ Moves shape to top """
+        self.board.move_up(self.board.selected)
+
+    def on_move_down(self, event=None):
+        """ Moves shape to top """
+        self.board.move_down(self.board.selected)
 
     def on_prev(self, event=None):
         """ Changes to the previous sheet """
@@ -1075,6 +1133,11 @@ class GUI(wx.Frame):
 
     def on_rotate(self, event=None):
         dlg = Rotate(self)
+        dlg.ShowModal()
+
+
+    def on_shape_viewer(self, event=None):
+        dlg = ShapeViewer(self)
         dlg.ShowModal()
 
 

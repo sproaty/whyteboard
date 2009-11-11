@@ -74,8 +74,6 @@ class ControlPanel(wx.Panel):
 
         width = wx.StaticText(self.pane, label=_("Thickness:"))
         prev = wx.StaticText(self.pane, label=_("Preview:"))
-        #self.colour = wx.ColourPickerCtrl(self.pane)
-        #self.colour.SetToolTipString(_("Select a custom color"))
         colour = self.colour_buttons()
 
         self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
@@ -107,8 +105,7 @@ class ControlPanel(wx.Panel):
         self.cp.Expand()
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
-
-        self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
+        self.Bind(wx.EVT_COMBOBOX, self.change_thickness, self.thickness)
 
 
     def colour_buttons(self):
@@ -126,9 +123,9 @@ class ControlPanel(wx.Panel):
         self.colour.Bind(csel.EVT_COLOURSELECT, self.change_colour)
         self.background.Bind(csel.EVT_COLOURSELECT, self.change_background)
         self.transparent.Bind(wx.EVT_CHECKBOX, self.on_transparency)
-        self.colour.SetToolTipString(_("Set the foreground colour"))
-        self.background.SetToolTipString(_("Set the background colour"))
-        self.transparent.SetToolTipString(_("Ignores the background colour"))
+        self.colour.SetToolTipString(_("Set the foreground color"))
+        self.background.SetToolTipString(_("Set the background color"))
+        self.transparent.SetToolTipString(_("Ignores the background color"))
 
         return panel
 
@@ -470,15 +467,15 @@ class Popup(wx.Menu):
         self.make_menu(extra)
 
     def make_menu(self, extra):
-        ID, ID2, ID3 = wx.NewId(),  wx.NewId(), wx.NewId()
+        ID, ID2, ID3 = wx.NewId(), wx.NewId(), wx.NewId()
         method = self.select_tab_method(extra)
 
         self.AppendItem(wx.MenuItem(self, ID, _("Select")))
         self.AppendSeparator()
         self.AppendItem(wx.MenuItem(self, wx.ID_NEW, _("New")+"\tCtrl-T"))
-        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Close")))
+        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Close")+"\tCtrl-W"))
         self.AppendSeparator()
-        self.AppendItem(wx.MenuItem(self, ID2, _("Rename...")))
+        self.AppendItem(wx.MenuItem(self, ID2, _("Rename...")+"\tF2"))
         self.AppendItem(wx.MenuItem(self, ID3, _("Export...")+"\tCtrl-E"))
 
         self.Bind(wx.EVT_MENU, method, id=ID)

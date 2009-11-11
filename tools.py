@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/python
 
 # Copyright (c) 2009 by Steven Sproat
@@ -28,6 +27,7 @@ import os
 import time
 import math
 import wx
+import copy
 
 from dialogs import TextInput
 
@@ -52,7 +52,7 @@ class Tool(object):
     tooltip = ""
     icon = ""
     hotkey = ""
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT, 
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL):
         self.board = board
         self.colour = colour
@@ -71,10 +71,10 @@ class Tool(object):
 
     def left_up(self, x, y):
         pass
-    
+
     def right_up(self, x, y):
         pass
-    
+
     def motion(self, x, y):
         pass
 
@@ -102,6 +102,10 @@ class Tool(object):
         """ Tools' preview in the left-hand panel """
         pass
 
+    def properties(self):
+        """ Text description of this Tool's properties (for Shape Viewer) """
+        pass
+
     def save(self):
         """ Defines how this class will pickle itself """
         self.board = None
@@ -121,7 +125,7 @@ class Pen(Tool):
     name = _("Pen")
     icon = "pen"
     hotkey = "p"
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT, 
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL):
         Tool.__init__(self, board, colour, thickness, background, cursor)
         self.points = []  # ALL x1, y1, x2, y2 coords to render
@@ -153,6 +157,9 @@ class Pen(Tool):
         dc.SetPen(self.pen)
         dc.DrawLineList(self.points)
 
+    def properties(self):
+        return "Number of points: %s" % len(self.points)
+
     def preview(self, dc, width, height):
         """Points below make a curly line to show an example Pen drawing"""
         dc.DrawSpline([(52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9),
@@ -174,7 +181,7 @@ class OverlayShape(Tool):
     Contains methods for drawing an overlayed shape. Has some general method
     implementations for drawing handles and drawing the shape.
     """
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT, 
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_CROSS):
         Tool.__init__(self, board, colour, thickness, background, cursor)
         self.handles = []
@@ -228,13 +235,13 @@ class OverlayShape(Tool):
         """Being moved with Select. Offset is to keep the cursor centered"""
         self.x = x - offset[0]
         self.y = y - offset[1]
-        
+
         size = self.board.GetClientSize()
         #print self.board.CalcUnscrolledPosition(0, 0)
 
         #if self.x < size[0] + 50:
         #    self.board.Scroll(self.x + 50, -1)
-        
+
 
     def sort_handles(self):
         """Sets the shape's handles"""
@@ -374,10 +381,16 @@ class Rectangle(OverlayShape):
         h =  abs(h) + self.thickness
         self.rect = wx.Rect(x - t, y - t, w, h)
 
+
     def hit_test(self, x, y):
         if not hasattr(self, "rect"):
             self.sort_handles()
         return self.rect.InsideXY(x, y)
+
+
+    def properties(self):
+        # return "X: %i, Y: %i, " + _("Width:")+" %i, " + _("Height:")+" %i" % (self.x, self.y, self.width, self.height)
+        return "X: %i, Y: %i, Width: %i, Height: %i" % (self.x, self.y, self.width, self.height)
 
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
@@ -437,6 +450,9 @@ class Circle(OverlayShape):
         d = lambda x, y: (x - 2, y - 2)
         x, y, r = self.get_args()
         return d(x - r, y - r), d(x- r, y + r), d(x + r, y - r), d(x + r, y + r)
+
+    def properties(self):
+        return "X: %i, Y: %i, Radius: %i" % (self.x, self.y, self.radius)
 
     def hit_test(self, x, y):
         val = ((x - self.x) * (x - self.x)) + ((y - self.y) * (y - self.y))
@@ -513,6 +529,9 @@ class Line(OverlayShape):
 
     def get_args(self):
         return [self.x, self.y, self.x2, self.y2]
+
+    def properties(self):
+        return "X: %i, Y: %i, X2: %i, Y2: %i" % (self.x, self.y, self.x2, self.y2)
 
     def move(self, x, y, offset):
         self.x = x - offset[0][0]
@@ -634,6 +653,14 @@ class Eyedrop(Tool):
         board = self.board.gui
         board.control.colour.SetColour(colour)
         board.util.colour = colour
+        board.control.preview.Refresh()
+
+    def right_up(self, x, y):
+        dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
+        colour = dc.GetPixel(x, y)  # get colour
+        board = self.board.gui
+        board.control.background.SetColour(colour)
+        board.util.background = colour
         board.control.preview.Refresh()
 
     def preview(self, dc, width, height):
@@ -771,6 +798,8 @@ class Text(OverlayShape):
             return True
         return False
 
+    def properties(self):
+        return "%s -- X: %i, Y: %i" % (self.text[:20], self.x, self.y)
 
     def preview(self, dc, width, height):
         dc.SetTextForeground(self.colour)
@@ -877,6 +906,7 @@ class Image(OverlayShape):
     """
     When being pickled, the image reference will be removed.
     """
+    name = _("Image")
     def __init__(self, board, image, path):
         OverlayShape.__init__(self, board, "Black", 1)
         self.image = image
@@ -913,7 +943,7 @@ class Image(OverlayShape):
         self.angle += 1
         if self.angle > 360:
             self.angle = 0
-        self.rotate()       
+        self.rotate()
 
 
     def rotate(self, angle=None):
@@ -932,6 +962,11 @@ class Image(OverlayShape):
     def get_args(self):
         return [self.image, self.x, self.y]
 
+
+    def properties(self):
+        return "X: %i, Y: %i %s %i %s %i" % (self.x, self.y, _("Width:"),
+                                            self.image.GetWidth(), _("Height:"),
+                                            self.image.GetHeight())
 
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
@@ -989,7 +1024,6 @@ class Select(Tool):
         self.undone = False  # Adds an undo point once per class
         self.anchored = False  # Anchor shape's x point -once-, when resizing
         self.direction = None
-        self.count = 0
         self.offset = (0, 0)
 
 
@@ -998,10 +1032,10 @@ class Select(Tool):
         Sees if a shape is underneath the mouse coords, and allows the shape to
         be re-dragged to place
         """
-        shapes = self.board.shapes
-        shapes.reverse()
+        self.board.redraw_all()
         found = False
-        for count, shape in enumerate(shapes):
+        for count, shape in enumerate(reversed(self.board.shapes)):
+
             direction = shape.handle_hit_test(x, y)  # test handle before area
 
             if direction:
@@ -1012,19 +1046,21 @@ class Select(Tool):
 
             if found:
                 self.board.overlay = wx.Overlay()
-                self.shape = shapes[count]
+                self.shape = shape
                 self.dragging = True
-                self.count = count
                 self.offset = self.shape.offset(x, y)
+
                 if self.board.selected:
                     self.board.deselect()
                 self.board.selected = shape
                 shape.selected = True
-                self.board.shapes.pop(count)
+
+                x = self.board.shapes.index(shape)
+                self.board.shapes.pop(x)
                 self.board.redraw_all()  # hide 'original'
-                self.board.shapes.insert(count, shape)
+                self.board.shapes.insert(x, shape)
                 shape.draw(self.board.get_dc(), False)  # draw 'new'
-                
+
                 if shape.background == wx.TRANSPARENT:
                     self.board.gui.control.transparent.SetValue(True)
                 else:
@@ -1032,7 +1068,7 @@ class Select(Tool):
                 break  # breaking is vital to selecting the correct shape
         else:
             self.board.deselect()
-            
+
 
 
     def double_click(self, x, y):
@@ -1064,10 +1100,12 @@ class Select(Tool):
         if self.dragging:
             self.shape.sort_handles()
 
+
         self.board.update_thumb()
         self.board.select_tool()
-        #if self.dragging:
-        #    self.shape.draw(self.board.get_dc(), False)#self.board.redraw_all()
+        if self.dragging:
+            self.shape.draw(self.board.get_dc(), True)#self.board.redraw_all()
+
 
 
 #----------------------------------------------------------------------
@@ -1083,10 +1121,8 @@ class BitmapSelect(Rectangle):
     hotkey = "b"
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         Rectangle.__init__(self, board, (0, 0, 0), 1)
+        self.make_pen(None)
 
-    def make_pen(self, dc=None):
-        self.brush = wx.TRANSPARENT_BRUSH
-        self.pen = wx.Pen(self.colour, self.thickness, wx.SHORT_DASH)
 
     def left_down(self, x, y):
         super(BitmapSelect, self).left_down(x, y)
@@ -1094,6 +1130,15 @@ class BitmapSelect(Rectangle):
         self.board.copy = None
         self.board.redraw_all()
         self.board.copy = self
+        self.make_pen()
+
+    def make_pen(self, dc=None):
+        if self.board.gui.util.config['bmp_select_transparent']:
+            self.brush = wx.Brush(wx.Color(0, 0, 255, 50))
+            self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
+        else:
+            self.pen = wx.Pen(self.colour, self.thickness, wx.SHORT_DASH)
+            self.brush = wx.TRANSPARENT_BRUSH
 
 
     def draw(self, dc, replay=False):
@@ -1101,20 +1146,16 @@ class BitmapSelect(Rectangle):
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
 
-        if not self.pen or self.selected or isinstance(self, Note):
-            self.make_pen(dc)  # Note object needs a DC to draw its outline here
-
-        
-        if not replay:
+        if not replay and self.board.gui.util.config['bmp_select_transparent']:
             gcdc = wx.GCDC(dc)
-            gcdc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 50)))  # light blue
-            gcdc.SetPen(wx.Pen(self.colour, self.thickness, wx.SHORT_DASH))                    
+            gcdc.SetBrush(self.brush)  # light blue
+            gcdc.SetPen(self.pen)
             gcdc.DrawRectangle(*self.get_args())
         else:
             dc.SetPen(self.pen)
             dc.SetBrush(self.brush)
             dc.DrawRectangle(*self.get_args())
-                    
+
         if not replay:
             del odc
 
@@ -1156,7 +1197,7 @@ class Zoom(Tool):
         new = (x[0] + 0.1, x[1] + 0.1)
         self.board.scale = new
         self.board.redraw_all()
-        
+
 #---------------------------------------------------------------------
 
 class Flood(Tool):
@@ -1186,7 +1227,7 @@ class Flood(Tool):
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush(self.colour))
         dc.DrawRectangle(10, 10, width - 20, height - 20)
-        
+
 #---------------------------------------------------------------------
 
 def find_inverse(colour):

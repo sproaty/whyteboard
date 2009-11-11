@@ -80,6 +80,7 @@ import whyteboard
 
 
 cfg = """
+bmp_select_transparent = boolean(default=False)
 canvas_border = integer(min=10, max=35, default=15)
 colour1 = list(min=3, max=3, default=list('280', '0', '0'))
 colour2 = list(min=3, max=3, default=list('255', '255', '0'))
@@ -113,6 +114,7 @@ languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
               (_("Dutch"), wx.LANGUAGE_DUTCH),
               (_("German"), wx.LANGUAGE_GERMAN),
               (_("Russian"), wx.LANGUAGE_RUSSIAN),
+              (_("Arabic"), wx.LANGUAGE_ARABIC),
               (_("Hindi"), wx.LANGUAGE_HINDI),
               (_("Spanish"), wx.LANGUAGE_SPANISH),
               (_("French"), wx.LANGUAGE_FRENCH),
@@ -142,7 +144,7 @@ class Utility(object):
         self.temp_file = None  # selected file (.wtdb/png/pdf - doesn't matter)
         self.saved = True
         self.colour = "Black"
-        self.background = "White" 
+        self.background = "White"
         self.transparent = True  # overwrites background
         self.thickness = 1
         self.font = None  # default font for text input
@@ -165,7 +167,7 @@ class Utility(object):
         # Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
                        "bmp", "pcx"]
-        label = [_("All files")+" (*.*)", _("Whyteboard files")+" (*.wtbd)", 
+        label = [_("All files")+" (*.*)", _("Whyteboard files")+" (*.wtbd)",
                  _("Image Files"), "PDF/PS/SVG"]
 
         result1 = ';'.join('*.' + i for i in self.types[2:-2])
@@ -321,7 +323,6 @@ class Utility(object):
                 shape.board = self.gui.board#wb  # restore board
                 shape.load()  # restore unpickleable settings
                 self.gui.board.add_shape(shape)
-
             self.gui.board.redraw_all(True)
 
         # close progress bar, handle older file versions gracefully
@@ -486,7 +487,7 @@ class Utility(object):
         const = types[_name]  # grab the right image type from dict. above
         self.gui.board.deselect()
         self.gui.board.redraw_all()
-                
+
         context = wx.MemoryDC(self.gui.board.buffer)
         memory = wx.MemoryDC()
         x, y = self.gui.board.buffer.GetSize()
@@ -541,6 +542,7 @@ class Utility(object):
                 dialog.Close()
         else:
             method(*args)
+
 
 
     def prompt_for_im(self):

@@ -64,7 +64,7 @@ class Preferences(wx.Dialog):
         self.tabs.AddPage(General(*params), _("General"))
         self.tabs.AddPage(FontAndColours(*params), _("Fonts and Color"))
         self.tabs.AddPage(View(*params), _("View"))
-        self.tabs.AddPage(PDF(*params), _("PDF Conversion")) 
+        self.tabs.AddPage(PDF(*params), _("PDF Conversion"))
 
         okay = wx.Button(self, wx.ID_OK, _("&OK"))
         cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
@@ -125,6 +125,9 @@ class Preferences(wx.Dialog):
         self.config.write()
         self.gui.util.config = self.config
         ctrl = self.gui.control
+
+        if self.config['bmp_select_transparent'] != old['bmp_select_transparent']:
+            self.gui.board.copy = None
 
         if self.config['toolbox'] != old['toolbox']:
             ctrl.toolsizer.Clear(True)
@@ -268,11 +271,15 @@ class FontAndColours(wx.Panel):
 
         labCol = wx.StaticText(self, label=_("Choose Your Custom Colors:"))
         labFont = wx.StaticText(self, label=_("Default Font:"))
+        transparency = wx.CheckBox(self, label=wordwrap(_("Transparent Bitmap Select (may draw slowly)"), 350, wx.ClientDC(gui)))
 
         new_font = labFont.GetClassDefaultAttributes().font
         new_font.SetWeight(wx.FONTWEIGHT_BOLD)
         labCol.SetFont(new_font)
         labFont.SetFont(new_font)
+
+        if self.config['bmp_select_transparent']:
+            transparency.SetValue(True)
 
         if self.config.has_key('default_font'):
             f = wx.FFont(0, 0)
@@ -298,7 +305,13 @@ class FontAndColours(wx.Panel):
         sizer.Add(labFont, 0, wx.LEFT, 15)
         sizer.Add((10, 15))
         sizer.Add(self.button, 0, wx.LEFT, 30)
+        sizer.Add((10, 25))
+        sizer.Add(transparency, 0, wx.LEFT, 15)
+        transparency.Bind(wx.EVT_CHECKBOX, self.on_transparency)
 
+
+    def on_transparency(self, event):
+        self.config['bmp_select_transparent'] = event.Checked()
 
 
     def on_font(self, event):
@@ -420,10 +433,10 @@ class View(wx.Panel):
             toolbar.SetValue(True)
         if self.config['print_title']:
             title.SetValue(True)
-                        
+
         self.width.SetValue(self.config['default_width'])
         self.height.SetValue(self.config['default_height'])
-        
+
         for x, btn in enumerate([radio1, radio2]):
             sizer.Add(btn, 0, wx.LEFT, 30)
             sizer.Add((10, 5))
@@ -450,10 +463,10 @@ class View(wx.Panel):
 
     def on_toolbar(self, event):
         self.config['toolbar'] = event.Checked()
-        
+
     def on_title(self, event):
         self.config['print_title'] = event.Checked()
-        
+
     def on_width(self, event):
         self.config['default_width'] = self.width.GetValue()
 
@@ -488,20 +501,20 @@ class PDF(wx.Panel):
         note = wx.StaticText(self, label=wordwrap(_("Note: Higher quality takes longer to convert"), 350, wx.ClientDC(gui)))
         radio1 = wx.RadioButton(self, label=" " + _("Highest"))
         radio2 = wx.RadioButton(self, label=" " + _("High"))
-        radio3 = wx.RadioButton(self, label=" " + _("Normal"))                       
+        radio3 = wx.RadioButton(self, label=" " + _("Normal"))
 
         font = label.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         label.SetFont(font)
         sizer.Add(label, 0, wx.ALL, 15)
-        
+
         for x, btn in enumerate([radio1, radio2, radio3]):
             sizer.Add(btn, 0, wx.LEFT, 30)
             sizer.Add((10, 5))
             method = lambda evt, id=x: self.on_quality(evt, id)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
-        
-        sizer.Add((10, 10))    
+
+        sizer.Add((10, 10))
         sizer.Add(note, 0, wx.ALL, 15)
 
         if self.config['convert_quality'] == 'highest':
@@ -510,8 +523,7 @@ class PDF(wx.Panel):
             radio2.SetValue(True)
         if self.config['convert_quality'] == 'normal':
             radio3.SetValue(True)
-            
-            
+
 
     def on_quality(self, event, id):
         if id == 0:
@@ -522,4 +534,4 @@ class PDF(wx.Panel):
             self.config['convert_quality'] = 'normal'
 
 
-#----------------------------------------------------------------------                     
+#----------------------------------------------------------------------

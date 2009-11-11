@@ -188,12 +188,11 @@ class Whyteboard(wx.ScrolledWindow):
                 self.update_thumb()
             self.drawing = False
 
-
     def right_up(self, event):
         """Called when the right mouse button is released - used for zoom"""
         self.shape.right_up(*self.convert_coords(event))
 
-            
+
     def left_double(self, event):
         """Double click for the Select tool - edit text"""
         x, y = self.convert_coords(event)
@@ -226,7 +225,7 @@ class Whyteboard(wx.ScrolledWindow):
             return
 
         if direction == RIGHT:
-            size = (size[0], self.area[1])            
+            size = (size[0], self.area[1])
         #    self.Scroll(self.GetVirtualSizeTuple()[0], -1)
         elif direction == BOTTOM:
             size = (self.area[0], size[1])
@@ -262,7 +261,7 @@ class Whyteboard(wx.ScrolledWindow):
             dc = wx.BufferedDC(None, self.buffer)
             dc.Clear()
             #dc.SetUserScale(self.scale[0], self.scale[1])
-            
+
         for s in self.shapes:
             s.draw(dc, True)
         if self.text:
@@ -288,10 +287,10 @@ class Whyteboard(wx.ScrolledWindow):
         colour = self.gui.util.colour
         thickness = self.gui.util.thickness
         params = [self, colour, thickness]  # Object constructor parameters
-        
+
         if not self.gui.util.transparent:
-            params.append(self.gui.util.background) 
-      
+            params.append(self.gui.util.background)
+
         self.shape = self.gui.util.items[new - 1](*params)  # create new Tool
         self.change_cursor()
         self.gui.control.preview.Refresh()
@@ -306,7 +305,7 @@ class Whyteboard(wx.ScrolledWindow):
 
     def add_shape(self, shape):
         """ Adds a shape to the "to-draw" list. """
-        self.add_undo(shape)
+        self.add_undo()
         self.shapes.append(shape)
 
         if self.selected:
@@ -319,7 +318,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.redraw_all()
 
 
-    def add_undo(self, shape=None):
+    def add_undo(self):
         """ Creates an undo point """
         l = [copy.copy(x) for x in self.shapes]
         self.undo_list.append(l)
@@ -371,6 +370,61 @@ class Whyteboard(wx.ScrolledWindow):
         self.redraw_all(update_thumb=True)
 
 
+    def check_move(self, pos):
+        if not self.selected:
+            return False
+        if pos == "top" or pos == "up":
+            length = len(self.shapes) - 1
+            if length < 0:
+                length = 0
+            if self.shapes.index(self.selected) != length:
+                return True
+        elif pos == "down" or pos == "bottom":
+            #print self.selected, self.shapes.index(self.selected)
+            if self.shapes.index(self.selected) != 0:
+                return True
+        return False
+
+
+    def do_move(self, shape):
+        """ Performs the move, by popping the item to be moved """
+        self.add_undo()
+        x = self.shapes.index(shape)
+        return (x, self.shapes.pop(x))
+
+
+    def move_up(self, shape):
+        """ Move a shape up in the to-draw list. """
+        x, item = self.do_move(shape)
+
+        if x != len(self.shapes):
+            self.shapes.insert(x + 1, item)
+            self.redraw_all(True)
+
+    def move_down(self, shape):
+        """ Move a shape up in the to-draw list. """
+        #print self.shapes
+        x, item = self.do_move(shape)
+        #print x, item
+        #if x != len(self.shapes):
+        self.shapes.insert(x - 1, item)
+        self.redraw_all(True)
+        #print self.shapes
+
+
+    def move_top(self, shape):
+        """ Move a shape to the top in the to-draw list. """
+        x, item = self.do_move(shape)
+        self.shapes.append(item)
+        self.redraw_all(True)
+
+    def move_bottom(self, shape):
+        """ Move a shape up in the to-draw list. """
+        x, item = self.do_move(shape)
+        self.shapes.insert(0, item)
+        self.redraw_all(True)
+
+
     def convert_coords(self, event):
         """ Translate mouse x/y coords to virtual scroll ones. """
         return self.CalcUnscrolledPosition(event.GetX(), event.GetY())
@@ -388,11 +442,11 @@ class Whyteboard(wx.ScrolledWindow):
     def on_paint(self, event=None):
         """
         Called when the window is exposed. Paint the buffer, and then create a
-        region, remove the buffer rectangle then clear it with grey
+        region, remove the buffer rectangle then clear it with grey.
         """
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
         #dc.SetUserScale(self.scale[0], self.scale[1])
-        
+
         if os.name == "nt":
             relbuf = self.CalcScrolledPosition(self.area)
             cli = self.GetClientSize()
