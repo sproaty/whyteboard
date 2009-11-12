@@ -35,7 +35,6 @@ from urllib import urlopen, urlretrieve, urlencode
 
 import tools
 from functions import get_home_dir
-
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -363,8 +362,7 @@ class UpdateDialog(wx.Dialog):
             if os.name == "posix":
                 os.system("tar -xf "+ tmp[0] +" --strip-components=1")
             else:
-                p = os.path.abspath(tmp[0])
-                self.gui.util.extract_tar(p, self.version)
+                self.gui.util.extract_tar(os.path.abspath(tmp[0]), self.version)
             os.remove(tmp[0])
             args = ['python', ['python', sys.argv[0]]]  # for os.execvp
 
@@ -777,7 +775,6 @@ class MyPrintout(wx.Printout):
         title = _("Untitled")
         if gui.util.filename:
             title = gui.util.filename
-            print title
         wx.Printout.__init__(self, title)
         self.gui = gui
 
@@ -823,7 +820,7 @@ class MyPrintout(wx.Printout):
 
         dc.SetUserScale(actualScale, actualScale)
         dc.SetDeviceOrigin(int(posX), int(posY))
-        dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY-marginY)
+        dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY - marginY + 100)
 
         if self.gui.util.config['print_title']:
             filename = _("Untitled")
@@ -835,7 +832,7 @@ class MyPrintout(wx.Printout):
             x = dc2.GetMultiLineTextExtent(filename, font)
             extent = x[0], x[1]
 
-            dc.DrawText(_(filename), marginX + x[0], marginY - x[1])
+            dc.DrawText(_(filename), marginX / 2, -120)
 
         dc.SetDeviceOrigin(int(posX), int(posY))
         board.redraw_all(dc=dc)
@@ -889,7 +886,8 @@ class ShapeList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin,
                 listmix.ListRowHighlighter):
 
     def __init__(self, parent, style=0):
-        wx.ListCtrl.__init__(self, parent, style=style | wx.LC_SINGLE_SEL)
+        wx.ListCtrl.__init__(self, parent, style=style | wx.DEFAULT_CONTROL_BORDER 
+                             | wx.LC_SINGLE_SEL)
         listmix.ListCtrlAutoWidthMixin.__init__(self)
         listmix.ListRowHighlighter.__init__(self, (206, 218, 255))
 
@@ -912,27 +910,26 @@ class ShapeViewer(wx.Dialog):
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
                            wx.RESIZE_BORDER)
         self.gui = gui
-        self.board = gui.board
+        self.shapes = copy(self.gui.board.shapes)
+        self.SetSizeHints(450, 300)
+        self.buttons = []  # move buttons
 
         label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.list = ShapeList(self, style=wx.LC_REPORT)
-        self.list.InsertColumn(0, _("Position"), wx.LIST_FORMAT_RIGHT, 65)
-        self.list.InsertColumn(1, _("Type"), wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(2, _("Thickness"), wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(3, _("Color"), wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(4, _("Properties"), wx.LIST_AUTOSIZE)
         self.populate()
 
-        font = label.GetClassDefaultAttributes().font
-        font.SetPointSize(font.GetPointSize() + 2)
-        self.list.SetFont(font)
+        if os.name == "nt":
+            font = label.GetClassDefaultAttributes().font
+            font.SetPointSize(font.GetPointSize() + 2)
+            self.list.SetFont(font)
         self.list.RefreshRows()
 
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
+        nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
+        
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
-
         icons = ["top", "up", "down", "bottom"]
         tips = ["To Top", "Up", "Down", "To Bottom"]
 
@@ -940,51 +937,123 @@ class ShapeViewer(wx.Dialog):
             btn = wx.BitmapButton(self, bitmap=wx.Bitmap(path+"move-" + icon + ".png"))
             btn.SetToolTipString("Move Shape "+tip)
             btn.Bind(wx.EVT_BUTTON, getattr(self, "on_"+icon))
-            bsizer.Add(btn)
-
-
+            bsizer.Add(btn, 0, wx.RIGHT, 5)
+            self.buttons.append(btn)
+          
+        self.prev = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "prev_sheet.png"))
+        self.prev.SetToolTipString(_("Previous Sheet"))
+        self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
+        nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)   
+        
+        self.next = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "next_sheet.png"))
+        self.next.SetToolTipString(_("Next Sheet"))
+        self.next.Bind(wx.EVT_BUTTON, self.on_next)
+        nextprevsizer.Add(self.next) 
+               
+        bsizer.Add((1, 1), 1, wx.EXPAND)
+        bsizer.Add(nextprevsizer, 0, wx.RIGHT | wx.ALIGN_RIGHT, 10) 
+        
         okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         okButton.SetDefault()
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         applyButton = wx.Button(self, wx.ID_APPLY, _("&Apply"))
-
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okButton)
         btnSizer.AddButton(cancelButton)
         btnSizer.AddButton(applyButton)
         btnSizer.Realize()
+        
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(label, 0, wx.ALL, 15)
         sizer.Add((10, 5))
-        sizer.Add(bsizer, 0, wx.LEFT, 10)
+        sizer.Add(bsizer, 0, wx.LEFT | wx.EXPAND, 10)
         sizer.Add((10, 5))
         sizer.Add(self.list, 1, wx.LEFT | wx.RIGHT |wx.EXPAND, 10)
         sizer.Add((10, 5))
         sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
         self.SetSizer(sizer)
+        self.check_buttons()
         self.SetFocus()
 
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
 
 
     def populate(self):
-        if not self.board.shapes:
+        """
+        Creates all columns and populates with the current sheets' data
+        """
+        self.list.ClearAll()
+        self.list.InsertColumn(0, _("Position"), width=65)
+        self.list.InsertColumn(1, _("Type"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(2, _("Thickness"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(3, _("Color"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(4, _("Properties"), wx.LIST_AUTOSIZE)
+                
+        if not self.shapes:
             index = self.list.InsertStringItem(sys.maxint, "")
             self.list.SetStringItem(index, 1, _("No shapes drawn"))
         else:
-            for x, shape in enumerate(self.board.shapes):
+            for x, shape in enumerate(reversed(self.shapes)):
                 index = self.list.InsertStringItem(sys.maxint, str(x))
                 self.list.SetStringItem(index, 1, shape.name)
                 self.list.SetStringItem(index, 2, str(shape.thickness))
                 self.list.SetStringItem(index, 3, str(shape.colour))
                 self.list.SetStringItem(index, 4, shape.properties())
-                #self.list.SetItemData(index, key)
+                #self.list.SetItemData(index, shape)
+        self.list.Select(0)
 
+
+    def check_buttons(self):
+        """ Enable / Disable the appropriate buttons """
+        if self.gui.current_tab + 1 < self.gui.tab_count:
+            self.next.Enable()
+        else:
+            self.next.Disable()
+
+        if self.gui.current_tab > 0:   
+            self.prev.Enable()
+        else:
+            self.prev.Disable()
+            
+        if self.list.GetFirstSelected() == 0:
+            self.buttons[0].Disable()
+            self.buttons[1].Disable()
+        else:      
+            self.buttons[0].Enable()
+            self.buttons[1].Enable() 
+                       
+        if self.list.GetFirstSelected() == len(self.gui.board.shapes) - 1:
+            self.buttons[2].Disable()
+            self.buttons[3].Disable()
+        else:      
+            self.buttons[2].Enable()
+            self.buttons[3].Enable()         
+                    
+         
+    def on_select(self, event):
+        self.check_buttons()
+                     
     def on_top(self, event):
-        pass
-
+        #print event.GetData()
+        #print self.gui.board.shapes.index()
+        index = len(self.gui.board.shapes) - self.list.GetFirstSelected() - 1 
+        
+        item = self.shapes.pop(index)
+        self.shapes.append(item)
+        #self.populate()
+        #print self.gui.board.shapes[len(self.gui.board.shapes) - self.list.GetFirstSelected() - 1]
+        self.list.DeleteItem(event.GetIndex())
+        index = self.list.InsertStringItem(0, "0")
+        self.list.SetStringItem(index, 1, shape.name)
+        self.list.SetStringItem(index, 2, str(shape.thickness))
+        self.list.SetStringItem(index, 3, str(shape.colour))
+        self.list.SetStringItem(index, 4, shape.properties())        
+        
+        
+        
     def on_bottom(self, event):
         pass
 
@@ -994,16 +1063,39 @@ class ShapeViewer(wx.Dialog):
     def on_down(self, event):
         pass
 
-    def apply(self, event):
-        pass
 
 
+    def on_next(self, event):              
+        self.gui.tabs.SetSelection(self.gui.current_tab + 1)
+        self.gui.on_change_tab()
+        self.shapes = copy(self.gui.board.shapes)
+        self.populate()
+        self.check_buttons()
+    
+    
+    def on_prev(self, event):      
+        self.gui.tabs.SetSelection(self.gui.current_tab - 1)
+        self.gui.on_change_tab()
+        self.shapes = copy(self.gui.board.shapes)
+        self.list.ClearAll()
+        self.populate()
+        self.check_buttons()
+
+               
     def ok(self, event):
+        self.gui.board.add_undo()
+        self.gui.board.shapes = self.shapes
+        self.gui.board.redraw_all(True)
         self.Close()
+
+
+    def apply(self, event):
+        self.gui.board.add_undo()
+        self.gui.board.shapes = self.shapes
+        self.gui.board.redraw_all(True)
 
 
     def cancel(self, event=None):
         self.Close()
-
-
+    
 #----------------------------------------------------------------------

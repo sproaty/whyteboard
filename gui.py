@@ -109,7 +109,8 @@ class GUI(wx.Frame):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
-        wx.Frame.__init__(self, parent, title=_("Untitled")+" - " + self.title)
+        wx.Frame.__init__(self, parent, title=_("Untitled")+" - " + self.title,
+                          style=wx.DEFAULT_FRAME_STYLE | wx.WANTS_CHARS)
         ico = lib.icon.whyteboard.getIcon()
         self.SetIcon(ico)
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
@@ -634,6 +635,7 @@ class GUI(wx.Frame):
         self.dialog = ProgressDialog(self, _("Loading..."), 5)
         self.dialog.Show()
         tree = self.notes.tree
+        self.on_change_tab()
 
         # Update thumbnails
         for x in range(self.tab_count):
@@ -661,8 +663,8 @@ class GUI(wx.Frame):
         if before < 0:
             before = 0
 
-        new = tree.InsertItemBefore(self.notes.root, before, text)
         tree.Delete(old_item)
+        new = tree.InsertItemBefore(self.notes.root, before, text)
 
         # Restore the notes to the new tree item
         for item in children:
@@ -685,9 +687,9 @@ class GUI(wx.Frame):
 
         tree.Expand(new)
         self.on_done_load()
-        self.on_change_tab()
-        wx.MilliSleep(100)  # try and stop user dragging too many tabs quickly
-        wx.SafeYield()
+#
+#        wx.MilliSleep(100)  # try and stop user dragging too many tabs quickly
+#        wx.SafeYield()
 
 
     def update_panels(self, select):
@@ -1002,11 +1004,12 @@ class GUI(wx.Frame):
     def on_exit(self, event=None):
         """ Ask to save, quit or cancel if the user hasn't saved. """
         self.util.prompt_for_save(self.Destroy)
+        self.Destroy()
 
 
     def tab_popup(self, event):
         """ Pops up the tab context menu. """
-        self.PopupMenu(SheetsPopup(self, self, event.GetSelection()))# (event.GetX(), event.GetY())))
+        self.PopupMenu(SheetsPopup(self, self, event.GetSelection()))
 
 
     def on_undo(self, event=None):
@@ -1019,19 +1022,15 @@ class GUI(wx.Frame):
         self.board.redo()
 
     def on_move_top(self, event=None):
-        """ Moves shape to top """
         self.board.move_top(self.board.selected)
 
     def on_move_bottom(self, event=None):
-        """ Moves shape to top """
         self.board.move_bottom(self.board.selected)
 
     def on_move_up(self, event=None):
-        """ Moves shape to top """
         self.board.move_up(self.board.selected)
 
     def on_move_down(self, event=None):
-        """ Moves shape to top """
         self.board.move_down(self.board.selected)
 
     def on_prev(self, event=None):
@@ -1211,6 +1210,7 @@ class GUI(wx.Frame):
         t = ['A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
              'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
              '"Amy" https://launchpad.net/~anthropofobe (German)',
+             '"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
              'David Aller https://launchpad.net/~niclamus (Italian)',
              '"Dennis" https://launchpad.net/~dlinn83 (German)',
              'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',

@@ -225,7 +225,7 @@ class Utility(object):
                           3: names,
                           4: canvas_sizes }
 
-                f = open(self.filename, 'w')
+                f = open(self.filename, 'wb')
                 try:
                     pickle.dump(_file, f)
                     t = os.path.split(self.filename)[1] + ' - ' + self.gui.title
@@ -280,7 +280,7 @@ class Utility(object):
         Closes all tabs, loads in a Whyteboard save file into their proper tab
         """
         temp = {}
-        f = open(filename)
+        f = open(filename, 'rb')
         try:
             temp = pickle.load(f)
         except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):

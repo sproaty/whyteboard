@@ -11,15 +11,15 @@ xx Nov 2009 -- 0.39.0
 
 * Background colour added - fills in shapes with solid colour. Right click a
   colour in the grid or with the Eyedropper to set that colour as the background
-* Checkbox below the colours for transparency - ignores the background
-* Drag and drop sheets to reposition them.
+* Checkbox below the colours for transparency - ignores the background colour
 * Export as PDF functionality (exports all sheets as images; requires Image
   Magick)
 * Import/export Whyteboard preference files
 * Bitmap Select now uses a fancy transparent blue fill (default is off - may be
   slow on older machines. Toggle it on in the preferences)
-* Similarly, the currently selected tab is highlighted with the transparent fill
 
+* Drag and drop sheets to reposition them.
+* The currently selected tab is highlighted with the transparent fill
 * Move shape up / down / to top / to bottom feature
 * Shape viewer, see a list of each tab's shapes and their properties, and move
   their drawing order around
@@ -33,9 +33,11 @@ xx Nov 2009 -- 0.39.0
 * Bugfix: Some crashes when loading older .wtbd files fixed
 * Bugfix / UI: Current shape de-selects with bitmap select / export / print, so
   the handles are never copied/drawn into the PNG/print
+
+* Bugfix: Incompatibilities between Windows and Linux saved .wtbd files. Should
+  now be able to load files saved on Windows that was saved on Linux; vice versa    
 * Bugfix: Printout title was aligned too low on the page
 * Bugfix: Pasting to a new sheet now places the image at the top-left corner
-
 * Bugfix: Select tool causing "flickering" when deselecting -- I said this was
   fixed last release, but the problem remained. NOTE: Whyteboard will draw the
   most recently drawn shape first. If you draw a rectangle, draw 20 other things

@@ -142,7 +142,6 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.motion(x, y)
             self.draw_shape(self.shape)
         elif isinstance(self.shape, Select):  # change cursor to indicate action
-
             for shape in reversed(self.shapes):
                 res = shape.handle_hit_test(x, y)
                 if res and isinstance(shape, Line):
@@ -396,20 +395,14 @@ class Whyteboard(wx.ScrolledWindow):
     def move_up(self, shape):
         """ Move a shape up in the to-draw list. """
         x, item = self.do_move(shape)
-
-        if x != len(self.shapes):
-            self.shapes.insert(x + 1, item)
-            self.redraw_all(True)
+        self.shapes.insert(x + 1, item)
+        self.redraw_all(True)
 
     def move_down(self, shape):
         """ Move a shape up in the to-draw list. """
-        #print self.shapes
         x, item = self.do_move(shape)
-        #print x, item
-        #if x != len(self.shapes):
         self.shapes.insert(x - 1, item)
         self.redraw_all(True)
-        #print self.shapes
 
 
     def move_top(self, shape):
