@@ -833,7 +833,7 @@ class MyPrintout(wx.Printout):
             dc2 = wx.WindowDC(self.gui)
             x = dc2.GetMultiLineTextExtent(filename, font)
             extent = x[0], x[1]
-
+            dc.SetFont(font)
             dc.DrawText(_(filename), marginX / 2, -120)
 
         dc.SetDeviceOrigin(int(posX), int(posY))
@@ -1033,8 +1033,7 @@ class ShapeViewer(wx.Dialog):
             self.buttons[0].Enable()
             self.buttons[1].Enable()
 
-        if (self.list.GetFirstSelected() == len(self.shapes) - 1  or
-            len(self.shapes) == 0):
+        if self.list.GetFirstSelected() == len(self.shapes) - 1  or not self.shapes:
             self.buttons[2].Disable()
             self.buttons[3].Disable()
         else:

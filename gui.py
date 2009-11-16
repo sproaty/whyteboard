@@ -1156,10 +1156,6 @@ class GUI(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
-    def on_change_tool(self, event, _id):
-        print 'ey'
-        self.control.change_tool(_id=_id)
-
 
     def find_help(self):
         """Locate the help files, update self.help var"""
@@ -1220,7 +1216,7 @@ class GUI(wx.Frame):
              '"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
              '"Lauren" https://launchpad.net/~lewakefi (French)',
              'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
-             'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese)',
+             'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
              'Medina Colpaca https://launchpad.net/~medina-colpaca (Spanish)',
              'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
              '"MixCool" https://launchpad.net/~mixcool (German)',

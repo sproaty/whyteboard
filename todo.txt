@@ -1,6 +1,6 @@
 Whyteboard 0.39.0 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 28 Oct October 2009
+Monday 16 November 2009
 
 ---- NEW FEATURES ----
 
@@ -17,7 +17,6 @@ see: https://blueprints.launchpad.net/whyteboard
   can have its own font/style/colour
 - "Zoom" capability; zoom in and out of the canvas. May be quite difficult to
   make...
-- Adding fill to shapes (a background colour)
 - UI changes as the left panel takes up some space
 
 Eventually, long term:

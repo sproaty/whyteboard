@@ -1,13 +1,13 @@
 Whyteboard 0.39.0 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 28 Oct October 2009
+Monday 16 November 2009
 
 ---- VERSION HISTORY ----
 
 
 ----------------------------------------------------------------------
 
-xx Nov 2009 -- 0.39.0
+16 Nov 2009 -- 0.39.0
 
 * Background colour added - fills in shapes with solid colour. Right click a
   colour in the grid or with the Eyedropper to set that colour as the background

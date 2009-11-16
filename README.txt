@@ -1,6 +1,6 @@
 Whyteboard 0.39.0 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wed 28 Oct October 2009
+Monday 16 November 2009
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -9,7 +9,7 @@ start menu.
 
 Otherwise, here are the requirements:
 
-* Python - 2.5.4 or 2.6.3 (untested on other major versions; should work on 2.4)
+* Python - 2.5.4 or 2.6.4 (untested on other major versions; should work on 2.4)
 * wxPython - latest version is -always- recommended (currently 2.8.10.1)
 * ImageMagick, possibly GhostScript for Windows users (optional)
 
@@ -57,6 +57,9 @@ Possible crash on Linux with loading a PDF:
   File "/usr/lib/python2.6/dist-packages/wx-2.8-gtk2-unicode/wx/_core.py", line 14522, in __getattr__
     raise PyDeadObjectError(self.attrStr % self._name)
 PyDeadObjectError: The C++ part of the Whyteboard object has been deleted, attribute access no longer allowed.
+
+I'm having a hard time replicating this issue, if anyone can provide extra 
+details on how to trigger the bug then that would help a ton.
 
 See up to date reports at https://bugs.launchpad.net/whyteboard
 Identified and confirmed bugs are always fixed before a new release.
