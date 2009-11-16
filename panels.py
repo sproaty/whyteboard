@@ -52,7 +52,7 @@ class ControlPanel(wx.Panel):
         """
         Stores a reference to the drawing preview and the toggled drawing tool.
         """
-        wx.Panel.__init__(self, gui)
+        wx.Panel.__init__(self, gui, style=0 | wx.RAISED_BORDER)
 
         self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
@@ -61,6 +61,7 @@ class ControlPanel(wx.Panel):
         self.toggled = 1  # Pen, initallly
         self.preview = DrawingPreview(self.pane, self.gui)
         self.tools = {}
+
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
@@ -362,7 +363,6 @@ class Notes(wx.Panel):
         self.tree = wx.TreeCtrl(self, style=wx.TR_HAS_BUTTONS)
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
-        self.notes = []
         self.add_tab()
         self.tree.Expand(self.root)
 
@@ -411,7 +411,6 @@ class Notes(wx.Panel):
 
         del self.tabs[note]
         # now ensure all nodes are linked to the right tab
-        count = self.gui.current_tab
         for x in range(self.gui.current_tab, len(self.tabs)):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
 
@@ -424,7 +423,6 @@ class Notes(wx.Panel):
         """Removes all tabs."""
         self.tree.DeleteChildren(self.root)
         self.tabs = []
-        self.notes = []
 
 
     def on_click(self, event):
@@ -638,7 +636,6 @@ class Thumbs(scrolled.ScrolledPanel):
         self.SetVirtualSize(self.GetBestVirtualSize())
 
         # now ensure all thumbnail classes are pointing to the right tab
-        count = self.gui.current_tab
         for x in range(self.gui.current_tab, len(self.thumbs)):
             self.thumbs[x].thumb_id = x
 

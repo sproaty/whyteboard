@@ -60,7 +60,6 @@ but are restored with it upon loading the file.
 
 import os
 import sys
-import random
 import urllib
 import tarfile
 import distutils.dir_util
@@ -72,7 +71,7 @@ except ImportError:
     import pickle
 
 from dialogs import ProgressDialog, FindIM
-from functions import (save_pasted_images, get_home_dir, load_image, make_bitmap,
+from functions import (save_pasted_images, get_home_dir, load_image,
                        convert_quality, make_filename)
 
 import tools
@@ -287,6 +286,11 @@ class Utility(object):
             wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.')
                         % os.path.basename(filename))
             return
+        except ImportError:
+            f.close()
+            f = open(filename, 'r')
+            temp = pickle.load(f)
+
         finally:
             f.close()
 

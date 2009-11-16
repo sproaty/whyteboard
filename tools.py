@@ -27,7 +27,6 @@ import os
 import time
 import math
 import wx
-import copy
 
 from dialogs import TextInput
 
@@ -1034,8 +1033,7 @@ class Select(Tool):
         """
         self.board.redraw_all()
         found = False
-        for count, shape in enumerate(reversed(self.board.shapes)):
-
+        for shape in reversed(self.board.shapes):
             direction = shape.handle_hit_test(x, y)  # test handle before area
 
             if direction:
@@ -1121,7 +1119,7 @@ class BitmapSelect(Rectangle):
     hotkey = "b"
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         Rectangle.__init__(self, board, (0, 0, 0), 1)
-        self.make_pen(None)
+
 
 
     def left_down(self, x, y):
@@ -1130,15 +1128,8 @@ class BitmapSelect(Rectangle):
         self.board.copy = None
         self.board.redraw_all()
         self.board.copy = self
-        self.make_pen()
 
-    def make_pen(self, dc=None):
-        if self.board.gui.util.config['bmp_select_transparent']:
-            self.brush = wx.Brush(wx.Color(0, 0, 255, 50))
-            self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
-        else:
-            self.pen = wx.Pen(self.colour, self.thickness, wx.SHORT_DASH)
-            self.brush = wx.TRANSPARENT_BRUSH
+
 
 
     def draw(self, dc, replay=False):
@@ -1147,11 +1138,17 @@ class BitmapSelect(Rectangle):
             odc.Clear()
 
         if not replay and self.board.gui.util.config['bmp_select_transparent']:
+            self.brush = wx.Brush(wx.Color(0, 0, 255, 50))
+            self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
+
             gcdc = wx.GCDC(dc)
             gcdc.SetBrush(self.brush)  # light blue
             gcdc.SetPen(self.pen)
             gcdc.DrawRectangle(*self.get_args())
         else:
+            self.pen = wx.Pen(self.colour, self.thickness, wx.SHORT_DASH)
+            self.brush = wx.TRANSPARENT_BRUSH
+
             dc.SetPen(self.pen)
             dc.SetBrush(self.brush)
             dc.DrawRectangle(*self.get_args())

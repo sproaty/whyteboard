@@ -18,24 +18,25 @@ xx Nov 2009 -- 0.39.0
 * Bitmap Select now uses a fancy transparent blue fill (default is off - may be
   slow on older machines. Toggle it on in the preferences)
 
-* Drag and drop sheets to reposition them.
+* Drag and drop sheets to reposition them as well as the notes tree / thumbnails
 * The currently selected tab is highlighted with the transparent fill
-* Move shape up / down / to top / to bottom feature
-* Shape viewer, see a list of each tab's shapes and their properties, and move
-  their drawing order around
+* Move shape up / down / to top / to bottom feature, with keyboard shortcuts
+* Shape viewer - see a list of each tab's shapes and their properties, and move
+  their drawing order around.
 
 
 * Bugfix: When resizing the canvas to the right, the cursor was misaligned
 * Bugfix: Cancel button for PDF conversion on Windows would take a long time
-  to actually cancel, is now practically instant
+  to actually cancel, it is now practically instant
 * Bugfix: Default font preferences's label was messed up when a default font
   preference was not set (on Windows)
 * Bugfix: Some crashes when loading older .wtbd files fixed
 * Bugfix / UI: Current shape de-selects with bitmap select / export / print, so
   the handles are never copied/drawn into the PNG/print
+* Bugfix: Rotate cursor on Linux looked bad
 
 * Bugfix: Incompatibilities between Windows and Linux saved .wtbd files. Should
-  now be able to load files saved on Windows that was saved on Linux; vice versa    
+  now be able to load files saved on Windows that was saved on Linux; vice versa
 * Bugfix: Printout title was aligned too low on the page
 * Bugfix: Pasting to a new sheet now places the image at the top-left corner
 * Bugfix: Select tool causing "flickering" when deselecting -- I said this was

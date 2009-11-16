@@ -34,7 +34,6 @@ from lib.BeautifulSoup import BeautifulSoup
 from urllib import urlopen, urlretrieve, urlencode
 
 import tools
-from functions import get_home_dir
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -234,8 +233,10 @@ class ProgressDialog(wx.Dialog):
     def on_cancel(self, event):
         """Cancels the conversion process"""
         self.gui.convert_cancelled = True
-        wx.Kill(self.gui.pid, wx.SIGKILL)
-
+        if os.name == "nt":
+            wx.Kill(self.gui.pid, wx.SIGKILL)
+        else:
+            wx.Kill(self.gui.pid)
 
 #----------------------------------------------------------------------
 
@@ -806,6 +807,7 @@ class MyPrintout(wx.Printout):
 
         maxX = board.buffer.GetWidth()
         maxY = board.buffer.GetHeight()
+
         marginX = 50
         marginY = 50
         maxX = maxX + (2 * marginX)
@@ -820,7 +822,7 @@ class MyPrintout(wx.Printout):
 
         dc.SetUserScale(actualScale, actualScale)
         dc.SetDeviceOrigin(int(posX), int(posY))
-        dc.DrawText(_("Page:")+" %d" % page, marginX/2, maxY - marginY + 100)
+        dc.DrawText(_("Page:")+" %d" % page, marginX / 2, maxY - marginY + 100)
 
         if self.gui.util.config['print_title']:
             filename = _("Untitled")
@@ -886,7 +888,7 @@ class ShapeList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin,
                 listmix.ListRowHighlighter):
 
     def __init__(self, parent, style=0):
-        wx.ListCtrl.__init__(self, parent, style=style | wx.DEFAULT_CONTROL_BORDER 
+        wx.ListCtrl.__init__(self, parent, style=style | wx.DEFAULT_CONTROL_BORDER
                              | wx.LC_SINGLE_SEL)
         listmix.ListCtrlAutoWidthMixin.__init__(self)
         listmix.ListRowHighlighter.__init__(self, (206, 218, 255))
@@ -912,7 +914,7 @@ class ShapeViewer(wx.Dialog):
         self.gui = gui
         self.shapes = copy(self.gui.board.shapes)
         self.SetSizeHints(450, 300)
-        self.buttons = []  # move buttons
+        self.buttons = []  # move up/down/top/bottom buttons
 
         label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -928,7 +930,7 @@ class ShapeViewer(wx.Dialog):
 
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
-        
+
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
         icons = ["top", "up", "down", "bottom"]
         tips = ["To Top", "Up", "Down", "To Bottom"]
@@ -939,20 +941,26 @@ class ShapeViewer(wx.Dialog):
             btn.Bind(wx.EVT_BUTTON, getattr(self, "on_"+icon))
             bsizer.Add(btn, 0, wx.RIGHT, 5)
             self.buttons.append(btn)
-          
+
         self.prev = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "prev_sheet.png"))
         self.prev.SetToolTipString(_("Previous Sheet"))
         self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
-        nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)   
-        
+        nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
+
         self.next = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "next_sheet.png"))
         self.next.SetToolTipString(_("Next Sheet"))
         self.next.Bind(wx.EVT_BUTTON, self.on_next)
-        nextprevsizer.Add(self.next) 
-               
-        bsizer.Add((1, 1), 1, wx.EXPAND)
-        bsizer.Add(nextprevsizer, 0, wx.RIGHT | wx.ALIGN_RIGHT, 10) 
-        
+        nextprevsizer.Add(self.next)
+
+        choices = [self.gui.tabs.GetPageText(x) for x in range(self.gui.tab_count)]
+
+        self.pages = wx.ComboBox(self, choices=choices, size=(125, 25), style=wx.CB_READONLY)
+        self.pages.SetSelection(self.gui.current_tab)
+
+        bsizer.Add((1, 1), 1, wx.EXPAND)  # align to the right
+        bsizer.Add(self.pages, 0, wx.RIGHT, 10)
+        bsizer.Add(nextprevsizer, 0, wx.RIGHT, 10)
+
         okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         okButton.SetDefault()
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
@@ -962,7 +970,7 @@ class ShapeViewer(wx.Dialog):
         btnSizer.AddButton(cancelButton)
         btnSizer.AddButton(applyButton)
         btnSizer.Realize()
-        
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(label, 0, wx.ALL, 15)
         sizer.Add((10, 5))
@@ -979,6 +987,7 @@ class ShapeViewer(wx.Dialog):
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
+        self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
 
 
     def populate(self):
@@ -991,18 +1000,17 @@ class ShapeViewer(wx.Dialog):
         self.list.InsertColumn(2, _("Thickness"), wx.LIST_AUTOSIZE)
         self.list.InsertColumn(3, _("Color"), wx.LIST_AUTOSIZE)
         self.list.InsertColumn(4, _("Properties"), wx.LIST_AUTOSIZE)
-                
+
         if not self.shapes:
             index = self.list.InsertStringItem(sys.maxint, "")
             self.list.SetStringItem(index, 1, _("No shapes drawn"))
         else:
             for x, shape in enumerate(reversed(self.shapes)):
-                index = self.list.InsertStringItem(sys.maxint, str(x))
+                index = self.list.InsertStringItem(sys.maxint, str(x + 1))
                 self.list.SetStringItem(index, 1, shape.name)
                 self.list.SetStringItem(index, 2, str(shape.thickness))
                 self.list.SetStringItem(index, 3, str(shape.colour))
                 self.list.SetStringItem(index, 4, shape.properties())
-                #self.list.SetItemData(index, shape)
         self.list.Select(0)
 
 
@@ -1013,75 +1021,94 @@ class ShapeViewer(wx.Dialog):
         else:
             self.next.Disable()
 
-        if self.gui.current_tab > 0:   
+        if self.gui.current_tab > 0:
             self.prev.Enable()
         else:
             self.prev.Disable()
-            
+
         if self.list.GetFirstSelected() == 0:
             self.buttons[0].Disable()
             self.buttons[1].Disable()
-        else:      
+        else:
             self.buttons[0].Enable()
-            self.buttons[1].Enable() 
-                       
-        if self.list.GetFirstSelected() == len(self.gui.board.shapes) - 1:
+            self.buttons[1].Enable()
+
+        if (self.list.GetFirstSelected() == len(self.shapes) - 1  or
+            len(self.shapes) == 0):
             self.buttons[2].Disable()
             self.buttons[3].Disable()
-        else:      
+        else:
             self.buttons[2].Enable()
-            self.buttons[3].Enable()         
-                    
-         
-    def on_select(self, event):
-        self.check_buttons()
-                     
+            self.buttons[3].Enable()
+
+
+
+
+    def find_shape(self):
+        """Find the selected shape's index and actual object"""
+        count = 0
+        for x in reversed(self.shapes):
+            if count == self.list.GetFirstSelected():
+                return (self.shapes.index(x), x)
+            count += 1
+
+
     def on_top(self, event):
-        #print event.GetData()
-        #print self.gui.board.shapes.index()
-        index = len(self.gui.board.shapes) - self.list.GetFirstSelected() - 1 
-        
-        item = self.shapes.pop(index)
+        index, item = self.find_shape()
+        self.shapes.pop(index)
         self.shapes.append(item)
-        #self.populate()
-        #print self.gui.board.shapes[len(self.gui.board.shapes) - self.list.GetFirstSelected() - 1]
-        self.list.DeleteItem(event.GetIndex())
-        index = self.list.InsertStringItem(0, "0")
-        self.list.SetStringItem(index, 1, shape.name)
-        self.list.SetStringItem(index, 2, str(shape.thickness))
-        self.list.SetStringItem(index, 3, str(shape.colour))
-        self.list.SetStringItem(index, 4, shape.properties())        
-        
-        
-        
+        self.populate()
+        self.list.Select(0)
+
+
     def on_bottom(self, event):
-        pass
+        index, item = self.find_shape()
+        self.shapes.pop(index)
+        self.shapes.insert(0, item)
+        self.populate()
+        self.list.Select(len(self.shapes) - 1)
+
 
     def on_up(self, event):
-        pass
+        index, item = self.find_shape()
+        self.shapes.pop(index)
+        self.shapes.insert(index + 1, item)
+        x = self.list.GetFirstSelected() - 1
+        self.populate()
+        self.list.Select(x)
+
 
     def on_down(self, event):
-        pass
+        index, item = self.find_shape()
+        self.shapes.pop(index)
+        self.shapes.insert(index - 1, item)
+        x = self.list.GetFirstSelected() + 1
+        self.populate()
+        self.list.Select(x)
 
 
-
-    def on_next(self, event):              
-        self.gui.tabs.SetSelection(self.gui.current_tab + 1)
+    def change(self, selection):
+        """Change the sheet, repopulate"""
+        self.gui.tabs.SetSelection(selection)
         self.gui.on_change_tab()
         self.shapes = copy(self.gui.board.shapes)
         self.populate()
         self.check_buttons()
-    
-    
-    def on_prev(self, event):      
-        self.gui.tabs.SetSelection(self.gui.current_tab - 1)
-        self.gui.on_change_tab()
-        self.shapes = copy(self.gui.board.shapes)
-        self.list.ClearAll()
-        self.populate()
+
+
+    def on_change_sheet(self, event):
+        self.change(self.pages.GetSelection())
+
+    def on_next(self, event):
+        self.change(self.gui.current_tab + 1)
+
+    def on_prev(self, event):
+        self.change(self.gui.current_tab - 1)
+
+    def on_select(self, event):
         self.check_buttons()
 
-               
+
     def ok(self, event):
         self.gui.board.add_undo()
         self.gui.board.shapes = self.shapes
@@ -1097,5 +1124,5 @@ class ShapeViewer(wx.Dialog):
 
     def cancel(self, event=None):
         self.Close()
-    
+
 #----------------------------------------------------------------------

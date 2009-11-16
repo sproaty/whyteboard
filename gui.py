@@ -60,6 +60,7 @@ ID_CHANGE_TOOL = wx.NewId()       # change tool hotkey
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
 ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
+ID_DESELECT = wx.NewId()          # deselect shape
 ID_EXPORT = wx.NewId()            # export sheet to image file
 ID_EXPORT_ALL = wx.NewId()        # export every sheet to numbered image files
 ID_EXPORT_PDF = wx.NewId()        # export->PDF
@@ -109,8 +110,7 @@ class GUI(wx.Frame):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
-        wx.Frame.__init__(self, parent, title=_("Untitled")+" - " + self.title,
-                          style=wx.DEFAULT_FRAME_STYLE | wx.WANTS_CHARS)
+        wx.Frame.__init__(self, parent, title=_("Untitled")+" - " + self.title)
         ico = lib.icon.whyteboard.getIcon()
         self.SetIcon(ico)
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
@@ -143,6 +143,7 @@ class GUI(wx.Frame):
         self.tab_total = 1
         self.current_tab = 0
         self.closed_tabs = []  # [shapes - undo - redo - canvas_size] per tab
+        self.hotkeys = []
 
         self.control = ControlPanel(self)
         self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8)
@@ -158,6 +159,8 @@ class GUI(wx.Frame):
         self.SetSizer(box)
         self.SetSizeWH(800, 600)
         self.Maximize(True)
+        if os.name == "posix":
+            self.board.SetFocus()  # makes EVT_CHAR_HOOK trigger
 
         self.count = 4  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(65)
@@ -238,9 +241,10 @@ class GUI(wx.Frame):
         shapes.Append(ID_MOVE_UP, _("Move Shape &Up")+"\tCtrl-Up", _("Moves the currently selected shape up"))
         shapes.Append(ID_MOVE_DOWN, _("Move Shape &Down")+"\tCtrl-Down", _("Moves the currently selected shape down"))
         shapes.Append(ID_MOVE_TO_TOP, _("Move Shape To &Top")+"\tCtrl-Shift-Up", _("Moves the currently selected shape to the top"))
-        shapes.Append(ID_MOVE_TO_BOTTOM, _("Move Shape To &Bottom")+"\tCtrl-Shift-Up", _("Moves the currently selected shape to the bottom"))
+        shapes.Append(ID_MOVE_TO_BOTTOM, _("Move Shape To &Bottom")+"\tCtrl-Shift-Down", _("Moves the currently selected shape to the bottom"))
         shapes.AppendSeparator()
         shapes.Append(wx.ID_DELETE, _("&Delete Shape")+"\tDelete", _("Delete the currently selected shape"))
+        shapes.Append(ID_DESELECT, _("&Deselect Shape")+"\tCtrl-D", _("Deselects the currently selected shape"))
         shapes.Append(ID_ROTATE, _("R&otate Image...")+"\tCtrl-I", _("Rotate the selected image"))
 
         sheets.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T", _("Add a new sheet"))
@@ -298,24 +302,13 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_CHAR_HOOK, self.hotkey)
 
         # idle event handlers
-        ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, wx.ID_DELETE, ID_ROTATE,
-               ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM]
+        ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_ROTATE, ID_MOVE_UP, ID_DESELECT,
+               ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, wx.ID_DELETE,
+               wx.ID_COPY, wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE,]
         [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
 
         # hotkeys
-        ac = [(wx.ACCEL_CTRL, ord('\t'), self.next.GetId()),
-              (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId())]
-
-        # Need to bind each item's hotkey to trigger change tool, passing its ID
-        # (position + 1 in the list, basically)
-        for x, item in enumerate(self.util.items):
-            blah = lambda evt, y=x + 1: self.on_change_tool(evt, y)
-            _id = wx.NewId()
-            ac.append((wx.ACCEL_NORMAL, ord(item.hotkey.upper()), _id))
-            self.Bind(wx.EVT_MENU, blah, id=_id)
-
-        tbl = wx.AcceleratorTable(ac)
-        self.SetAcceleratorTable(tbl)
+        self.hotkeys = [x.hotkey for x in self.util.items]
 
         # toolbar bindings
         ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
@@ -326,12 +319,12 @@ class GUI(wx.Frame):
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
                   "copy", "paste", "rotate", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
                   "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
-                  "move_down", "move_top", "move_bottom"]
+                  "move_down", "move_top", "move_bottom", "deselect"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
                wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
                ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
-               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM]
+               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -360,10 +353,8 @@ class GUI(wx.Frame):
 
             if x == 2 or x == 6:
                 self.toolbar.AddSeparator()
-            if x >= 3:
-                self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=_id)
-                self.toolbar.EnableTool(_id, False)
             x += 1
+        self.toolbar.EnableTool(wx.ID_PASTE, self.can_paste)
         self.toolbar.Realize()
 
 
@@ -484,7 +475,7 @@ class GUI(wx.Frame):
         """Exports the current sheet as an image, or all as a PDF."""
         filename = self.export_prompt()
         if filename:
-                self.util.export(filename)
+            self.util.export(filename)
 
 
     def on_export_all(self, event=None):
@@ -663,8 +654,8 @@ class GUI(wx.Frame):
         if before < 0:
             before = 0
 
-        tree.Delete(old_item)
         new = tree.InsertItemBefore(self.notes.root, before, text)
+        tree.Delete(old_item)
 
         # Restore the notes to the new tree item
         for item in children:
@@ -682,14 +673,14 @@ class GUI(wx.Frame):
         while child.IsOk():
             self.notes.tabs[count] = child
             tree.SetItemData(self.notes.tabs[count], wx.TreeItemData(count))
-            (child, cookie) = tree.GetNextChild(self.notes.tabs[count], cookie)
+            (child, cookie) = tree.GetNextChild(self.notes.root, cookie)
             count += 1
 
         tree.Expand(new)
         self.on_done_load()
-#
-#        wx.MilliSleep(100)  # try and stop user dragging too many tabs quickly
-#        wx.SafeYield()
+
+        wx.MilliSleep(100)  # try and stop user dragging too many tabs quickly
+        wx.SafeYield()
 
 
     def update_panels(self, select):
@@ -789,6 +780,9 @@ class GUI(wx.Frame):
     def on_delete_shape(self, event=None):
         self.board.delete_selected()
 
+    def on_deselect(self, event=None):
+        self.board.deselect()
+
 
     def update_menus(self, event):
         """
@@ -827,14 +821,14 @@ class GUI(wx.Frame):
                 do = True
             elif _id == wx.ID_UNDO and self.board.undo_list:
                 do = True
-            elif _id == ID_PREV and self.current_tab > 0:
+            elif _id == ID_PREV and self.current_tab:
                 do = True
             elif (_id == ID_NEXT and self.tab_count > 1 and
-             (self.current_tab + 1 < self.tab_count)):
+                  self.current_tab + 1 < self.tab_count):
                 do = True
-            elif _id == ID_UNDO_SHEET and len(self.closed_tabs) >= 1:
+            elif _id == ID_UNDO_SHEET and self.closed_tabs:
                 do = True
-            elif _id == wx.ID_DELETE and self.board.selected:
+            elif _id in [wx.ID_DELETE, ID_DESELECT] and self.board.selected:
                 do = True
             elif _id == ID_MOVE_UP and self.board.check_move("up"):
                 do = True
@@ -910,6 +904,11 @@ class GUI(wx.Frame):
         """
         Processes a hotkey (escape / home / end / page up / page down)
         """
+        for x, key in enumerate(self.hotkeys):
+            if event.GetKeyCode() == ord(key) or event.GetKeyCode() == ord(key.upper()):
+                self.control.change_tool(_id=x + 1)
+                return
+
         if event.GetKeyCode() == wx.WXK_ESCAPE:  # close fullscreen
             if self.IsFullScreen():
                 flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION |
@@ -1158,6 +1157,7 @@ class GUI(wx.Frame):
         dlg.Destroy()
 
     def on_change_tool(self, event, _id):
+        print 'ey'
         self.control.change_tool(_id=_id)
 
 
@@ -1224,10 +1224,12 @@ class GUI(wx.Frame):
              'Medina Colpaca https://launchpad.net/~medina-colpaca (Spanish)',
              'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
              '"MixCool" https://launchpad.net/~mixcool (German)',
+             'Nkolay Parukhin https://launchpad.net/~parukhin (Russian)',
              '"Rarulis" https://launchpad.net/~rarulis (French)',
              'Roberto Bondi https://launchpad.net/~bondi (Italian)',
              '"RodriT" https://launchpad.net/~rodri316 (Spanish)',
              'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
+             '"Tobberoth" https://launchpad.net/~tobberoth (Japanese)'
              '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
              '"Vonlist" https://launchpad.net/~hengartt (Spanish)',
              'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']

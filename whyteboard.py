@@ -106,6 +106,9 @@ class Whyteboard(wx.ScrolledWindow):
             self.resizing = True
             return
 
+        if not isinstance(self.shape, Select) and self.selected:
+            self.deselect()
+
         self.shape.left_down(x, y)
         if not isinstance(self.shape, Text):  #  Crashes without the Text check
             self.drawing = True
@@ -379,7 +382,6 @@ class Whyteboard(wx.ScrolledWindow):
             if self.shapes.index(self.selected) != length:
                 return True
         elif pos == "down" or pos == "bottom":
-            #print self.selected, self.shapes.index(self.selected)
             if self.shapes.index(self.selected) != 0:
                 return True
         return False

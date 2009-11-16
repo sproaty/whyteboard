@@ -13,7 +13,7 @@ Otherwise, here are the requirements:
 * wxPython - latest version is -always- recommended (currently 2.8.10.1)
 * ImageMagick, possibly GhostScript for Windows users (optional)
 
-http://python.org/download/
+http://www.python.org/download/
 http://www.wxpython.org/download.php
 http://www.imagemagick.net
 http://pages.cs.wisc.edu/~ghost/ - Windows users may need this for ImageMagick
@@ -47,10 +47,28 @@ http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D
 http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14-157CFDFFEE4E
 
 
-Icons taken from Crystal Project, http://www.everaldo.com/crystal/
-
 
 ---- KNOWN BUGS ----
 
+Possible crash on Linux with loading a PDF:
+
+  File "/usr/lib/whyteboard/utility.py", line 469, in display_converted
+    self.gui.board.redraw_all()
+  File "/usr/lib/python2.6/dist-packages/wx-2.8-gtk2-unicode/wx/_core.py", line 14522, in __getattr__
+    raise PyDeadObjectError(self.attrStr % self._name)
+PyDeadObjectError: The C++ part of the Whyteboard object has been deleted, attribute access no longer allowed.
+
 See up to date reports at https://bugs.launchpad.net/whyteboard
 Identified and confirmed bugs are always fixed before a new release.
+
+
+---- LIBRARIES / SOFTWARE USED ----
+
+Python, core programmling language - http://www.python.org/download/
+wxPython, GUI framework - http://www.wxpython.org
+ImageMagick - image editing suite - http://www.imagemagick.net
+BeautifulSoup, Python HTML parser - http://www.crummy.com/software/BeautifulSoup/
+ConfigObj, Python Configuration Files - http://www.voidspace.org.uk/python/configobj.html
+Editra Control Library, extra wxPython widgets - http://editra.org/eclib
+
+Crystal Project, icons - http://www.everaldo.com/crystal/
