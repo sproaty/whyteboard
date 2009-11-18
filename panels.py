@@ -24,6 +24,7 @@ This module contains classes for the GUI side panels and pop-up menus.
 import os
 
 import wx
+import wx.media
 import wx.lib.colourselect as csel
 from wx.lib import scrolledpanel as scrolled
 from wx.lib.buttons import GenBitmapToggleButton
@@ -311,6 +312,89 @@ class DrawingPreview(wx.Window):
 
 
 #----------------------------------------------------------------------
+
+class MediaPanel(wx.Panel):
+    def __init__(self, parent, pos):
+        wx.Panel.__init__(self, parent, pos=pos, size=(500, 500), style=wx.TAB_TRAVERSAL |
+                                                       wx.CLIP_CHILDREN)
+
+        self.mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
+        self.gui= parent.gui
+
+        btn1 = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_MENU))
+        self.playBtn = wx.BitmapButton(self, bitmap=wx.Bitmap(os.path.join(self.gui.util.get_path(), "images", "icons", "play.png")))
+        btn3 = wx.BitmapButton(self, bitmap=wx.Bitmap(os.path.join(self.gui.util.get_path(), "images", "icons", "pause.png")))
+        btn4 = wx.BitmapButton(self, bitmap=wx.Bitmap(os.path.join(self.gui.util.get_path(), "images", "icons", "stop.png")))
+
+
+        slider = wx.Slider(self, -1, 0, 0, 0)
+        self.slider = slider
+        slider.SetMinSize((150, -1))
+
+        # setup the layout
+        sizer = wx.GridBagSizer(5,5)
+        sizer.Add(self.mc, (1,1), span=(5,1))#, flag=wx.EXPAND)
+        sizer.Add(btn1, (1,3))
+        sizer.Add(self.playBtn, (2,3))
+        sizer.Add(btn3, (3,3))
+        sizer.Add(btn4, (4,3))
+        sizer.Add(slider, (6,1), flag=wx.EXPAND)
+        self.SetSizer(sizer)
+        self.Layout()
+
+        self.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
+        self.Bind(wx.EVT_BUTTON, self.OnLoadFile, btn1)
+        self.Bind(wx.EVT_BUTTON, self.OnPlay, self.playBtn)
+        self.Bind(wx.EVT_BUTTON, self.OnPause, btn3)
+        self.Bind(wx.EVT_BUTTON, self.OnStop, btn4)
+        self.Bind(wx.EVT_SLIDER, self.OnSeek, slider)
+
+
+    def OnLoadFile(self, evt):
+        dlg = wx.FileDialog(self, message=_("Choose a media file"),
+                            style=wx.OPEN | wx.CHANGE_DIR )
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            self.DoLoadFile(path)
+        dlg.Destroy()
+
+
+    def DoLoadFile(self, path):
+        self.playBtn.Disable()
+
+        if not self.mc.Load(path):
+            wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
+                          _("Error"),
+                          wx.ICON_ERROR | wx.OK)
+        else:
+            self.mc.SetInitialSize()
+            self.GetSizer().Layout()
+            self.slider.SetRange(0, self.mc.Length())
+
+    def OnMediaLoaded(self, evt):
+        self.playBtn.Enable()
+
+    def OnPlay(self, evt):
+        if not self.mc.Play():
+            wx.MessageBox(_("Unable to Play media : Unsupported format?"),
+                          _("Error"), wx.ICON_ERROR | wx.OK)
+        else:
+            self.mc.SetInitialSize()
+            self.GetSizer().Layout()
+            self.slider.SetRange(0, self.mc.Length())
+
+    def OnPause(self, evt):
+        self.mc.Pause()
+
+    def OnStop(self, evt):
+        self.mc.Stop()
+
+
+    def OnSeek(self, evt):
+        offset = self.slider.GetValue()
+        self.mc.Seek(offset)
+
+#---------------------------------------------------------------------
 
 
 class SidePanel(wx.Panel):

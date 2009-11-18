@@ -36,8 +36,8 @@ import copy
 import wx
 import wx.lib.dragscroller
 
-from tools import (Image, Text, Line, Note, Select, OverlayShape, TOP_LEFT,
-                   TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT)
+from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
+                   TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT)
 
 #----------------------------------------------------------------------
 
@@ -181,7 +181,7 @@ class Whyteboard(wx.ScrolledWindow):
             if self.copy:
                 self.draw_shape(self.copy)  # draw back the GCDC
             return
-        if self.drawing or isinstance(self.shape, Text):
+        if self.drawing or isinstance(self.shape, Text) or isinstance(self.shape, Media):
             before = len(self.shapes)
             self.shape.left_up(*self.convert_coords(event))
 

@@ -28,8 +28,10 @@ import os
 import time
 import math
 import wx
+import wx.media
 
 from dialogs import TextInput
+from panels import MediaPanel
 
 _ = wx.GetTranslation
 
@@ -632,10 +634,18 @@ class Media(Tool):
     icon = "media"
 
 
-    def preview(self, dc, width, height):
-        dc.DrawLine(10, height / 2, width - 10, height / 2)
-        dc.DrawLine(width - 10, height / 2, width - 20, (height / 2) - 6)
-        dc.DrawLine(width - 10, height / 2, width - 20, (height / 2) + 6)
+    def left_down(self, x, y):
+        self.mc = MediaPanel(self.board, (x, y))
+        #self.mc = wx.media.MediaCtrl(self.board, style=wx.SIMPLE_BORDER,
+        #                              pos=(x, y), size=(150, 150))
+        #dlg = wx.FileDialog(self.board, message="Choose a media file",
+        #                    defaultDir=os.getcwd(), defaultFile="",
+        #                    style=wx.OPEN | wx.CHANGE_DIR )
+        #if dlg.ShowModal() == wx.ID_OK:
+        #    path = dlg.GetPath()
+        #    self.mc.Load(path)
+        #dlg.Destroy()
+
 
 #---------------------------------------------------------------------
 
@@ -1311,4 +1321,4 @@ RectSelect = BitmapSelect
 
 # items to draw with
 items = [Pen, Eraser, Rectangle, RoundedRect, Line, Arrow, Ellipse, Circle, Text,
-         Note, Eyedrop, Media, BitmapSelect, Select]
+         Note, Media, Eyedrop, BitmapSelect, Select]
