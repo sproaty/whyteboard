@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009 by Steven Sproat
 #
@@ -102,7 +102,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.39.0"
+    version = "0.39.1"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -309,6 +309,20 @@ class GUI(wx.Frame):
 
         # hotkeys
         self.hotkeys = [x.hotkey for x in self.util.items]
+        ac = []
+
+        # Need to bind each item's hotkey to trigger change tool, passing its ID
+        # (position + 1 in the list, basically)
+        if os.name == "nt":
+            for x, item in enumerate(self.util.items):
+                blah = lambda evt, y=x + 1: self.on_change_tool(evt, y)
+                _id = wx.NewId()
+                ac.append((wx.ACCEL_NORMAL, ord(item.hotkey.upper()), _id))
+                self.Bind(wx.EVT_MENU, blah, id=_id)
+
+        tbl = wx.AcceleratorTable(ac)
+        self.SetAcceleratorTable(tbl)
+
 
         # toolbar bindings
         ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
@@ -899,15 +913,20 @@ class GUI(wx.Frame):
                wx.FULLSCREEN_NOSTATUSBAR)
         self.ShowFullScreen(not self.IsFullScreen(), flag)
 
+    def on_change_tool(self, event, _id):
+        self.control.change_tool(_id=_id)
 
     def hotkey(self, event=None):
         """
         Processes a hotkey (escape / home / end / page up / page down)
         """
-        for x, key in enumerate(self.hotkeys):
-            if event.GetKeyCode() == ord(key) or event.GetKeyCode() == ord(key.upper()):
-                self.control.change_tool(_id=x + 1)
-                return
+        if os.name == "posix":
+            for x, key in enumerate(self.hotkeys):
+
+                if (event.GetKeyCode() == ord(key)
+                    or event.GetKeyCode() == ord(key.upper())):
+                    self.control.change_tool(_id=x + 1)
+                    return
 
         if event.GetKeyCode() == wx.WXK_ESCAPE:  # close fullscreen
             if self.IsFullScreen():
@@ -1003,7 +1022,6 @@ class GUI(wx.Frame):
     def on_exit(self, event=None):
         """ Ask to save, quit or cancel if the user hasn't saved. """
         self.util.prompt_for_save(self.Destroy)
-        self.Destroy()
 
 
     def tab_popup(self, event):

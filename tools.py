@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009 by Steven Sproat
 #
@@ -578,6 +579,63 @@ class Line(OverlayShape):
         if val < 3 + round(self.thickness / 2):
             return True
         return False
+
+
+#---------------------------------------------------------------------
+
+class Arrow(Line):
+    tooltip = _("Draw an arrow")
+    name = _("Arrow")
+    hotkey = "a"
+    icon = "arrow"
+
+    def draw(self, dc, replay=False):
+        """
+        From http://lifshitz.ucdavis.edu/~dmartin/teach_java/slope/arrows.html
+        """
+        if not replay:
+            odc = wx.DCOverlay(self.board.overlay, dc)
+            odc.Clear()
+        if not self.pen or self.selected:
+            self.make_pen(dc)
+        dc.SetPen(self.pen)
+        dc.SetBrush(self.brush)
+
+        x0, x1, y0, y1 = self.x, self.x2, self.y, self.y2
+        deltaX = self.x2 - self.x
+        deltaY = self.y2 - self.y
+        frac = 0.2
+
+        dc.DrawLine(*self.get_args())
+        dc.DrawLine(x0 + ((1 - frac) * deltaX + frac * deltaY),
+                    y0 + ((1 - frac) * deltaY - frac * deltaX), x1, y1)
+        dc.DrawLine(x0 + ((1 - frac) * deltaX - frac * deltaY),
+                    y0 + ((1 - frac) * deltaY + frac * deltaX), x1, y1)
+
+        if self.selected:
+            self.draw_selected(dc)
+        if not replay:
+            del odc
+
+
+    def preview(self, dc, width, height):
+        dc.DrawLine(10, height / 2, width - 10, height / 2)
+        dc.DrawLine(width - 10, height / 2, width - 20, (height / 2) - 6)
+        dc.DrawLine(width - 10, height / 2, width - 20, (height / 2) + 6)
+
+#---------------------------------------------------------------------
+
+class Media(Tool):
+    tooltip = _("Insert media and audio")
+    name = _("Media")
+    hotkey = "m"
+    icon = "media"
+
+
+    def preview(self, dc, width, height):
+        dc.DrawLine(10, height / 2, width - 10, height / 2)
+        dc.DrawLine(width - 10, height / 2, width - 20, (height / 2) - 6)
+        dc.DrawLine(width - 10, height / 2, width - 20, (height / 2) + 6)
 
 #---------------------------------------------------------------------
 
@@ -1252,5 +1310,5 @@ RoundRect = RoundedRect
 RectSelect = BitmapSelect
 
 # items to draw with
-items = [Pen, Eraser, Rectangle, RoundedRect, Line, Ellipse, Circle, Text, Note,
-        Eyedrop, BitmapSelect, Select]
+items = [Pen, Eraser, Rectangle, RoundedRect, Line, Arrow, Ellipse, Circle, Text,
+         Note, Eyedrop, Media, BitmapSelect, Select]
