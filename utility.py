@@ -1,5 +1,5 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
+#!/usr/bin/python
 
 # Copyright (c) 2009 by Steven Sproat
 #
@@ -385,8 +385,7 @@ class Utility(object):
         for x, key in files.items():
             if files[x]['file'] == _file and files[x]['quality'] == quality:
                 return files[x]['images']
-        else:
-            return False
+        return False
 
 
     def library_write(self, location, images, quality):
@@ -431,8 +430,7 @@ class Utility(object):
             path = get_home_dir("wtbd-tmp")  # directory to store the images
             tmp_file = make_filename()
             before = os.walk(path).next()[2]  # file count before convert
-
-            full_path = os.path.join(path + tmp_file + ".png")
+            full_path = path + tmp_file + ".png"
 
             cmd = convert_quality(quality, self.im_location, _file, full_path)
             self.gui.convert_dialog(cmd)  # show progress bar, kick off convert
@@ -446,11 +444,13 @@ class Utility(object):
                 temp_path = path + tmp_file + ".png"
                 load_image(temp_path, self.gui.board)
             else:
-
+                if not count:
+                    wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed; http://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
+                    return
                 images = []
                 for x in range(0, count):
                     # store the temp file path for this file in the dictionary
-                    temp_file = path + tmp_file + "-%s" % (x) + ".png"
+                    temp_file = path + tmp_file + "-%s" % x + ".png"
                     images.append(temp_file)
 
                 self.display_converted(_file, images)
@@ -464,7 +464,7 @@ class Utility(object):
 
     def display_converted(self, _file, images):
         """
-        Display converted items. _file: PDF/PS. count: Images: list of files
+        Display converted items. _file: PDF/PS name. Images: list of files
         """
         if self.gui.tab_count == 1 and not self.gui.board.shapes:
             self.remove_all_sheets()
@@ -684,14 +684,23 @@ class Utility(object):
 
 #----------------------------------------------------------------------
 
-class FileDropTarget(wx.FileDropTarget):
+class FileDropTarget(wx.TextDropTarget):
     """Implements drop target functionality to receive files"""
     def __init__(self, gui):
-        wx.FileDropTarget.__init__(self)
+        wx.TextDropTarget.__init__(self)
         self.gui = gui
+
+    def OnDropText(self, x, y, text):
+        t = tools.Text(self.gui.board, self.gui.util.colour, 1)
+        t.left_down(x, y)
+        #t.text = text
+        t.left_up(x, y)
 
     def OnDropFiles(self, x, y, filenames):
         """Passes the first file to the load file method to handle"""
-        self.gui.do_open(filenames[0])
+        for x, name in enumerate(filenames):
+            if x or self.gui.board.shapes:
+                self.gui.on_new_tab()            
+            self.gui.do_open(name)
 
 #----------------------------------------------------------------------

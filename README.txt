@@ -1,4 +1,4 @@
-Whyteboard 0.39.1 - A simple image, PDF and postscript file annotator
+Whyteboard 0.39.2 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Tuesday 17 November 2009
 
@@ -10,7 +10,8 @@ start menu.
 Otherwise, here are the requirements:
 
 * Python - 2.5.4 or 2.6.4 (untested on other major versions; should work on 2.4)
-* wxPython - latest version is -always- recommended (currently 2.8.10.1)
+* wxPython - latest version is -always- recommended (currently 2.8.10.1). 
+    ---- WXPYTHON 2.8.9.0 NEEDED AT MINIMUM
 * ImageMagick, possibly GhostScript for Windows users (optional)
 
 http://www.python.org/download/

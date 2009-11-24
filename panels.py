@@ -313,41 +313,94 @@ class DrawingPreview(wx.Window):
 
 #----------------------------------------------------------------------
 
-class MediaPanel(wx.Panel):
-    def __init__(self, parent, pos):
-        wx.Panel.__init__(self, parent, pos=pos, size=(500, 500), style=wx.TAB_TRAVERSAL |
+class MediaPanel(wx.Window):
+    """
+    A panel that contains a MediaCtrl for playing videos/audio, and buttons for
+    controlling it: open (file)/pause/stop/play, and a slider bar.
+    """
+    def __init__(self, parent, pos, tool):
+        wx.Window.__init__(self, parent, pos=pos, size=(250, 250), style=wx.TAB_TRAVERSAL |
                                                        wx.CLIP_CHILDREN)
-
+        self.gui = parent.gui
+        self.tool = tool
+        self.offset = (0, 0)
         self.mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
-        self.gui= parent.gui
+        self.timer = wx.Timer(self)  # updates the slider as the file plays
+        self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
 
-        btn1 = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_MENU))
-        self.playBtn = wx.BitmapButton(self, bitmap=wx.Bitmap(os.path.join(self.gui.util.get_path(), "images", "icons", "play.png")))
-        btn3 = wx.BitmapButton(self, bitmap=wx.Bitmap(os.path.join(self.gui.util.get_path(), "images", "icons", "pause.png")))
-        btn4 = wx.BitmapButton(self, bitmap=wx.Bitmap(os.path.join(self.gui.util.get_path(), "images", "icons", "stop.png")))
-
+        path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
+        self.open = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_MENU))
+        self.play = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "play.png"))
+        self.pause = wx.BitmapButton(self, bitmap=wx.Bitmap(path +  "pause.png"))
+        self.stop = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "stop.png"))
+        self.play.Disable()
+        self.pause.Disable()
+        self.stop.Disable()
 
         slider = wx.Slider(self, -1, 0, 0, 0)
         self.slider = slider
         slider.SetMinSize((150, -1))
 
-        # setup the layout
         sizer = wx.GridBagSizer(5,5)
         sizer.Add(self.mc, (1,1), span=(5,1))#, flag=wx.EXPAND)
-        sizer.Add(btn1, (1,3))
-        sizer.Add(self.playBtn, (2,3))
-        sizer.Add(btn3, (3,3))
-        sizer.Add(btn4, (4,3))
+        sizer.Add(self.open, (1,3), flag=wx.RIGHT, border=10)
+        sizer.Add(self.play, (2,3), flag=wx.RIGHT, border=10)
+        sizer.Add(self.pause, (3,3), flag=wx.RIGHT, border=10)
+        sizer.Add(self.stop, (4,3), flag=wx.RIGHT, border=10)
         sizer.Add(slider, (6,1), flag=wx.EXPAND)
         self.SetSizer(sizer)
         self.Layout()
 
         self.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
-        self.Bind(wx.EVT_BUTTON, self.OnLoadFile, btn1)
-        self.Bind(wx.EVT_BUTTON, self.OnPlay, self.playBtn)
-        self.Bind(wx.EVT_BUTTON, self.OnPause, btn3)
-        self.Bind(wx.EVT_BUTTON, self.OnStop, btn4)
+        self.Bind(wx.EVT_BUTTON, self.OnLoadFile, self.open)
+        self.Bind(wx.EVT_BUTTON, self.OnPlay, self.play)
+        self.Bind(wx.EVT_BUTTON, self.OnPause, self.pause)
+        self.Bind(wx.EVT_BUTTON, self.OnStop, self.stop)
         self.Bind(wx.EVT_SLIDER, self.OnSeek, slider)
+        self.Bind(wx.EVT_LEFT_UP, self.left_up)
+        self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
+        self.Bind(wx.EVT_MOTION, self.left_motion)
+        self.Bind(wx.EVT_TIMER, self.OnTimer)
+        self.timer.Start(100)
+
+
+    def OnTimer(self, evt):
+        if self.mc.GetState() == wx.media.MEDIASTATE_PLAYING:
+            offset = self.mc.Tell()
+            self.slider.SetValue(offset)
+
+
+    def left_down(self, event):
+        """
+        Grab the offset value to position the cursor in the same place in the
+        object
+        """
+        parentPos = self.Parent.ScreenToClient(
+            self.ClientToScreen(event.Position))
+
+        selfPos = self.Parent.ScreenToClient(
+            self.ClientToScreen(self.GetPositionTuple()))
+
+        self.offset = (parentPos[0] - selfPos[0], parentPos[1] - selfPos[1])
+        self.CaptureMouse()
+
+
+    def left_up(self, event):
+        if self.HasCapture():
+            self.ReleaseMouse()
+
+
+    def left_motion(self, event):
+        """Reposition the window with an offset"""
+        if event.Dragging():
+
+            parentPos = self.Parent.ScreenToClient(
+                self.ClientToScreen(event.Position))
+
+            pos = (parentPos[0] - self.offset[0], parentPos[1] - self.offset[1])
+            self.tool.x = pos[0]
+            self.tool.y = pos[1]
+            self.SetPosition(pos)
 
 
     def OnLoadFile(self, evt):
@@ -360,39 +413,50 @@ class MediaPanel(wx.Panel):
 
 
     def DoLoadFile(self, path):
-        self.playBtn.Disable()
 
         if not self.mc.Load(path):
             wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
                           _("Error"),
                           wx.ICON_ERROR | wx.OK)
+            self.play.Disable()
+            self.pause.Disable()
+            self.stop.Disable()
         else:
             self.mc.SetInitialSize()
-            self.GetSizer().Layout()
             self.slider.SetRange(0, self.mc.Length())
 
+
     def OnMediaLoaded(self, evt):
-        self.playBtn.Enable()
+        self.play.Enable()
 
     def OnPlay(self, evt):
         if not self.mc.Play():
             wx.MessageBox(_("Unable to Play media : Unsupported format?"),
                           _("Error"), wx.ICON_ERROR | wx.OK)
         else:
+            self.play.Disable()
+            self.pause.Enable()
+            self.stop.Enable()
             self.mc.SetInitialSize()
             self.GetSizer().Layout()
+            self.Fit()
             self.slider.SetRange(0, self.mc.Length())
 
     def OnPause(self, evt):
         self.mc.Pause()
+        self.play.Enable()
+        self.pause.Disable()
 
     def OnStop(self, evt):
         self.mc.Stop()
-
+        self.play.Enable()
+        self.pause.Disable()
+        self.stop.Disable()
 
     def OnSeek(self, evt):
         offset = self.slider.GetValue()
         self.mc.Seek(offset)
+
 
 #---------------------------------------------------------------------
 

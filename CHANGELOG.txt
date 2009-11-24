@@ -1,8 +1,20 @@
-Whyteboard 0.39.1 - A simple image, PDF and postscript file annotator
+Whyteboard 0.39.2 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Tuesday 17 November 2009
 
 ---- VERSION HISTORY ----
+
+----------------------------------------------------------------------
+
+xx Nov 2009 -- 0.39.2
+
+* The new Arrow tool's arrows are drawn at a smaller degree
+* A check for a minimum wxPython version of 2.8.9.0
+* Support for drag/drop multiple files
+* Possible fix for crashing during PDF loading. I've had many bug reports of the
+  issue but cannot replicate it on my Windows or Linux installs. I'm not sure if
+  the bug is even fixed, I've just added some code that may help...
+* Bugfix: drag/drop files onto the canvas, again
 
 ----------------------------------------------------------------------
 

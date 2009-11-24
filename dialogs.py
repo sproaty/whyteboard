@@ -25,6 +25,7 @@ from __future__ import division
 
 import os
 import sys
+import subprocess
 import wx
 import wx.lib.mixins.listctrl as listmix
 
@@ -429,14 +430,14 @@ class TextInput(wx.Dialog):
         self.note = None
         self.colour = gui.util.colour
         gap = wx.LEFT | wx.TOP | wx.RIGHT
+        
         text = ""
-
         if note:
             self.note = note
             self.colour = note.colour
             text = note.text
             font = wx.FFont(0, 0)
-            font.SetNativeFontInfoFromString(note.font_data)
+            font.SetNativeFontInfoFromString(note.font_data)        
         else:
             font = gui.util.font
 
@@ -856,13 +857,26 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
     def GetProgramName(self):
         return "Whyteboard " + wx.GetTopLevelWindows()[0].version
 
+    def GetEnvironmentInfo(self):
+        x = super(ErrorDialog, self).GetEnvironmentInfo()
+        if wx.GetTopLevelWindows()[0].util.config.has_key('imagemagick_path'):
+            im = subprocess.Popen('"'+ wx.GetTopLevelWindows()[0].util.config['imagemagick_path'] +'\convert.exe" -list configure', stdout = subprocess.PIPE)
+            
+            xx = ""
+            for blah in im.stdout.readlines():
+                xx += blah
+            x += "#---- ImageMagick Information ----#\n%s\n" % xx
+        return x
+
     def Send(self):
-        """Send the error report. PHP script calls isset($_POST['submitted'])"""
+        """Send the error report. PHP script calls isset($_POST['submitted'])"""        
         params = urlencode({'submitted': 'fgdg',
                             'message': self._panel.err_msg,
                             'desc': self._panel.action.GetValue(),
                             'email': self._panel.email.GetValue()})
         f = urlopen("http://www.basicrpg.com/bug_submit.php", params)
+        
+        self.gui.util.prompt_for_save(self.gui.Destroy)
 
 
  #----------------------------------------------------------------------

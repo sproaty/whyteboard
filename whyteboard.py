@@ -38,6 +38,7 @@ import wx.lib.dragscroller
 
 from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
                    TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT)
+from utility import FileDropTarget
 
 #----------------------------------------------------------------------
 
@@ -57,10 +58,13 @@ class Whyteboard(wx.ScrolledWindow):
         style = wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN
         wx.ScrolledWindow.__init__(self, tab, style=style)
 
-        self.area = (gui.util.config['default_width'], gui.util.config['default_height'])#(640, 480)
+        self.area = (gui.util.config['default_width'], gui.util.config['default_height'])
         self.SetVirtualSizeHints(2, 2)
-        self.SetScrollRate(1, 1)
+        self.SetScrollRate(1, 1)     
         self.SetBackgroundColour('Grey')
+        self.file_drop = FileDropTarget(gui)
+        self.SetDropTarget(self.file_drop)
+                
         if os.name == "nt":
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
         if os.name == "posix":
@@ -96,11 +100,10 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
-
     def left_down(self, event):
         """Starts drawing"""
         x, y = self.convert_coords(event)
-        if os.name == "nt":
+        if os.name == "nt" and not isinstance(self.shape, Media):
             self.CaptureMouse()
         if self.check_canvas_resize(x, y):  # don't draw outside canvas
             self.resizing = True
@@ -110,14 +113,14 @@ class Whyteboard(wx.ScrolledWindow):
             self.deselect()
 
         self.shape.left_down(x, y)
-        if not isinstance(self.shape, Text):  #  Crashes without the Text check
+        #  Crashes without the Text check
+        if not isinstance(self.shape, Text) and not isinstance(self.shape, Media):
             self.drawing = True
 
 
     def left_motion(self, event):
         """Updates the shape. Indicate shape may be changed using Select tool"""
         x, y = self.convert_coords(event)
-
         if self.resizing:
             self.resize_canvas((x, y), self.resize_direction)
             return
@@ -147,6 +150,7 @@ class Whyteboard(wx.ScrolledWindow):
         elif isinstance(self.shape, Select):  # change cursor to indicate action
             for shape in reversed(self.shapes):
                 res = shape.handle_hit_test(x, y)
+
                 if res and isinstance(shape, Line):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
                     break
@@ -172,9 +176,10 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Called when the left mouse button is released.
         """
-        if os.name == "nt":
+        if os.name == "nt" and not isinstance(self.shape, Media):
             if self.HasCapture():
                 self.ReleaseMouse()
+
         if self.resizing:
             self.resizing = False
             self.redraw_all(True)  # update thumb for new canvas size
@@ -334,6 +339,8 @@ class Whyteboard(wx.ScrolledWindow):
     def undo(self):
         """ Undoes an action, and adds it to the redo list. """
         self.perform(self.undo_list, self.redo_list)
+        if isinstance(shape, Media):
+            shape.mc.Destroy()
 
     def redo(self):
         """ Redoes an action, and adds it to the undo list. """
@@ -342,21 +349,22 @@ class Whyteboard(wx.ScrolledWindow):
 
     def perform(self, list_a, list_b):
         """ list_a: to remove from / list b: append to """
-
         if not list_a:
             return
+
         list_b.append(list(self.shapes))
         shapes = list_a.pop()
         self.shapes = shapes
         self.deselect()
         self.redraw_all(True)
 
-        # nicest way to sort the notes out at the moment
+        # nicest (and laziest) way to sort the notes out at the moment
         notes = self.gui.notes
         notes.tree.DeleteChildren(notes.tabs[self.gui.tabs.GetSelection()])
         for x in shapes:
             if isinstance(x, Note):
                 self.gui.notes.add_note(x)
+
 
 
     def clear(self, keep_images=False):

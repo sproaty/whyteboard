@@ -606,13 +606,13 @@ class Arrow(Line):
         x0, x1, y0, y1 = self.x, self.x2, self.y, self.y2
         deltaX = self.x2 - self.x
         deltaY = self.y2 - self.y
-        frac = 0.2
+        frac = 0.15
 
         dc.DrawLine(*self.get_args())
-        dc.DrawLine(x0 + ((1 - frac) * deltaX + frac * deltaY),
-                    y0 + ((1 - frac) * deltaY - frac * deltaX), x1, y1)
-        dc.DrawLine(x0 + ((1 - frac) * deltaX - frac * deltaY),
-                    y0 + ((1 - frac) * deltaY + frac * deltaX), x1, y1)
+        dc.DrawLine(x0 + ((.75 - frac) * deltaX + frac * deltaY),
+                    y0 + ((.75 - frac) * deltaY - frac * deltaX), x1, y1)
+        dc.DrawLine(x0 + ((.75 - frac) * deltaX - frac * deltaY),
+                    y0 + ((.75 - frac) * deltaY + frac * deltaX), x1, y1)
 
         if self.selected:
             self.draw_selected(dc)
@@ -635,7 +635,10 @@ class Media(Tool):
 
 
     def left_down(self, x, y):
-        self.mc = MediaPanel(self.board, (x, y))
+        self.x = x
+        self.y = y
+        self.board.add_shape(self)
+        self.mc = MediaPanel(self.board, (x, y), self)
         #self.mc = wx.media.MediaCtrl(self.board, style=wx.SIMPLE_BORDER,
         #                              pos=(x, y), size=(150, 150))
         #dlg = wx.FileDialog(self.board, message="Choose a media file",
@@ -645,6 +648,14 @@ class Media(Tool):
         #    path = dlg.GetPath()
         #    self.mc.Load(path)
         #dlg.Destroy()
+
+    def save(self):
+        self.filename = self.mc.mc.filename
+        self.mc = None
+
+    def load(self):
+        self.left_down(0, 0)
+
 
 
 #---------------------------------------------------------------------
@@ -766,6 +777,7 @@ class Text(OverlayShape):
         super(Text, self).left_down(x, y)
         self.board.text = self
 
+
     def left_up(self, x, y):
         """
         Shows the text input dialog, creates a new Shape object if the cancel
@@ -775,7 +787,8 @@ class Text(OverlayShape):
         self.x = x
         self.y = y
         dlg = TextInput(self.board.gui)
-
+        #dlg.ctrl.SetValue(self.text)
+        
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
             self.board.text = None
@@ -1321,4 +1334,4 @@ RectSelect = BitmapSelect
 
 # items to draw with
 items = [Pen, Eraser, Rectangle, RoundedRect, Line, Arrow, Ellipse, Circle, Text,
-         Note, Media, Eyedrop, BitmapSelect, Select]
+         Note, Eyedrop, Media, BitmapSelect, Select]
