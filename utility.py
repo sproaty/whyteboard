@@ -60,6 +60,7 @@ but are restored with it upon loading the file.
 
 import os
 import sys
+import webbrowser
 import urllib
 import tarfile
 import distutils.dir_util
@@ -176,7 +177,6 @@ class Utility(object):
         wc_list = [x + "|" + y for x, y in zip(label, wc_types)]
 
         self.wildcard = '|'.join(wc_list)
-
 
 
     def save_file(self):
@@ -446,6 +446,9 @@ class Utility(object):
             else:
                 if not count:
                     wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed; http://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
+                    wx.BeginBusyCursor()
+                    webbrowser.open_new_tab("http://pages.cs.wisc.edu/~ghost/")
+                    wx.CallAfter(wx.EndBusyCursor)
                     return
                 images = []
                 for x in range(0, count):
@@ -528,8 +531,7 @@ class Utility(object):
             name = _("Untitled")
             if self.filename:
                 name = os.path.basename(self.filename)
-            msg = (_('"%s" has been modified.\nDo you want to save '
-                   'your changes?') % name)
+            msg = (_('"%s" has been modified.\nDo you want to save your changes?') % name)
             dialog = wx.MessageDialog(self.gui, msg, _("Save File?"), style |
                                       wx.ICON_EXCLAMATION)
             val = dialog.ShowModal()
@@ -700,7 +702,7 @@ class FileDropTarget(wx.TextDropTarget):
         """Passes the first file to the load file method to handle"""
         for x, name in enumerate(filenames):
             if x or self.gui.board.shapes:
-                self.gui.on_new_tab()            
+                self.gui.on_new_tab()
             self.gui.do_open(name)
 
 #----------------------------------------------------------------------

@@ -60,11 +60,11 @@ class Whyteboard(wx.ScrolledWindow):
 
         self.area = (gui.util.config['default_width'], gui.util.config['default_height'])
         self.SetVirtualSizeHints(2, 2)
-        self.SetScrollRate(1, 1)     
+        self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
         self.file_drop = FileDropTarget(gui)
         self.SetDropTarget(self.file_drop)
-                
+
         if os.name == "nt":
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
         if os.name == "posix":
@@ -176,7 +176,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Called when the left mouse button is released.
         """
-        if os.name == "nt" and not isinstance(self.shape, Media):
+        if os.name == "nt":
             if self.HasCapture():
                 self.ReleaseMouse()
 
@@ -338,13 +338,22 @@ class Whyteboard(wx.ScrolledWindow):
 
     def undo(self):
         """ Undoes an action, and adds it to the redo list. """
+        x = len(self.shapes) - 1
+        if not self.shapes:
+            x = 0
+        if isinstance(self.shapes[x], Media):
+            self.shapes[x].mc.Destroy()
+            self.shapes[x].mc = None
         self.perform(self.undo_list, self.redo_list)
-        if isinstance(shape, Media):
-            shape.mc.Destroy()
 
     def redo(self):
         """ Redoes an action, and adds it to the undo list. """
         self.perform(self.redo_list, self.undo_list)
+        x = len(self.shapes) - 1
+        if not self.shapes:
+            x = 0
+        if isinstance(self.shapes[x], Media):
+            self.shapes[x].make_panel()
 
 
     def perform(self, list_a, list_b):

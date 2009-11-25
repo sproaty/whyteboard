@@ -21,17 +21,19 @@
 This module contains classes for the GUI side panels and pop-up menus.
 """
 
+from __future__ import division
 import os
 
 import wx
 import wx.media
 import wx.lib.colourselect as csel
+from wx.lib.wordwrap import wordwrap as wordwrap
 from wx.lib import scrolledpanel as scrolled
 from wx.lib.buttons import GenBitmapToggleButton
 
 from copy import copy
 
-from functions import make_bitmap
+from functions import make_bitmap, get_time
 
 _ = wx.GetTranslation
 
@@ -324,9 +326,13 @@ class MediaPanel(wx.Window):
         self.gui = parent.gui
         self.tool = tool
         self.offset = (0, 0)
+        self.moving = False
+        self.overlay = wx.Overlay()
         self.mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
         self.timer = wx.Timer(self)  # updates the slider as the file plays
         self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
+        self.SetBackgroundColour("Grey")
+        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
 
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
         self.open = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_MENU))
@@ -337,37 +343,55 @@ class MediaPanel(wx.Window):
         self.pause.Disable()
         self.stop.Disable()
 
-        slider = wx.Slider(self, -1, 0, 0, 0)
-        self.slider = slider
-        slider.SetMinSize((150, -1))
+        self.file = wx.StaticText(self)
+        self.total = wx.StaticText(self)
+        self.elapsed = wx.StaticText(self)
+        timesizer = wx.BoxSizer(wx.HORIZONTAL)
+        timesizer.Add(self.file, 1, wx.LEFT | wx.RIGHT, 5)
+        timesizer.Add(self.elapsed, 0, wx.LEFT, 5)
+        timesizer.Add(wx.StaticText(self, label="/"), 0, wx.LEFT | wx.RIGHT, 1)
+        timesizer.Add(self.total, 0, wx.RIGHT, 5)
 
-        sizer = wx.GridBagSizer(5,5)
-        sizer.Add(self.mc, (1,1), span=(5,1))#, flag=wx.EXPAND)
-        sizer.Add(self.open, (1,3), flag=wx.RIGHT, border=10)
-        sizer.Add(self.play, (2,3), flag=wx.RIGHT, border=10)
-        sizer.Add(self.pause, (3,3), flag=wx.RIGHT, border=10)
-        sizer.Add(self.stop, (4,3), flag=wx.RIGHT, border=10)
-        sizer.Add(slider, (6,1), flag=wx.EXPAND)
+        self.slider = wx.Slider(self)
+        self.slider.SetToolTipString(_("Skip to a position "))
+        self.volume = wx.Slider(self, value=0, style=wx.SL_VERTICAL)
+        self.volume.SetToolTipString(_("Set the volume"))
+
+        sizer = wx.GridBagSizer(6, 5)
+        sizer.Add(self.mc, (1, 1), span=(5, 1))#, flag=wx.EXPAND)
+        sizer.Add(self.open, (1, 3), flag=wx.RIGHT, border=10)
+        sizer.Add(self.play, (2, 3), flag=wx.RIGHT, border=10)
+        sizer.Add(self.pause, (3, 3), flag=wx.RIGHT, border=10)
+        sizer.Add(self.stop, (4, 3), flag=wx.RIGHT, border=10)
+        sizer.Add(self.volume, (5, 3), flag=wx.RIGHT, border=10)
+
+        sizer.Add(self.slider, (6, 1), flag=wx.EXPAND)
+        sizer.Add(timesizer, (7, 1), flag=wx.EXPAND | wx.BOTTOM, border=10)
         self.SetSizer(sizer)
         self.Layout()
 
-        self.Bind(wx.media.EVT_MEDIA_LOADED, self.OnMediaLoaded)
-        self.Bind(wx.EVT_BUTTON, self.OnLoadFile, self.open)
-        self.Bind(wx.EVT_BUTTON, self.OnPlay, self.play)
-        self.Bind(wx.EVT_BUTTON, self.OnPause, self.pause)
-        self.Bind(wx.EVT_BUTTON, self.OnStop, self.stop)
-        self.Bind(wx.EVT_SLIDER, self.OnSeek, slider)
+        self.Bind(wx.media.EVT_MEDIA_LOADED, self.media_loaded)
+        self.Bind(wx.EVT_BUTTON, self.load_file, self.open)
+        self.Bind(wx.EVT_BUTTON, self.on_play, self.play)
+        self.Bind(wx.EVT_BUTTON, self.on_pause, self.pause)
+        self.Bind(wx.EVT_BUTTON, self.on_stop, self.stop)
+        self.Bind(wx.EVT_SLIDER, self.on_seek, self.slider)
+        self.Bind(wx.EVT_SLIDER, self.on_volume, self.volume)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_MOTION, self.left_motion)
-        self.Bind(wx.EVT_TIMER, self.OnTimer)
-        self.timer.Start(100)
+        self.Bind(wx.EVT_TIMER, self.on_timer)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.timer.Start(500)
 
+    def on_paint(self, event):
+        if self.moving:
+            dc = wx.BufferedPaintDC(self)
+            dc.SetBackground(wx.Brush(wx.Colour(112,112,112)))
+            dc.Clear()
+        else:
+            wx.BufferedPaintDC(self)
 
-    def OnTimer(self, evt):
-        if self.mc.GetState() == wx.media.MEDIASTATE_PLAYING:
-            offset = self.mc.Tell()
-            self.slider.SetValue(offset)
 
 
     def left_down(self, event):
@@ -381,13 +405,19 @@ class MediaPanel(wx.Window):
         selfPos = self.Parent.ScreenToClient(
             self.ClientToScreen(self.GetPositionTuple()))
 
-        self.offset = (parentPos[0] - selfPos[0], parentPos[1] - selfPos[1])
+        self.offset = (selfPos[0] - parentPos[0], selfPos[1] - parentPos[1])
+
+        print parentPos
+        print self.offset
+
         self.CaptureMouse()
+        self.moving = True
 
 
     def left_up(self, event):
         if self.HasCapture():
             self.ReleaseMouse()
+            self.moving = False
 
 
     def left_motion(self, event):
@@ -401,35 +431,59 @@ class MediaPanel(wx.Window):
             self.tool.x = pos[0]
             self.tool.y = pos[1]
             self.SetPosition(pos)
+            self.HighlightWindow()
+            self.Refresh()
 
 
-    def OnLoadFile(self, evt):
+    def load_file(self, evt):
+        vids = "*.avi; *.mkv; *.mov; *.mpg; *ogg; *.wmv"
+        audio = "*.mp3; *.oga; *.ogg; *.wav"
+        wc = _("Media Files")+" |%s;%s|" % (vids, audio)
+        wc += _("Video Files")+" (%s)|%s|" % (vids, vids)
+        wc += _("Audio Files")+" (%s)|%s" % (audio, audio)
+
         dlg = wx.FileDialog(self, message=_("Choose a media file"),
-                            style=wx.OPEN | wx.CHANGE_DIR )
+                            wildcard=wc, style=wx.OPEN | wx.CHANGE_DIR )
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
-            self.DoLoadFile(path)
+            self.do_load_file(path)
         dlg.Destroy()
 
 
-    def DoLoadFile(self, path):
+    def do_load_file(self, path):
 
         if not self.mc.Load(path):
             wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
-                          _("Error"),
-                          wx.ICON_ERROR | wx.OK)
+                          _("Error"), wx.ICON_ERROR | wx.OK)
             self.play.Disable()
             self.pause.Disable()
             self.stop.Disable()
         else:
+            self.tool.filename = path
             self.mc.SetInitialSize()
             self.slider.SetRange(0, self.mc.Length())
 
 
-    def OnMediaLoaded(self, evt):
+    def media_loaded(self, evt):
         self.play.Enable()
+        #wordwrap(os.path.basename(self.tool.filename), 350, wx.ClientDC(self.gui))
+        self.file.SetLabel(os.path.basename(self.tool.filename))
+        self.elapsed.SetLabel("00:00")
+        self.total.SetLabel(get_time(self.mc.Length() / 1000))
+        self.mc.SetInitialSize()
+        self.slider.SetRange(0, self.mc.Length())
+        self.GetSizer().Layout()
+        self.Fit()
 
-    def OnPlay(self, evt):
+
+    def on_timer(self, evt):
+        if self.mc.GetState() == wx.media.MEDIASTATE_PLAYING:
+            offset = self.mc.Tell()
+            self.slider.SetValue(offset)
+            self.elapsed.SetLabel(get_time(offset / 1000))
+
+
+    def on_play(self, evt):
         if not self.mc.Play():
             wx.MessageBox(_("Unable to Play media : Unsupported format?"),
                           _("Error"), wx.ICON_ERROR | wx.OK)
@@ -437,26 +491,28 @@ class MediaPanel(wx.Window):
             self.play.Disable()
             self.pause.Enable()
             self.stop.Enable()
-            self.mc.SetInitialSize()
-            self.GetSizer().Layout()
-            self.Fit()
-            self.slider.SetRange(0, self.mc.Length())
 
-    def OnPause(self, evt):
+
+    def on_pause(self, evt):
         self.mc.Pause()
         self.play.Enable()
         self.pause.Disable()
 
-    def OnStop(self, evt):
+    def on_stop(self, evt):
         self.mc.Stop()
         self.play.Enable()
         self.pause.Disable()
         self.stop.Disable()
 
-    def OnSeek(self, evt):
-        offset = self.slider.GetValue()
-        self.mc.Seek(offset)
+    def on_seek(self, evt):
+        self.mc.Seek(self.slider.GetValue())
+        self.elapsed.SetLabel(get_time(self.slider.GetValue() / 1000))
 
+    def on_volume(self, evt):
+        val = 100 - self.volume.GetValue()
+        if val == 0:
+            val = 1
+        self.mc.SetVolume(float(val / 100))
 
 #---------------------------------------------------------------------
 

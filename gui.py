@@ -36,6 +36,20 @@ import sys
 import time
 import locale
 import webbrowser
+
+WXVER = '2.8.9'
+import wxversion
+if wxversion.checkInstalled(WXVER):
+    wxversion.select([WXVER, '2.8.10'])
+else:
+    import wx
+    app = wx.PySimpleApp()
+    wx.MessageBox("The requested version of wxPython is not installed.\n"
+                  "Please install version %s" % WXVER, "wxPython Version Error")
+    app.MainLoop()
+    webbrowser.open("http://wxPython.org/download.php")
+    sys.exit()
+
 import wx
 import wx.lib.newevent
 import lib.flatnotebook as fnb
@@ -102,7 +116,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.39.1"
+    version = "0.39.2"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -1233,9 +1247,10 @@ class GUI(wx.Frame):
              'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
              '"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
              '"Lauren" https://launchpad.net/~lewakefi (French)',
+             'Javier Acuña Ditzel https://launchpad.net/~santoposmoderno (Spanish)',
              'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
              'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
-             'Medina Colpaca https://launchpad.net/~medina-colpaca (Spanish)',
+             'Medina https://launchpad.net/~medina-colpaca (Spanish)',
              'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
              '"MixCool" https://launchpad.net/~mixcool (German)',
              'Nkolay Parukhin https://launchpad.net/~parukhin (Russian)',

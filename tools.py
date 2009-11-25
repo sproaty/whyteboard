@@ -52,8 +52,10 @@ CENTER_LEFT   = 8
 class Tool(object):
     """ Abstract class representing a tool: Drawing board/colour/thickness """
     tooltip = ""
+    name = ""
     icon = ""
     hotkey = ""
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL):
         self.board = board
@@ -83,6 +85,7 @@ class Tool(object):
     def draw(self, dc, replay=True):
         """ Draws itself. """
         pass
+
 
     def hit_test(self, x, y):
         """ Returns True/False if a mouseclick in "inside" the shape """
@@ -127,6 +130,7 @@ class Pen(Tool):
     name = _("Pen")
     icon = "pen"
     hotkey = "p"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL):
         Tool.__init__(self, board, colour, thickness, background, cursor)
@@ -308,6 +312,7 @@ class Rectangle(OverlayShape):
     name = _("Rectangle")
     icon = "rectangle"
     hotkey = "r"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, board, colour, thickness, background)
         self.width = 0
@@ -432,6 +437,7 @@ class Circle(OverlayShape):
     name = _("Circle")
     icon = "circle"
     hotkey = "c"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, board, colour, thickness, background)
         self.radius = 1
@@ -473,6 +479,7 @@ class RoundedRect(Rectangle):
     name = _("Rounded Rect")
     icon = "rounded-rect"
     hotkey = "u"
+
     def draw(self, dc, replay=False):
         super(RoundedRect, self).draw(dc, replay, "RoundedRectangle")
 
@@ -495,6 +502,7 @@ class Line(OverlayShape):
     name = _("Line")
     icon = "line"
     hotkey = "l"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, board, colour, thickness, background)
         self.x2 = 0
@@ -633,28 +641,35 @@ class Media(Tool):
     hotkey = "m"
     icon = "media"
 
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+                 cursor=wx.CURSOR_ARROW):
+        Tool.__init__(self, board, colour, thickness, background, cursor)
+        self.filename = None
+        self.mc = None  # media panel
 
     def left_down(self, x, y):
         self.x = x
         self.y = y
         self.board.add_shape(self)
-        self.mc = MediaPanel(self.board, (x, y), self)
-        #self.mc = wx.media.MediaCtrl(self.board, style=wx.SIMPLE_BORDER,
-        #                              pos=(x, y), size=(150, 150))
-        #dlg = wx.FileDialog(self.board, message="Choose a media file",
-        #                    defaultDir=os.getcwd(), defaultFile="",
-        #                    style=wx.OPEN | wx.CHANGE_DIR )
-        #if dlg.ShowModal() == wx.ID_OK:
-        #    path = dlg.GetPath()
-        #    self.mc.Load(path)
-        #dlg.Destroy()
+        self.make_panel()
+
+    def make_panel(self):
+        self.mc = MediaPanel(self.board, (self.x, self.y), self)
+        if self.filename:
+            self.mc.do_load_file(self.filename)
+
+    def hit_test(self, x, y):
+        rect = wx.Rect(self.x, self.y, self.mc.GetSizeTuple()[0], self.mc.GetSizeTuple()[1])
+        return rect.InsideXY(x, y)
+
+    def properties(self):
+        return _("Loaded file")+ ": " + str(self.filename)
 
     def save(self):
-        self.filename = self.mc.mc.filename
-        self.mc = None
+        pass
 
     def load(self):
-        self.left_down(0, 0)
+        pass
 
 
 
@@ -669,6 +684,7 @@ class Eraser(Pen):
     name = _("Eraser")
     icon = "eraser"
     hotkey = "e"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         cursor = self.make_cursor(thickness)
         Pen.__init__(self, board, (255, 255, 255), thickness + 6, background,
@@ -722,6 +738,7 @@ class Eyedrop(Tool):
     name = _("Eyedropper")
     icon = "eyedrop"
     hotkey = "d"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         Tool.__init__(self, board, colour, thickness, background, wx.CURSOR_CROSS)
 
@@ -759,6 +776,7 @@ class Text(OverlayShape):
     name = _("Text")
     icon = "text"
     hotkey = "t"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, board, colour, thickness, background,
                               wx.CURSOR_IBEAM)
@@ -788,7 +806,7 @@ class Text(OverlayShape):
         self.y = y
         dlg = TextInput(self.board.gui)
         #dlg.ctrl.SetValue(self.text)
-        
+
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
             self.board.text = None
@@ -911,6 +929,7 @@ class Note(Text):
     name = _("Note")
     icon = "note"
     hotkey = "n"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         Text.__init__(self, board, colour, thickness, background)
         self.tree_id = None
@@ -1097,6 +1116,7 @@ class Select(Tool):
     name = _("Shape Select ")
     icon = "select"
     hotkey = "s"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         Tool.__init__(self, board, (0, 0, 0), 1, background, cursor=wx.CURSOR_ARROW)
         self.shape = None
@@ -1192,16 +1212,16 @@ class Select(Tool):
 class BitmapSelect(Rectangle):
     """
     Rectangle selection tool, used to select a region to copy/paste. When it
-    is drawn it is stored inside the current tab, not in the shapes list
+    is drawn it is stored inside the current tab as an instance attribute,
+    not in the shapes list. It is then drawn separately from other shapes
     """
     tooltip = _("Select a rectangle region to copy as a bitmap")
     name = _("Bitmap Select")
     icon = "select-rectangular"
     hotkey = "b"
+
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         Rectangle.__init__(self, board, (0, 0, 0), 1)
-
-
 
     def left_down(self, x, y):
         super(BitmapSelect, self).left_down(x, y)
@@ -1209,8 +1229,6 @@ class BitmapSelect(Rectangle):
         self.board.copy = None
         self.board.redraw_all()
         self.board.copy = self
-
-
 
 
     def draw(self, dc, replay=False):
@@ -1260,6 +1278,7 @@ class Zoom(Tool):
     name = _("Zoom")
     icon = "zoom"
     hotkey = "z"
+
     def __init__(self, board, colour, thickness, cursor=wx.CURSOR_MAGNIFIER):
         Tool.__init__(self, board, (0, 0, 0), 1, cursor)
 
@@ -1287,6 +1306,7 @@ class Flood(Tool):
     name = _("Flood Fill")
     icon = "flood"
     hotkey = "f"
+
     def __init__(self, board, colour, thickness):
         Tool.__init__(self, board, colour, 1)
 

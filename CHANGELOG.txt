@@ -8,20 +8,21 @@ Tuesday 17 November 2009
 
 xx Nov 2009 -- 0.39.2
 
+* New Media tool - embed audio and video files into Whyteboard! Each sheet may
+  have as many Media panels embedded as you wish
 * The new Arrow tool's arrows are drawn at a smaller degree
 * A check for a minimum wxPython version of 2.8.9.0
-* Support for drag/drop multiple files
-* Possible fix for crashing during PDF loading. I've had many bug reports of the
-  issue but cannot replicate it on my Windows or Linux installs. I'm not sure if
-  the bug is even fixed, I've just added some code that may help...
-* Bugfix: drag/drop files onto the canvas, again
+* Support for drag/drop multiple files; e.g. opening 3 .jpgs into 3 new sheets
+* Stopped a crash when PDF conversion with ImageMagick fails (due to no install
+  of GhostScript)
+* Bugfix: can now drag/drop files onto the canvas once again (0.39.0 broke it)
 
 ----------------------------------------------------------------------
 
 17 Nov 2009 -- 0.39.1
 
 * Arrow tool
-* Bugfix: "cancel" in the "do you want to save before quitting" dialog would 
+* Bugfix: "cancel" in the "do you want to save before quitting" dialog would
   quit, not cancel the dialog
 * Bugfix: keyboard shortcuts for selecting tools were not working on Windows
 

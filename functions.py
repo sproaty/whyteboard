@@ -71,6 +71,19 @@ def get_home_dir(extra_path=None):
     return path
 
 
+def get_time(seconds):
+    """Returns an h:m:s time from a seconds value"""
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+
+    if h > 0:
+        h = "%d" % h
+    else:
+        h = ""
+
+    return h+"%02d:%02d" % (m, s)
+
+
 def load_image(path, board):
     """
     Loads an image into the given Whyteboard tab. bitmap is the path to an
