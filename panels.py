@@ -321,21 +321,16 @@ class MediaPanel(wx.Window):
     controlling it: open (file)/pause/stop/play, and a slider bar.
     """
     def __init__(self, parent, pos, tool):
-        wx.Window.__init__(self, parent, pos=pos, size=(250, 250), style=wx.TAB_TRAVERSAL |
+        wx.Window.__init__(self, parent, pos=pos, style=wx.TAB_TRAVERSAL |
                                                        wx.CLIP_CHILDREN)
         self.gui = parent.gui
         self.tool = tool
-        self.offset = (0, 0)
-        self.moving = False
-        self.overlay = wx.Overlay()
         self.mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
         self.timer = wx.Timer(self)  # updates the slider as the file plays
         self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
-        self.SetBackgroundColour("Grey")
-        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
 
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
-        self.open = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_MENU))
+        self.open = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR))
         self.play = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "play.png"))
         self.pause = wx.BitmapButton(self, bitmap=wx.Bitmap(path +  "pause.png"))
         self.stop = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "stop.png"))
@@ -354,11 +349,13 @@ class MediaPanel(wx.Window):
 
         self.slider = wx.Slider(self)
         self.slider.SetToolTipString(_("Skip to a position "))
-        self.volume = wx.Slider(self, value=0, style=wx.SL_VERTICAL)
+        self.volume = wx.Slider(self, value=100, style=wx.SL_VERTICAL | wx.SL_INVERSE)
         self.volume.SetToolTipString(_("Set the volume"))
+        self.slider.SetMinSize((150, -1))
+        self.volume.SetMinSize((-1, 75))
 
         sizer = wx.GridBagSizer(6, 5)
-        sizer.Add(self.mc, (1, 1), span=(5, 1))#, flag=wx.EXPAND)
+        sizer.Add(self.mc, (1, 1), span=(5, 1))
         sizer.Add(self.open, (1, 3), flag=wx.RIGHT, border=10)
         sizer.Add(self.play, (2, 3), flag=wx.RIGHT, border=10)
         sizer.Add(self.pause, (3, 3), flag=wx.RIGHT, border=10)
@@ -369,6 +366,7 @@ class MediaPanel(wx.Window):
         sizer.Add(timesizer, (7, 1), flag=wx.EXPAND | wx.BOTTOM, border=10)
         self.SetSizer(sizer)
         self.Layout()
+        self.Fit()
 
         self.Bind(wx.media.EVT_MEDIA_LOADED, self.media_loaded)
         self.Bind(wx.EVT_BUTTON, self.load_file, self.open)
@@ -381,7 +379,7 @@ class MediaPanel(wx.Window):
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_TIMER, self.on_timer)
-        self.Bind(wx.EVT_PAINT, self.on_paint)
+        #self.Bind(wx.EVT_PAINT, self.on_paint)
         self.timer.Start(500)
 
     def on_paint(self, event):
@@ -395,44 +393,23 @@ class MediaPanel(wx.Window):
 
 
     def left_down(self, event):
-        """
-        Grab the offset value to position the cursor in the same place in the
-        object
-        """
-        parentPos = self.Parent.ScreenToClient(
-            self.ClientToScreen(event.Position))
-
-        selfPos = self.Parent.ScreenToClient(
-            self.ClientToScreen(self.GetPositionTuple()))
-
-        self.offset = (selfPos[0] - parentPos[0], selfPos[1] - parentPos[1])
-
-        print parentPos
-        print self.offset
-
         self.CaptureMouse()
-        self.moving = True
 
 
     def left_up(self, event):
         if self.HasCapture():
             self.ReleaseMouse()
-            self.moving = False
 
 
     def left_motion(self, event):
         """Reposition the window with an offset"""
         if event.Dragging():
+            pos = self.Parent.ScreenToClient(self.ClientToScreen(event.Position))
 
-            parentPos = self.Parent.ScreenToClient(
-                self.ClientToScreen(event.Position))
-
-            pos = (parentPos[0] - self.offset[0], parentPos[1] - self.offset[1])
             self.tool.x = pos[0]
             self.tool.y = pos[1]
             self.SetPosition(pos)
-            self.HighlightWindow()
-            self.Refresh()
+
 
 
     def load_file(self, evt):
@@ -445,8 +422,7 @@ class MediaPanel(wx.Window):
         dlg = wx.FileDialog(self, message=_("Choose a media file"),
                             wildcard=wc, style=wx.OPEN | wx.CHANGE_DIR )
         if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            self.do_load_file(path)
+            self.do_load_file(dlg.GetPath())
         dlg.Destroy()
 
 
@@ -460,13 +436,12 @@ class MediaPanel(wx.Window):
             self.stop.Disable()
         else:
             self.tool.filename = path
-            self.mc.SetInitialSize()
-            self.slider.SetRange(0, self.mc.Length())
 
 
     def media_loaded(self, evt):
+
         self.play.Enable()
-        #wordwrap(os.path.basename(self.tool.filename), 350, wx.ClientDC(self.gui))
+        wordwrap(os.path.basename(self.tool.filename), 350, wx.ClientDC(self.gui))
         self.file.SetLabel(os.path.basename(self.tool.filename))
         self.elapsed.SetLabel("00:00")
         self.total.SetLabel(get_time(self.mc.Length() / 1000))
@@ -500,6 +475,8 @@ class MediaPanel(wx.Window):
 
     def on_stop(self, evt):
         self.mc.Stop()
+        self.slider.SetValue(0)
+        self.elapsed.SetLabel("00:00")
         self.play.Enable()
         self.pause.Disable()
         self.stop.Disable()
@@ -509,10 +486,7 @@ class MediaPanel(wx.Window):
         self.elapsed.SetLabel(get_time(self.slider.GetValue() / 1000))
 
     def on_volume(self, evt):
-        val = 100 - self.volume.GetValue()
-        if val == 0:
-            val = 1
-        self.mc.SetVolume(float(val / 100))
+        self.mc.SetVolume(float(self.volume.GetValue() / 100))
 
 #---------------------------------------------------------------------
 

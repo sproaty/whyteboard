@@ -335,26 +335,24 @@ class Whyteboard(wx.ScrolledWindow):
         if self.gui.util.saved:
             self.gui.util.saved = False
 
-
-    def undo(self):
-        """ Undoes an action, and adds it to the redo list. """
+    def top_shape(self, method):
+        """Call method on the top shape if it's Media, to restore the widget"""
         x = len(self.shapes) - 1
         if not self.shapes:
             x = 0
         if isinstance(self.shapes[x], Media):
-            self.shapes[x].mc.Destroy()
-            self.shapes[x].mc = None
+            getattr(self.shapes[x], method)()
+
+
+    def undo(self):
+        """ Undoes an action, and adds it to the redo list. """
+        self.top_shape("remove_panel")
         self.perform(self.undo_list, self.redo_list)
 
     def redo(self):
         """ Redoes an action, and adds it to the undo list. """
         self.perform(self.redo_list, self.undo_list)
-        x = len(self.shapes) - 1
-        if not self.shapes:
-            x = 0
-        if isinstance(self.shapes[x], Media):
-            self.shapes[x].make_panel()
-
+        self.top_shape("make_panel")
 
     def perform(self, list_a, list_b):
         """ list_a: to remove from / list b: append to """
@@ -373,7 +371,6 @@ class Whyteboard(wx.ScrolledWindow):
         for x in shapes:
             if isinstance(x, Note):
                 self.gui.notes.add_note(x)
-
 
 
     def clear(self, keep_images=False):

@@ -668,6 +668,12 @@ class Utility(object):
         wx.TheClipboard.Close()
         if success:
             return bmp
+        text = wx.TextDataObject()
+        wx.TheClipboard.Open()
+        success = wx.TheClipboard.GetData(text)
+        wx.TheClipboard.Close()
+        if success:
+            return text
         return False
 
 
@@ -686,10 +692,10 @@ class Utility(object):
 
 #----------------------------------------------------------------------
 
-class FileDropTarget(wx.TextDropTarget):
+class FileDropTarget(wx.FileDropTarget):
     """Implements drop target functionality to receive files"""
     def __init__(self, gui):
-        wx.TextDropTarget.__init__(self)
+        wx.FileDropTarget.__init__(self)
         self.gui = gui
 
     def OnDropText(self, x, y, text):

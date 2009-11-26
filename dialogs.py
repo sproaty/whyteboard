@@ -407,7 +407,7 @@ class TextInput(wx.Dialog):
     Shows a text input screen, updates the canvas' text as text is being input
     and has methods for
     """
-    def __init__(self, gui, note=None):
+    def __init__(self, gui, note=None, text=""):
         """
         Standard constructor - sets text to supplied text variable, if present.
         """
@@ -431,7 +431,7 @@ class TextInput(wx.Dialog):
         self.colour = gui.util.colour
         gap = wx.LEFT | wx.TOP | wx.RIGHT
 
-        text = ""
+        #text = ""
         if note:
             self.note = note
             self.colour = note.colour
@@ -440,6 +440,9 @@ class TextInput(wx.Dialog):
             font.SetNativeFontInfoFromString(note.font_data)
         else:
             font = gui.util.font
+
+        if text:
+            self.gui.board.redraw_all(True)
 
         self.set_text_colour(text)
         self.ctrl.SetFont(font)
@@ -515,6 +518,7 @@ class TextInput(wx.Dialog):
             board = self.gui.board
             shape = board.shape
         self.transfer_data(shape)
+
         shape.find_extent()
         board.redraw_all()  # stops overlapping text
 

@@ -44,8 +44,7 @@ if wxversion.checkInstalled(WXVER):
 else:
     import wx
     app = wx.PySimpleApp()
-    wx.MessageBox("The requested version of wxPython is not installed.\n"
-                  "Please install version %s" % WXVER, "wxPython Version Error")
+    wx.MessageBox(_("The requested version of wxPython is not installed.\nPlease install version %s") % WXVER, _("wxPython Version Error"))
     app.MainLoop()
     webbrowser.open("http://wxPython.org/download.php")
     sys.exit()
@@ -61,7 +60,7 @@ from lib.validate import Validator
 
 import lib.icon
 from whyteboard import Whyteboard
-from tools import Image, Note
+from tools import Image, Note, Text
 from utility import Utility, FileDropTarget, languages, cfg
 from functions import get_home_dir
 from dialogs import (History, ProgressDialog, Resize, Rotate, UpdateDialog,
@@ -900,19 +899,41 @@ class GUI(wx.Frame):
 
     def on_paste(self, event=None, ignore=False):
         """ Grabs the image from the clipboard and places it on the panel """
-        bmp = self.util.get_clipboard()
-        if not bmp:
+        data = self.util.get_clipboard()
+        if not data:
             return
-        shape = Image(self.board, bmp.GetBitmap(), None)
 
-        x, y = 0, 0
-        if not ignore:
-            x, y = self.board.ScreenToClient(wx.GetMousePosition())
-            x, y = self.board.CalcUnscrolledPosition(x, y)
+        if isinstance(data, wx.TextDataObject):
+            shape = Text(self.board, self.util.colour, 1)
+            shape.text = data.GetText()
 
-        shape.left_down(x, y)
-        wx.Yield()
-        self.board.redraw_all(True)
+            x, y = 0, 0
+            if not ignore:
+                x, y = self.board.ScreenToClient(wx.GetMousePosition())
+                if x < 0 or y < 0:
+                    x = 0
+                    y = 0
+                x, y = self.board.CalcUnscrolledPosition(x, y)
+
+            #old = self.board.shape
+            self.board.shape = shape
+            shape.left_down(x, y)
+            shape.left_up(x, y)
+            self.board.text = None
+            #self.board.shape = old
+            self.board.select_tool()
+            self.board.redraw_all(True)
+        else:
+            shape = Image(self.board, data.GetBitmap(), None)
+
+            x, y = 0, 0
+            if not ignore:
+                x, y = self.board.ScreenToClient(wx.GetMousePosition())
+                x, y = self.board.CalcUnscrolledPosition(x, y)
+
+            shape.left_down(x, y)
+            wx.Yield()
+            self.board.redraw_all(True)
 
 
     def on_paste_new(self, event):

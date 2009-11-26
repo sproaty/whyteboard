@@ -666,10 +666,16 @@ class Media(Tool):
         return _("Loaded file")+ ": " + str(self.filename)
 
     def save(self):
-        pass
+        super(Media, self).save()
+        self.remove_panel()
+
+    def remove_panel(self):
+        self.mc.Destroy()
+        self.mc = None
 
     def load(self):
-        pass
+        super(Media, self).load()
+        self.make_panel()
 
 
 
@@ -804,8 +810,7 @@ class Text(OverlayShape):
         """
         self.x = x
         self.y = y
-        dlg = TextInput(self.board.gui)
-        #dlg.ctrl.SetValue(self.text)
+        dlg = TextInput(self.board.gui, text=self.text)
 
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
@@ -819,6 +824,7 @@ class Text(OverlayShape):
 
         if self.text:
             self.board.add_shape(self)
+            print self.text
             return True
         self.board.text = None
         return False
@@ -1153,6 +1159,7 @@ class Select(Tool):
                     self.board.deselect()
                 self.board.selected = shape
                 shape.selected = True
+                print 'y'
 
                 x = self.board.shapes.index(shape)
                 self.board.shapes.pop(x)
