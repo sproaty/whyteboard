@@ -266,7 +266,10 @@ class ControlPanel(wx.Panel):
 
         if self.gui.board.selected:
             self.gui.board.add_undo()
-            setattr(self.gui.board.selected, var_name, value)
+            if var_name == "background" and not self.transparent.IsChecked():
+                setattr(self.gui.board.selected, var_name, value)
+            elif var_name != "background":
+                setattr(self.gui.board.selected, var_name, value)
             self.gui.board.redraw_all(True)
         self.gui.board.select_tool()
         self.preview.Refresh()

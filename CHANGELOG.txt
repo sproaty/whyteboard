@@ -22,7 +22,10 @@ xx Nov 2009 -- 0.39.2
 * Bugfix: the program's process could sometimes remain after closing the program
 * Bugfix: text objects were being re-drawn twice after using the Select tool
 * Bugfix: can now drag/drop files onto the canvas once again (0.39.0 broke it)
+* Bugfix: Changing background colour with a shape selected would change its
+  background colour, even with "transparent" selected
 * Bugfix: ensured some strings were displayed in their translated form
+* Fixed a few spelling mistakes
 * Latest translations
 
 ----------------------------------------------------------------------

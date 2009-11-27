@@ -470,8 +470,8 @@ class TextInput(wx.Dialog):
         if text:
             self.update_canvas()
             self.gui.board.redraw_all(True)
-            
-            
+
+
     def on_font(self, evt):
         """
         Shows the font dialog, sets the input text's font and returns focus to
@@ -863,16 +863,6 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
     def GetProgramName(self):
         return "Whyteboard " + wx.GetTopLevelWindows()[0].version
 
-    def GetEnvironmentInfo(self):
-        x = super(ErrorDialog, self).GetEnvironmentInfo()
-        if wx.GetTopLevelWindows()[0].util.config.has_key('imagemagick_path'):
-            im = subprocess.Popen('"'+ wx.GetTopLevelWindows()[0].util.config['imagemagick_path'] +'\convert.exe" -list configure', stdout = subprocess.PIPE)
-
-            xx = ""
-            for blah in im.stdout.readlines():
-                xx += blah
-            x += "#---- ImageMagick Information ----#\n%s\n" % xx
-        return x
 
     def Send(self):
         """Send the error report. PHP script calls isset($_POST['submitted'])"""

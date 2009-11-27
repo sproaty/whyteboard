@@ -191,11 +191,12 @@ class OverlayShape(Tool):
                  cursor=wx.CURSOR_CROSS):
         Tool.__init__(self, board, colour, thickness, background, cursor)
         self.handles = []
+        self.board.overlay = wx.Overlay()
 
     def left_down(self, x, y):
         self.x = x
         self.y = y
-        self.board.overlay = wx.Overlay()
+
 
     def left_up(self, x, y):
         """ Only adds the shape if it was actually dragged out """
@@ -242,7 +243,7 @@ class OverlayShape(Tool):
         self.x = x - offset[0]
         self.y = y - offset[1]
 
-        size = self.board.GetClientSize()
+        #size = self.board.GetClientSize()
         #print self.board.CalcUnscrolledPosition(0, 0)
 
         #if self.x < size[0] + 50:
@@ -1280,8 +1281,7 @@ class Polygon(OverlayShape):
     hotkey = "y"
 
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        Tool.__init__(self, board, colour, thickness, background)
-        self.board.overlay = wx.Overlay()
+        OverlayShape.__init__(self, board, colour, thickness, background)
         self.points = []
 
     def left_down(self, x, y):
@@ -1291,8 +1291,6 @@ class Polygon(OverlayShape):
             self.y = y
         self.board.draw_shape(self)
 
-    def properties(self):
-        return _("Number of points: %s") % len(self.points)
 
     def left_up(self, x, y):
         pass
@@ -1300,6 +1298,7 @@ class Polygon(OverlayShape):
     def right_up(self, x, y):
         self.board.add_shape(self)
         self.board.select_tool()
+        self.sort_handles()
 
     def hit_test(self, x, y):
         """http://ariel.com.au/a/python-point-int-poly.html"""
@@ -1317,22 +1316,58 @@ class Polygon(OverlayShape):
                         if p1x == p2x or x <= xinters:
                             inside = not inside
             p1x, p1y = p2x, p2y
-
         return inside
 
 
+    def sort_handles(self):
+        self.handles = []
+        for x in self.get_handles():
+            size = HANDLE_SIZE
+            self.handles.append(wx.Rect(x[0], x[1], size, size))
+
+
+    def get_handles(self):
+        handles = []
+        d = lambda x, y: (x - 2, y - 2)
+
+        for x in self.points:
+            handles.append(d(x[0], x[1]))
+        return handles
+
+
     def handle_hit_test(self, x, y):
-        pass
+        for count, handle in enumerate(self.handles):
+            if handle.ContainsXY(x, y):
+                return count + 1
+        return False  # nothing hit
+
+    def resize(self, x, y, direction=None):
+        pos = direction - 1
+        if pos < 0:
+            pos = 0
+        self.points[pos] = (x, y)
+
+    def move(self, x, y, offset):
+        """Gotta update every point relative to how much the first has moved"""
+        super(Polygon, self).move(x, y, offset)
+        diff = (x - self.points[0][0] - offset[0], y - self.points[0][1] - offset[1])
+
+        for count, point in enumerate(self.points):
+            self.points[count] = (point[0] + diff[0], point[1] + diff[1])
+
 
     def get_args(self):
         return [self.points]
+
+    def properties(self):
+        return _("Number of points: %s") % len(self.points)
 
     def draw(self, dc, replay=False):
         super(Polygon, self).draw(dc, replay, "Polygon")
 
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush(self.colour))
-        dc.DrawPolygon(((13, 14), (25, 25), (4, 6), (22, 11), (14, 10)))
+        dc.DrawPolygon(((10, 10), (25, 25), (15, 15), (3, 3)))
 
 
 #----------------------------------------------------------------------
