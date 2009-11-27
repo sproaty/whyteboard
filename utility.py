@@ -544,11 +544,14 @@ class Utility(object):
 
             if val == wx.ID_NO:
                 method(*args)
+                if method == self.gui.Destroy:
+                    sys.exit()
             if val == wx.ID_CANCEL:
                 dialog.Close()
         else:
             method(*args)
-
+            if method == self.gui.Destroy:
+                sys.exit()
 
 
     def prompt_for_im(self):

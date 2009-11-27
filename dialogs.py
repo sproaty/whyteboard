@@ -441,8 +441,6 @@ class TextInput(wx.Dialog):
         else:
             font = gui.util.font
 
-        if text:
-            self.gui.board.redraw_all(True)
 
         self.set_text_colour(text)
         self.ctrl.SetFont(font)
@@ -469,7 +467,11 @@ class TextInput(wx.Dialog):
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
         self.Bind(wx.EVT_BUTTON, self.on_close, self.cancelButton)
 
-
+        if text:
+            self.update_canvas()
+            self.gui.board.redraw_all(True)
+            
+            
     def on_font(self, evt):
         """
         Shows the font dialog, sets the input text's font and returns focus to
@@ -1025,7 +1027,7 @@ class ShapeViewer(wx.Dialog):
         else:
             for x, shape in enumerate(reversed(self.shapes)):
                 index = self.list.InsertStringItem(sys.maxint, str(x + 1))
-                self.list.SetStringItem(index, 1, shape.name)
+                self.list.SetStringItem(index, 1, _(shape.name))
                 self.list.SetStringItem(index, 2, str(shape.thickness))
                 self.list.SetStringItem(index, 3, str(shape.colour))
                 self.list.SetStringItem(index, 4, shape.properties())

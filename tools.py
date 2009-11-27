@@ -164,7 +164,7 @@ class Pen(Tool):
         dc.DrawLineList(self.points)
 
     def properties(self):
-        return "Number of points: %s" % len(self.points)
+        return _("Number of points: %s") % len(self.points)
 
     def preview(self, dc, width, height):
         """Points below make a curly line to show an example Pen drawing"""
@@ -397,7 +397,8 @@ class Rectangle(OverlayShape):
 
     def properties(self):
         # return "X: %i, Y: %i, " + _("Width:")+" %i, " + _("Height:")+" %i" % (self.x, self.y, self.width, self.height)
-        return "X: %i, Y: %i, Width: %i, Height: %i" % (self.x, self.y, self.width, self.height)
+        w, h = _("Width:"), _("Height:")
+        return "X: %i, Y: %i, %s %i, %s %i" % (self.x, self.y, w, self.width, h, self.height)
 
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
@@ -460,7 +461,8 @@ class Circle(OverlayShape):
         return d(x - r, y - r), d(x- r, y + r), d(x + r, y - r), d(x + r, y + r)
 
     def properties(self):
-        return "X: %i, Y: %i, Radius: %i" % (self.x, self.y, self.radius)
+        r = _("Radius")
+        return "X: %i, Y: %i, %s: %i" % (self.x, self.y, r, self.radius)
 
     def hit_test(self, x, y):
         val = ((x - self.x) * (x - self.x)) + ((y - self.y) * (y - self.y))
@@ -652,6 +654,7 @@ class Media(Tool):
         self.y = y
         self.board.add_shape(self)
         self.make_panel()
+        self.board.select_tool()
 
     def make_panel(self):
         self.mc = MediaPanel(self.board, (self.x, self.y), self)
@@ -824,7 +827,6 @@ class Text(OverlayShape):
 
         if self.text:
             self.board.add_shape(self)
-            print self.text
             return True
         self.board.text = None
         return False
@@ -1159,7 +1161,6 @@ class Select(Tool):
                     self.board.deselect()
                 self.board.selected = shape
                 shape.selected = True
-                print 'y'
 
                 x = self.board.shapes.index(shape)
                 self.board.shapes.pop(x)
@@ -1209,8 +1210,8 @@ class Select(Tool):
 
         self.board.update_thumb()
         self.board.select_tool()
-        if self.dragging:
-            self.shape.draw(self.board.get_dc(), True)#self.board.redraw_all()
+        #if self.dragging:
+        #    self.shape.draw(self.board.get_dc(), True)#self.board.redraw_all()
 
 
 
@@ -1244,20 +1245,13 @@ class BitmapSelect(Rectangle):
             odc.Clear()
 
         if not replay and self.board.gui.util.config['bmp_select_transparent']:
-            self.brush = wx.Brush(wx.Color(0, 0, 255, 50))
-            self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
-
-            gcdc = wx.GCDC(dc)
-            gcdc.SetBrush(self.brush)  # light blue
-            gcdc.SetPen(self.pen)
-            gcdc.DrawRectangle(*self.get_args())
+            dc = wx.GCDC(dc)
+            dc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 50)))  # light blue
+            dc.SetPen(wx.Pen(self.colour, self.thickness, wx.SOLID))
         else:
-            self.pen = wx.Pen(self.colour, self.thickness, wx.SHORT_DASH)
-            self.brush = wx.TRANSPARENT_BRUSH
-
-            dc.SetPen(self.pen)
-            dc.SetBrush(self.brush)
-            dc.DrawRectangle(*self.get_args())
+            dc.SetPen(wx.Pen(self.colour, self.thickness, wx.SHORT_DASH))
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.DrawRectangle(*self.get_args())
 
         if not replay:
             del odc
@@ -1276,6 +1270,73 @@ class BitmapSelect(Rectangle):
 
 #----------------------------------------------------------------------
 
+class Polygon(OverlayShape):
+    """
+    Draws a polygon with [x] number of points.
+    """
+    tooltip = _("Draws a polygon")
+    name = _("Polygon")
+    icon = "polygon"
+    hotkey = "y"
+
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        Tool.__init__(self, board, colour, thickness, background)
+        self.board.overlay = wx.Overlay()
+        self.points = []
+
+    def left_down(self, x, y):
+        self.points.append((x, y))
+        if not self.x or not self.y:
+            self.x = x
+            self.y = y
+        self.board.draw_shape(self)
+
+    def properties(self):
+        return _("Number of points: %s") % len(self.points)
+
+    def left_up(self, x, y):
+        pass
+
+    def right_up(self, x, y):
+        self.board.add_shape(self)
+        self.board.select_tool()
+
+    def hit_test(self, x, y):
+        """http://ariel.com.au/a/python-point-int-poly.html"""
+        n = len(self.points)
+        inside = False
+
+        p1x, p1y = self.points[0]
+        for i in range(n + 1):
+            p2x, p2y = self.points[i % n]
+            if y > min(p1y, p2y):
+                if y <= max(p1y, p2y):
+                    if x <= max(p1x, p2x):
+                        if p1y != p2y:
+                            xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                        if p1x == p2x or x <= xinters:
+                            inside = not inside
+            p1x, p1y = p2x, p2y
+
+        return inside
+
+
+    def handle_hit_test(self, x, y):
+        pass
+
+    def get_args(self):
+        return [self.points]
+
+    def draw(self, dc, replay=False):
+        super(Polygon, self).draw(dc, replay, "Polygon")
+
+    def preview(self, dc, width, height):
+        dc.SetBrush(wx.Brush(self.colour))
+        dc.DrawPolygon(((13, 14), (25, 25), (4, 6), (22, 11), (14, 10)))
+
+
+#----------------------------------------------------------------------
+
 class Zoom(Tool):
     """
     Zooms in and out on the canvas, by setting the user scale in the Whyteboard
@@ -1286,8 +1347,8 @@ class Zoom(Tool):
     icon = "zoom"
     hotkey = "z"
 
-    def __init__(self, board, colour, thickness, cursor=wx.CURSOR_MAGNIFIER):
-        Tool.__init__(self, board, (0, 0, 0), 1, cursor)
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+        Tool.__init__(self, board, (0, 0, 0), 1, background, wx.CURSOR_MAGNIFIER)
 
 
     def left_up(self, x, y):
@@ -1360,5 +1421,5 @@ RoundRect = RoundedRect
 RectSelect = BitmapSelect
 
 # items to draw with
-items = [Pen, Eraser, Rectangle, RoundedRect, Line, Arrow, Ellipse, Circle, Text,
-         Note, Eyedrop, Media, BitmapSelect, Select]
+items = [Pen, Eraser, Rectangle, RoundedRect, Ellipse, Circle, Polygon, Line, Arrow, Text,
+         Note, Media, Eyedrop, BitmapSelect, Select]

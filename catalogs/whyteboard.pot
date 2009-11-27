@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-11-26 05:28+0000\n"
+"POT-Creation-Date: 2009-11-27 05:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,15 +36,15 @@ msgstr ""
 msgid "&About"
 msgstr ""
 
-#: whyteboard/dialogs.py:628 whyteboard/dialogs.py:713
-#: whyteboard/dialogs.py:985
+#: whyteboard/dialogs.py:630 whyteboard/dialogs.py:715
+#: whyteboard/dialogs.py:987
 msgid "&Apply"
 msgstr ""
 
 #: whyteboard/dialogs.py:68 whyteboard/dialogs.py:210
 #: whyteboard/dialogs.py:267 whyteboard/dialogs.py:420
-#: whyteboard/dialogs.py:555 whyteboard/dialogs.py:627
-#: whyteboard/dialogs.py:712 whyteboard/dialogs.py:984
+#: whyteboard/dialogs.py:557 whyteboard/dialogs.py:629
+#: whyteboard/dialogs.py:714 whyteboard/dialogs.py:986
 #: whyteboard/preferences.py:70
 msgid "&Cancel"
 msgstr ""
@@ -109,9 +109,9 @@ msgstr ""
 msgid "&Next Sheet"
 msgstr ""
 
-#: whyteboard/dialogs.py:418 whyteboard/dialogs.py:553
-#: whyteboard/dialogs.py:625 whyteboard/dialogs.py:710
-#: whyteboard/dialogs.py:982 whyteboard/preferences.py:69
+#: whyteboard/dialogs.py:418 whyteboard/dialogs.py:555
+#: whyteboard/dialogs.py:627 whyteboard/dialogs.py:712
+#: whyteboard/dialogs.py:984 whyteboard/preferences.py:69
 msgid "&OK"
 msgstr ""
 
@@ -187,7 +187,7 @@ msgstr ""
 msgid "A preview of your drawing"
 msgstr ""
 
-#: whyteboard/gui.py:1257
+#: whyteboard/gui.py:1259
 msgid "A simple whiteboard and PDF annotator"
 msgstr ""
 
@@ -199,7 +199,7 @@ msgstr ""
 msgid "All files"
 msgstr ""
 
-#: whyteboard/dialogs.py:855
+#: whyteboard/dialogs.py:857
 msgid "An error has occured - please report it"
 msgstr ""
 
@@ -207,15 +207,15 @@ msgstr ""
 msgid "Arabic"
 msgstr ""
 
-#: whyteboard/tools.py:598
+#: whyteboard/tools.py:600
 msgid "Arrow"
 msgstr ""
 
-#: whyteboard/panels.py:420
+#: whyteboard/panels.py:421
 msgid "Audio Files"
 msgstr ""
 
-#: whyteboard/tools.py:1226
+#: whyteboard/tools.py:1227
 msgid "Bitmap Select"
 msgstr ""
 
@@ -243,15 +243,15 @@ msgstr ""
 msgid "Choose Your Language:"
 msgstr ""
 
-#: whyteboard/dialogs.py:576
+#: whyteboard/dialogs.py:578
 msgid "Choose a directory"
 msgstr ""
 
-#: whyteboard/panels.py:422
+#: whyteboard/panels.py:423
 msgid "Choose a media file"
 msgstr ""
 
-#: whyteboard/tools.py:437
+#: whyteboard/tools.py:438
 msgid "Circle"
 msgstr ""
 
@@ -283,7 +283,7 @@ msgstr ""
 msgid "Clear the current sheet"
 msgstr ""
 
-#: whyteboard/panels.py:652
+#: whyteboard/panels.py:657
 msgid "Close"
 msgstr ""
 
@@ -291,7 +291,7 @@ msgstr ""
 msgid "Close the current sheet"
 msgstr ""
 
-#: whyteboard/dialogs.py:1019
+#: whyteboard/dialogs.py:1021
 msgid "Color"
 msgstr ""
 
@@ -307,7 +307,7 @@ msgstr ""
 msgid "Conversion Quality:"
 msgstr ""
 
-#: whyteboard/gui.py:493 whyteboard/gui.py:1036
+#: whyteboard/gui.py:495 whyteboard/gui.py:1038
 msgid "Converting..."
 msgstr ""
 
@@ -320,11 +320,11 @@ msgid "Copy a Bitmap Selection region"
 msgstr ""
 
 #: whyteboard/dialogs.py:297 whyteboard/dialogs.py:353
-#: whyteboard/utility.py:601
+#: whyteboard/utility.py:604
 msgid "Could not connect to server."
 msgstr ""
 
-#: whyteboard/dialogs.py:705
+#: whyteboard/dialogs.py:707
 msgid "Custom:"
 msgstr ""
 
@@ -356,7 +356,7 @@ msgstr ""
 msgid "Downloaded"
 msgstr ""
 
-#: whyteboard/tools.py:436
+#: whyteboard/tools.py:437
 msgid "Draw a circle"
 msgstr ""
 
@@ -364,19 +364,19 @@ msgstr ""
 msgid "Draw a rectangle"
 msgstr ""
 
-#: whyteboard/tools.py:478
+#: whyteboard/tools.py:480
 msgid "Draw a rectangle with rounded edges"
 msgstr ""
 
-#: whyteboard/tools.py:501
+#: whyteboard/tools.py:503
 msgid "Draw a straight line"
 msgstr ""
 
-#: whyteboard/tools.py:597
+#: whyteboard/tools.py:599
 msgid "Draw an arrow"
 msgstr ""
 
-#: whyteboard/tools.py:411
+#: whyteboard/tools.py:412
 msgid "Draw an oval shape"
 msgstr ""
 
@@ -384,15 +384,19 @@ msgstr ""
 msgid "Draw strokes with a brush"
 msgstr ""
 
+#: whyteboard/tools.py:1277
+msgid "Draws a polygon"
+msgstr ""
+
 #: whyteboard/utility.py:114
 msgid "Dutch"
 msgstr ""
 
-#: whyteboard/panels.py:699
+#: whyteboard/panels.py:704
 msgid "Edit Note..."
 msgstr ""
 
-#: whyteboard/tools.py:412
+#: whyteboard/tools.py:413
 msgid "Ellipse"
 msgstr ""
 
@@ -408,19 +412,19 @@ msgstr ""
 msgid "Enter text"
 msgstr ""
 
-#: whyteboard/tools.py:689
+#: whyteboard/tools.py:692
 msgid "Erase a drawing to the background"
 msgstr ""
 
-#: whyteboard/tools.py:690
+#: whyteboard/tools.py:693
 msgid "Eraser"
 msgstr ""
 
-#: whyteboard/panels.py:433 whyteboard/panels.py:464 whyteboard/utility.py:601
+#: whyteboard/panels.py:434 whyteboard/panels.py:468 whyteboard/utility.py:604
 msgid "Error"
 msgstr ""
 
-#: whyteboard/dialogs.py:854
+#: whyteboard/dialogs.py:856
 msgid "Error Report"
 msgstr ""
 
@@ -440,7 +444,7 @@ msgstr ""
 msgid "Export &All Sheets..."
 msgstr ""
 
-#: whyteboard/gui.py:464 whyteboard/gui.py:550 whyteboard/gui.py:581
+#: whyteboard/gui.py:466 whyteboard/gui.py:552 whyteboard/gui.py:583
 msgid "Export data to..."
 msgstr ""
 
@@ -452,7 +456,7 @@ msgstr ""
 msgid "Export every sheet to a series of image files"
 msgstr ""
 
-#: whyteboard/gui.py:532
+#: whyteboard/gui.py:534
 msgid "Export preferences to..."
 msgstr ""
 
@@ -464,11 +468,11 @@ msgstr ""
 msgid "Export your Whyteboard preferences file"
 msgstr ""
 
-#: whyteboard/panels.py:655
+#: whyteboard/panels.py:660
 msgid "Export..."
 msgstr ""
 
-#: whyteboard/tools.py:744
+#: whyteboard/tools.py:747
 msgid "Eyedropper"
 msgstr ""
 
@@ -476,15 +480,15 @@ msgstr ""
 msgid "Failed to convert file. Ensure GhostScript is installed; http://pages.cs.wisc.edu/~ghost/"
 msgstr ""
 
-#: whyteboard/dialogs.py:550
+#: whyteboard/dialogs.py:552
 msgid "Find location..."
 msgstr ""
 
-#: whyteboard/tools.py:1313
+#: whyteboard/tools.py:1374
 msgid "Flood Fill"
 msgstr ""
 
-#: whyteboard/tools.py:1312
+#: whyteboard/tools.py:1373
 msgid "Flood fill an area"
 msgstr ""
 
@@ -512,11 +516,11 @@ msgstr ""
 msgid "Go to the previous sheet"
 msgstr ""
 
-#: whyteboard/dialogs.py:619 whyteboard/tools.py:1073
+#: whyteboard/dialogs.py:621 whyteboard/tools.py:400 whyteboard/tools.py:1075
 msgid "Height:"
 msgstr ""
 
-#: whyteboard/gui.py:1241
+#: whyteboard/gui.py:1243
 msgid "Help files not found, do you want to download them?"
 msgstr ""
 
@@ -544,7 +548,7 @@ msgstr ""
 msgid "Ignores the background color"
 msgstr ""
 
-#: whyteboard/tools.py:1014
+#: whyteboard/tools.py:1016
 msgid "Image"
 msgstr ""
 
@@ -552,31 +556,31 @@ msgstr ""
 msgid "Image Files"
 msgstr ""
 
-#: whyteboard/dialogs.py:544
+#: whyteboard/dialogs.py:546
 msgid "ImageMagick Notification"
 msgstr ""
 
-#: whyteboard/utility.py:562
+#: whyteboard/utility.py:565
 msgid "ImageMagick was not found. You will be unable to load PDF and PS files until it is installed."
 msgstr ""
 
-#: whyteboard/tools.py:781
+#: whyteboard/tools.py:784
 msgid "Input text"
 msgstr ""
 
-#: whyteboard/tools.py:934
+#: whyteboard/tools.py:936
 msgid "Insert a note"
 msgstr ""
 
-#: whyteboard/tools.py:639
+#: whyteboard/tools.py:641
 msgid "Insert media and audio"
 msgstr ""
 
-#: whyteboard/gui.py:472 whyteboard/gui.py:594
+#: whyteboard/gui.py:474 whyteboard/gui.py:596
 msgid "Invalid filetype"
 msgstr ""
 
-#: whyteboard/gui.py:471 whyteboard/gui.py:593
+#: whyteboard/gui.py:473 whyteboard/gui.py:595
 msgid "Invalid filetype to export as:"
 msgstr ""
 
@@ -588,7 +592,7 @@ msgstr ""
 msgid "Japanese"
 msgstr ""
 
-#: whyteboard/tools.py:502
+#: whyteboard/tools.py:504
 msgid "Line"
 msgstr ""
 
@@ -600,19 +604,19 @@ msgstr ""
 msgid "Load in a Whyteboard preferences file"
 msgstr ""
 
-#: whyteboard/tools.py:666
+#: whyteboard/tools.py:669
 msgid "Loaded file"
 msgstr ""
 
-#: whyteboard/gui.py:653 whyteboard/utility.py:298 whyteboard/utility.py:463
+#: whyteboard/gui.py:655 whyteboard/utility.py:298 whyteboard/utility.py:463
 msgid "Loading..."
 msgstr ""
 
-#: whyteboard/tools.py:640
+#: whyteboard/tools.py:642
 msgid "Media"
 msgstr ""
 
-#: whyteboard/panels.py:418
+#: whyteboard/panels.py:419
 msgid "Media Files"
 msgstr ""
 
@@ -648,7 +652,7 @@ msgstr ""
 msgid "Moves the currently selected shape up"
 msgstr ""
 
-#: whyteboard/panels.py:651
+#: whyteboard/panels.py:656
 msgid "New"
 msgstr ""
 
@@ -660,11 +664,11 @@ msgstr ""
 msgid "New Sheet"
 msgstr ""
 
-#: whyteboard/dialogs.py:969
+#: whyteboard/dialogs.py:971
 msgid "Next Sheet"
 msgstr ""
 
-#: whyteboard/dialogs.py:1024
+#: whyteboard/dialogs.py:1026
 msgid "No shapes drawn"
 msgstr ""
 
@@ -672,7 +676,7 @@ msgstr ""
 msgid "Normal"
 msgstr ""
 
-#: whyteboard/tools.py:935
+#: whyteboard/tools.py:937
 msgid "Note"
 msgstr ""
 
@@ -680,7 +684,7 @@ msgstr ""
 msgid "Note: Higher quality takes longer to convert"
 msgstr ""
 
-#: whyteboard/panels.py:511
+#: whyteboard/panels.py:516
 msgid "Notes"
 msgstr ""
 
@@ -692,11 +696,16 @@ msgstr ""
 msgid "Number of Recently Closed Sheets"
 msgstr ""
 
+#: whyteboard/tools.py:167 whyteboard/tools.py:1295
+#, python-format
+msgid "Number of points: %s"
+msgstr ""
+
 #: whyteboard/gui.py:371
 msgid "Open a File"
 msgstr ""
 
-#: whyteboard/gui.py:430
+#: whyteboard/gui.py:432
 msgid "Open file..."
 msgstr ""
 
@@ -716,20 +725,20 @@ msgstr ""
 msgid "Page Set&up"
 msgstr ""
 
-#: whyteboard/dialogs.py:830
+#: whyteboard/dialogs.py:832
 msgid "Page:"
 msgstr ""
 
 #: whyteboard/gui.py:372
-msgid "Paste Image"
-msgstr ""
-
-#: whyteboard/gui.py:242
-msgid "Paste an image from your clipboard into Whyteboard"
+msgid "Paste an Image/Text"
 msgstr ""
 
 #: whyteboard/gui.py:217
 msgid "Paste from your clipboard into a new sheet"
+msgstr ""
+
+#: whyteboard/gui.py:242
+msgid "Paste text or an image from your clipboard into Whyteboard"
 msgstr ""
 
 #: whyteboard/gui.py:217
@@ -740,15 +749,19 @@ msgstr ""
 msgid "Pen"
 msgstr ""
 
-#: whyteboard/tools.py:743
+#: whyteboard/tools.py:746
 msgid "Picks a color from the selected pixel"
+msgstr ""
+
+#: whyteboard/tools.py:1278
+msgid "Polygon"
 msgstr ""
 
 #: whyteboard/utility.py:113
 msgid "Portugese"
 msgstr ""
 
-#: whyteboard/dialogs.py:1016
+#: whyteboard/dialogs.py:1018
 msgid "Position"
 msgstr ""
 
@@ -764,7 +777,7 @@ msgstr ""
 msgid "Preview:"
 msgstr ""
 
-#: whyteboard/dialogs.py:964
+#: whyteboard/dialogs.py:966
 msgid "Previous Sheet"
 msgstr ""
 
@@ -772,7 +785,7 @@ msgstr ""
 msgid "Print Pre&view"
 msgstr ""
 
-#: whyteboard/gui.py:1146
+#: whyteboard/gui.py:1148
 msgid "Print Preview"
 msgstr ""
 
@@ -780,11 +793,11 @@ msgstr ""
 msgid "Print the current page"
 msgstr ""
 
-#: whyteboard/gui.py:1143 whyteboard/gui.py:1162
+#: whyteboard/gui.py:1145 whyteboard/gui.py:1164
 msgid "Printing Error"
 msgstr ""
 
-#: whyteboard/dialogs.py:1020
+#: whyteboard/dialogs.py:1022
 msgid "Properties"
 msgstr ""
 
@@ -794,6 +807,10 @@ msgstr ""
 
 #: whyteboard/gui.py:261
 msgid "R&otate Image..."
+msgstr ""
+
+#: whyteboard/tools.py:464
+msgid "Radius"
 msgstr ""
 
 #: whyteboard/gui.py:264
@@ -812,7 +829,7 @@ msgstr ""
 msgid "Redo the last undone operation"
 msgstr ""
 
-#: whyteboard/gui.py:794
+#: whyteboard/gui.py:796
 msgid "Rename sheet"
 msgstr ""
 
@@ -820,11 +837,11 @@ msgstr ""
 msgid "Rename the current sheet"
 msgstr ""
 
-#: whyteboard/gui.py:793
+#: whyteboard/gui.py:795
 msgid "Rename this sheet to:"
 msgstr ""
 
-#: whyteboard/panels.py:654
+#: whyteboard/panels.py:659
 msgid "Rename..."
 msgstr ""
 
@@ -836,7 +853,7 @@ msgstr ""
 msgid "Resi&ze Canvas..."
 msgstr ""
 
-#: whyteboard/dialogs.py:601
+#: whyteboard/dialogs.py:603
 msgid "Resize Canvas"
 msgstr ""
 
@@ -844,11 +861,11 @@ msgstr ""
 msgid "Retry"
 msgstr ""
 
-#: whyteboard/dialogs.py:692
+#: whyteboard/dialogs.py:694
 msgid "Rotate Image"
 msgstr ""
 
-#: whyteboard/dialogs.py:697
+#: whyteboard/dialogs.py:699
 msgid "Rotate by angle"
 msgstr ""
 
@@ -856,7 +873,7 @@ msgstr ""
 msgid "Rotate the selected image"
 msgstr ""
 
-#: whyteboard/tools.py:479
+#: whyteboard/tools.py:481
 msgid "Rounded Rect"
 msgstr ""
 
@@ -876,7 +893,7 @@ msgstr ""
 msgid "Save File?"
 msgstr ""
 
-#: whyteboard/gui.py:403
+#: whyteboard/gui.py:405
 msgid "Save Whyteboard As..."
 msgstr ""
 
@@ -892,7 +909,7 @@ msgstr ""
 msgid "Search for updates to Whyteboard"
 msgstr ""
 
-#: whyteboard/panels.py:649
+#: whyteboard/panels.py:654
 msgid "Select"
 msgstr ""
 
@@ -900,11 +917,11 @@ msgstr ""
 msgid "Select Font"
 msgstr ""
 
-#: whyteboard/tools.py:1225
+#: whyteboard/tools.py:1226
 msgid "Select a rectangle region to copy as a bitmap"
 msgstr ""
 
-#: whyteboard/tools.py:1121
+#: whyteboard/tools.py:1123
 msgid "Select a shape to move and resize it"
 msgstr ""
 
@@ -936,20 +953,20 @@ msgstr ""
 msgid "Sha&pes"
 msgstr ""
 
-#: whyteboard/tools.py:1122
+#: whyteboard/tools.py:1124
 msgid "Shape Select "
 msgstr ""
 
-#: whyteboard/dialogs.py:929
+#: whyteboard/dialogs.py:931
 msgid "Shape Viewer"
 msgstr ""
 
-#: whyteboard/dialogs.py:937
+#: whyteboard/dialogs.py:939
 msgid "Shapes at the top of the list are drawn over shapes at the bottom"
 msgstr ""
 
-#: whyteboard/gui.py:167 whyteboard/gui.py:615 whyteboard/panels.py:560
-#: whyteboard/panels.py:792
+#: whyteboard/gui.py:167 whyteboard/gui.py:617 whyteboard/panels.py:565
+#: whyteboard/panels.py:797
 msgid "Sheet"
 msgstr ""
 
@@ -969,7 +986,7 @@ msgstr ""
 msgid "Show the title when printing"
 msgstr ""
 
-#: whyteboard/dialogs.py:659
+#: whyteboard/dialogs.py:661
 msgid "Size"
 msgstr ""
 
@@ -981,7 +998,7 @@ msgstr ""
 msgid "Spanish"
 msgstr ""
 
-#: whyteboard/preferences.py:411 whyteboard/tools.py:782
+#: whyteboard/preferences.py:411 whyteboard/tools.py:785
 msgid "Text"
 msgstr ""
 
@@ -992,7 +1009,7 @@ msgid ""
 "Please install version %s"
 msgstr ""
 
-#: whyteboard/gui.py:1142 whyteboard/gui.py:1161
+#: whyteboard/gui.py:1144 whyteboard/gui.py:1163
 msgid ""
 "There was a problem printing.\n"
 "Perhaps your current printer is not set correctly?"
@@ -1002,7 +1019,7 @@ msgstr ""
 msgid "There was nothing to draw."
 msgstr ""
 
-#: whyteboard/dialogs.py:1018
+#: whyteboard/dialogs.py:1020
 msgid "Thickness"
 msgstr ""
 
@@ -1010,7 +1027,7 @@ msgstr ""
 msgid "Thickness:"
 msgstr ""
 
-#: whyteboard/panels.py:510
+#: whyteboard/panels.py:515
 msgid "Thumbnails"
 msgstr ""
 
@@ -1034,15 +1051,15 @@ msgstr ""
 msgid "Transparent Bitmap Select (may draw slowly)"
 msgstr ""
 
-#: whyteboard/dialogs.py:1017
+#: whyteboard/dialogs.py:1019
 msgid "Type"
 msgstr ""
 
-#: whyteboard/panels.py:463
+#: whyteboard/panels.py:467
 msgid "Unable to Play media : Unsupported format?"
 msgstr ""
 
-#: whyteboard/panels.py:432
+#: whyteboard/panels.py:433
 #, python-format
 msgid "Unable to load %s: Unsupported format?"
 msgstr ""
@@ -1059,7 +1076,7 @@ msgstr ""
 msgid "Undo the last operation"
 msgstr ""
 
-#: whyteboard/dialogs.py:781 whyteboard/dialogs.py:833 whyteboard/gui.py:126
+#: whyteboard/dialogs.py:783 whyteboard/dialogs.py:835 whyteboard/gui.py:126
 #: whyteboard/utility.py:531
 msgid "Untitled"
 msgstr ""
@@ -1072,11 +1089,11 @@ msgstr ""
 msgid "Updates"
 msgstr ""
 
-#: whyteboard/gui.py:1050
+#: whyteboard/gui.py:1052
 msgid "Updating Thumbnails"
 msgstr ""
 
-#: whyteboard/panels.py:419
+#: whyteboard/panels.py:420
 msgid "Video Files"
 msgstr ""
 
@@ -1116,7 +1133,7 @@ msgstr ""
 msgid "Welsh"
 msgstr ""
 
-#: whyteboard/gui.py:530 whyteboard/gui.py:548
+#: whyteboard/gui.py:532 whyteboard/gui.py:550
 msgid "Whyteboard Preference Files"
 msgstr ""
 
@@ -1124,7 +1141,7 @@ msgstr ""
 msgid "Whyteboard doesn't support the filetype"
 msgstr ""
 
-#: whyteboard/gui.py:405
+#: whyteboard/gui.py:407
 msgid "Whyteboard file "
 msgstr ""
 
@@ -1132,7 +1149,7 @@ msgstr ""
 msgid "Whyteboard files"
 msgstr ""
 
-#: whyteboard/dialogs.py:548
+#: whyteboard/dialogs.py:550
 msgid ""
 "Whyteboard uses ImageMagick to load PDF, SVG and PS files. \n"
 "Please select its installed location."
@@ -1143,7 +1160,7 @@ msgstr ""
 msgid "Whyteboard will be translated into %s when restarted"
 msgstr ""
 
-#: whyteboard/dialogs.py:616 whyteboard/tools.py:1072
+#: whyteboard/dialogs.py:618 whyteboard/tools.py:400 whyteboard/tools.py:1074
 msgid "Width:"
 msgstr ""
 
@@ -1151,11 +1168,11 @@ msgstr ""
 msgid "You are running the latest version."
 msgstr ""
 
-#: whyteboard/tools.py:1285
+#: whyteboard/tools.py:1346
 msgid "Zoom"
 msgstr ""
 
-#: whyteboard/tools.py:1284
+#: whyteboard/tools.py:1345
 msgid "Zoom in and out of the canvas"
 msgstr ""
 

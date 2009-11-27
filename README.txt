@@ -10,7 +10,7 @@ start menu.
 Otherwise, here are the requirements:
 
 * Python - 2.5.4 or 2.6.4 (untested on other major versions; should work on 2.4)
-* wxPython - latest version is -always- recommended (currently 2.8.10.1). 
+* wxPython - latest version is -always- recommended (currently 2.8.10.1).
     ---- WXPYTHON 2.8.9.0 NEEDED AT MINIMUM
 * ImageMagick, possibly GhostScript for Windows users (optional)
 
@@ -21,10 +21,10 @@ http://pages.cs.wisc.edu/~ghost/ - Windows users may need this for ImageMagick
 
 ***
 
-Run whyteboard.py or gui.py to launch the application, no installation needed!
+Run gui.py to launch the application, no installation needed!
 If nothing happens, try launching one of the scripts from the console:
 
-$ python whyteboard.py
+$ python gui.py
 
 see what error occurred and let me know at, <sproaty@gmail.com>, report a bug at
 Launchpad at the link below.
@@ -59,7 +59,7 @@ Possible crash on Linux with loading a PDF:
     raise PyDeadObjectError(self.attrStr % self._name)
 PyDeadObjectError: The C++ part of the Whyteboard object has been deleted, attribute access no longer allowed.
 
-I'm having a hard time replicating this issue, if anyone can provide extra 
+I'm having a hard time replicating this issue, if anyone can provide extra
 details on how to trigger the bug then that would help a ton.
 
 See up to date reports at https://bugs.launchpad.net/whyteboard

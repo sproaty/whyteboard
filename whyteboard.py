@@ -467,6 +467,7 @@ class Whyteboard(wx.ScrolledWindow):
                 dc.SetClippingRegionAsRegion(bkgregion)
                 dc.SetBrush(wx.GREY_BRUSH)
                 dc.Clear()
+                dc.DestroyClippingRegion()
 
 
     def delete_selected(self):

@@ -77,7 +77,7 @@ def get_time(seconds):
     h, m = divmod(m, 60)
 
     if h > 0:
-        h = "%d" % h
+        h = "%d:" % h
     else:
         h = ""
 

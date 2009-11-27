@@ -239,7 +239,7 @@ class GUI(wx.Frame):
         edit.Append(wx.ID_REDO, _("&Redo")+"\tCtrl+Y", _("Redo the last undone operation"))
         edit.AppendSeparator()
         edit.Append(wx.ID_COPY, _("&Copy")+"\tCtrl+C", _("Copy a Bitmap Selection region"))
-        edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste an image from your clipboard into Whyteboard"))
+        edit.Append(wx.ID_PASTE, _("&Paste")+"\tCtrl+V", _("Paste text or an image from your clipboard into Whyteboard"))
         edit.AppendItem(pnew)
         edit.AppendSeparator()
         edit.Append(wx.ID_PREFERENCES, _("Prefere&nces"), _("Change your preferences"))
@@ -369,7 +369,7 @@ class GUI(wx.Frame):
         arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_COPY,
                 wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO, wx.ART_DELETE]
         tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"),
-                _("Paste Image"), _("Undo the Last Action"), _("Redo the Last Undone Action"),
+                _("Paste an Image/Text"), _("Undo the Last Action"), _("Redo the Last Undone Action"),
                 _("Delete the currently selected shape")]
 
         # add tools, add a separator and bind paste/undo/redo for UI updating
@@ -400,8 +400,10 @@ class GUI(wx.Frame):
         """
         Prompts for the filename and location to save to.
         """
+        now = time.localtime(time.time())
+        now = time.strftime("%Y-%m-%d-%H-%M-%S")
         dlg = wx.FileDialog(self, _("Save Whyteboard As..."), os.getcwd(),
-                style=wx.SAVE | wx.OVERWRITE_PROMPT,
+                style=wx.SAVE | wx.OVERWRITE_PROMPT,  defaultFile=now,
                 wildcard = _("Whyteboard file ")+"(*.wtbd)|*.wtbd")
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
@@ -1260,6 +1262,7 @@ class GUI(wx.Frame):
              'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
              '"Amy" https://launchpad.net/~anthropofobe (German)',
              '"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
+             'Cristian Asenjo https://launchpad.net/~apu2009 (Spanish)',
              'David Aller https://launchpad.net/~niclamus (Italian)',
              '"Dennis" https://launchpad.net/~dlinn83 (German)',
              'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
@@ -1279,7 +1282,7 @@ class GUI(wx.Frame):
              'Roberto Bondi https://launchpad.net/~bondi (Italian)',
              '"RodriT" https://launchpad.net/~rodri316 (Spanish)',
              'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
-             '"Tobberoth" https://launchpad.net/~tobberoth (Japanese)'
+             '"Tobberoth" https://launchpad.net/~tobberoth (Japanese)',
              '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
              '"Vonlist" https://launchpad.net/~hengartt (Spanish)',
              'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']
