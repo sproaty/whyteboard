@@ -28,7 +28,6 @@ import os
 import time
 import math
 import wx
-import wx.media
 
 from dialogs import TextInput
 from panels import MediaPanel
@@ -76,6 +75,9 @@ class Tool(object):
     def left_up(self, x, y):
         pass
 
+    def double_click(self, x, y):
+        pass
+
     def right_up(self, x, y):
         pass
 
@@ -85,7 +87,6 @@ class Tool(object):
     def draw(self, dc, replay=True):
         """ Draws itself. """
         pass
-
 
     def hit_test(self, x, y):
         """ Returns True/False if a mouseclick in "inside" the shape """
@@ -124,64 +125,6 @@ class Tool(object):
 
 #----------------------------------------------------------------------
 
-class Pen(Tool):
-    """ A free-hand pen. """
-    tooltip = _("Draw strokes with a brush")
-    name = _("Pen")
-    icon = "pen"
-    hotkey = "p"
-
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
-                 cursor=wx.CURSOR_PENCIL):
-        Tool.__init__(self, board, colour, thickness, background, cursor)
-        self.points = []  # ALL x1, y1, x2, y2 coords to render
-        self.time = []  # list of times for each point, for redrawing
-        self.background = None
-
-    def left_down(self, x, y):
-        self.x = x  # original mouse coords
-        self.y = y
-        self.motion(x, y)
-
-
-    def left_up(self, x, y):
-        if self.points:
-            self.board.add_shape(self)
-            if len(self.points) == 1:  # a single click
-                self.board.redraw_all()
-
-    def motion(self, x, y):
-        self.points.append( [self.x, self.y, x, y] )
-        self.time.append(time.time())
-        self.x = x
-        self.y = y  # swap for the next call to this function
-
-
-    def draw(self, dc, replay=True):
-        if not self.pen:
-            self.make_pen()
-        dc.SetPen(self.pen)
-        dc.DrawLineList(self.points)
-
-    def properties(self):
-        return _("Number of points: %s") % len(self.points)
-
-    def preview(self, dc, width, height):
-        """Points below make a curly line to show an example Pen drawing"""
-        dc.DrawSpline([(52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9),
-                 (47, 9), (46, 9), (46, 8), (45, 8), (44, 8), (43, 8), (42, 8),
-                 (41, 8), (40, 8), (39, 8), (38, 8), (37, 8), (36, 8), (35, 8),
-                 (34, 8), (33, 8), (32, 8), (31, 8), (30, 8), (29, 8), (28, 8),
-                 (27, 8), (27, 10), (26, 10), (26, 11), (26, 12), (26, 13),
-                 (26, 14), (26, 15), (26, 16), (28, 18), (30, 19), (31, 21),
-                 (34, 22), (36, 24), (37, 26), (38, 27), (40, 28), (40, 29),
-                 (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33),
-                 (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37),
-                 (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37)])
-
-
-#----------------------------------------------------------------------
-
 class OverlayShape(Tool):
     """
     Contains methods for drawing an overlayed shape. Has some general method
@@ -197,12 +140,12 @@ class OverlayShape(Tool):
         self.x = x
         self.y = y
 
-
     def left_up(self, x, y):
         """ Only adds the shape if it was actually dragged out """
         if x != self.x and y != self.y:
             self.board.add_shape(self)
             self.sort_handles()
+
 
     def draw(self, dc, replay=False, _type="Rectangle"):
         """
@@ -242,12 +185,6 @@ class OverlayShape(Tool):
         """Being moved with Select. Offset is to keep the cursor centered"""
         self.x = x - offset[0]
         self.y = y - offset[1]
-
-        #size = self.board.GetClientSize()
-        #print self.board.CalcUnscrolledPosition(0, 0)
-
-        #if self.x < size[0] + 50:
-        #    self.board.Scroll(self.x + 50, -1)
 
 
     def sort_handles(self):
@@ -301,6 +238,161 @@ class OverlayShape(Tool):
     def load(self):
         super(OverlayShape, self).load()
         self.selected = False
+
+#----------------------------------------------------------------------
+
+class Pen(OverlayShape):
+    """
+    A free-hand pen. Has been turned into an OverlayShape to allow it to be
+    selected and moved.
+    """
+    tooltip = _("Draw strokes with a brush")
+    name = _("Pen")
+    icon = "pen"
+    hotkey = "p"
+
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+                 cursor=wx.CURSOR_PENCIL):
+        OverlayShape.__init__(self, board, colour, thickness, background, cursor)
+        self.points = []  # ALL x1, y1, x2, y2 coords to render
+        self.time = []  # list of times for each point, for redrawing
+        self.background = None
+        self.x_tmp = 0
+        self.y_tmp = 0
+
+    def left_down(self, x, y):
+        self.x = x  # original mouse coords
+        self.y = y
+        self.x_tmp = x
+        self.y_tmp = y
+
+
+    def left_up(self, x, y):
+        if self.points:
+            self.board.add_shape(self)
+            self.sort_handles()
+            if len(self.points) == 1:  # a single click
+                self.board.redraw_all()
+
+            #dc = wx.BufferedDC(None, self.board.hit_buffer, wx.BUFFER_VIRTUAL_AREA)
+            #dc.SetPen(wx.Pen(wx.BLACK, self.thickness, wx.SOLID))
+            #dc.DrawLineList(self.points)
+
+
+    def draw_shape(self, shape, replay=False):
+        """ Redraws a single shape efficiently"""
+        dc = self.get_dc()
+        #dc.SetUserScale(self.scale[0], self.scale[1])
+        if replay:
+            shape.draw(dc, replay)
+        else:
+            shape.draw(dc)
+        self.redraw_dirty(dc)
+
+
+    def motion(self, x, y):
+        self.points.append( [self.x_tmp, self.y_tmp, x, y] )
+        self.time.append(time.time())
+        self.x_tmp = x
+        self.y_tmp = y  # swap for the next call to this function
+
+
+    def draw(self, dc, replay=True):
+        super(Pen, self).draw(dc, replay, "LineList")
+
+    def get_args(self):
+        return [self.points]
+
+    def sort_handles(self):
+        self.handles = self.get_handles()
+#        bmp = wx.EmptyBitmap(*self.board.area)
+#        dc = wx.MemoryDC()
+#        dc.SetPen(wx.Pen((255, 255, 255), 1))
+#        dc.SetBrush(wx.Brush((255, 255, 255)))
+#        dc.Clear()
+#        dc.FloodFill(0, 0, (255, 255, 255), wx.FLOOD_BORDER)
+#
+#        dc.SetPen(wx.Pen((0, 0, 0), self.thickness, wx.SOLID))
+#        dc.DrawLineList(self.points)
+#        dc.SelectObject(wx.NullBitmap)
+#        self.image = bmp
+
+
+    def handle_hit_test(self, x, y):
+        pass
+
+    def draw_selected(self, dc):
+        pass
+
+    def move(self, x, y, offset):
+        """Gotta update every point relative to how much the first has moved"""
+        super(Pen, self).move(x, y, offset)
+        diff = (x - self.points[0][0] - offset[0], y - self.points[0][1] - offset[1])
+
+        self.points = list(self.points)
+        for count, point in enumerate(self.points):
+            self.points[count] = [point[0] + diff[0], point[1] + diff[1],
+                                  point[2] + diff[0], point[3] + diff[1]]
+
+
+    def hit_test(self, x, y):
+        """ Returns True/False if a mouseclick in "inside" the shape """
+        #area = self.handles
+
+        #if x > area[0] and x < area[1]:
+        #    if y > area[2] and y < area[3]:
+        #        return True
+        #return False
+#        points = [(p[0], p[1]) for p in self.points]
+#        n = len(points)
+#        inside = False
+#
+#        p1x, p1y = points[0]
+#        for i in range(n + 1):
+#            p2x, p2y = points[i % n]
+#            if y > min(p1y, p2y):
+#                if y <= max(p1y, p2y):
+#                    if x <= max(p1x, p2x):
+#                        if p1y != p2y:
+#                            xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+#                        if p1x == p2x or x <= xinters:
+#                            inside = not inside
+#            p1x, p1y = p2x, p2y
+#
+#        return inside
+        #dc = wx.BufferedDC(None, self.board.hit_buffer)
+        #colour = dc.GetPixel(x, y)  # get colour
+        #if colour == (0, 0, 0, 255):
+        #    return True
+        pass#return False
+
+
+    def get_handles(self):
+        """Calculate the "bounding area" for the pen"""
+        left = min([point[0] for point in self.points])
+        right = max([point[0] for point in self.points])
+        top = min([point[1] for point in self.points])
+        bottom = max([point[1] for point in self.points])
+
+        return [left, right, top, bottom]
+
+
+    def properties(self):
+        return _("Number of points: %s") % len(self.points)
+
+    def preview(self, dc, width, height):
+        """Points below make a curly line to show an example Pen drawing"""
+        dc.DrawSpline([(52, 10), (51, 10), (50, 10), (49, 10), (49, 9), (48, 9),
+                 (47, 9), (46, 9), (46, 8), (45, 8), (44, 8), (43, 8), (42, 8),
+                 (41, 8), (40, 8), (39, 8), (38, 8), (37, 8), (36, 8), (35, 8),
+                 (34, 8), (33, 8), (32, 8), (31, 8), (30, 8), (29, 8), (28, 8),
+                 (27, 8), (27, 10), (26, 10), (26, 11), (26, 12), (26, 13),
+                 (26, 14), (26, 15), (26, 16), (28, 18), (30, 19), (31, 21),
+                 (34, 22), (36, 24), (37, 26), (38, 27), (40, 28), (40, 29),
+                 (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33),
+                 (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37),
+                 (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37)])
+
 
 #----------------------------------------------------------------------
 
@@ -658,7 +750,8 @@ class Media(Tool):
         self.board.select_tool()
 
     def make_panel(self):
-        self.mc = MediaPanel(self.board, (self.x, self.y), self)
+        if not self.mc:
+            self.mc = MediaPanel(self.board, (self.x, self.y), self)
         if self.filename:
             self.mc.do_load_file(self.filename)
 
@@ -674,8 +767,9 @@ class Media(Tool):
         self.remove_panel()
 
     def remove_panel(self):
-        self.mc.Destroy()
-        self.mc = None
+        if self.mc:
+            self.mc.Destroy()
+            self.mc = None
 
     def load(self):
         super(Media, self).load()
@@ -1208,7 +1302,6 @@ class Select(Tool):
         if self.dragging:
             self.shape.sort_handles()
 
-
         self.board.update_thumb()
         self.board.select_tool()
         #if self.dragging:
@@ -1273,9 +1366,11 @@ class BitmapSelect(Rectangle):
 
 class Polygon(OverlayShape):
     """
-    Draws a polygon with [x] number of points.
+    Draws a polygon with [x] number of points, each of which can be repositioned
+    Due to it working different to every other shape it has to do some canvas
+    manipulation here
     """
-    tooltip = _("Draws a polygon")
+    tooltip = _("Draw a polygon")
     name = _("Polygon")
     icon = "polygon"
     hotkey = "y"
@@ -1283,22 +1378,43 @@ class Polygon(OverlayShape):
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, board, colour, thickness, background)
         self.points = []
+        self.drawing = False
+
 
     def left_down(self, x, y):
+        self.drawing = True
         self.points.append((x, y))
         if not self.x or not self.y:
             self.x = x
             self.y = y
-        self.board.draw_shape(self)
+            self.points.append((x, y))
+            self.board.draw_shape(self)
 
+
+    def motion(self, x, y):
+        if self.drawing:
+            if self.points:
+                pos = len(self.points) - 1
+                if pos < 0:
+                    pos = 0
+                self.points[pos] = (x, y)
+
+            self.board.draw_shape(self)
+
+    def double_click(self, x, y):
+        del self.points[len(self.points) - 1]
+        self.right_up(x, y)
 
     def left_up(self, x, y):
         pass
 
     def right_up(self, x, y):
-        self.board.add_shape(self)
-        self.board.select_tool()
-        self.sort_handles()
+        if len(self.points) > 2:
+            self.drawing = False
+            self.board.add_shape(self)
+            self.sort_handles()
+            self.board.select_tool()
+            self.board.update_thumb()
 
     def hit_test(self, x, y):
         """http://ariel.com.au/a/python-point-int-poly.html"""
@@ -1322,8 +1438,7 @@ class Polygon(OverlayShape):
     def sort_handles(self):
         self.handles = []
         for x in self.get_handles():
-            size = HANDLE_SIZE
-            self.handles.append(wx.Rect(x[0], x[1], size, size))
+            self.handles.append(wx.Rect(x[0], x[1], HANDLE_SIZE, HANDLE_SIZE))
 
 
     def get_handles(self):
@@ -1342,14 +1457,18 @@ class Polygon(OverlayShape):
         return False  # nothing hit
 
     def resize(self, x, y, direction=None):
+        self.points = list(self.points)
         pos = direction - 1
         if pos < 0:
             pos = 0
         self.points[pos] = (x, y)
+        if pos == 0:
+            self.x, self.y = x, y
 
     def move(self, x, y, offset):
         """Gotta update every point relative to how much the first has moved"""
         super(Polygon, self).move(x, y, offset)
+        self.points = list(self.points)
         diff = (x - self.points[0][0] - offset[0], y - self.points[0][1] - offset[1])
 
         for count, point in enumerate(self.points):

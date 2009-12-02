@@ -25,7 +25,7 @@ from __future__ import division
 
 import os
 import sys
-import subprocess
+import zipfile
 import wx
 import wx.lib.mixins.listctrl as listmix
 
@@ -303,15 +303,12 @@ class UpdateDialog(wx.Dialog):
         _type = ".tar.gz"
         if os.name == "nt":
             if self.gui.util.is_exe():
-                _type = ".exe"
+                _type = ".zip"
 
         for i, td in enumerate(soup.findAll("td", {"class": "vt id col_0"})):
             _file = td.findNext('a').renderContents().strip()
 
             if _file.endswith(_type):
-                if _file.find("installer") != -1 or _file.find("help") != -1:
-                    continue  # ignore it
-
                 found = True
                 start = _file.find("-") + 1
                 stop = _file.find(_type)
@@ -346,7 +343,7 @@ class UpdateDialog(wx.Dialog):
         args = []  # args to reload running program, may include filename
         tmp = None
         tmp_file = os.path.join(path[0], 'tmp-wb-' + self._type)
-        wx.MessageBox(tmp_file)
+
         try:
             tmp = urlretrieve(self._file, tmp_file, self.reporter)
         except IOError:
@@ -355,11 +352,15 @@ class UpdateDialog(wx.Dialog):
             return
 
         if self.gui.util.is_exe():
-            # rename current exe, rename temp to current
+            # rename current exe, extract zip which contains whyteboard.exe
             if os.name == "nt":
                 os.rename(path[1], "wtbd-bckup.exe")
-                os.rename("tmp-wb-.exe", "whyteboard.exe")
-                args = [sys.argv[0], [sys.argv[0]]]
+                zip = zipfile.ZipFile(tmp_file)
+                zip.extractall()
+                zip.close()
+                os.remove(tmp_file)
+                wb = os.path.abspath(sys.argv[0])
+                args = [wb, [wb]]
         else:
             if os.name == "posix":
                 os.system("tar -xf "+ tmp[0] +" --strip-components=1")
@@ -382,8 +383,8 @@ class UpdateDialog(wx.Dialog):
         _type = "KB"
         rem = ""
         if done >= 1024:
-            rem = ".%s" % (done % 1024)
-            done /= 1024
+            rem = "%.2i" % (done % 1024)
+            done //= 1024
             _type = "MB"
 
 
@@ -391,12 +392,12 @@ class UpdateDialog(wx.Dialog):
         total /= 1024
         rem2 = ""
         if total >= 1024:
-            rem2 = ".%s" % (total % 1024)
-            total /= 1024
+            rem2 = "%.2i" % (total % 1024)
+            total //= 1024
             _type2 = "MB"
 
-        self.text2.SetLabel(" "+_("Downloaded")+" %s%s%s" % (done, rem, _type) +
-                            " of %s%s%s" % (total, rem2, _type2))
+        self.text2.SetLabel(" "+_("Downloaded")+" %s.%s%s" % (int(done), rem, _type) +
+                            " of %s.%s%s" % (int(total), rem2, _type2))
 
 
 #----------------------------------------------------------------------

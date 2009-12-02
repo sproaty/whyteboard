@@ -19,7 +19,7 @@ Place, Suite 330, Boston, MA  02111-1307  USA"""
 
 
 """
-This module implements the Whteboard application.  It takes a Whyteboard class
+This module implements the Whyteboard application.  It takes a Whyteboard class
 and wraps it in a GUI with a menu/toolbar/statusbar; can save and load drawings,
 clear the workspace, undo, redo, a simple history "replayer", allowing you to
 have a replay of what you have drawn played back to you.
@@ -37,17 +37,19 @@ import time
 import locale
 import webbrowser
 
-WXVER = '2.8.9'
-import wxversion
-if wxversion.checkInstalled(WXVER):
-    wxversion.select([WXVER, '2.8.10'])
-else:
-    import wx
-    app = wx.PySimpleApp()
-    wx.MessageBox(_("The requested version of wxPython is not installed.\nPlease install version %s") % WXVER, _("wxPython Version Error"))
-    app.MainLoop()
-    webbrowser.open("http://wxPython.org/download.php")
-    sys.exit()
+if not hasattr(sys, 'frozen'):
+    WXVER = '2.8.9'
+    import wxversion
+    if wxversion.checkInstalled(WXVER):
+        wxversion.select([WXVER, '2.8.10'])
+    else:
+        import wx
+        app = wx.PySimpleApp()
+        wx.MessageBox("The requested version of wxPython is not installed.\n"+
+                     "Please install version "+ WXVER, "wxPython Version Error")
+        app.MainLoop()
+        webbrowser.open("http://wxPython.org/download.php")
+        sys.exit()
 
 import wx
 import wx.lib.newevent
@@ -159,15 +161,16 @@ class GUI(wx.Frame):
         self.hotkeys = []
 
         self.control = ControlPanel(self)
-        self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8)
-        self.board = Whyteboard(self.tabs, self)  # the active whiteboard tab
+        self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8
+                                     | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS)
+        self.board = Whyteboard(self.tabs, self)  # the active whyteboard tab
         self.panel = SidePanel(self)
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
         self.tabs.AddPage(self.board, _("Sheet")+" 1")
         box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         box.Add(self.control, 0, wx.EXPAND)
-        box.Add(self.tabs, 2, wx.EXPAND)
+        box.Add(self.tabs, 1, wx.EXPAND)
         box.Add(self.panel, 0, wx.EXPAND)
         self.SetSizer(box)
         self.SetSizeWH(800, 600)
@@ -175,7 +178,7 @@ class GUI(wx.Frame):
         if os.name == "posix":
             self.board.SetFocus()  # makes EVT_CHAR_HOOK trigger
 
-        self.count = 4  # used to update menu timings
+        self.count = 5  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(65)
         wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         self.board.update_thumb()
@@ -608,17 +611,20 @@ class GUI(wx.Frame):
 
 
     def on_new_tab(self, event=None, name=None, wb=None):
-        """Opens a new tab, selects it, creates a new thumbnail and tree item"""
-        self.tab_count += 1
+        """
+        Opens a new tab, selects it, creates a new thumbnail and tree item
+        name: unique name, sent by PDF convert/load file.
+        wb: Passed by undo_tab to ensure the tab total is correct
+        """
         if not wb:
-            wb = Whyteboard(self.tabs, self)
             self.tab_total += 1
         if not name:
             name = _("Sheet")+" %s" % self.tab_total
 
+        self.tab_count += 1
         self.thumbs.new_thumb(name=name)
         self.notes.add_tab(name)
-        self.tabs.AddPage(wb, name)
+        self.tabs.AddPage(Whyteboard(self.tabs, self), name)
 
         self.update_panels(False)  # unhighlight current
         self.thumbs.thumbs[self.current_tab].current = True
@@ -748,7 +754,6 @@ class GUI(wx.Frame):
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
-        self.tab_total -= 1
 
         if os.name == "posix":
             self.tabs.RemovePage(self.current_tab)
@@ -764,17 +769,11 @@ class GUI(wx.Frame):
         Undoes the last closed tab from the list.
         Re-creates the board from the saved shapes/undo/redo lists
         """
-        #self.board.redraw_all()
         if not self.closed_tabs:
             return
         board = self.closed_tabs.pop()
 
-        #if board[4]:
-
-        self.on_new_tab(name=board[4])
-
-        #else:
-        #    self.on_new_tab()
+        self.on_new_tab(name=board[4], wb=True)
         self.board.shapes = board[0]
         self.board.undo_list = board[1]
         self.board.redo_list = board[2]
@@ -825,13 +824,14 @@ class GUI(wx.Frame):
 
         if _id == wx.ID_PASTE:  # check this less frequently
             self.count += 1
-            if self.count == 5:
+            if self.count == 6:
                 self.can_paste = False
 
             wx.TheClipboard.Open()
             success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
+            success2 = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_TEXT))
             wx.TheClipboard.Close()
-            if success:#self.util.get_clipboard():
+            if success or success2:
                 self.can_paste = True
                 self.count = 0
                 try:
@@ -905,34 +905,26 @@ class GUI(wx.Frame):
         if not data:
             return
 
+        x, y = 0, 0
+        if not ignore:
+            x, y = self.board.ScreenToClient(wx.GetMousePosition())
+            if x < 0 or y < 0:
+                x = 0
+                y = 0
+            x, y = self.board.CalcUnscrolledPosition(x, y)
+
         if isinstance(data, wx.TextDataObject):
             shape = Text(self.board, self.util.colour, 1)
             shape.text = data.GetText()
 
-            x, y = 0, 0
-            if not ignore:
-                x, y = self.board.ScreenToClient(wx.GetMousePosition())
-                if x < 0 or y < 0:
-                    x = 0
-                    y = 0
-                x, y = self.board.CalcUnscrolledPosition(x, y)
-
-            #old = self.board.shape
             self.board.shape = shape
             shape.left_down(x, y)
             shape.left_up(x, y)
             self.board.text = None
-            #self.board.shape = old
             self.board.select_tool()
             self.board.redraw_all(True)
         else:
             shape = Image(self.board, data.GetBitmap(), None)
-
-            x, y = 0, 0
-            if not ignore:
-                x, y = self.board.ScreenToClient(wx.GetMousePosition())
-                x, y = self.board.CalcUnscrolledPosition(x, y)
-
             shape.left_down(x, y)
             wx.Yield()
             self.board.redraw_all(True)
@@ -1191,7 +1183,7 @@ class GUI(wx.Frame):
 
     def on_shape_viewer(self, event=None):
         dlg = ShapeViewer(self)
-        dlg.ShowModal()
+        dlg.Show()
 
 
     def on_preferences(self, event=None):
@@ -1275,6 +1267,7 @@ class GUI(wx.Frame):
              'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
              'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
              'Medina https://launchpad.net/~medina-colpaca (Spanish)',
+             'Miguel Anxo Bouzada https://launchpad.net/~mbouzada/ (Galician)',
              'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
              '"MixCool" https://launchpad.net/~mixcool (German)',
              'Nkolay Parukhin https://launchpad.net/~parukhin (Russian)',

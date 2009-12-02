@@ -10,23 +10,32 @@ xx Nov 2009 -- 0.39.2
 
 * New Media tool - embed audio and video files into Whyteboard! Each sheet may
   have as many Media panels embedded as you wish
+* New Polygon tool - draw a shape with [x] many points, as complex as you wish.
+  Each point can then be adjusted separately
 * Paste text from the clipboard. Doesn't preserve any font/colour data, though
 * Support for drag/drop of multiple files; e.g. drag/drop 3 .jpg files will open
   3 new sheets, each containing one of the images
+
 * Stopped a crash when PDF conversion with ImageMagick fails (due to no install
   of GhostScript)
 * Saving a new file suggests the current date/time as the filename
 * The Arrow tool's arrows are drawn at a smaller degree
+* Middle clicking a sheet in the tab list will close it
 * A check for a minimum wxPython version of 2.8.9.0
+* The uninstaller on Windows will prompt for feedback on why Whyteboard is being
+  uninstalled
 
 * Bugfix: the program's process could sometimes remain after closing the program
 * Bugfix: text objects were being re-drawn twice after using the Select tool
 * Bugfix: can now drag/drop files onto the canvas once again (0.39.0 broke it)
 * Bugfix: Changing background colour with a shape selected would change its
-  background colour, even with "transparent" selected
+  background colour, even with "transparent" checked
+* Bugfix: Updating the EXE was broken on Windows, now fixed
 * Bugfix: ensured some strings were displayed in their translated form
+* Bugfix: sheet counts were appearing wrong, sometimes.
 * Fixed a few spelling mistakes
-* Latest translations
+* Latest translations. New translation:
+   - Galician
 
 ----------------------------------------------------------------------
 

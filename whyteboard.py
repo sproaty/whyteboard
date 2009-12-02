@@ -32,13 +32,30 @@ larger than the client size, then scrollbars are displayed, and a slight
 """
 
 import os
+import sys
 import copy
+import webbrowser
+
+if not hasattr(sys, 'frozen'):
+    WXVER = '2.8.9'
+    import wxversion
+    if wxversion.checkInstalled(WXVER):
+        wxversion.select([WXVER, '2.8.10'])
+    else:
+        import wx
+        app = wx.PySimpleApp()
+        wx.MessageBox("The requested version of wxPython is not installed.\n"+
+                     "Please install version "+ WXVER, "wxPython Version Error")
+        app.MainLoop()
+        webbrowser.open("http://wxPython.org/download.php")
+        sys.exit()
+
 import wx
 import wx.lib.dragscroller
 
-from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
+from tools import (Image, Text, Line, Note, Select, OverlayShape, Media, Polygon,
                    TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT)
-from utility import FileDropTarget
+import utility
 
 #----------------------------------------------------------------------
 
@@ -62,7 +79,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
-        self.file_drop = FileDropTarget(gui)
+        self.file_drop = utility.FileDropTarget(gui)
         self.SetDropTarget(self.file_drop)
 
         if os.name == "nt":
@@ -73,6 +90,11 @@ class Whyteboard(wx.ScrolledWindow):
         self.scroller = wx.lib.dragscroller.DragScroller(self)
         self.overlay = wx.Overlay()
         self.buffer = wx.EmptyBitmap(*self.area)
+        #self.hit_buffer = wx.EmptyBitmap(*self.area)  # used by pen for hit test
+        #dc = wx.BufferedDC(None, self.hit_buffer, wx.BUFFER_VIRTUAL_AREA)
+        #dc.SetBackground(wx.WHITE_BRUSH)
+        #dc.Clear()
+
         self.gui = gui
         self.tab = tab
         self.scale = (1.0, 1.0)
@@ -127,7 +149,7 @@ class Whyteboard(wx.ScrolledWindow):
         else:
             direction = self.check_canvas_resize(x, y)
 
-            if not self.drawing and direction:
+            if not self.drawing and direction and not isinstance(self.shape, Polygon):
                 if not self.resize_direction:
                     self.resize_direction = direction
                 if( not self.cursor_control or direction != self.resize_direction):
@@ -144,14 +166,15 @@ class Whyteboard(wx.ScrolledWindow):
         if self.gui.bar_shown:
             self.gui.SetStatusText(" %s, %s" % (x, y))
 
-        if self.drawing:
+        if self.drawing or isinstance(self.shape, Polygon):
             self.shape.motion(x, y)
-            self.draw_shape(self.shape)
+            if not isinstance(self.shape, Polygon):
+                self.draw_shape(self.shape)
         elif isinstance(self.shape, Select):  # change cursor to indicate action
             for shape in reversed(self.shapes):
                 res = shape.handle_hit_test(x, y)
 
-                if res and isinstance(shape, Line):
+                if res and (isinstance(shape, Line) or isinstance(shape, Polygon)):
                     self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
                     break
                 if res and isinstance(shape, Image):
@@ -202,9 +225,9 @@ class Whyteboard(wx.ScrolledWindow):
 
     def left_double(self, event):
         """Double click for the Select tool - edit text"""
-        x, y = self.convert_coords(event)
-        if isinstance(self.shape, Select):
-            self.shape.double_click(x, y)
+        #, y =
+        #if isinstance(self.shape, Select):
+        self.shape.double_click(*self.convert_coords(event))
 
 
     def check_canvas_resize(self, x, y):
@@ -245,7 +268,6 @@ class Whyteboard(wx.ScrolledWindow):
         size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
         self.SetVirtualSize(size)
         self.redraw_all()
-
         self.Scroll(*size)
 
     def redraw_dirty(self, dc):
@@ -339,7 +361,7 @@ class Whyteboard(wx.ScrolledWindow):
         """Call method on the top shape if it's Media, to restore the widget"""
         x = len(self.shapes) - 1
         if not self.shapes:
-            x = 0
+            return
         if isinstance(self.shapes[x], Media):
             getattr(self.shapes[x], method)()
 
@@ -389,13 +411,13 @@ class Whyteboard(wx.ScrolledWindow):
     def check_move(self, pos):
         if not self.selected:
             return False
-        if pos == "top" or pos == "up":
+        if pos in ["top", "up"]:
             length = len(self.shapes) - 1
             if length < 0:
                 length = 0
             if self.shapes.index(self.selected) != length:
                 return True
-        elif pos == "down" or pos == "bottom":
+        elif pos in ["down", "bottom"]:
             if self.shapes.index(self.selected) != 0:
                 return True
         return False
@@ -474,12 +496,13 @@ class Whyteboard(wx.ScrolledWindow):
         """Deletes the selected shape"""
         if not self.selected:
             return
-        for x in self.shapes:
-            if x == self.selected:
-                self.add_undo()
-                self.shapes.remove(x)
-                self.selected = None
-                self.redraw_all(True)
+
+        self.add_undo()
+        if isinstance(self.selected, Media):
+            self.selected.remove_panel()
+        self.shapes.remove(self.selected)
+        self.selected = None
+        self.redraw_all(True)
 
 
     def deselect(self):

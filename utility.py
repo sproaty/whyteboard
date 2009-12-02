@@ -97,7 +97,7 @@ default_width = integer(min=1, max=12000, default=640)
 default_height = integer(min=1, max=12000, default=480)
 imagemagick_path = string
 handle_size = integer(min=3, max=15, default=6)
-language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', 'Portugese', 'Japanese', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', default='English')
+language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', 'Portugese', 'Japanese', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', 'galician', default='English')
 print_title = boolean(default=True)
 statusbar = boolean(default=True)
 toolbar = boolean(default=True)
@@ -121,7 +121,8 @@ languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
               (_("Welsh"), wx.LANGUAGE_WELSH),
               (_("Traditional Chinese"), wx.LANGUAGE_CHINESE_TRADITIONAL),
               (_("Czech"), wx.LANGUAGE_CZECH),
-              (_("Italian"), wx.LANGUAGE_ITALIAN) )
+              (_("Italian"), wx.LANGUAGE_ITALIAN),
+              (_("Galician"), wx.LANGUAGE_GALICIAN) )
 
 #----------------------------------------------------------------------
 
@@ -664,7 +665,7 @@ class Utility(object):
 
 
     def get_clipboard(self):
-        """Checks the clipboard for any valid image data to paste"""
+        """Checks the clipboard for any valid image or text data to paste"""
         bmp = wx.BitmapDataObject()
         wx.TheClipboard.Open()
         success = wx.TheClipboard.GetData(bmp)

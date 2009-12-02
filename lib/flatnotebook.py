@@ -3965,7 +3965,11 @@ class PageContainer(wx.Panel):
         where, tabIdx = self.HitTest(event.GetPosition())
 
         if where == FNB_TAB:
-            self.DeletePage(tabIdx)
+            #self.DeletePage(tabIdx)
+            # hack specific to Whyteboard, here.
+            self.Parent.Parent.current_tab = tabIdx
+            self.Parent.Parent.board = self.Parent.GetPage(tabIdx)
+            self.Parent.Parent.on_close_tab()           
 
         event.Skip()
 
