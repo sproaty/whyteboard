@@ -30,6 +30,8 @@ xx Nov 2009 -- 0.39.2
 * Bugfix: can now drag/drop files onto the canvas once again (0.39.0 broke it)
 * Bugfix: Changing background colour with a shape selected would change its
   background colour, even with "transparent" checked
+* Bugfix: Exporting as PDF on Linux without typing ".pdf" into the filename now
+  works
 * Bugfix: Updating the EXE was broken on Windows, now fixed
 * Bugfix: ensured some strings were displayed in their translated form
 * Bugfix: sheet counts were appearing wrong, sometimes.

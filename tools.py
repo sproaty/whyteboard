@@ -709,7 +709,7 @@ class Arrow(Line):
         x0, x1, y0, y1 = self.x, self.x2, self.y, self.y2
         deltaX = self.x2 - self.x
         deltaY = self.y2 - self.y
-        frac = 0.15
+        frac = 0.05
 
         dc.DrawLine(*self.get_args())
         dc.DrawLine(x0 + ((.75 - frac) * deltaX + frac * deltaY),
@@ -1402,6 +1402,8 @@ class Polygon(OverlayShape):
             self.board.draw_shape(self)
 
     def double_click(self, x, y):
+        if len(self.points) == 2:
+            return
         del self.points[len(self.points) - 1]
         self.right_up(x, y)
 

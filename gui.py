@@ -407,7 +407,7 @@ class GUI(wx.Frame):
         now = time.strftime("%Y-%m-%d-%H-%M-%S")
         dlg = wx.FileDialog(self, _("Save Whyteboard As..."), os.getcwd(),
                 style=wx.SAVE | wx.OVERWRITE_PROMPT,  defaultFile=now,
-                wildcard = _("Whyteboard file ")+"(*.wtbd)|*.wtbd")
+                wildcard=_("Whyteboard file ")+"(*.wtbd)|*.wtbd")
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
             if not os.path.splitext(filename)[1]:  # no file extension
@@ -437,7 +437,7 @@ class GUI(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()
-
+            
             if name.endswith(".wtbd"):
                 self.util.prompt_for_save(self.do_open, args=[name])
             else:
@@ -471,8 +471,9 @@ class GUI(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
             ext = os.path.splitext(filename)[1]
-
-            if ext != ".pdf":
+            if not ext:  # no file extension
+                filename += '.pdf'            
+            elif ext != ".pdf":
                 wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % ext,
                               _("Invalid filetype"))
                 return
