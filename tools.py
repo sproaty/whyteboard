@@ -65,6 +65,7 @@ class Tool(object):
         self.pen = None
         self.brush = None
         self.selected = False
+        self.drawing = False
         self.x = 0
         self.y = 0
         self.make_pen()
@@ -122,6 +123,8 @@ class Tool(object):
         """ Defines how this class will unpickle itself """
         if not hasattr(self, "background"):
             self.background = wx.TRANSPARENT
+        if not hasattr(self, "drawing"):
+            self.drawing = False
 
 #----------------------------------------------------------------------
 
@@ -745,19 +748,19 @@ class Media(Tool):
     def left_down(self, x, y):
         self.x = x
         self.y = y
-        self.board.add_shape(self)
+        #self.board.add_shape(self)
+        self.board.medias.append(self)
         self.make_panel()
         self.board.select_tool()
 
     def make_panel(self):
         if not self.mc:
             self.mc = MediaPanel(self.board, (self.x, self.y), self)
-        if self.filename:
-            self.mc.do_load_file(self.filename)
+            if self.filename:
+                self.mc.do_load_file(self.filename)
 
     def hit_test(self, x, y):
-        rect = wx.Rect(self.x, self.y, self.mc.GetSizeTuple()[0], self.mc.GetSizeTuple()[1])
-        return rect.InsideXY(x, y)
+        pass
 
     def properties(self):
         return _("Loaded file")+ ": " + str(self.filename)
@@ -1382,6 +1385,10 @@ class Polygon(OverlayShape):
 
 
     def left_down(self, x, y):
+        if not self.drawing:
+            if not self.board.HasCapture():
+                self.board.CaptureMouse()
+
         self.drawing = True
         self.points.append((x, y))
         if not self.x or not self.y:
@@ -1417,6 +1424,10 @@ class Polygon(OverlayShape):
             self.sort_handles()
             self.board.select_tool()
             self.board.update_thumb()
+
+            if self.board.HasCapture():
+                print 'ey'
+                self.board.ReleaseMouse()
 
     def hit_test(self, x, y):
         """http://ariel.com.au/a/python-point-int-poly.html"""

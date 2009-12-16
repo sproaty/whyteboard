@@ -66,7 +66,8 @@ BOTTOM = 3
 
 class Whyteboard(wx.ScrolledWindow):
     """
-    The drawing frame of the application.
+    The drawing frame of the application. References to self.shape.drawing are
+    for the Polygon tool, mainly avoiding isinstance() checks
     """
     def __init__(self, tab, gui):
         """
@@ -100,6 +101,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.scale = (1.0, 1.0)
         self.shapes = []  # list of shapes for re-drawing/saving
         self.shape = None  # currently selected shape *to draw with*
+        self.medias = []  # list of Media panels
         self.selected = None  # selected shape *with Select tool*
         self.text  = None  # current Text object for redraw all
         self.copy = None  # BitmapSelect instance
@@ -125,9 +127,9 @@ class Whyteboard(wx.ScrolledWindow):
     def left_down(self, event):
         """Starts drawing"""
         x, y = self.convert_coords(event)
-        if os.name == "nt" and not isinstance(self.shape, Media):
+        if os.name == "nt" and not isinstance(self.shape, Media) and not self.shape.drawing:
             self.CaptureMouse()
-        if self.check_canvas_resize(x, y):  # don't draw outside canvas
+        if not self.shape.drawing and self.check_canvas_resize(x, y):  # don't draw outside canvas
             self.resizing = True
             return
 
@@ -141,7 +143,11 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def left_motion(self, event):
-        """Updates the shape. Indicate shape may be changed using Select tool"""
+        """
+        Checks if the canvas can be updated, changes the cursor to show it can
+        Updates the shape if the user is drawing. Indicate shape may be changed
+        when using Select tool by changing the cursor
+        """
         x, y = self.convert_coords(event)
         if self.resizing:
             self.resize_canvas((x, y), self.resize_direction)
@@ -149,26 +155,27 @@ class Whyteboard(wx.ScrolledWindow):
         else:
             direction = self.check_canvas_resize(x, y)
 
-            if not self.drawing and direction and not isinstance(self.shape, Polygon):
-                if not self.resize_direction:
-                    self.resize_direction = direction
-                if( not self.cursor_control or direction != self.resize_direction):
-                    self.resize_direction = direction
-                    self.cursor_control = True
-                    self.resize_cursor(direction) # change cursor
-                return
+            if not self.drawing and direction:
+                if not self.shape.drawing:
+                    if not self.resize_direction:
+                        self.resize_direction = direction
+                    if( not self.cursor_control or direction != self.resize_direction):
+                        self.resize_direction = direction
+                        self.cursor_control = True
+                        self.resize_cursor(direction) # change cursor
+                    return
             else:
                 if self.cursor_control:
                     self.change_cursor()
                     self.cursor_control = False
-                    return
+                    return  # don't want to update status text
 
         if self.gui.bar_shown:
             self.gui.SetStatusText(" %s, %s" % (x, y))
 
-        if self.drawing or isinstance(self.shape, Polygon):
+        if self.drawing or self.shape.drawing:
             self.shape.motion(x, y)
-            if not isinstance(self.shape, Polygon):
+            if not self.shape.drawing:  # polygon
                 self.draw_shape(self.shape)
         elif isinstance(self.shape, Select):  # change cursor to indicate action
             for shape in reversed(self.shapes):
@@ -199,7 +206,7 @@ class Whyteboard(wx.ScrolledWindow):
         """
         Called when the left mouse button is released.
         """
-        if os.name == "nt":
+        if os.name == "nt" and not self.shape.drawing:
             if self.HasCapture():
                 self.ReleaseMouse()
 
@@ -209,13 +216,13 @@ class Whyteboard(wx.ScrolledWindow):
             if self.copy:
                 self.draw_shape(self.copy)  # draw back the GCDC
             return
-        if self.drawing or isinstance(self.shape, Text) or isinstance(self.shape, Media):
+        if self.drawing or isinstance(self.shape, Text):
             before = len(self.shapes)
             self.shape.left_up(*self.convert_coords(event))
-
-            if len(self.shapes) - before:
-                self.select_tool()
-                self.update_thumb()
+            if not isinstance(self.shape, Media):
+                if len(self.shapes) - before:
+                    self.select_tool()
+                    self.update_thumb()
             self.drawing = False
 
     def right_up(self, event):
@@ -225,8 +232,6 @@ class Whyteboard(wx.ScrolledWindow):
 
     def left_double(self, event):
         """Double click for the Select tool - edit text"""
-        #, y =
-        #if isinstance(self.shape, Select):
         self.shape.double_click(*self.convert_coords(event))
 
 
@@ -256,19 +261,19 @@ class Whyteboard(wx.ScrolledWindow):
 
         if direction == RIGHT:
             size = (size[0], self.area[1])
-        #    self.Scroll(self.GetVirtualSizeTuple()[0], -1)
+            self.Scroll(self.GetVirtualSizeTuple()[0], -1)
         elif direction == BOTTOM:
             size = (self.area[0], size[1])
-        #    self.Scroll(-1, size[1])
-        #elif direction is not None:
-        #    self.Scroll(*size)
+            self.Scroll(-1, size[1])
+        elif direction is not None:
+            self.Scroll(*size)
 
         self.buffer = wx.EmptyBitmap(*size)
         self.area = size
         size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
         self.SetVirtualSize(size)
         self.redraw_all()
-        self.Scroll(*size)
+
 
     def redraw_dirty(self, dc):
         """ Figure out what part of the window to refresh. """
@@ -357,30 +362,19 @@ class Whyteboard(wx.ScrolledWindow):
         if self.gui.util.saved:
             self.gui.util.saved = False
 
-    def top_shape(self, method):
-        """Call method on the top shape if it's Media, to restore the widget"""
-        x = len(self.shapes) - 1
-        if not self.shapes:
-            return
-        if isinstance(self.shapes[x], Media):
-            getattr(self.shapes[x], method)()
-
 
     def undo(self):
         """ Undoes an action, and adds it to the redo list. """
-        self.top_shape("remove_panel")
         self.perform(self.undo_list, self.redo_list)
 
     def redo(self):
         """ Redoes an action, and adds it to the undo list. """
         self.perform(self.redo_list, self.undo_list)
-        self.top_shape("make_panel")
 
     def perform(self, list_a, list_b):
         """ list_a: to remove from / list b: append to """
         if not list_a:
             return
-
         list_b.append(list(self.shapes))
         shapes = list_a.pop()
         self.shapes = shapes
@@ -395,15 +389,41 @@ class Whyteboard(wx.ScrolledWindow):
                 self.gui.notes.add_note(x)
 
 
+    def delete_selected(self):
+        """Deletes the selected shape"""
+        if not self.selected:
+            return
+
+        if isinstance(self.selected, Media):
+            #self.selected.make_panel()
+            self.selected.remove_panel()
+        else:
+            self.add_undo()
+            self.shapes.remove(self.selected)
+
+        self.gui.util.saved = False
+        self.selected = None
+        self.redraw_all(True)
+
+
     def clear(self, keep_images=False):
         """ Removes all shapes from the 'to-draw' list. """
-        self.add_undo()
-        images = []
-        if keep_images:
-            for x in self.shapes:
-                if isinstance(x, Image):
-                    images.append(x)
+        if not self.medias and not self.shapes:
+            return
 
+        for m in self.medias:
+            m.remove_panel()
+        self.medias = []
+        images = []
+
+        if self.shapes:
+            self.add_undo()
+            if keep_images:
+                for x in self.shapes:
+                    if isinstance(x, Image):
+                        images.append(x)
+
+        self.gui.util.saved = False
         self.shapes = images
         self.redraw_all(update_thumb=True)
 
@@ -491,18 +511,6 @@ class Whyteboard(wx.ScrolledWindow):
                 dc.Clear()
                 dc.DestroyClippingRegion()
 
-
-    def delete_selected(self):
-        """Deletes the selected shape"""
-        if not self.selected:
-            return
-
-        self.add_undo()
-        if isinstance(self.selected, Media):
-            self.selected.remove_panel()
-        self.shapes.remove(self.selected)
-        self.selected = None
-        self.redraw_all(True)
 
 
     def deselect(self):

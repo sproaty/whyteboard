@@ -1,6 +1,6 @@
 Whyteboard 0.39.2 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Tuesday 17 November 2009
+Wednesday 16 December 2009
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -51,6 +51,9 @@ http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14
 
 ---- KNOWN BUGS ----
 
+Media Tool may take several file loads to actually load the file correctly.
+
+
 Possible crash on Linux with loading a PDF:
 
   File "/usr/lib/whyteboard/utility.py", line 469, in display_converted
@@ -59,8 +62,8 @@ Possible crash on Linux with loading a PDF:
     raise PyDeadObjectError(self.attrStr % self._name)
 PyDeadObjectError: The C++ part of the Whyteboard object has been deleted, attribute access no longer allowed.
 
-I'm having a hard time replicating this issue, if anyone can provide extra
-details on how to trigger the bug then that would help a ton.
+Hopefully this bug has been fixed in version 0.39.2; was due to GhostScript not
+being present.
 
 See up to date reports at https://bugs.launchpad.net/whyteboard
 Identified and confirmed bugs are always fixed before a new release.
@@ -68,11 +71,10 @@ Identified and confirmed bugs are always fixed before a new release.
 
 ---- LIBRARIES / SOFTWARE USED ----
 
-Python, core programmling language - http://www.python.org/download/
+Python, core programmling language - http://www.python.org/
 wxPython, GUI framework - http://www.wxpython.org
 ImageMagick - image editing suite - http://www.imagemagick.net
 BeautifulSoup, Python HTML parser - http://www.crummy.com/software/BeautifulSoup/
 ConfigObj, Python Configuration Files - http://www.voidspace.org.uk/python/configobj.html
 Editra Control Library, extra wxPython widgets - http://editra.org/eclib
-
 Crystal Project, icons - http://www.everaldo.com/crystal/

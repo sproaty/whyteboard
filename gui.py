@@ -179,7 +179,7 @@ class GUI(wx.Frame):
             self.board.SetFocus()  # makes EVT_CHAR_HOOK trigger
 
         self.count = 5  # used to update menu timings
-        wx.UpdateUIEvent.SetUpdateInterval(65)
+        wx.UpdateUIEvent.SetUpdateInterval(50)
         wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         self.board.update_thumb()
         self.do_bindings()
@@ -319,8 +319,8 @@ class GUI(wx.Frame):
 
         # idle event handlers
         ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_ROTATE, ID_MOVE_UP, ID_DESELECT,
-               ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, wx.ID_DELETE,
-               wx.ID_COPY, wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE,]
+               ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, wx.ID_COPY,
+               wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE,]
         [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
 
         # hotkeys
@@ -437,7 +437,6 @@ class GUI(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()
-            
             if name.endswith(".wtbd"):
                 self.util.prompt_for_save(self.do_open, args=[name])
             else:
@@ -472,7 +471,7 @@ class GUI(wx.Frame):
             filename = dlg.GetPath()
             ext = os.path.splitext(filename)[1]
             if not ext:  # no file extension
-                filename += '.pdf'            
+                filename += '.pdf'
             elif ext != ".pdf":
                 wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % ext,
                               _("Invalid filetype"))
@@ -901,7 +900,10 @@ class GUI(wx.Frame):
 
 
     def on_paste(self, event=None, ignore=False):
-        """ Grabs the image from the clipboard and places it on the panel """
+        """
+        Grabs the image from the clipboard and places it on the panel
+        Ignore is used when pasting into a new sheet
+        """
         data = self.util.get_clipboard()
         if not data:
             return
@@ -912,6 +914,10 @@ class GUI(wx.Frame):
             if x < 0 or y < 0:
                 x = 0
                 y = 0
+            if x > self.board.area[0] or y > self.board.area[1]:
+                x = 0
+                y = 0
+
             x, y = self.board.CalcUnscrolledPosition(x, y)
 
         if isinstance(data, wx.TextDataObject):
@@ -925,10 +931,13 @@ class GUI(wx.Frame):
             self.board.select_tool()
             self.board.redraw_all(True)
         else:
-            shape = Image(self.board, data.GetBitmap(), None)
+            bmp = data.GetBitmap()
+            shape = Image(self.board, bmp, None)
             shape.left_down(x, y)
             wx.Yield()
             self.board.redraw_all(True)
+            if ignore:
+                self.board.resize_canvas((bmp.GetWidth(), bmp.GetHeight()))
 
 
     def on_paste_new(self, event):
@@ -1225,7 +1234,7 @@ class GUI(wx.Frame):
             if page:
                 self.help.Display(page)
             else:
-                self.help.DisplayContents()
+                self.help.DisplayIndex()
         else:
             if self.download_help():
                 self.on_help(page=page)
@@ -1278,6 +1287,7 @@ class GUI(wx.Frame):
              'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
              '"Tobberoth" https://launchpad.net/~tobberoth (Japanese)',
              '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
+             '"ucnj" https://launchpad.net/~ucn (German)',
              '"Vonlist" https://launchpad.net/~hengartt (Spanish)',
              'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']
 

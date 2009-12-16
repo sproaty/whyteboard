@@ -1,6 +1,6 @@
 Whyteboard 0.39.2 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Tuesday 17 November 2009
+Wednesday 16 December 2009
 
 ---- NEW FEATURES ----
 
@@ -13,9 +13,8 @@ see: https://blueprints.launchpad.net/whyteboard
   into a single folder where all the relevant data is saved together (like
   saving a web page)
 * Drag / drop items in the Shape Viewer to rearrange them
-* Paste text, essentially creating Text objects from the clipboard. May need
-  to modify the current text method to allow RTF, so different sections of text
-  can have its own font/style/colour
+* Rich Text Control, allowing any part of text to be bolded/coloured differently
+  to other parts of the text, as opposed to a single colour/font/style.
 * "Zoom" capability; zoom in and out of the canvas. May be quite difficult to
   make...
 * UI changes as the left panel takes up some space

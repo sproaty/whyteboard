@@ -142,8 +142,8 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             if _type == "icon":
-                path = os.path.join(self.gui.util.get_path(), "images",
-                                    "tools", val + ".png")
+                path = os.path.join(self.gui.util.get_path(), u"images",
+                                    u"tools", val + u".png")
                 b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path))
                 evt = wx.EVT_BUTTON
             else:
@@ -342,7 +342,6 @@ class MediaPanel(wx.Window):
         self.stop.Disable()
 
         self.file = wx.StaticText(self)
-        self.total = wx.StaticText(self)
         self.elapsed = wx.StaticText(self)
         timesizer = wx.BoxSizer(wx.HORIZONTAL)
         timesizer.Add(self.file, 1, wx.LEFT | wx.RIGHT, 5)
@@ -426,7 +425,8 @@ class MediaPanel(wx.Window):
             self.pause.Disable()
             self.stop.Disable()
         else:
-            #self.mc.Load(path)
+            if os.name == "posix":
+                self.mc.Load(path)
             self.tool.filename = path
 
 
@@ -436,7 +436,6 @@ class MediaPanel(wx.Window):
         wordwrap(os.path.basename(self.tool.filename), 350, wx.ClientDC(self.gui))
         self.file.SetLabel(os.path.basename(self.tool.filename))
         self.elapsed.SetLabel("00:00/" + self.total)
-        #self.total.SetLabel()
         self.mc.SetInitialSize()
         self.slider.SetRange(0, self.mc.Length())
         self.GetSizer().Layout()

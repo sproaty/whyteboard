@@ -189,15 +189,20 @@ class Utility(object):
         if self.filename:
             temp = {}
             names =  []
+            medias = []
             canvas_sizes = []
             tree_ids = []  # every note's tree ID
 
             # load in every shape from every tab
             for x in range(0, self.gui.tab_count):
                 board = self.gui.tabs.GetPage(x)
+
+                for m in board.medias:
+                    m.save()
                 save_pasted_images(board.shapes)
                 temp[x] = list(board.shapes)
                 canvas_sizes.append(board.area)
+                medias.append(board.medias)
                 text = self.gui.tabs.GetPageText(x)
                 names.append(text)
 
@@ -223,7 +228,8 @@ class Utility(object):
                           1: temp,
                           2: None,  # was self.to_convert, but wasn't used.
                           3: names,
-                          4: canvas_sizes }
+                          4: canvas_sizes,
+                          5: medias }
 
                 f = open(self.filename, 'wb')
                 try:
@@ -240,14 +246,18 @@ class Utility(object):
                 # Fix bug in Windows where the current shapes get reset above
                 count = 0
                 for x in temp:
+                    board = self.gui.tabs.GetPage(x)
                     for shape in temp[x]:
-                        shape.board = self.gui.tabs.GetPage(x)
+                        shape.board = board
                         if isinstance(shape, tools.Note):
                             shape.load(False)
                             shape.tree_id = tree_ids[count]
                             count += 1
                         else:
                             shape.load()
+                    for m in board.medias:
+                        m.board = board
+                        m.load()
             else:
                 wx.MessageBox(_("Error saving file data - no data to save"))
                 self.saved = False
@@ -321,6 +331,16 @@ class Utility(object):
 
             try:
                 self.gui.board.resize_canvas(temp[4][x])
+            except KeyError:
+                pass
+
+            media = []
+            try:
+                media = temp[5][x]
+                for m in media:
+                    m.board = self.gui.board
+                    m.load()
+                    self.gui.board.medias.append(m)
             except KeyError:
                 pass
 
@@ -683,6 +703,10 @@ class Utility(object):
 
     def set_clipboard(self, rect):
         """Sets the clipboard with a bitmap image data of a selection"""
+        if rect.x < 0:
+            rect.SetX(0)
+        if rect.y < 0:
+            rect.SetY(0)
         temp = self.gui.board.buffer.GetSubBitmap(rect)
         bmp = wx.BitmapDataObject()
         bmp.SetBitmap(temp)
@@ -693,8 +717,27 @@ class Utility(object):
 
 
 
-
 #----------------------------------------------------------------------
+
+class TestDropTarget(wx.PyDropTarget):
+    """Implements drop target functionality to receive files"""
+    def __init__(self, gui):
+        wx.PyDropTarget.__init__(self)
+        self.gui = gui
+        self.do = wx.DataObjectComposite()
+        self.do.Add(wx.FileDataObject())
+        self.do.Add(wx.TextDataObject())
+        self.SetDataObject(self.do)
+
+    def OnDrop(self, x, y):
+        print self.do.GetReceivedFormat()
+
+
+    def OnData(self, x, y, d):
+        self.GetData()
+        print self.do
+        return d
+
 
 class FileDropTarget(wx.FileDropTarget):
     """Implements drop target functionality to receive files"""
@@ -702,17 +745,16 @@ class FileDropTarget(wx.FileDropTarget):
         wx.FileDropTarget.__init__(self)
         self.gui = gui
 
-    def OnDropText(self, x, y, text):
-        t = tools.Text(self.gui.board, self.gui.util.colour, 1)
-        t.left_down(x, y)
-        #t.text = text
-        t.left_up(x, y)
-
     def OnDropFiles(self, x, y, filenames):
         """Passes the first file to the load file method to handle"""
+        print filenames
         for x, name in enumerate(filenames):
             if x or self.gui.board.shapes:
                 self.gui.on_new_tab()
-            self.gui.do_open(name)
+
+            if name.endswith(".wtbd"):
+                self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
+            else:
+                self.gui.do_open(name)
 
 #----------------------------------------------------------------------
