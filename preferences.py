@@ -33,7 +33,6 @@ GUI too.
 
 import os
 import wx
-import lib.flatnotebook as fnb
 from copy import copy
 from wx.lib.wordwrap import wordwrap as wordwrap
 

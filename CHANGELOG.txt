@@ -6,7 +6,7 @@ Wednesday 16 December 2009
 
 ----------------------------------------------------------------------
 
-xx Dec 2009 -- 0.39.2
+16 Dec 2009 -- 0.39.2
 
 * New Media tool - embed audio and video files into Whyteboard! Each sheet may
   have as many Media panels embedded as you wish
@@ -16,6 +16,8 @@ xx Dec 2009 -- 0.39.2
 * Pasted images "into a new sheet" will resize the canvas to the image size
 * Support for drag/drop of multiple files; e.g. drag/drop 3 .jpg files will open
   3 new sheets, each containing one of the images
+* Support for drag and dropping text. However, dragging text from a web browser
+  will not work currently, as it is not recognised as "plain" text
 
 * Stopped a crash when PDF conversion with ImageMagick fails (due to no install
   of GhostScript)

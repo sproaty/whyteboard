@@ -63,7 +63,7 @@ from lib.validate import Validator
 import lib.icon
 from whyteboard import Whyteboard
 from tools import Image, Note, Text
-from utility import Utility, FileDropTarget, languages, cfg
+from utility import Utility, WhyteboardDropTarget, languages, cfg
 from functions import get_home_dir
 from dialogs import (History, ProgressDialog, Resize, Rotate, UpdateDialog,
                      MyPrintout, ExceptionHook, ShapeViewer)
@@ -130,7 +130,7 @@ class GUI(wx.Frame):
         self.SetIcon(ico)
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
         self.util = Utility(self, config)
-        self.file_drop = FileDropTarget(self)
+        self.file_drop = WhyteboardDropTarget(self)
         self.SetDropTarget(self.file_drop)
         self.statusbar = self.CreateStatusBar()
         self.printData = wx.PrintData()
@@ -185,6 +185,7 @@ class GUI(wx.Frame):
         self.do_bindings()
         self.update_panels(True)  # bold first items
         self.UpdateWindowUI()
+        
 
 
     def __del__(self):

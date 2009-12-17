@@ -277,21 +277,6 @@ class Pen(OverlayShape):
             if len(self.points) == 1:  # a single click
                 self.board.redraw_all()
 
-            #dc = wx.BufferedDC(None, self.board.hit_buffer, wx.BUFFER_VIRTUAL_AREA)
-            #dc.SetPen(wx.Pen(wx.BLACK, self.thickness, wx.SOLID))
-            #dc.DrawLineList(self.points)
-
-
-    def draw_shape(self, shape, replay=False):
-        """ Redraws a single shape efficiently"""
-        dc = self.get_dc()
-        #dc.SetUserScale(self.scale[0], self.scale[1])
-        if replay:
-            shape.draw(dc, replay)
-        else:
-            shape.draw(dc)
-        self.redraw_dirty(dc)
-
 
     def motion(self, x, y):
         self.points.append( [self.x_tmp, self.y_tmp, x, y] )
@@ -308,18 +293,6 @@ class Pen(OverlayShape):
 
     def sort_handles(self):
         self.handles = self.get_handles()
-#        bmp = wx.EmptyBitmap(*self.board.area)
-#        dc = wx.MemoryDC()
-#        dc.SetPen(wx.Pen((255, 255, 255), 1))
-#        dc.SetBrush(wx.Brush((255, 255, 255)))
-#        dc.Clear()
-#        dc.FloodFill(0, 0, (255, 255, 255), wx.FLOOD_BORDER)
-#
-#        dc.SetPen(wx.Pen((0, 0, 0), self.thickness, wx.SOLID))
-#        dc.DrawLineList(self.points)
-#        dc.SelectObject(wx.NullBitmap)
-#        self.image = bmp
-
 
     def handle_hit_test(self, x, y):
         pass
@@ -339,36 +312,7 @@ class Pen(OverlayShape):
 
 
     def hit_test(self, x, y):
-        """ Returns True/False if a mouseclick in "inside" the shape """
-        #area = self.handles
-
-        #if x > area[0] and x < area[1]:
-        #    if y > area[2] and y < area[3]:
-        #        return True
-        #return False
-#        points = [(p[0], p[1]) for p in self.points]
-#        n = len(points)
-#        inside = False
-#
-#        p1x, p1y = points[0]
-#        for i in range(n + 1):
-#            p2x, p2y = points[i % n]
-#            if y > min(p1y, p2y):
-#                if y <= max(p1y, p2y):
-#                    if x <= max(p1x, p2x):
-#                        if p1y != p2y:
-#                            xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
-#                        if p1x == p2x or x <= xinters:
-#                            inside = not inside
-#            p1x, p1y = p2x, p2y
-#
-#        return inside
-        #dc = wx.BufferedDC(None, self.board.hit_buffer)
-        #colour = dc.GetPixel(x, y)  # get colour
-        #if colour == (0, 0, 0, 255):
-        #    return True
-        pass#return False
-
+        pass
 
     def get_handles(self):
         """Calculate the "bounding area" for the pen"""
@@ -748,7 +692,6 @@ class Media(Tool):
     def left_down(self, x, y):
         self.x = x
         self.y = y
-        #self.board.add_shape(self)
         self.board.medias.append(self)
         self.make_panel()
         self.board.select_tool()

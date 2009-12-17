@@ -92,6 +92,7 @@ def load_image(path, board):
     image = wx.Bitmap(path)
     shape = tools.Image(board, image, path)
     shape.left_down(0, 0)  # renders, updates scrollbars
+    board.update_thumb()
 
 
 def make_bitmap(colour):

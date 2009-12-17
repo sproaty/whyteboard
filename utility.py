@@ -719,42 +719,57 @@ class Utility(object):
 
 #----------------------------------------------------------------------
 
-class TestDropTarget(wx.PyDropTarget):
-    """Implements drop target functionality to receive files"""
+class WhyteboardDropTarget(wx.PyDropTarget):
+    """Implements drop target functionality to receive files and text"""
     def __init__(self, gui):
         wx.PyDropTarget.__init__(self)
         self.gui = gui
         self.do = wx.DataObjectComposite()
-        self.do.Add(wx.FileDataObject())
-        self.do.Add(wx.TextDataObject())
+        self.filedo = wx.FileDataObject()
+        self.textdo = wx.TextDataObject()
+        self.bmpdo = wx.BitmapDataObject()
+        self.do.Add(self.filedo)
+        self.do.Add(self.bmpdo)
+        self.do.Add(self.textdo)
         self.SetDataObject(self.do)
-
-    def OnDrop(self, x, y):
-        print self.do.GetReceivedFormat()
 
 
     def OnData(self, x, y, d):
-        self.GetData()
-        print self.do
+        """
+        Handles drag/dropping files/text or a bitmap
+        """
+        if self.GetData():
+            df = self.do.GetReceivedFormat().GetType()
+
+            if df == wx.DF_UNICODETEXT or df == wx.DF_TEXT:
+
+                shape = tools.Text(self.gui.board, self.gui.util.colour, 1)
+                shape.text = self.textdo.GetText()
+
+                self.gui.board.shape = shape
+                shape.left_down(x, y)
+                shape.left_up(x, y)
+                self.gui.board.text = None
+                self.gui.board.select_tool()
+                self.gui.board.redraw_all(True)
+
+            elif df == wx.DF_FILENAME:
+                for x, name in enumerate(self.filedo.GetFilenames()):
+                    if x or self.gui.board.shapes:
+                        self.gui.on_new_tab()
+
+                    if name.endswith(".wtbd"):
+                        self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
+                    else:
+                        self.gui.do_open(name)
+
+            elif df == wx.DF_BITMAP:
+                bmp = self.bmpdo.GetBitmap()
+                shape = tools.Image(self.gui.board, bmp, None)
+                shape.left_down(x, y)
+                wx.Yield()
+                self.gui.board.redraw_all(True)
+
         return d
-
-
-class FileDropTarget(wx.FileDropTarget):
-    """Implements drop target functionality to receive files"""
-    def __init__(self, gui):
-        wx.FileDropTarget.__init__(self)
-        self.gui = gui
-
-    def OnDropFiles(self, x, y, filenames):
-        """Passes the first file to the load file method to handle"""
-        print filenames
-        for x, name in enumerate(filenames):
-            if x or self.gui.board.shapes:
-                self.gui.on_new_tab()
-
-            if name.endswith(".wtbd"):
-                self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
-            else:
-                self.gui.do_open(name)
 
 #----------------------------------------------------------------------

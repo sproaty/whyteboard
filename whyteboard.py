@@ -80,7 +80,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
-        self.file_drop = utility.FileDropTarget(gui)
+        self.file_drop = utility.WhyteboardDropTarget(gui)
         self.SetDropTarget(self.file_drop)
 
         if os.name == "nt":
@@ -395,7 +395,6 @@ class Whyteboard(wx.ScrolledWindow):
             return
 
         if isinstance(self.selected, Media):
-            #self.selected.make_panel()
             self.selected.remove_panel()
         else:
             self.add_undo()
