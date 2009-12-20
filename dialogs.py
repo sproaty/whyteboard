@@ -22,6 +22,7 @@ This module contains classes extended from wx.Dialog used by the GUI.
 """
 
 from __future__ import division
+from __future__ import with_statement
 
 import os
 import sys
@@ -30,11 +31,12 @@ import wx
 import wx.lib.mixins.listctrl as listmix
 
 from copy import copy
+from urllib import urlopen, urlretrieve, urlencode
 import lib.errdlg
 from lib.BeautifulSoup import BeautifulSoup
-from urllib import urlopen, urlretrieve, urlencode
 
 import tools
+from functions import get_home_dir
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -860,6 +862,23 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
 
     def Abort(self):
         self.gui.util.prompt_for_save(self.gui.Destroy)
+
+    def GetEnvironmentInfo(self):
+        """
+        Need to stick in extra information: preferences, helps with debugging
+        """
+        info = super(ErrorDialog, self).GetEnvironmentInfo()
+
+        info = info.split(os.linesep)
+        path = os.path.join(get_home_dir(), "user.pref")
+        if os.path.exists(path):
+            info.append("#---- Preferences ----#")
+            with open(path) as f:
+                for x in f:
+                    info.append(x.rstrip())
+            info.append("")
+            info.append("")
+        return os.linesep.join(info)
 
     def GetProgramName(self):
         return "Whyteboard " + wx.GetTopLevelWindows()[0].version

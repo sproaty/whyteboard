@@ -1,11 +1,11 @@
-Whyteboard 0.39.2 - A simple image, PDF and postscript file annotator
+Whyteboard 0.39.3 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Wednesday 16 December 2009
 
 ---- TO RUN WHYTEBOARD ----
 
 If you have installed the Windows .exe file, simply run Whyteboard from the
-start menu.
+start menu. If you have the stand-alone exe, please run whyteboard.exe
 
 Otherwise, here are the requirements:
 
@@ -75,6 +75,7 @@ Python, core programmling language - http://www.python.org/
 wxPython, GUI framework - http://www.wxpython.org
 ImageMagick - image editing suite - http://www.imagemagick.net
 BeautifulSoup, Python HTML parser - http://www.crummy.com/software/BeautifulSoup/
-ConfigObj, Python Configuration Files - http://www.voidspace.org.uk/python/configobj.html
+ConfigObj, Python configuration files - http://www.voidspace.org.uk/python/configobj.html
 Editra Control Library, extra wxPython widgets - http://editra.org/eclib
 Crystal Project, icons - http://www.everaldo.com/crystal/
+Tango Icon Library - http://tango.freedesktop.org/Tango_Icon_Library

@@ -428,7 +428,7 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def check_move(self, pos):
-        if not self.selected:
+        if not self.selected or isinstance(self.selected, Media):
             return False
         if pos in ["top", "up"]:
             length = len(self.shapes) - 1

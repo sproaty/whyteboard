@@ -94,6 +94,11 @@ def load_image(path, board):
     shape.left_down(0, 0)  # renders, updates scrollbars
     board.update_thumb()
 
+    try:
+        board.gui.util.to_archive.index(path)
+    except ValueError:
+        board.gui.util.to_archive.append(path)
+
 
 def make_bitmap(colour):
     """

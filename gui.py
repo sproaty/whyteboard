@@ -117,7 +117,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.39.2"
+    version = "0.39.3"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
@@ -185,7 +185,7 @@ class GUI(wx.Frame):
         self.do_bindings()
         self.update_panels(True)  # bold first items
         self.UpdateWindowUI()
-        
+
 
 
     def __del__(self):
@@ -530,7 +530,7 @@ class GUI(wx.Frame):
     def on_export_pref(self, event=None):
         """Exports the user's preferences."""
         if not os.path.exists(self.util.config.filename):
-            wx.MessageBox("Export Error", "You have not set any preferences")
+            wx.MessageBox(_("Export Error"), _("You have not set any preferences"))
             return
         filename = ""
         wc = _("Whyteboard Preference Files")+" (*.pref)|*.pref"
@@ -553,7 +553,7 @@ class GUI(wx.Frame):
         """
         wc =  _("Whyteboard Preference Files")+" (*.pref)|*.pref"
 
-        dlg = wx.FileDialog(self, _("Export data to..."), get_home_dir(),
+        dlg = wx.FileDialog(self, _("Import Preferences From..."), get_home_dir(),
                             "user.pref", wc, wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
@@ -828,20 +828,21 @@ class GUI(wx.Frame):
             if self.count == 6:
                 self.can_paste = False
 
-            wx.TheClipboard.Open()
-            success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
-            success2 = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_TEXT))
-            wx.TheClipboard.Close()
-            if success or success2:
-                self.can_paste = True
-                self.count = 0
-                try:
-                    event.Enable(self.can_paste)
-                    self.menu.Enable(ID_PASTE_NEW, self.can_paste)
-                    self.menu.Enable(wx.ID_PASTE, self.can_paste)
-                except wx.PyDeadObjectError:
-                    pass
-            return
+            if not wx.TheClipboard.IsOpened():
+                wx.TheClipboard.Open()
+                success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
+                success2 = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_TEXT))
+                wx.TheClipboard.Close()
+                if success or success2:
+                    self.can_paste = True
+                    self.count = 0
+                    try:
+                        event.Enable(self.can_paste)
+                        self.menu.Enable(ID_PASTE_NEW, self.can_paste)
+                        self.menu.Enable(wx.ID_PASTE, self.can_paste)
+                    except wx.PyDeadObjectError:
+                        pass
+                return
 
         do = False
         if not _id == wx.ID_COPY:

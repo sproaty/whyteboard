@@ -1,8 +1,28 @@
-Whyteboard 0.39.2 - A simple image, PDF and postscript file annotator
+Whyteboard 0.39.3 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Wednesday 16 December 2009
 
 ---- VERSION HISTORY ----
+
+----------------------------------------------------------------------
+
+xx Dec 2009 -- 0.39.3
+
+* New save format. ".wtbd" files are now renamed ".zip" files. The zip files now
+  contain all loaded/imported images (and images from a PDF conversion) to allow
+  the save file to be transferred from one computer to another.
+
+  The "old" .wtbd files are also compatible, and will be converted to the new
+  format when they are saved with this version of the program. Of course, this
+  new change means that the .wtbd files become larger as more images are loaded
+
+* Open file dialog defaults to the new "all supported files" rather than .wtbd
+  files - so all supported image types, PDF/PS/SVG and .wtbd files are "matched"
+
+* User's preferences are sent when reporting a bug to help debugging
+* Bugfix: crash when selecting the "shapes" menu with a Media panel selected
+* Bugfix: possible crash with the clipboard being already open
+* Bugfix: Polygon's preview was drawn wrong
 
 ----------------------------------------------------------------------
 

@@ -64,8 +64,6 @@ class ControlPanel(wx.Panel):
         self.toggled = 1  # Pen, initallly
         self.preview = DrawingPreview(self.pane, self.gui)
         self.tools = {}
-
-
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -73,18 +71,15 @@ class ControlPanel(wx.Panel):
         if gui.util.config['toolbox'] == 'icon':
             cols = 2
 
-        self.toolsizer = wx.GridSizer(cols=cols, hgap=1, vgap=2)
-        self.make_toolbox(gui.util.config['toolbox'])
-
         width = wx.StaticText(self.pane, label=_("Thickness:"))
         prev = wx.StaticText(self.pane, label=_("Preview:"))
         colour = self.colour_buttons()
-
         self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
         self.make_colour_grid()
+        self.toolsizer = wx.GridSizer(cols=cols, hgap=1, vgap=2)
+        self.make_toolbox(gui.util.config['toolbox'])
 
         choices = ''.join(str(i) + " " for i in range(1, 26) ).split()
-
         self.thickness = wx.ComboBox(self.pane, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
@@ -142,8 +137,9 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             if _type == "icon":
-                path = os.path.join(self.gui.util.get_path(), u"images",
-                                    u"tools", val + u".png")
+                path = os.path.join(self.gui.util.get_path().decode("latin-1"),
+                                    "images", "tools", val.decode("latin-1") +
+                                    ".png")
                 b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path))
                 evt = wx.EVT_BUTTON
             else:

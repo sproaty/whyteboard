@@ -903,6 +903,7 @@ class Text(OverlayShape):
 
 
     def draw(self, dc, replay=False):
+        self.text.replace("\t", "        ")
         if not self.font:
             self.restore_font()
         dc.SetFont(self.font)
@@ -1324,8 +1325,10 @@ class Polygon(OverlayShape):
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, board, colour, thickness, background)
         self.points = []
-        self.drawing = False
+        self.drawing = False  # class keeps track of its drawing, not whyteboard
 
+    def left_up(self, x, y):
+        pass
 
     def left_down(self, x, y):
         if not self.drawing:
@@ -1357,8 +1360,6 @@ class Polygon(OverlayShape):
         del self.points[len(self.points) - 1]
         self.right_up(x, y)
 
-    def left_up(self, x, y):
-        pass
 
     def right_up(self, x, y):
         if len(self.points) > 2:
@@ -1369,8 +1370,8 @@ class Polygon(OverlayShape):
             self.board.update_thumb()
 
             if self.board.HasCapture():
-                print 'ey'
                 self.board.ReleaseMouse()
+
 
     def hit_test(self, x, y):
         """http://ariel.com.au/a/python-point-int-poly.html"""
@@ -1398,11 +1399,8 @@ class Polygon(OverlayShape):
 
 
     def get_handles(self):
-        handles = []
         d = lambda x, y: (x - 2, y - 2)
-
-        for x in self.points:
-            handles.append(d(x[0], x[1]))
+        handles = [d(x[0], x[1]) for x in self.points]
         return handles
 
 
@@ -1418,7 +1416,7 @@ class Polygon(OverlayShape):
         if pos < 0:
             pos = 0
         self.points[pos] = (x, y)
-        if pos == 0:
+        if pos == 0:  # first point
             self.x, self.y = x, y
 
     def move(self, x, y, offset):
@@ -1441,8 +1439,7 @@ class Polygon(OverlayShape):
         super(Polygon, self).draw(dc, replay, "Polygon")
 
     def preview(self, dc, width, height):
-        dc.SetBrush(wx.Brush(self.colour))
-        dc.DrawPolygon(((10, 10), (25, 25), (15, 15), (3, 3)))
+        dc.DrawPolygon(((7, 13), (54, 9), (60, 38), (27, 34)))
 
 
 #----------------------------------------------------------------------

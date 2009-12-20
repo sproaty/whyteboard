@@ -63,6 +63,7 @@ import sys
 import webbrowser
 import urllib
 import tarfile
+import zipfile
 import distutils.dir_util
 import wx
 
@@ -143,6 +144,7 @@ class Utility(object):
         self.gui = gui
         self.filename = None   # ACTIVE .wtbd file
         self.temp_file = None  # selected file (.wtdb/png/pdf - doesn't matter)
+        self.to_archive = []  # image files to add to the save archive
         self.saved = True
         self.colour = "Black"
         self.background = "White"
@@ -168,12 +170,16 @@ class Utility(object):
         # Make wxPython wildcard filter. Add a new item - new type supported!
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
                        "bmp", "pcx"]
-        label = [_("All files")+" (*.*)", _("Whyteboard files")+" (*.wtbd)",
-                 _("Image Files"), "PDF/PS/SVG"]
+        images = result1 = ', '.join('*.' + i for i in self.types[2:])
+
+        label = [_("All files")+" (*.*)", _("All supported files"),
+                _("Whyteboard files")+" (*.wtbd)", _("Image Files")+" ("+images+")",
+                "PDF/PS/SVG"]
 
         result1 = ';'.join('*.' + i for i in self.types[2:-2])
         result2 = ';'.join('*.' + i for i in self.types[0:2])
-        wc_types = ["*.*", "*.wtbd", result1, result2]
+
+        wc_types = ["*.*", "*.wtbd;"+result1+result2, "*.wtbd", result1, result2]
 
         wc_list = [x + "|" + y for x, y in zip(label, wc_types)]
 
@@ -187,11 +193,18 @@ class Utility(object):
         a saved file.
         """
         if self.filename:
+            self.gui.dialog = ProgressDialog(self.gui, _("Saving..."), 30)
+            self.gui.dialog.Show()
+            _zip = zipfile.ZipFile(self.filename, "w")
+            for x in self.to_archive:
+                f = open(x)
+                _zip.write(x, os.path.join("data", os.path.basename(x)))
+                f.close()
             temp = {}
             names =  []
             medias = []
             canvas_sizes = []
-            tree_ids = []  # every note's tree ID
+            tree_ids = []  # every note's tree ID to restore to
 
             # load in every shape from every tab
             for x in range(0, self.gui.tab_count):
@@ -231,10 +244,11 @@ class Utility(object):
                           4: canvas_sizes,
                           5: medias }
 
-                f = open(self.filename, 'wb')
+                f = open("save.data", 'wb')
                 try:
                     pickle.dump(_file, f)
                     t = os.path.split(self.filename)[1] + ' - ' + self.gui.title
+
                     self.gui.SetTitle(t)
                 except pickle.PickleError:
                     wx.MessageBox(_("Error saving file data"))
@@ -242,6 +256,10 @@ class Utility(object):
                     self.filename = None
                 finally:
                     f.close()
+
+                _zip.write("save.data")
+                os.remove("save.data")
+                _zip.close()
 
                 # Fix bug in Windows where the current shapes get reset above
                 count = 0
@@ -262,6 +280,8 @@ class Utility(object):
                 wx.MessageBox(_("Error saving file data - no data to save"))
                 self.saved = False
                 self.filename = None
+
+            self.gui.dialog.Destroy()
 
 
     def load_file(self, filename=None):
@@ -287,24 +307,72 @@ class Utility(object):
 
     def load_wtbd(self, filename):
         """
-        Closes all tabs, loads in a Whyteboard save file into their proper tab
+        Closes all tabs, loads in a Whyteboard save, which is a zipped file
+        """
+        f = None
+        try:
+            f = zipfile.ZipFile(filename)
+        except zipfile.BadZipfile:
+            self.load_wtbd_pickle(filename)  # old save format
+            return
+
+        data = None
+        try:
+            data = f.read("save.data")
+        except KeyError:
+            wx.MessageBox(_('"%s" is missing the file save.data')
+                        % os.path.basename(filename))
+            return
+
+        self.load_wtbd_pickle(filename, data)
+
+
+    def load_wtbd_pickle(self, filename="", pickle_data=None):
+        """
+        Loads in the old .wtbd format (just a pickled file). Takes in either
+        a filename (path) or a Python file object (from the zip archive)
         """
         temp = {}
-        f = open(filename, 'rb')
+        method = None
+        if filename:
+            f = open(filename, 'rb')
+            method = pickle.load
+        if pickle_data:
+            f = pickle_data
+            method = pickle.loads
+
         try:
-            temp = pickle.load(f)
+            temp = method(f)
         except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):
             wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.')
                         % os.path.basename(filename))
             return
-        except ImportError:
-            f.close()
-            f = open(filename, 'r')
-            temp = pickle.load(f)
+        except ImportError:  # older windows/linux incompatible type
 
+            if not pickle_data:
+                f.close()
+                f = open(filename, 'r')
+
+            try:
+                temp = method(f)
+            except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):
+                wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.')
+                            % os.path.basename(filename))
+                return
+            finally:
+                if not pickle_data:
+                    f.close()
         finally:
-            f.close()
+            if not pickle_data:
+                f.close()
 
+        self.recreate_save(filename, temp)
+
+
+    def recreate_save(self, filename, temp):
+        """
+        Recreates the saved .wtbd file's state
+        """
         self.filename = filename
         self.gui.dialog = ProgressDialog(self.gui, _("Loading..."), 30)
         self.gui.dialog.Show()
@@ -345,7 +413,7 @@ class Utility(object):
                 pass
 
             for shape in temp[1][x]:
-                shape.board = self.gui.board#wb  # restore board
+                shape.board = self.gui.board  # restore board
                 shape.load()  # restore unpickleable settings
                 self.gui.board.add_shape(shape)
             self.gui.board.redraw_all(True)
