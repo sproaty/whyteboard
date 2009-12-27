@@ -34,7 +34,6 @@ from wx.lib.buttons import GenBitmapToggleButton
 from copy import copy
 
 from functions import make_bitmap, get_time
-
 _ = wx.GetTranslation
 
 
@@ -323,6 +322,7 @@ class MediaPanel(wx.Window):
         wx.Window.__init__(self, parent, pos=pos, style=wx.CLIP_CHILDREN)
         self.gui = parent.gui
         self.tool = tool
+        self.offset = (0, 0)
         self.mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
         self.timer = wx.Timer(self)  # updates the slider as the file plays
         self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
@@ -382,6 +382,9 @@ class MediaPanel(wx.Window):
         self.gui.board.selected = self.tool
         self.tool.selected = True
         self.CaptureMouse()
+        pos = self.Parent.ScreenToClient(self.ClientToScreen(event.Position))
+
+        self.offset = (pos[0] - self.tool.x, pos[1] - self.tool.y)
 
     def left_up(self, event):
         if self.HasCapture():
@@ -392,9 +395,9 @@ class MediaPanel(wx.Window):
         """Reposition the window with an offset"""
         if event.Dragging():
             pos = self.Parent.ScreenToClient(self.ClientToScreen(event.Position))
+            pos = (pos[0] - self.offset[0], pos[1] - self.offset[1])
 
-            self.tool.x = pos[0]
-            self.tool.y = pos[1]
+            self.tool.x, self.tool.y = pos
             self.SetPosition(pos)
 
 
@@ -414,16 +417,16 @@ class MediaPanel(wx.Window):
 
     def do_load_file(self, path):
 
-        if not self.mc.Load(path):
-            wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
-                          _("Error"), wx.ICON_ERROR | wx.OK)
-            self.play.Disable()
-            self.pause.Disable()
-            self.stop.Disable()
-        else:
-            if os.name == "posix":
-                self.mc.Load(path)
-            self.tool.filename = path
+        self.mc.Load(path)
+        #    wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
+         #                 _("Error"), wx.ICON_ERROR | wx.OK)
+          #  self.play.Disable()
+           # self.pause.Disable()
+            #self.stop.Disable()
+        #else:
+         #   if os.name == "posix":
+          #      self.mc.Load(path)
+        self.tool.filename = path
 
 
     def media_loaded(self, evt):
@@ -615,6 +618,19 @@ class Notes(wx.Panel):
         if self.tree.GetPyData(event.GetItem()) is not None:
             self.PopupMenu(NotesPopup(self, self.gui, event))
 
+    def select(self, event, draw=True):
+        item = self.tree.GetPyData(event.GetItem())
+        self.gui.board.deselect()
+        item.selected = True
+        self.gui.board.selected = item
+
+        if draw:
+            self.gui.board.redraw_all()
+
+    def delete(self, event):
+        self.select(event, False)
+        self.gui.board.delete_selected()
+
 
 #----------------------------------------------------------------------
 
@@ -638,13 +654,13 @@ class Popup(wx.Menu):
         ID, ID2, ID3 = wx.NewId(), wx.NewId(), wx.NewId()
         method = self.select_tab_method(extra)
 
-        self.AppendItem(wx.MenuItem(self, ID, _("Select")))
+        self.AppendItem(wx.MenuItem(self, ID, _("&Select")))
         self.AppendSeparator()
-        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, _("New")+"\tCtrl-T"))
-        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Close")+"\tCtrl-W"))
+        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, _("&New Sheet")+"\tCtrl-T"))
+        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl-W"))
         self.AppendSeparator()
-        self.AppendItem(wx.MenuItem(self, ID2, _("Rename...")+"\tF2"))
-        self.AppendItem(wx.MenuItem(self, ID3, _("Export...")+"\tCtrl-E"))
+        self.AppendItem(wx.MenuItem(self, ID2, _("&Rename...")+"\tF2"))
+        self.AppendItem(wx.MenuItem(self, ID3, _("&Export...")+"\tCtrl+E"))
 
         self.Bind(wx.EVT_MENU, method, id=ID)
         self.Bind(wx.EVT_MENU, self.rename, id=ID2)
@@ -679,7 +695,7 @@ class Popup(wx.Menu):
 class NotesPopup(Popup):
     """
     Parent = Notes panel - needs access to tree's events and methods. Overwrites
-    the menu for a note
+    the menu for a note, adding in extra items
     """
     def make_menu(self, extra):
         if self.item is None:  # root node
@@ -687,11 +703,16 @@ class NotesPopup(Popup):
         if isinstance(self.item, int):  # sheet node
             super(NotesPopup, self).make_menu(extra)
         else:
-            ID = wx.NewId()
-            menu = wx.MenuItem(self, ID, _("Edit Note..."))
-            self.AppendItem(menu)
-            method = self.select_tab_method(extra)
-            self.Bind(wx.EVT_MENU, method, id=ID)
+            ID, ID2, ID3 = wx.NewId(), wx.NewId(), wx.NewId()
+            self.AppendItem(wx.MenuItem(self, ID, _("&Select")))
+            self.AppendItem(wx.MenuItem(self, ID2, _("&Edit Note...")))
+            self.AppendSeparator()
+            self.AppendItem(wx.MenuItem(self, ID3, _("&Delete")))
+
+            self.Bind(wx.EVT_MENU, lambda x: self.parent.select(extra), id=ID)
+            self.Bind(wx.EVT_MENU, self.select_tab_method(extra), id=ID2)
+            self.Bind(wx.EVT_MENU, lambda x: self.parent.delete(extra), id=ID3)
+
 
     def select_tab_method(self, extra):
         return lambda x: self.parent.on_click(extra)
@@ -708,11 +729,7 @@ class SheetsPopup(Popup):
     """
     def set_item(self, extra):
         """Hit test on the tab bar"""
-        self.item = extra#sheet = self.parent.tabs.HitTest(extra)
-        #self.item = sheet[0]
-        #if sheet[0] < 0:
-        #    self.item = self.parent.current_tab
-
+        self.item = extra
 
     def select_tab_method(self, extra):
         return lambda x: self.bleh()

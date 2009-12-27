@@ -198,8 +198,7 @@ class ProgressDialog(wx.Dialog):
     """
     def __init__(self, gui, title, to_add=1, cancellable=False):
         """Defines a gauge and a timer which updates the gauge."""
-        wx.Dialog.__init__(self, gui, title=title,
-                          style=wx.CAPTION)
+        wx.Dialog.__init__(self, gui, title=title, style=wx.CAPTION)
         self.gui = gui
         self.count = 0
         self.to_add = to_add
@@ -228,9 +227,9 @@ class ProgressDialog(wx.Dialog):
     def on_timer(self, event):
         """Increases the gauge's progress."""
         self.count += self.to_add
-        self.gauge.SetValue(self.count)
         if self.count > 100:
             self.count = 0
+        self.gauge.SetValue(self.count)
 
 
     def on_cancel(self, event):
@@ -240,6 +239,7 @@ class ProgressDialog(wx.Dialog):
             wx.Kill(self.gui.pid, wx.SIGKILL)
         else:
             wx.Kill(self.gui.pid)
+
 
 #----------------------------------------------------------------------
 
@@ -542,12 +542,12 @@ class TextInput(wx.Dialog):
 class FindIM(wx.Dialog):
     """
     Asks a user for the location of ImageMagick (Windows-only)
+    Method is called on the ok button (for preference use)
     """
-
-
-    def __init__(self, parent, gui):
+    def __init__(self, parent, gui, method):
         wx.Dialog.__init__(self, gui, title=_("ImageMagick Notification"))
         self.gui = gui
+        self.method = method
         self.path = "C:/Program Files/"
 
         t = (_("Whyteboard uses ImageMagick to load PDF, SVG and PS files. \nPlease select its installed location."))
@@ -578,7 +578,7 @@ class FindIM(wx.Dialog):
 
 
     def browse(self, event=None):
-        dlg = wx.DirDialog(self, _("Choose a directory"), self.path)
+        dlg = wx.DirDialog(self, _("Choose a directory"), self.path, style=wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
             self.path = dlg.GetPath()
@@ -586,7 +586,7 @@ class FindIM(wx.Dialog):
             dlg.Destroy()
 
     def ok(self, event=None):
-        if self.gui.util.check_im_path(self.path):
+        if self.method(self.path):
             self.Close()
 
     def cancel(self, event=None):
@@ -600,8 +600,8 @@ class Resize(wx.Dialog):
     """
     def __init__(self, gui):
         """
-        Two text controls for inputting the size, limited to integers only
-        using a Validator class
+        Two spinctrls are used to set the width/height. Canvas updates as the
+        values change
         """
         wx.Dialog.__init__(self, gui, title=_("Resize Canvas"))
 

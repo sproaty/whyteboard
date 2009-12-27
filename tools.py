@@ -27,6 +27,7 @@ with by the user (e.g. they can't draw an image directly)
 import os
 import time
 import math
+import cStringIO
 import wx
 
 from dialogs import TextInput
@@ -1132,15 +1133,28 @@ class Image(OverlayShape):
 
     def load(self):
         super(Image, self).load()
+        util = self.board.gui.util
 
-        if self.path and os.path.exists(self.path):
-            self.image = wx.Bitmap(self.path)
-            self.img = wx.ImageFromBitmap(self.image)
-            self.colour = "Black"
+        if not util.is_zipped:
+            if self.path and os.path.exists(self.path):
+                self.image = wx.Bitmap(self.path)
+            else:
+                self.image = wx.EmptyBitmap(0, 0)
+                wx.MessageBox(_("Path for the image %s not found.") % self.path)
+
         else:
-            self.image = wx.EmptyBitmap(0, 0)
-            self.img = wx.ImageFromBitmap(self.image)
-            wx.MessageBox("Path for the image %s not found." % self.path)
+            try:
+                data = util.zip.read("data/" + os.path.basename(self.path))
+                stream = cStringIO.StringIO(data)
+                self.image = wx.BitmapFromImage( wx.ImageFromStream( stream ))
+
+            except KeyError:
+                self.image = wx.EmptyBitmap(0, 0)
+                wx.MessageBox(_("File %s not found in the save") %
+                                            os.path.basename(self.path))
+
+        self.img = wx.ImageFromBitmap(self.image)
+        self.colour = "Black"
 
 
     def hit_test(self, x, y):

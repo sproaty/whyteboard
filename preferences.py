@@ -36,10 +36,10 @@ import wx
 from copy import copy
 from wx.lib.wordwrap import wordwrap as wordwrap
 
-
 import tools
 import whyteboard
 from functions import make_bitmap
+from dialogs import FindIM
 from utility import languages
 
 _ = wx.GetTranslation
@@ -491,6 +491,7 @@ class PDF(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.config = config
         self.gui = gui
+        self.im_result = None
         if os.name == "posix":
             self.SetBackgroundColour("White")
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -498,6 +499,7 @@ class PDF(wx.Panel):
 
         label = wx.StaticText(self, label=_("Conversion Quality:"))
         note = wx.StaticText(self, label=wordwrap(_("Note: Higher quality takes longer to convert"), 350, wx.ClientDC(gui)))
+
         radio1 = wx.RadioButton(self, label=" " + _("Highest"))
         radio2 = wx.RadioButton(self, label=" " + _("High"))
         radio3 = wx.RadioButton(self, label=" " + _("Normal"))
@@ -514,7 +516,19 @@ class PDF(wx.Panel):
             btn.Bind(wx.EVT_RADIOBUTTON, method)
 
         sizer.Add((10, 10))
-        sizer.Add(note, 0, wx.ALL, 15)
+        sizer.Add(note, 0,  wx.LEFT | wx.BOTTOM, 30)
+
+        if os.name == "nt":
+            label_im = wx.StaticText(self, label=_("ImageMagick Location"))
+            label_im.SetFont(font)
+            self.im_button = wx.Button(self)
+            self.im_button.Bind(wx.EVT_BUTTON, self.on_im)
+            self.set_im_button()
+
+            sizer.Add(label_im, 0, wx.LEFT, 15)
+            sizer.Add((10, 15))
+            sizer.Add(self.im_button, 0, wx.LEFT, 30)
+
 
         if self.config['convert_quality'] == 'highest':
             radio1.SetValue(True)
@@ -522,6 +536,7 @@ class PDF(wx.Panel):
             radio2.SetValue(True)
         if self.config['convert_quality'] == 'normal':
             radio3.SetValue(True)
+
 
 
     def on_quality(self, event, id):
@@ -532,5 +547,31 @@ class PDF(wx.Panel):
         else:
             self.config['convert_quality'] = 'normal'
 
+
+    def set_im_button(self):
+        s = _("Find...")
+        if self.config.has_key("imagemagick_path"):
+            s = self.config["imagemagick_path"]
+        self.im_button.SetLabel(s)
+        self.GetSizer().Layout()
+
+
+    def on_im(self, event):
+        dlg = FindIM(self, self.gui, self.check_im_path)
+        dlg.ShowModal()
+        if self.im_result:
+            self.config['imagemagick_path'] = self.im_result
+        self.set_im_button()
+
+
+    def check_im_path(self, path):
+        _file = os.path.join(path, "convert.exe")
+        if not os.path.exists(_file):
+            wx.MessageBox(path + " does not contain convert.exe")
+            self.im_result = None
+            return False
+
+        self.im_result = path
+        return True
 
 #----------------------------------------------------------------------

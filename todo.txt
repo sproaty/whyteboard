@@ -9,10 +9,7 @@ see: https://blueprints.launchpad.net/whyteboard
 * Improvements for whiteboard pen usage: accepting certain commands to perform
   program shortcuts (e.g. new/close tab, clear sheet etc; sent via a tool like
   ZScreen)
-* Adding all whiteboard-related resources (pasted images, exported sheets, etc)
-  into a single folder where all the relevant data is saved together (like
-  saving a web page)
-* Drag / drop items in the Shape Viewer to rearrange them
+* Drag / drop items in the Shape Viewer to re-arrange them
 * Rich Text Control, allowing any part of text to be bolded/coloured differently
   to other parts of the text, as opposed to a single colour/font/style.
 * "Zoom" capability; zoom in and out of the canvas. May be quite difficult to

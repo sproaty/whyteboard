@@ -34,7 +34,7 @@ containing relevant system information and a log of the error. This is the best
 method to report errors. Please fill in as much detail about what you was doing
 to produce the error.
 Giving your e-mail address will allow me to get back in touch with you to follow
-up on the bug, and to confirm a fix.
+up on the bug, and to confirm a fix. Several people have done this, thanks.
 
 
 If you are getting an error on Windows,
@@ -52,18 +52,7 @@ http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14
 ---- KNOWN BUGS ----
 
 Media Tool may take several file loads to actually load the file correctly.
-
-
-Possible crash on Linux with loading a PDF:
-
-  File "/usr/lib/whyteboard/utility.py", line 469, in display_converted
-    self.gui.board.redraw_all()
-  File "/usr/lib/python2.6/dist-packages/wx-2.8-gtk2-unicode/wx/_core.py", line 14522, in __getattr__
-    raise PyDeadObjectError(self.attrStr % self._name)
-PyDeadObjectError: The C++ part of the Whyteboard object has been deleted, attribute access no longer allowed.
-
-Hopefully this bug has been fixed in version 0.39.2; was due to GhostScript not
-being present.
+Media Tool may not resize the video/control panel properly
 
 See up to date reports at https://bugs.launchpad.net/whyteboard
 Identified and confirmed bugs are always fixed before a new release.
@@ -73,9 +62,15 @@ Identified and confirmed bugs are always fixed before a new release.
 
 Python, core programmling language - http://www.python.org/
 wxPython, GUI framework - http://www.wxpython.org
-ImageMagick - image editing suite - http://www.imagemagick.net
+ImageMagick, image editing suite - http://www.imagemagick.net
 BeautifulSoup, Python HTML parser - http://www.crummy.com/software/BeautifulSoup/
 ConfigObj, Python configuration files - http://www.voidspace.org.uk/python/configobj.html
 Editra Control Library, extra wxPython widgets - http://editra.org/eclib
 Crystal Project, icons - http://www.everaldo.com/crystal/
+<<<<<<< TREE
 Tango Icon Library - http://tango.freedesktop.org/Tango_Icon_Library
+py2exe, compiled python to windows exes - http://www.py2exe.org/
+GUI2Exe, python compiler front-end -  http://code.google.com/p/gui2exe/
+InnoSetup - windows installer creator - http://www.jrsoftware.org/isinfo.php
+UPX, exe compressor - http://upx.sourceforge.net/=======
+Tango Icon Library - http://tango.freedesktop.org/Tango_Icon_Library>>>>>>> MERGE-SOURCE

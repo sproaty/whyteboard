@@ -16,13 +16,28 @@ xx Dec 2009 -- 0.39.3
   format when they are saved with this version of the program. Of course, this
   new change means that the .wtbd files become larger as more images are loaded
 
+  Another downside is there's a performance hit to loading/saving files - though
+  I haven't benchmarked the difference.
+
 * Open file dialog defaults to the new "all supported files" rather than .wtbd
   files - so all supported image types, PDF/PS/SVG and .wtbd files are "matched"
 
-* User's preferences are sent when reporting a bug to help debugging
+* Select and Delete options added to a Note's right-click menu in the Note tree
+* ImageMagick's location can be set from the preferences
+* User's preferences are added to the bug reporter to help debugging
+
+* Bugfix: moving the media panel will maintain a mouse "offset" (not place the
+  panel's top-left corner at the mouse position)
+* Bugfix: deleting a Note wouldn't remove it from the Note tree
 * Bugfix: crash when selecting the "shapes" menu with a Media panel selected
+* Bugfix: undoing closed tabs will re-create any Media panels
 * Bugfix: possible crash with the clipboard being already open
-* Bugfix: Polygon's preview was drawn wrong
+* Bugfix: possible crash on the "open file" dialog
+* Bugfix: Polygon's preview was drawing incorrectly
+* Bugfix: image "filter" on open file dialog wouldn't recognise upper case
+  files on Linux
+* Bugfix: "import image" wouldn't set the correct dialog filter when set to a
+  language other than English
 
 ----------------------------------------------------------------------
 

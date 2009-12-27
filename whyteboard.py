@@ -397,6 +397,8 @@ class Whyteboard(wx.ScrolledWindow):
         if isinstance(self.selected, Media):
             self.selected.remove_panel()
         else:
+            if isinstance(self.selected, Note):
+                self.gui.notes.tree.Delete(self.selected.tree_id)
             self.add_undo()
             self.shapes.remove(self.selected)
 

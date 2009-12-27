@@ -208,11 +208,11 @@ class GUI(wx.Frame):
         _import.Append(ID_IMPORT_IMAGE, _('&Image...'))
         _import.Append(ID_IMPORT_PDF, '&PDF...')
         _import.Append(ID_IMPORT_PS, 'Post&Script...')
-        _import.Append(ID_IMPORT_PREF, 'P&references...', _("Load in a Whyteboard preferences file"))
+        _import.Append(ID_IMPORT_PREF, _('P&references...'), _("Load in a Whyteboard preferences file"))
         _export = wx.Menu()
         _export.Append(ID_EXPORT, _("&Export Sheet...")+"\tCtrl+E", _("Export the current sheet to an image file"))
         _export.Append(ID_EXPORT_ALL, _("Export &All Sheets...")+"\tCtrl+Shift+E", _("Export every sheet to a series of image files"))
-        _export.Append(ID_EXPORT_PDF, 'As &PDF...', _("Export every sheet into a PDF file"))
+        _export.Append(ID_EXPORT_PDF, _('As &PDF...'), _("Export every sheet into a PDF file"))
         _export.Append(ID_EXPORT_PREF, _('P&references...'), _("Export your Whyteboard preferences file"))
 
         new = wx.MenuItem(_file, ID_NEW, _("New &Window")+"\tCtrl-N", _("Opens a new Whyteboard instance"))
@@ -429,12 +429,12 @@ class GUI(wx.Frame):
         """
         wc = self.util.wildcard
         if text == "img":
-            wc = wc[ wc.find("Image") : wc.find("|PDF") ]  # image to page
+            wc = wc[ wc.find(_("Image Files")) : wc.find("|PDF") ]  # image to page
         elif text:
             wc = wc[ wc.find("PDF") :]  # page descriptions
 
         dlg = wx.FileDialog(self, _("Open file..."), style=wx.OPEN, wildcard=wc)
-        dlg.SetFilterIndex(1)
+        dlg.SetFilterIndex(0)
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()
@@ -554,7 +554,8 @@ class GUI(wx.Frame):
         wc =  _("Whyteboard Preference Files")+" (*.pref)|*.pref"
 
         dlg = wx.FileDialog(self, _("Import Preferences From..."), get_home_dir(),
-                            "user.pref", wc, wx.OPEN)
+                            style=wx.OPEN, wildcard=wc)
+
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
 
@@ -751,7 +752,8 @@ class GUI(wx.Frame):
 
         board = self.board
         n = self.tabs.GetPageText(self.current_tab)
-        item = [board.shapes, board.undo_list, board.redo_list, board.area, n]
+        item = [board.shapes, board.undo_list, board.redo_list, board.area, n,
+                board.medias]
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
@@ -778,6 +780,11 @@ class GUI(wx.Frame):
         self.board.shapes = board[0]
         self.board.undo_list = board[1]
         self.board.redo_list = board[2]
+        self.board.medias = board[5]
+
+        for x in self.board.medias:
+            x.board = self.board
+            x.make_panel()
 
         for shape in self.board.shapes:
             shape.board = self.board
@@ -823,7 +830,7 @@ class GUI(wx.Frame):
             return
         _id = event.GetId()
 
-        if _id == wx.ID_PASTE:  # check this less frequently
+        if _id == wx.ID_PASTE:  # check this less frequently, possibly expensive
             self.count += 1
             if self.count == 6:
                 self.can_paste = False
@@ -842,7 +849,7 @@ class GUI(wx.Frame):
                         self.menu.Enable(wx.ID_PASTE, self.can_paste)
                     except wx.PyDeadObjectError:
                         pass
-                return
+            return
 
         do = False
         if not _id == wx.ID_COPY:

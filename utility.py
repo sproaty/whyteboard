@@ -135,7 +135,6 @@ class Utility(object):
 
     Trying to achieve a data-driven system, focusing on "don't repeat yourself"
     """
-
     def __init__(self, gui, config):
         """
         Initialise "shared" variables, and set up a wxPython wildcard from the
@@ -145,6 +144,8 @@ class Utility(object):
         self.filename = None   # ACTIVE .wtbd file
         self.temp_file = None  # selected file (.wtdb/png/pdf - doesn't matter)
         self.to_archive = []  # image files to add to the save archive
+        self.is_zipped = False
+        self.zip = None  # zip archive to read images from
         self.saved = True
         self.colour = "Black"
         self.background = "White"
@@ -168,22 +169,23 @@ class Utility(object):
             self.font.SetNativeFontInfoFromString(self.config['default_font'])
 
         # Make wxPython wildcard filter. Add a new item - new type supported!
+        # kinda (!) confusing code
         self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
-                       "bmp", "pcx"]
-        images = result1 = ', '.join('*.' + i for i in self.types[2:])
+                       "bmp", "pcx", "JPEG", "JPG", "PNG", "TIFF", "BMP", "PCX"]
+        images = ', '.join('*.' + i for i in self.types[2:])
 
-        label = [_("All files")+" (*.*)", _("All supported files"),
+        label = [_("All supported files"), _("All files")+" (*.*)",
                 _("Whyteboard files")+" (*.wtbd)", _("Image Files")+" ("+images+")",
                 "PDF/PS/SVG"]
 
-        result1 = ';'.join('*.' + i for i in self.types[2:-2])
-        result2 = ';'.join('*.' + i for i in self.types[0:2])
+        res1 = ';'.join('*.' + i for i in self.types[2:])
+        res2 = ';'.join('*.' + i for i in self.types[0:2])
 
-        wc_types = ["*.*", "*.wtbd;"+result1+result2, "*.wtbd", result1, result2]
+        wc_types = ["*.wtbd;" + res1 + res2, "*.*", "*.wtbd", res1, res2]
 
         wc_list = [x + "|" + y for x, y in zip(label, wc_types)]
-
         self.wildcard = '|'.join(wc_list)
+
 
 
     def save_file(self):
@@ -191,19 +193,53 @@ class Utility(object):
         Saves the file if there is any drawn data to save. Any loaded Image
         objects must be removed - they will be converted to an Image loading
         a saved file.
+
+        An existing .wtbd zip must be re-created by copying all files except
+        the pickled file, otherwise it gets added twice
         """
         if self.filename:
             self.gui.dialog = ProgressDialog(self.gui, _("Saving..."), 30)
             self.gui.dialog.Show()
-            _zip = zipfile.ZipFile(self.filename, "w")
+            mode = 'w'  # to open zip file
+
+            if os.path.exists(self.filename):  # need to remove save.data
+                do = True
+                try:
+                    _zip = zipfile.ZipFile(self.filename, "r")
+                except zipfile.BadZipfile:  # old save format
+                    do = False
+
+                if do:
+                    zout = zipfile.ZipFile('whyteboard_temp_new.wtbd', 'w')
+                    for item in _zip.infolist():
+                        if item.filename != 'save.data':
+                            zout.writestr(item, _zip.read(item.filename))
+                    zout.close()
+                    _zip.close()
+
+                    os.remove(self.filename)
+                    os.rename('whyteboard_temp_new.wtbd', self.filename)
+
+                    if os.stat(self.filename).st_size:  # not a 0-byte file
+                        mode = 'a'
+                else:
+                    for x in range(0, self.gui.tab_count):
+                        board = self.gui.tabs.GetPage(x)
+                        for shape in board.shapes:
+                            if isinstance(shape, tools.Image):
+                                if shape.path not in self.to_archive:
+                                    self.to_archive.append(shape.path)                                
+                                
+
+            _zip = zipfile.ZipFile(self.filename, mode)
+
             for x in self.to_archive:
                 f = open(x)
                 _zip.write(x, os.path.join("data", os.path.basename(x)))
                 f.close()
+
             temp = {}
-            names =  []
-            medias = []
-            canvas_sizes = []
+            names, medias, canvas_sizes = [], [], []
             tree_ids = []  # every note's tree ID to restore to
 
             # load in every shape from every tab
@@ -216,8 +252,7 @@ class Utility(object):
                 temp[x] = list(board.shapes)
                 canvas_sizes.append(board.area)
                 medias.append(board.medias)
-                text = self.gui.tabs.GetPageText(x)
-                names.append(text)
+                names.append(self.gui.tabs.GetPageText(x))
 
             if temp:
                 for x in temp:
@@ -258,8 +293,11 @@ class Utility(object):
                     f.close()
 
                 _zip.write("save.data")
-                os.remove("save.data")
                 _zip.close()
+                os.remove("save.data")
+                self.to_archive = []
+
+                self.zip = zipfile.ZipFile(self.filename, "r")
 
                 # Fix bug in Windows where the current shapes get reset above
                 count = 0
@@ -276,6 +314,8 @@ class Utility(object):
                     for m in board.medias:
                         m.board = board
                         m.load()
+
+                self.zip.close()
             else:
                 wx.MessageBox(_("Error saving file data - no data to save"))
                 self.saved = False
@@ -307,37 +347,43 @@ class Utility(object):
 
     def load_wtbd(self, filename):
         """
-        Closes all tabs, loads in a Whyteboard save, which is a zipped file
+        Closes all tabs, loads in a Whyteboard save, which can be a zipped file
+        or a single pickled file.
         """
         f = None
         try:
             f = zipfile.ZipFile(filename)
         except zipfile.BadZipfile:
-            self.load_wtbd_pickle(filename)  # old save format
+            self.is_zipped = False
+            self.load_wtbd_pickle(filename)  # old save format            
             return
 
         data = None
+        self.is_zipped = True
+        self.zip = f
         try:
             data = f.read("save.data")
         except KeyError:
             wx.MessageBox(_('"%s" is missing the file save.data')
                         % os.path.basename(filename))
+            f.close()
             return
 
         self.load_wtbd_pickle(filename, data)
+        self.zip.close()
 
 
-    def load_wtbd_pickle(self, filename="", pickle_data=None):
+    def load_wtbd_pickle(self, filename, pickle_data=None):
         """
         Loads in the old .wtbd format (just a pickled file). Takes in either
         a filename (path) or a Python file object (from the zip archive)
+        Pretty messy code, to support old save files written in "w", not "wb"
         """
         temp = {}
-        method = None
-        if filename:
+        method = pickle.load
+        if not pickle_data:
             f = open(filename, 'rb')
-            method = pickle.load
-        if pickle_data:
+        else:
             f = pickle_data
             method = pickle.loads
 
@@ -366,6 +412,7 @@ class Utility(object):
             if not pickle_data:
                 f.close()
 
+                
         self.recreate_save(filename, temp)
 
 
@@ -508,6 +555,7 @@ class Utility(object):
 
         if not self.im_location:  # above will have changed this if IM exists
             return
+
         if _file is None:
             _file = self.temp_file
 
@@ -657,7 +705,7 @@ class Utility(object):
         elif os.name == "nt":
 
             if not self.config.has_key('imagemagick_path'):
-                dlg = FindIM(self, self.gui)
+                dlg = FindIM(self, self.gui, self.check_im_path)
                 dlg.ShowModal()
                 if self.im_location:
                     self.config['imagemagick_path'] = os.path.dirname(self.im_location)

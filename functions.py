@@ -72,16 +72,15 @@ def get_home_dir(extra_path=None):
 
 
 def get_time(seconds):
-    """Returns an h:m:s time from a seconds value"""
+    """Returns an (h:)m:s time from a seconds value - hour not shown if < 0"""
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
-
+        
     if h > 0:
-        h = "%d:" % h
+        h = "%d:" % h   
     else:
-        h = ""
-
-    return h+"%02d:%02d" % (m, s)
+        h = ""  
+    return h + "%02d:%02d" % (m, s)
 
 
 def load_image(path, board):
@@ -93,10 +92,7 @@ def load_image(path, board):
     shape = tools.Image(board, image, path)
     shape.left_down(0, 0)  # renders, updates scrollbars
     board.update_thumb()
-
-    try:
-        board.gui.util.to_archive.index(path)
-    except ValueError:
+    if not path in board.gui.util.to_archive:
         board.gui.util.to_archive.append(path)
 
 
