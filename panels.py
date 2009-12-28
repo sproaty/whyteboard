@@ -620,10 +620,14 @@ class Notes(wx.Panel):
 
     def select(self, event, draw=True):
         item = self.tree.GetPyData(event.GetItem())
-        self.gui.board.deselect()
-        item.selected = True
-        self.gui.board.selected = item
 
+        if not item.selected:   
+            self.gui.board.deselect()      
+            item.selected = True
+            self.gui.board.selected = item
+        else:
+            self.gui.board.deselect()            
+          
         if draw:
             self.gui.board.redraw_all()
 
@@ -702,9 +706,13 @@ class NotesPopup(Popup):
             return
         if isinstance(self.item, int):  # sheet node
             super(NotesPopup, self).make_menu(extra)
-        else:
+        else:            
             ID, ID2, ID3 = wx.NewId(), wx.NewId(), wx.NewId()
-            self.AppendItem(wx.MenuItem(self, ID, _("&Select")))
+            text = _("&Select")
+
+            if self.item.selected:
+               text =  _("De&select")
+            self.AppendItem(wx.MenuItem(self, ID, text))
             self.AppendItem(wx.MenuItem(self, ID2, _("&Edit Note...")))
             self.AppendSeparator()
             self.AppendItem(wx.MenuItem(self, ID3, _("&Delete")))

@@ -229,8 +229,8 @@ class Utility(object):
                         for shape in board.shapes:
                             if isinstance(shape, tools.Image):
                                 if shape.path not in self.to_archive:
-                                    self.to_archive.append(shape.path)                                
-                                
+                                    self.to_archive.append(shape.path)
+
 
             _zip = zipfile.ZipFile(self.filename, mode)
 
@@ -356,11 +356,11 @@ class Utility(object):
             f = zipfile.ZipFile(filename)
         except zipfile.BadZipfile:
             self.is_zipped = False
-            self.load_wtbd_pickle(filename)  # old save format            
+            self.load_wtbd_pickle(filename)  # old save format
             return
-        
+
         self.is_zipped = True
-        data = None        
+        data = None
         self.zip = f
         try:
             data = f.read("save.data")
@@ -369,7 +369,7 @@ class Utility(object):
                         % os.path.basename(filename))
             f.close()
             return
-        
+
         self.load_wtbd_pickle(filename, data)
         self.zip.close()
 
@@ -413,7 +413,7 @@ class Utility(object):
             if not pickle_data:
                 f.close()
 
-                
+
         self.recreate_save(filename, temp)
 
 

@@ -26,7 +26,8 @@ xx Dec 2009 -- 0.39.3
 * Recently opened files sub-menu
 * "Reload preferences" added to File menu
 
-* Select and Delete options added to a Note's right-click menu in the Note tree
+* Select/deselect and Delete options added to a Note's right-click menu in the 
+  Note tree
 * ImageMagick's location can be set from the preferences
 * User's preferences are added to the bug reporter to help debugging
 * Many "keyboard accessors" for menu items added where missing

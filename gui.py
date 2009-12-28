@@ -34,6 +34,7 @@ of Notes that the user has inputted.
 import os
 import sys
 import time
+import pickle
 import locale
 import webbrowser
 
@@ -210,7 +211,7 @@ class GUI(wx.Frame):
         _import = wx.Menu()
         recent = wx.Menu()
         self.filehistory.UseMenu(recent)
-                      
+
         _import.Append(ID_IMPORT_IMAGE, _('&Image...'))
         _import.Append(ID_IMPORT_PDF, '&PDF...')
         _import.Append(ID_IMPORT_PS, 'Post&Script...')
@@ -232,7 +233,7 @@ class GUI(wx.Frame):
 
         _file.AppendItem(new)
         _file.Append(wx.ID_OPEN, _("&Open...")+"\tCtrl-O", _("Load a Whyteboard save file, an image or convert a PDF/PS document"))
-        _file.AppendMenu(-1, _('Open &Recent'), recent, _("Recently Opened Files"))        
+        _file.AppendMenu(-1, _('Open &Recent'), recent, _("Recently Opened Files"))
         _file.AppendSeparator()
         _file.Append(wx.ID_SAVE, _("&Save")+"\tCtrl+S", _("Save the Whyteboard data"))
         _file.Append(wx.ID_SAVEAS, _("Save &As...")+"\tCtrl+Shift+S", _("Save the Whyteboard data in a new file"))
@@ -415,10 +416,10 @@ class GUI(wx.Frame):
         """
         now = time.localtime(time.time())
         now = time.strftime("%Y-%m-%d-%H-%M-%S")
-        
+
         if self.util.filename:
-           now = self.util.filename 
-        
+           now = self.util.filename
+
         dlg = wx.FileDialog(self, _("Save Whyteboard As..."), os.getcwd(),
                 style=wx.SAVE | wx.OVERWRITE_PROMPT,  defaultFile=now,
                 wildcard=_("Whyteboard file ")+"(*.wtbd)|*.wtbd")
@@ -445,8 +446,8 @@ class GUI(wx.Frame):
             wc = wc[ wc.find(_("Image Files")) : wc.find("|PDF") ]  # image to page
         elif text:
             wc = wc[ wc.find("PDF") :]  # page descriptions
-        
-        _dir = "" 
+
+        _dir = ""
         if self.directory:
             _dir = self.directory
 
@@ -456,7 +457,7 @@ class GUI(wx.Frame):
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()
-            
+
             if name.endswith(".wtbd"):
                 self.util.prompt_for_save(self.do_open, args=[name])
             else:
@@ -472,7 +473,7 @@ class GUI(wx.Frame):
         """
         self.directory = os.path.dirname(path)
         self.filehistory.AddFileToHistory(path)
-                    
+
         if path.endswith(".wtbd"):
             self.util.load_wtbd(path)
         else:
@@ -785,6 +786,9 @@ class GUI(wx.Frame):
 
         self.notes.remove_tab(self.current_tab)
         self.thumbs.remove(self.current_tab)
+
+        for x in self.board.medias:
+            x.remove_panel()
 
         board = self.board
         n = self.tabs.GetPageText(self.current_tab)
@@ -1102,17 +1106,17 @@ class GUI(wx.Frame):
         self.on_refresh()  # force thumbnails
         self.dialog.Destroy()
 
-        
+
     def on_file_history(self, evt):
         fileNum = evt.GetId() - wx.ID_FILE1
         path = self.filehistory.GetHistoryFile(fileNum)
         self.filehistory.AddFileToHistory(path)  # move up the list
-        
+
         if path.endswith(".wtbd"):
             self.util.prompt_for_save(self.do_open, args=[path])
         else:
-            self.do_open(path)                
-        
+            self.do_open(path)
+
 
     def on_exit(self, event=None):
         """ Ask to save, quit or cancel if the user hasn't saved. """
