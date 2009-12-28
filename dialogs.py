@@ -310,7 +310,7 @@ class UpdateDialog(wx.Dialog):
         for i, td in enumerate(soup.findAll("td", {"class": "vt id col_0"})):
             _file = td.findNext('a').renderContents().strip()
 
-            if _file.endswith(_type):
+            if _file.endswith(_type) and _file.find("help") == -1:
                 found = True
                 start = _file.find("-") + 1
                 stop = _file.find(_type)

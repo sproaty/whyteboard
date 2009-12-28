@@ -1,12 +1,12 @@
 Whyteboard 0.39.3 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Wednesday 16 December 2009
+Monday 28 December 2009
 
 ---- VERSION HISTORY ----
 
 ----------------------------------------------------------------------
 
-xx Dec 2009 -- 0.39.3
+28 Dec 2009 -- 0.39.3
 
 * New save format. ".wtbd" files are now renamed ".zip" files. The zip files now
   contain all loaded/imported images (and images from a PDF conversion) to allow
@@ -26,18 +26,23 @@ xx Dec 2009 -- 0.39.3
 * Recently opened files sub-menu
 * "Reload preferences" added to File menu
 
-* Select/deselect and Delete options added to a Note's right-click menu in the 
+* Support for drag and dropping a file onto a Media panel to load it
+* Select/deselect and Delete options added to a Note's right-click menu in the
   Note tree
 * ImageMagick's location can be set from the preferences
 * User's preferences are added to the bug reporter to help debugging
 * Many "keyboard accessors" for menu items added where missing
 * "Save As" fills in the filename with the current loaded filename
+* Latest translations
 
+* Bugfix: exiting the program with multiple Whyteboard instances through "new
+  window" would close *all* instances instead of just one
 * Bugfix: moving the media panel will maintain a mouse "offset" (not place the
   panel's top-left corner at the mouse position)
 * Bugfix: deleting a Note wouldn't remove it from the Note tree
 * Bugfix: crash when selecting the "shapes" menu with a Media panel selected
 * Bugfix: undoing closed tabs will re-create any Media panels
+
 * Bugfix: possible crash with the clipboard being already open
 * Bugfix: possible crash on the "open file" dialog
 * Bugfix: Polygon's preview was drawing incorrectly
@@ -45,7 +50,7 @@ xx Dec 2009 -- 0.39.3
   files on Linux
 * Bugfix: "import image" wouldn't set the correct dialog filter when set to a
   language other than English
-* Latest translations
+
 
 ----------------------------------------------------------------------
 

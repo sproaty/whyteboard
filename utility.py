@@ -581,6 +581,7 @@ class Utility(object):
             if count == 1:
                 temp_path = path + tmp_file + ".png"
                 load_image(temp_path, self.gui.board)
+                self.gui.board.redraw_all()
             else:
                 if not count:
                     wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed; http://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
@@ -616,6 +617,7 @@ class Utility(object):
             load_image(images[x], self.gui.board)
 
         self.gui.board.redraw_all()
+        print 'k'
 
 
     def export(self, filename):
@@ -665,6 +667,7 @@ class Utility(object):
         if not args:
             args = []
 
+
         if not self.saved:
             name = _("Untitled")
             if self.filename:
@@ -683,13 +686,18 @@ class Utility(object):
             if val == wx.ID_NO:
                 method(*args)
                 if method == self.gui.Destroy:
-                    sys.exit()
+                    self.gui.__class__.instances -= 1
+                    if not self.gui.__class__.instances:
+                        sys.exit()
             if val == wx.ID_CANCEL:
                 dialog.Close()
         else:
+
             method(*args)
             if method == self.gui.Destroy:
-                sys.exit()
+                self.gui.__class__.instances -= 1
+                if not self.gui.__class__.instances:
+                    sys.exit()
 
 
     def prompt_for_im(self):
@@ -888,5 +896,16 @@ class WhyteboardDropTarget(wx.PyDropTarget):
                 self.gui.board.redraw_all(True)
 
         return d
+
+#----------------------------------------------------------------------
+
+class MediaDropTarget(wx.FileDropTarget):
+    """Implements drop target functionality to receive files"""
+    def __init__(self, panel):
+        wx.FileDropTarget.__init__(self)
+        self.panel = panel
+
+    def OnDropFiles(self, x, y, filenames):
+        self.panel.do_load_file(filenames[0])
 
 #----------------------------------------------------------------------

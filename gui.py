@@ -122,6 +122,7 @@ class GUI(wx.Frame):
     version = "0.39.3"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
+    instances = 0
 
     def __init__(self, parent, config):
         """
@@ -138,7 +139,10 @@ class GUI(wx.Frame):
         self.printData = wx.PrintData()
         self.printData.SetPaperId(wx.PAPER_LETTER)
         self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
-        self.filehistory = wx.FileHistory(5)
+
+        self.filehistory = wx.FileHistory(8)
+        self.config = wx.Config("Whyteboard",style=wx.CONFIG_USE_LOCAL_FILE)
+        self.filehistory.Load(self.config)
 
         self._oldhook = sys.excepthook
         sys.excepthook = ExceptionHook
@@ -158,6 +162,7 @@ class GUI(wx.Frame):
         self.make_menu()
         self.bar_shown = True  # slight performance optimisation
         self.find_help()
+        self.__class__.instances += 1
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.tab_total = 1
         self.current_tab = 0
@@ -191,7 +196,6 @@ class GUI(wx.Frame):
         self.UpdateWindowUI()
 
 
-
     def __del__(self):
         sys.excepthook = self._oldhook
 
@@ -211,6 +215,7 @@ class GUI(wx.Frame):
         _import = wx.Menu()
         recent = wx.Menu()
         self.filehistory.UseMenu(recent)
+        self.filehistory.AddFilesToMenu()
 
         _import.Append(ID_IMPORT_IMAGE, _('&Image...'))
         _import.Append(ID_IMPORT_PDF, '&PDF...')
@@ -473,6 +478,7 @@ class GUI(wx.Frame):
         """
         self.directory = os.path.dirname(path)
         self.filehistory.AddFileToHistory(path)
+        self.filehistory.Save(self.config)
 
         if path.endswith(".wtbd"):
             self.util.load_wtbd(path)

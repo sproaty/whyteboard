@@ -75,11 +75,11 @@ def get_time(seconds):
     """Returns an (h:)m:s time from a seconds value - hour not shown if < 0"""
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
-        
+
     if h > 0:
-        h = "%d:" % h   
+        h = "%d:" % h
     else:
-        h = ""  
+        h = ""
     return h + "%02d:%02d" % (m, s)
 
 

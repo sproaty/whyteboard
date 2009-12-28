@@ -1135,7 +1135,7 @@ class Image(OverlayShape):
 
     def load(self):
         super(Image, self).load()
-        
+
         if not hasattr(self, "filename"):
             self.filename = os.path.basename(self.path)
             if self.filename.find("\\"):  # loading windows file on linux

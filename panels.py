@@ -33,6 +33,7 @@ from wx.lib.buttons import GenBitmapToggleButton
 
 from copy import copy
 
+from utility import MediaDropTarget
 from functions import make_bitmap, get_time
 _ = wx.GetTranslation
 
@@ -323,10 +324,14 @@ class MediaPanel(wx.Window):
         self.gui = parent.gui
         self.tool = tool
         self.offset = (0, 0)
+        self.directory = None
         self.mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
         self.timer = wx.Timer(self)  # updates the slider as the file plays
         self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
         self.total = ""  # total time
+
+        self.file_drop = MediaDropTarget(self)
+        self.SetDropTarget(self.file_drop)
 
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
         self.open = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR))
@@ -408,8 +413,12 @@ class MediaPanel(wx.Window):
         wc += _("Video Files")+" (%s)|%s|" % (vids, vids)
         wc += _("Audio Files")+" (%s)|%s" % (audio, audio)
 
+        _dir = ""
+        if self.directory:
+            _dir = self.directory
+
         dlg = wx.FileDialog(self, message=_("Choose a media file"),
-                            wildcard=wc, style=wx.OPEN | wx.CHANGE_DIR )
+                            wildcard=wc, style=wx.OPEN, defaultDir=_dir)
         if dlg.ShowModal() == wx.ID_OK:
             self.do_load_file(dlg.GetPath())
         dlg.Destroy()
@@ -417,15 +426,16 @@ class MediaPanel(wx.Window):
 
     def do_load_file(self, path):
 
-        self.mc.Load(path)
-        #    wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
-         #                 _("Error"), wx.ICON_ERROR | wx.OK)
-          #  self.play.Disable()
-           # self.pause.Disable()
-            #self.stop.Disable()
-        #else:
-         #   if os.name == "posix":
-          #      self.mc.Load(path)
+        if not self.mc.Load(path):
+            wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
+                         _("Error"), wx.ICON_ERROR | wx.OK)
+            self.play.Disable()
+            self.pause.Disable()
+            self.stop.Disable()
+        else:
+            if os.name == "posix":
+                self.mc.Load(path)
+        self.directory = path
         self.tool.filename = path
 
 
@@ -621,13 +631,13 @@ class Notes(wx.Panel):
     def select(self, event, draw=True):
         item = self.tree.GetPyData(event.GetItem())
 
-        if not item.selected:   
-            self.gui.board.deselect()      
+        if not item.selected:
+            self.gui.board.deselect()
             item.selected = True
             self.gui.board.selected = item
         else:
-            self.gui.board.deselect()            
-          
+            self.gui.board.deselect()
+
         if draw:
             self.gui.board.redraw_all()
 
@@ -706,7 +716,7 @@ class NotesPopup(Popup):
             return
         if isinstance(self.item, int):  # sheet node
             super(NotesPopup, self).make_menu(extra)
-        else:            
+        else:
             ID, ID2, ID3 = wx.NewId(), wx.NewId(), wx.NewId()
             text = _("&Select")
 
