@@ -94,6 +94,7 @@ ID_NEW = wx.NewId()               # new window
 ID_NEXT = wx.NewId()              # next sheet
 ID_PASTE_NEW = wx.NewId()         # paste as new selection
 ID_PREV = wx.NewId()              # previous sheet
+ID_RELOAD_PREF = wx.NewId()       # reload preferences
 ID_RENAME = wx.NewId()            # rename sheet
 ID_REPORT_BUG = wx.NewId()        # report a problem
 ID_RESIZE = wx.NewId()            # resize dialog
@@ -136,6 +137,7 @@ class GUI(wx.Frame):
         self.printData = wx.PrintData()
         self.printData.SetPaperId(wx.PAPER_LETTER)
         self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
+        self.filehistory = wx.FileHistory(5)
 
         self._oldhook = sys.excepthook
         sys.excepthook = ExceptionHook
@@ -150,6 +152,7 @@ class GUI(wx.Frame):
         self.dialog = None
         self.convert_cancelled = False
         self.help = None
+        self.directory = None  # last opened directory
         self.make_toolbar()
         self.make_menu()
         self.bar_shown = True  # slight performance optimisation
@@ -205,6 +208,9 @@ class GUI(wx.Frame):
         sheets = wx.Menu()
         _help = wx.Menu()
         _import = wx.Menu()
+        recent = wx.Menu()
+        self.filehistory.UseMenu(recent)
+                      
         _import.Append(ID_IMPORT_IMAGE, _('&Image...'))
         _import.Append(ID_IMPORT_PDF, '&PDF...')
         _import.Append(ID_IMPORT_PS, 'Post&Script...')
@@ -226,12 +232,14 @@ class GUI(wx.Frame):
 
         _file.AppendItem(new)
         _file.Append(wx.ID_OPEN, _("&Open...")+"\tCtrl-O", _("Load a Whyteboard save file, an image or convert a PDF/PS document"))
+        _file.AppendMenu(-1, _('Open &Recent'), recent, _("Recently Opened Files"))        
         _file.AppendSeparator()
         _file.Append(wx.ID_SAVE, _("&Save")+"\tCtrl+S", _("Save the Whyteboard data"))
         _file.Append(wx.ID_SAVEAS, _("Save &As...")+"\tCtrl+Shift+S", _("Save the Whyteboard data in a new file"))
         _file.AppendSeparator()
-        _file.AppendMenu(+1, _('&Import File'), _import)
-        _file.AppendMenu(+1, '&Export File', _export)
+        _file.AppendMenu(-1, _('&Import File'), _import, _("Import various file types"))
+        _file.AppendMenu(-1, _('&Export File'), _export, _("Export your data files as images/PDFs"))
+        _file.Append(ID_RELOAD_PREF, _('Re&load Preferences'), _("Reload your preferences file"))
         _file.AppendSeparator()
         _file.Append(wx.ID_PRINT_SETUP, _("Page Set&up"), _("Set up the page for printing"))
         _file.Append(wx.ID_PREVIEW_PRINT, _("Print Pre&view"), _("View a preview of the page to be printed"))
@@ -317,6 +325,7 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # end conversion
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
         self.Bind(wx.EVT_CHAR_HOOK, self.hotkey)
+        self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
 
         # idle event handlers
         ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_ROTATE, ID_MOVE_UP, ID_DESELECT,
@@ -350,12 +359,12 @@ class GUI(wx.Frame):
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
                   "copy", "paste", "rotate", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
                   "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
-                  "move_down", "move_top", "move_bottom", "deselect"]
+                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
                wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
                ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
-               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT]
+               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT, ID_RELOAD_PREF]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -406,6 +415,10 @@ class GUI(wx.Frame):
         """
         now = time.localtime(time.time())
         now = time.strftime("%Y-%m-%d-%H-%M-%S")
+        
+        if self.util.filename:
+           now = self.util.filename 
+        
         dlg = wx.FileDialog(self, _("Save Whyteboard As..."), os.getcwd(),
                 style=wx.SAVE | wx.OVERWRITE_PROMPT,  defaultFile=now,
                 wildcard=_("Whyteboard file ")+"(*.wtbd)|*.wtbd")
@@ -432,12 +445,18 @@ class GUI(wx.Frame):
             wc = wc[ wc.find(_("Image Files")) : wc.find("|PDF") ]  # image to page
         elif text:
             wc = wc[ wc.find("PDF") :]  # page descriptions
+        
+        _dir = "" 
+        if self.directory:
+            _dir = self.directory
 
-        dlg = wx.FileDialog(self, _("Open file..."), style=wx.OPEN, wildcard=wc)
+        dlg = wx.FileDialog(self, _("Open file..."), style=wx.OPEN, wildcard=wc,
+                             defaultDir=_dir)
         dlg.SetFilterIndex(0)
 
         if dlg.ShowModal() == wx.ID_OK:
             name = dlg.GetPath()
+            
             if name.endswith(".wtbd"):
                 self.util.prompt_for_save(self.do_open, args=[name])
             else:
@@ -446,15 +465,18 @@ class GUI(wx.Frame):
             dlg.Destroy()
 
 
-    def do_open(self, name):
+    def do_open(self, path):
         """
         Updates the appropriate variables in the utility file class and loads
         the selected file.
         """
-        if name.endswith(".wtbd"):
-            self.util.load_wtbd(name)
+        self.directory = os.path.dirname(path)
+        self.filehistory.AddFileToHistory(path)
+                    
+        if path.endswith(".wtbd"):
+            self.util.load_wtbd(path)
         else:
-            self.util.temp_file = name
+            self.util.temp_file = path
             self.util.load_file()
 
 
@@ -577,6 +599,20 @@ class GUI(wx.Frame):
             pref.config.filename = home
             pref.on_okay()
             #self.SendSizeEvent()
+
+
+    def on_reload_preferences(self, event):
+            home =  os.path.join(get_home_dir(), "user.pref")
+            if os.path.exists(home):
+                config = ConfigObj(home, configspec=cfg.split("\n"))
+                validator = Validator()
+                config.validate(validator)
+                pref = Preferences(self)
+                pref.config = config
+                pref.config.filename = home
+                pref.on_okay()
+            else:
+                wx.MessageBox(_("No preferences file to reload"))
 
 
     def export_prompt(self):
@@ -1066,6 +1102,17 @@ class GUI(wx.Frame):
         self.on_refresh()  # force thumbnails
         self.dialog.Destroy()
 
+        
+    def on_file_history(self, evt):
+        fileNum = evt.GetId() - wx.ID_FILE1
+        path = self.filehistory.GetHistoryFile(fileNum)
+        self.filehistory.AddFileToHistory(path)  # move up the list
+        
+        if path.endswith(".wtbd"):
+            self.util.prompt_for_save(self.do_open, args=[path])
+        else:
+            self.do_open(path)                
+        
 
     def on_exit(self, event=None):
         """ Ask to save, quit or cancel if the user hasn't saved. """

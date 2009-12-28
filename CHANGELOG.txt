@@ -16,15 +16,21 @@ xx Dec 2009 -- 0.39.3
   format when they are saved with this version of the program. Of course, this
   new change means that the .wtbd files become larger as more images are loaded
 
-  Another downside is there's a performance hit to loading/saving files - though
-  I haven't benchmarked the difference.
+  Another downside is there is a performance hit to loading/saving files - I
+  haven't benchmarked the difference. It will be more noticeable with saves with
+  many open sheets, and with many images.
 
 * Open file dialog defaults to the new "all supported files" rather than .wtbd
   files - so all supported image types, PDF/PS/SVG and .wtbd files are "matched"
+* Open file dialog remembers the last opened directory
+* Recently opened files sub-menu
+* "Reload preferences" added to File menu
 
 * Select and Delete options added to a Note's right-click menu in the Note tree
 * ImageMagick's location can be set from the preferences
 * User's preferences are added to the bug reporter to help debugging
+* Many "keyboard accessors" for menu items added where missing
+* "Save As" fills in the filename with the current loaded filename
 
 * Bugfix: moving the media panel will maintain a mouse "offset" (not place the
   panel's top-left corner at the mouse position)
@@ -38,6 +44,7 @@ xx Dec 2009 -- 0.39.3
   files on Linux
 * Bugfix: "import image" wouldn't set the correct dialog filter when set to a
   language other than English
+* Latest translations
 
 ----------------------------------------------------------------------
 

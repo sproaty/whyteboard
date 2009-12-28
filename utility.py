@@ -64,6 +64,7 @@ import webbrowser
 import urllib
 import tarfile
 import zipfile
+import shutil
 import distutils.dir_util
 import wx
 
@@ -218,7 +219,7 @@ class Utility(object):
                     _zip.close()
 
                     os.remove(self.filename)
-                    os.rename('whyteboard_temp_new.wtbd', self.filename)
+                    shutil.move('whyteboard_temp_new.wtbd', self.filename)
 
                     if os.stat(self.filename).st_size:  # not a 0-byte file
                         mode = 'a'
@@ -357,9 +358,9 @@ class Utility(object):
             self.is_zipped = False
             self.load_wtbd_pickle(filename)  # old save format            
             return
-
-        data = None
+        
         self.is_zipped = True
+        data = None        
         self.zip = f
         try:
             data = f.read("save.data")
@@ -368,7 +369,7 @@ class Utility(object):
                         % os.path.basename(filename))
             f.close()
             return
-
+        
         self.load_wtbd_pickle(filename, data)
         self.zip.close()
 

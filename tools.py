@@ -28,6 +28,7 @@ import os
 import time
 import math
 import cStringIO
+import ntpath
 import wx
 
 from dialogs import TextInput
@@ -1061,6 +1062,7 @@ class Image(OverlayShape):
         OverlayShape.__init__(self, board, "Black", 1)
         self.image = image
         self.path = path  # used to restore image on load
+        self.filename = os.path.basename(path)
         self.resizing = False
         self.angle = 0  # for rotating
         self.img = None  # rotated wx.Image
@@ -1133,25 +1135,27 @@ class Image(OverlayShape):
 
     def load(self):
         super(Image, self).load()
-        util = self.board.gui.util
+        
+        if not hasattr(self, "filename"):
+            self.filename = os.path.basename(self.path)
+            if self.filename.find("\\"):  # loading windows file on linux
+                self.filename = ntpath.basename(self.path)
 
-        if not util.is_zipped:
+        if not self.board.gui.util.is_zipped:
             if self.path and os.path.exists(self.path):
                 self.image = wx.Bitmap(self.path)
             else:
                 self.image = wx.EmptyBitmap(0, 0)
                 wx.MessageBox(_("Path for the image %s not found.") % self.path)
-
         else:
             try:
-                data = util.zip.read("data/" + os.path.basename(self.path))
+                data = self.board.gui.util.zip.read("data/" + self.filename)
                 stream = cStringIO.StringIO(data)
-                self.image = wx.BitmapFromImage( wx.ImageFromStream( stream ))
+                self.image = wx.BitmapFromImage(wx.ImageFromStream(stream))
 
             except KeyError:
                 self.image = wx.EmptyBitmap(0, 0)
-                wx.MessageBox(_("File %s not found in the save") %
-                                            os.path.basename(self.path))
+                wx.MessageBox(_("File %s not found in the save") % self.filename)
 
         self.img = wx.ImageFromBitmap(self.image)
         self.colour = "Black"
