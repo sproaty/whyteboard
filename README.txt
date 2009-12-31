@@ -1,4 +1,4 @@
-Whyteboard 0.39.3 - A simple image, PDF and postscript file annotator
+Whyteboard 0.39.4 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Monday 28 December 2009
 

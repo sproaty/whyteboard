@@ -67,16 +67,13 @@ class ControlPanel(wx.Panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
 
-        cols = 1
-        if gui.util.config['toolbox'] == 'icon':
-            cols = 2
 
         width = wx.StaticText(self.pane, label=_("Thickness:"))
         prev = wx.StaticText(self.pane, label=_("Preview:"))
         colour = self.colour_buttons()
         self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
         self.make_colour_grid()
-        self.toolsizer = wx.GridSizer(cols=cols, hgap=1, vgap=2)
+        self.toolsizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
         self.make_toolbox(gui.util.config['toolbox'])
 
         choices = ''.join(str(i) + " " for i in range(1, 26) ).split()
@@ -132,8 +129,11 @@ class ControlPanel(wx.Panel):
     def make_toolbox(self, _type="text"):
         """Creates a toolbox made from toggleable text or icon buttons"""
         items = [_(i.name) for i in self.gui.util.items]
+        self.toolsizer.SetCols(1)
+                  
         if _type == "icon":
             items = [_(i.icon) for i in self.gui.util.items]
+            self.toolsizer.SetCols(2)  
 
         for x, val in enumerate(items):
             if _type == "icon":

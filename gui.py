@@ -119,7 +119,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.39.3"
+    version = "0.39.4"
     title = "Whyteboard " + version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
     instances = 0
@@ -141,7 +141,8 @@ class GUI(wx.Frame):
         self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
 
         self.filehistory = wx.FileHistory(8)
-        self.config = wx.Config("Whyteboard",style=wx.CONFIG_USE_LOCAL_FILE)
+        path = os.path.join(get_home_dir(), "directories.txt")
+        self.config = wx.FileConfig("Whyteboard", "Whyteboard", path, path, wx.CONFIG_USE_LOCAL_FILE)
         self.filehistory.Load(self.config)
 
         self._oldhook = sys.excepthook

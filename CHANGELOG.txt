@@ -1,8 +1,20 @@
-Whyteboard 0.39.3 - A simple image, PDF and postscript file annotator
+Whyteboard 0.39.4 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Monday 28 December 2009
 
 ---- VERSION HISTORY ----
+
+----------------------------------------------------------------------
+
+xx xxx 2009 -- 0.39.4
+
+* Bugfix: toolbox acting weird when changing between text/icons twice or more
+  from the preferences
+* Bugfix: crash with loading fonts saved on Windows into Linux that don't exist 
+  there on Linux, and vice versa
+* Bugfix: bitmap select, and pasting images were broken
+* Bugfix: pasting the same image multiple times would create multiple copies of
+  the image when saving; now saves one file and refers all copies to that file
 
 ----------------------------------------------------------------------
 

@@ -26,7 +26,7 @@ import tools
 #----------------------------------------------------------------------
 
 
-def save_pasted_images(shapes):
+def save_pasted_images(shapes, utility):
     """
     When saving a Whyteboard file, any pasted Images (with path == None)
     will be saved to a directory in the user's home directory, and the image
@@ -35,25 +35,28 @@ def save_pasted_images(shapes):
     all images with that common image filepath will be updated.
     """
     data = {}
-    for shape in shapes:
-        if isinstance(shape, tools.Image):
-            img1 = shape.image.ConvertToImage()
-
-            if not shape.path:
-                for path in data:
-                    if path == img1.GetData():
-                        shape.path = path
-                        break
-
-                #  the above iteration didn't find any common pastes
+    for key, value in shapes.items():  # each tab
+        for shape in value:  # each tab's shapes
+            if isinstance(shape, tools.Image):
+                img = shape.image.ConvertToImage()
+                img_data = img.GetData()
+    
                 if not shape.path:
-                    path = get_home_dir("pastes")
-                    tmp_file = path + make_filename() + ".jpg"
-                    shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
-                    shape.path = tmp_file
+                    for k, v in data.items():
+                        if v == img_data:
+                            shape.path = k
+                            break
+    
+                    #  the above iteration didn't find any common pastes
+                    if not shape.path:
+                        path = get_home_dir("pastes")
+                        tmp_file = path + make_filename() + ".jpg"
+                        shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
+                        shape.path = tmp_file                    
+                        utility.to_archive.append(tmp_file)
+                        data[shape.path] = img_data
 
-                    data[shape.path] = img1.GetData()
-
+    
 
 def get_home_dir(extra_path=None):
     """

@@ -905,7 +905,7 @@ class Text(OverlayShape):
 
 
     def draw(self, dc, replay=False):
-        self.text.replace("\t", "        ")
+        #self.text.replace("\t", "        ")
         if not self.font:
             self.restore_font()
         dc.SetFont(self.font)
@@ -919,6 +919,8 @@ class Text(OverlayShape):
         """Updates the text's font to the saved font data"""
         self.font = wx.FFont(0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
+        if not self.font.IsOk():
+            self.font = wx.FFont(0, 0)
 
 
     def find_extent(self):
@@ -1062,7 +1064,9 @@ class Image(OverlayShape):
         OverlayShape.__init__(self, board, "Black", 1)
         self.image = image
         self.path = path  # used to restore image on load
-        self.filename = os.path.basename(path)
+        self.filename = None
+        if path:
+            self.filename = os.path.basename(path)  
         self.resizing = False
         self.angle = 0  # for rotating
         self.img = None  # rotated wx.Image
@@ -1136,7 +1140,7 @@ class Image(OverlayShape):
     def load(self):
         super(Image, self).load()
 
-        if not hasattr(self, "filename"):
+        if not hasattr(self, "filename") or not self.filename:
             self.filename = os.path.basename(self.path)
             if self.filename.find("\\"):  # loading windows file on linux
                 self.filename = ntpath.basename(self.path)

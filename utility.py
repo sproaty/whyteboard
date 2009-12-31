@@ -231,14 +231,6 @@ class Utility(object):
                                 if shape.path not in self.to_archive:
                                     self.to_archive.append(shape.path)
 
-
-            _zip = zipfile.ZipFile(self.filename, mode)
-
-            for x in self.to_archive:
-                f = open(x)
-                _zip.write(x, os.path.join("data", os.path.basename(x)))
-                f.close()
-
             temp = {}
             names, medias, canvas_sizes = [], [], []
             tree_ids = []  # every note's tree ID to restore to
@@ -249,11 +241,20 @@ class Utility(object):
 
                 for m in board.medias:
                     m.save()
-                save_pasted_images(board.shapes)
+                
                 temp[x] = list(board.shapes)
                 canvas_sizes.append(board.area)
                 medias.append(board.medias)
                 names.append(self.gui.tabs.GetPageText(x))
+
+            save_pasted_images(temp, self)
+            #  now write all the new images for the save
+            _zip = zipfile.ZipFile(self.filename, mode)
+
+            for x in self.to_archive:
+                f = open(x)
+                _zip.write(x, os.path.join("data", os.path.basename(x)))
+                f.close()
 
             if temp:
                 for x in temp:
@@ -617,7 +618,6 @@ class Utility(object):
             load_image(images[x], self.gui.board)
 
         self.gui.board.redraw_all()
-        print 'k'
 
 
     def export(self, filename):
