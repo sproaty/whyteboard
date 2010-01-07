@@ -434,7 +434,6 @@ class TextInput(wx.Dialog):
         self.colour = gui.util.colour
         gap = wx.LEFT | wx.TOP | wx.RIGHT
 
-        #text = ""
         if note:
             self.note = note
             self.colour = note.colour
@@ -749,11 +748,14 @@ class Rotate(wx.Dialog):
 
 
     def apply(self, event):
+        if self.custom.IsEnabled():
+            self.gui.board.add_undo()
+            self.rotate()
         self.bmp = self.gui.board.selected.image
 
     def ok(self, event):
-        self.image.rotate(self.custom.GetValue())
-        self.gui.board.draw_shape(self.image)
+        self.gui.board.add_undo()
+        self.rotate()
         self.Close()
 
 
@@ -770,12 +772,14 @@ class Rotate(wx.Dialog):
             self.rotate()
         else:
             self.custom.Disable()
-            self.image.rotate((id + 1) * 90)
+            angle = (id + 1) * 90
+            self.image.rotate(angle=angle)
             self.gui.board.draw_shape(self.image)
+            self.custom.SetValue(angle)
 
 
     def rotate(self, event=None):
-        self.image.rotate(self.custom.GetValue())
+        self.image.rotate(angle=self.custom.GetValue())
         self.gui.board.draw_shape(self.image)
 
 #----------------------------------------------------------------------
@@ -1119,6 +1123,7 @@ class ShapeViewer(wx.Dialog):
     def change(self, selection):
         """Change the sheet, repopulate"""
         self.gui.tabs.SetSelection(selection)
+        self.pages.SetSelection(selection)
         self.gui.on_change_tab()
         self.shapes = copy(self.gui.board.shapes)
         self.populate()

@@ -195,7 +195,7 @@ class General(wx.Panel):
 
         self.handlectrl.SetValue(self.config['handle_size'])
         self.undoctrl.SetValue(self.config['undo_sheets'])
-        self.lang.SetValue(_(self.config['language']))
+        self.lang.SetValue(_(self.config['language'].capitalize()))
         self.borderctrl.SetValue(self.config['canvas_border'])
 
         self.lang.Bind(wx.EVT_COMBOBOX, self.on_lang)

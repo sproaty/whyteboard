@@ -1,26 +1,35 @@
 Whyteboard 0.39.4 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Monday 28 December 2009
+xx xx January 2010
 
 ---- NEW FEATURES ----
 
 see: https://blueprints.launchpad.net/whyteboard
 
+* Selecting drawn Pen items with the select tool, to move/re-order, like other
+  tools
 * Improvements for whiteboard pen usage: accepting certain commands to perform
   program shortcuts (e.g. new/close tab, clear sheet etc; sent via a tool like
   ZScreen)
 * Drag / drop items in the Shape Viewer to re-arrange them
 * Rich Text Control, allowing any part of text to be bolded/coloured differently
   to other parts of the text, as opposed to a single colour/font/style.
-* "Zoom" capability; zoom in and out of the canvas. May be quite difficult to
-  make...
-* UI changes as the left panel takes up some space
+* "Zoom" capability; zoom in and out of the canvas. *Will* be difficult to make
+* UI changes:
+  - the left panel takes up too much vertical space
+  - remove the text panel, so you're writing on the canvas (with floating
+    "text edit" toolbar, would be cool)
+* Hyperlinks to web resources
+* Slider bar to "move" back/forwards through a drawing's timeline in a replay,
+  as well as being able to jump to the start/end
+
 
 Eventually, long term:
 
 * Network support w/ Twisted (a Python library)
 * Poppler support for better PDF rendering - no need to use ImageMagick.
-  - Problems with Windows here though, Linux is more compatible.
+  -> Problems with Windows here though, Linux is more compatible. Research is
+    ongoing into Poppler + Windows
 * Improved drawing with anti-aliased graphics, including transparency
-* Slider bar to "move" back/forwards through a drawing's timeline in a replay,
-  as well as being able to jump to the start/end
+  -> Performance will be much worse, guaranteed
+

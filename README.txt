@@ -1,6 +1,6 @@
 Whyteboard 0.39.4 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Monday 28 December 2009
+xx xx January 2010
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -51,8 +51,11 @@ http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14
 
 ---- KNOWN BUGS ----
 
-Media Tool may take several file loads to actually load the file correctly.
-Media Tool may not resize the video/control panel properly
+* Media Tool may take several file loads to actually load the file correctly.
+* Media Tool may not resize the video/control panel properly
+* Dragging and dropping text from Firefox will 'hang' the program until the text 
+  dialog is closed
+* Copying/pasting text with tab characters do not display the tabs on Windows
 
 See up to date reports at https://bugs.launchpad.net/whyteboard
 Identified and confirmed bugs are always fixed before a new release.

@@ -65,47 +65,11 @@ import lib.icon
 from whyteboard import Whyteboard
 from tools import Image, Note, Text
 from utility import Utility, WhyteboardDropTarget, languages, cfg
-from functions import get_home_dir
+from functions import *
 from dialogs import (History, ProgressDialog, Resize, Rotate, UpdateDialog,
                      MyPrintout, ExceptionHook, ShapeViewer)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
-
-
-ID_CHANGE_TOOL = wx.NewId()       # change tool hotkey
-ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
-ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
-ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
-ID_DESELECT = wx.NewId()          # deselect shape
-ID_EXPORT = wx.NewId()            # export sheet to image file
-ID_EXPORT_ALL = wx.NewId()        # export every sheet to numbered image files
-ID_EXPORT_PDF = wx.NewId()        # export->PDF
-ID_EXPORT_PREF = wx.NewId()       # export->preferences
-ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
-ID_HISTORY = wx.NewId()           # history viewer
-ID_IMPORT_IMAGE = wx.NewId()      # import->Image
-ID_IMPORT_PDF = wx.NewId()        # import->PDF
-ID_IMPORT_PREF = wx.NewId()       # import->Preferences
-ID_IMPORT_PS = wx.NewId()         # import->PS
-ID_MOVE_UP = wx.NewId()           # move shape up
-ID_MOVE_DOWN = wx.NewId()         # move shape down
-ID_MOVE_TO_TOP = wx.NewId()       # move shape to the top
-ID_MOVE_TO_BOTTOM = wx.NewId()    # move shape to the bottom
-ID_NEW = wx.NewId()               # new window
-ID_NEXT = wx.NewId()              # next sheet
-ID_PASTE_NEW = wx.NewId()         # paste as new selection
-ID_PREV = wx.NewId()              # previous sheet
-ID_RELOAD_PREF = wx.NewId()       # reload preferences
-ID_RENAME = wx.NewId()            # rename sheet
-ID_REPORT_BUG = wx.NewId()        # report a problem
-ID_RESIZE = wx.NewId()            # resize dialog
-ID_ROTATE = wx.NewId()            # rotate dialog for image 90/180/270
-ID_SHAPE_VIEWER = wx.NewId()      # view/edit shapes
-ID_STATUSBAR = wx.NewId()         # toggle statusbar
-ID_TOOLBAR = wx.NewId()           # toggle toolbar
-ID_TRANSLATE = wx.NewId()         # open translation URL
-ID_UNDO_SHEET = wx.NewId()        # undo close sheet
-ID_UPDATE = wx.NewId()            # update self
 
 
 _ = wx.GetTranslation             # Define a translation string
@@ -141,8 +105,8 @@ class GUI(wx.Frame):
         self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
 
         self.filehistory = wx.FileHistory(8)
-        path = os.path.join(get_home_dir(), "directories.txt")
-        self.config = wx.FileConfig("Whyteboard", "Whyteboard", path, path, wx.CONFIG_USE_LOCAL_FILE)
+        self.config = wx.Config("Whyteboard", "Whyteboard",
+                                style=wx.CONFIG_USE_LOCAL_FILE)
         self.filehistory.Load(self.config)
 
         self._oldhook = sys.excepthook
@@ -229,15 +193,16 @@ class GUI(wx.Frame):
         _export.Append(ID_EXPORT_PREF, _('P&references...'), _("Export your Whyteboard preferences file"))
 
         new = wx.MenuItem(_file, ID_NEW, _("New &Window")+"\tCtrl-N", _("Opens a new Whyteboard instance"))
-        new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
-
         pnew = wx.MenuItem(edit, ID_PASTE_NEW, _("Paste to a &New Sheet")+"\tCtrl+Shift-V", _("Paste from your clipboard into a new sheet"))
-        pnew.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_PASTE, wx.ART_MENU))
-
         undo_sheet = wx.MenuItem(edit, ID_UNDO_SHEET, _("&Undo Last Closed Sheet")+"\tCtrl+Shift-T", _("Undo the last closed sheet"))
-        undo_sheet.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_UNDO, wx.ART_MENU))
+
+        if os.name != "nt":
+            new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
+            pnew.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_PASTE, wx.ART_MENU))
+            undo_sheet.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_UNDO, wx.ART_MENU))
 
         _file.AppendItem(new)
+        _file.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T", _("Add a new sheet"))
         _file.Append(wx.ID_OPEN, _("&Open...")+"\tCtrl-O", _("Load a Whyteboard save file, an image or convert a PDF/PS document"))
         _file.AppendMenu(-1, _('Open &Recent'), recent, _("Recently Opened Files"))
         _file.AppendSeparator()
@@ -279,7 +244,6 @@ class GUI(wx.Frame):
         shapes.Append(ID_DESELECT, _("&Deselect Shape")+"\tCtrl-D", _("Deselects the currently selected shape"))
         shapes.Append(ID_ROTATE, _("R&otate Image...")+"\tCtrl-I", _("Rotate the selected image"))
 
-        sheets.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T", _("Add a new sheet"))
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl+W", _("Close the current sheet"))
         sheets.Append(ID_RENAME, _("&Rename Sheet...")+"\tF2", _("Rename the current sheet"))
         sheets.Append(ID_RESIZE, _("Resi&ze Canvas...")+"\tCtrl+R", _("Change the canvas' size"))
@@ -689,6 +653,7 @@ class GUI(wx.Frame):
         self.update_panels(True)
         self.thumbs.thumbs[self.current_tab].update()
         #self.thumbs.Scroll(-1, self.current_tab - 1)
+        self.thumbs.ScrollChildIntoView(self.thumbs.thumbs[self.current_tab])
         self.control.change_tool()
 
         if self.notes.tabs:
@@ -1381,29 +1346,28 @@ class WhyteboardApp(wx.App):
         config.validate(validator)
 
         for x in languages:
-            if config['language'] == 'Welsh':
+            if config['language'].capitalize() == 'Welsh':
                 self.locale = wx.Locale()
                 self.locale.Init("Cymraeg", "cy", "cy_GB.utf8")
                 break
-            elif config['language'] == x[0]:
+            elif config['language'].capitalize() == x[0]:
                 nolog = wx.LogNull()
                 self.locale = wx.Locale(x[1], wx.LOCALE_LOAD_DEFAULT)
-                del nolog
 
-        if not wx.Locale.IsOk(self.locale):
-            wx.MessageBox("Error setting language to %s - reverting to English" % config['language'])
-            config['language'] = 'English'
-            config.write()
-            self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
+        if hasattr(self, "locale"):
+            if not wx.Locale.IsOk(self.locale):
+                wx.MessageBox("Error setting language to %s - reverting to English" % config['language'])
+                config['language'] = 'English'
+                config.write()
+                self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
 
-
-        path = os.path.dirname(sys.argv[0])
-        if path == "/usr/bin":
-            path = "/usr/lib/whyteboard"  # simple workaround...
-        langdir = os.path.join(path, 'locale')
-        locale.setlocale(locale.LC_ALL, '')
-        self.locale.AddCatalogLookupPathPrefix(langdir)
-        self.locale.AddCatalog("whyteboard")
+            path = os.path.dirname(sys.argv[0])
+            if path == "/usr/bin":
+                path = "/usr/lib/whyteboard"  # simple workaround...
+            langdir = os.path.join(path, 'locale')
+            locale.setlocale(locale.LC_ALL, '')
+            self.locale.AddCatalogLookupPathPrefix(langdir)
+            self.locale.AddCatalog("whyteboard")
 
         self.frame = GUI(None, config)
         self.frame.Show(True)

@@ -34,7 +34,7 @@ from wx.lib.buttons import GenBitmapToggleButton
 from copy import copy
 
 from utility import MediaDropTarget
-from functions import make_bitmap, get_time
+from functions import *
 _ = wx.GetTranslation
 
 
@@ -68,8 +68,8 @@ class ControlPanel(wx.Panel):
         csizer = wx.BoxSizer(wx.VERTICAL)
 
 
-        width = wx.StaticText(self.pane, label=_("Thickness:"))
-        prev = wx.StaticText(self.pane, label=_("Preview:"))
+        #width = wx.StaticText(self.pane, label=_("Thickness:"))
+        #prev = wx.StaticText(self.pane, label=_("Preview:"))
         colour = self.colour_buttons()
         self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
         self.make_colour_grid()
@@ -81,17 +81,19 @@ class ControlPanel(wx.Panel):
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
         self.thickness.SetToolTipString(_("Sets the drawing thickness"))
-
+        line = wx.StaticLine(self, size=(-1, 30))
+        line.SetBackgroundColour((0, 0, 0))
         spacing = 4
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(self.toolsizer, 0, wx.ALIGN_CENTER | wx.ALL, spacing)
-        box.Add(wx.StaticLine(self), 0, wx.EXPAND | wx.ALL, spacing)
+        box.Add((5, 8))
         box.Add(self.grid, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add(colour, 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add((5, 10))
-        box.Add(width, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
+        box.Add((5, 8))
+        #box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.thickness, 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
+        box.Add((5, 5))
+        #box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
         csizer.Add(box, 1, wx.EXPAND)
         sizer.Add(self.cp, 1, wx.EXPAND)
@@ -111,7 +113,8 @@ class ControlPanel(wx.Panel):
         if os.name == "nt":
             parent = self.colour
 
-        self.background = csel.ColourSelect(parent, pos=(0, 30), size=(30, 30))
+        self.background = csel.ColourSelect(parent, pos=(0, 30), size=(30, 30),
+                                            style=wx.NO_BORDER)
         self.background.SetValue("White")
         self.transparent = wx.CheckBox(panel, label=_("Transparent"), pos=(0, 69))
         self.transparent.SetValue(True)
@@ -130,17 +133,18 @@ class ControlPanel(wx.Panel):
         """Creates a toolbox made from toggleable text or icon buttons"""
         items = [_(i.name) for i in self.gui.util.items]
         self.toolsizer.SetCols(1)
-                  
+
         if _type == "icon":
             items = [_(i.icon) for i in self.gui.util.items]
-            self.toolsizer.SetCols(2)  
+            self.toolsizer.SetCols(2)
 
         for x, val in enumerate(items):
             if _type == "icon":
                 path = os.path.join(self.gui.util.get_path().decode("latin-1"),
                                     "images", "tools", val.decode("latin-1") +
                                     ".png")
-                b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path))
+                b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
+                                          style=wx.NO_BORDER)
                 evt = wx.EVT_BUTTON
             else:
                 b = wx.ToggleButton(self.pane, x + 1, val)
@@ -283,7 +287,7 @@ class DrawingPreview(wx.Window):
         """
         Stores gui reference to access utility colour/thickness attributes.
         """
-        wx.Window.__init__(self, pane, style=wx.RAISED_BORDER)
+        wx.Window.__init__(self, pane)
         self.gui = gui
         self.SetBackgroundColour(wx.WHITE)
         self.SetSize((45, 45))
@@ -541,16 +545,16 @@ class Notes(wx.Panel):
     to that sheet.  Notes can be double/right clicked upon to be edited.
     """
     def __init__(self, parent, gui):
-        wx.Panel.__init__(self, parent, size=(170, -1), style=wx.RAISED_BORDER)
+        wx.Panel.__init__(self, parent)
         self.gui = gui
-        self.tree = wx.TreeCtrl(self, style=wx.TR_HAS_BUTTONS)
+        self.tree = wx.TreeCtrl(self, style=wx.TR_HAS_BUTTONS)# | wx.NO_BORDER)
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
         self.add_tab()
         self.tree.Expand(self.root)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.tree, 1, wx.EXPAND)  # fills out vertical space
+        self.sizer.Add(self.tree, 1, wx.EXPAND | wx.TOP, 10)  # fills vert space
         self.SetSizer(self.sizer)
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
@@ -760,6 +764,58 @@ class SheetsPopup(Popup):
 #----------------------------------------------------------------------
 
 
+class ShapePopup(Popup):
+    """
+    Brought up by right-clicking on a shape with the Select tool
+    """
+    def make_menu(self, extra):
+        ID, ID2, ID3 = wx.NewId(), wx.NewId(), wx.NewId()
+        text = _("&Select")
+
+        if self.item.selected:
+           text =  _("De&select")
+        self.AppendItem(wx.MenuItem(self, ID, text))
+
+        self.AppendItem(wx.MenuItem(self, ID2, _("&Edit...")))
+        if not self.item.name == "Text" and not self.item.name == "Note":
+            self.Enable(ID2, False)
+        self.AppendItem(wx.MenuItem(self, ID3, _("&Delete")))
+        self.AppendSeparator()
+
+        self.AppendItem(wx.MenuItem(self, ID_MOVE_UP, _("Move &Up")+"\tCtrl-Up"))
+        self.AppendItem(wx.MenuItem(self, ID_MOVE_DOWN,_("Move &Down")+"\tCtrl-Down"))
+        self.AppendItem(wx.MenuItem(self, ID_MOVE_TO_TOP, _("Move To &Top")+"\tCtrl-Shift-Up"))
+        self.AppendItem(wx.MenuItem(self, ID_MOVE_TO_BOTTOM, _("Move To &Bottom")+"\tCtrl-Shift-Down"))
+
+        self.Bind(wx.EVT_MENU, lambda x: self.select(), id=ID)
+        self.Bind(wx.EVT_MENU, lambda x: self.edit(), id=ID2)
+        self.Bind(wx.EVT_MENU, lambda x: self.delete(), id=ID3)
+
+    def set_item(self, extra):
+        """Hit test on the tab bar"""
+        self.item = extra
+
+    def edit(self):
+        self.item.edit()
+
+    def delete(self):
+        self.select(False)
+        self.gui.board.delete_selected()
+
+    def select(self, draw=True):
+        if not self.item.selected:
+            self.gui.board.deselect()
+            self.item.selected = True
+            self.gui.board.selected = self.item
+        else:
+            self.gui.board.deselect()
+
+        if draw:
+            self.gui.board.redraw_all()
+
+#----------------------------------------------------------------------
+
+
 class ThumbsPopup(SheetsPopup):
     """
     Just need to set the item to the current tab number, parent: tab number
@@ -778,11 +834,10 @@ class Thumbs(scrolled.ScrolledPanel):
     Thumbnails of all tabs' drawings.
     """
     def __init__(self, parent, gui):
-        scrolled.ScrolledPanel.__init__(self, parent, size=(170, -1),
-                                        style=wx.VSCROLL | wx.RAISED_BORDER)
+        scrolled.ScrolledPanel.__init__(self, parent, style=wx.VSCROLL)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
-        self.SetScrollRate(0, 170)
+        self.SetScrollRate(0, 175)
 
         self.gui = gui
         self.thumbs  = []  # ThumbButtons
@@ -955,9 +1010,9 @@ class ThumbButton(wx.BitmapButton):
         """
         Highlights the current thumbnail with a light overlay.
         """
-        _copy = copy(self.buffer)
+        #_copy = copy(self.buffer)
         dc = wx.MemoryDC()
-        dc.SelectObject(_copy)
+        dc.SelectObject(self.buffer)
 
         gcdc = wx.GCDC(dc)
         gcdc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 50)))  # light blue
@@ -965,7 +1020,7 @@ class ThumbButton(wx.BitmapButton):
         gcdc.DrawRectangle(0, 0, 150, 150)
 
         dc.SelectObject(wx.NullBitmap)
-        self.SetBitmapLabel(_copy)
+        self.SetBitmapLabel(self.buffer)
 
 
 #----------------------------------------------------------------------

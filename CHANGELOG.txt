@@ -1,20 +1,52 @@
 Whyteboard 0.39.4 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Monday 28 December 2009
+xx xx January 2010
 
 ---- VERSION HISTORY ----
 
 ----------------------------------------------------------------------
 
-xx xxx 2009 -- 0.39.4
+xx Jan 2010 -- 0.39.4
 
-* Bugfix: toolbox acting weird when changing between text/icons twice or more
-  from the preferences
-* Bugfix: crash with loading fonts saved on Windows into Linux that don't exist 
+* Improvements to rotating an image with the mouse: now "follows" the mouse's
+  position, and can be rotated clockwise and counter-clockwise.
+  Thanks to Zack Buhman for help with the coding
+
+* Image rotation is now performed from a rotation "handle". Rotating draws a
+  transparent rectangle "over" the image to show where its rotation will end up,
+  instead of *actually* rotating the image (which performed slow, before)
+* Image re-scaling using its selection handles. Also draws a transparent
+  rectangle to indicate its new size
+
+* 8-way selection handle on rectangle, rounded rectangle and ellipse, allowing
+  vertical-only / horizontal-only resizing
+* Right clicking a shape with the select tool pops up a menu with select/delete/
+  edit/move operations
+* Changing sheets scrolls the new sheet's thumbnail into view
+* Few UI changes, program now looks neater with less borders, also takes up less
+  vertical space (takes up ~700 pixels vertically at a minimum)
+* Help files updated and improved with more detail
+* Thick rectangles now don't have a "roundness" to their edges
+
+* Bugfix: possible crash on Mac when loading/saving .wtbd files containing text
+* Bugfix: using next/previous sheet buttons in the Shape Viewer wouldn't set
+  the drop-down control to the changed-to sheet
+* Bugfix: the "rotate image" dialog was broken
+* Bugfix: menu icons appearing for 3 menu items on Windows, when no other menu
+  item had icons - now removed
+
+----------------------------------------------------------------------
+
+31 Dec 2009 -- 0.39.35
+
+* Bugfix: crash with loading fonts saved on Windows into Linux that don't exist
   there on Linux, and vice versa
 * Bugfix: bitmap select, and pasting images were broken
 * Bugfix: pasting the same image multiple times would create multiple copies of
   the image when saving; now saves one file and refers all copies to that file
+* Bugfix: toolbox acting weird when changing between text/icons twice or more
+  from the preferences
+* Few translation improvements
 
 ----------------------------------------------------------------------
 

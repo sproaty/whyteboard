@@ -23,6 +23,44 @@ import wx
 
 import tools
 
+# the IDs for event binding, put here so they can accessed by all
+
+ID_CHANGE_TOOL = wx.NewId()       # change tool hotkey
+ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
+ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
+ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
+ID_DESELECT = wx.NewId()          # deselect shape
+ID_EXPORT = wx.NewId()            # export sheet to image file
+ID_EXPORT_ALL = wx.NewId()        # export every sheet to numbered image files
+ID_EXPORT_PDF = wx.NewId()        # export->PDF
+ID_EXPORT_PREF = wx.NewId()       # export->preferences
+ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
+ID_HISTORY = wx.NewId()           # history viewer
+ID_IMPORT_IMAGE = wx.NewId()      # import->Image
+ID_IMPORT_PDF = wx.NewId()        # import->PDF
+ID_IMPORT_PREF = wx.NewId()       # import->Preferences
+ID_IMPORT_PS = wx.NewId()         # import->PS
+ID_MOVE_UP = wx.NewId()           # move shape up
+ID_MOVE_DOWN = wx.NewId()         # move shape down
+ID_MOVE_TO_TOP = wx.NewId()       # move shape to the top
+ID_MOVE_TO_BOTTOM = wx.NewId()    # move shape to the bottom
+ID_NEW = wx.NewId()               # new window
+ID_NEXT = wx.NewId()              # next sheet
+ID_PASTE_NEW = wx.NewId()         # paste as new selection
+ID_PREV = wx.NewId()              # previous sheet
+ID_RELOAD_PREF = wx.NewId()       # reload preferences
+ID_RENAME = wx.NewId()            # rename sheet
+ID_REPORT_BUG = wx.NewId()        # report a problem
+ID_RESIZE = wx.NewId()            # resize dialog
+ID_ROTATE = wx.NewId()            # rotate dialog for image 90/180/270
+ID_SHAPE_VIEWER = wx.NewId()      # view/edit shapes
+ID_STATUSBAR = wx.NewId()         # toggle statusbar
+ID_TOOLBAR = wx.NewId()           # toggle toolbar
+ID_TRANSLATE = wx.NewId()         # open translation URL
+ID_UNDO_SHEET = wx.NewId()        # undo close sheet
+ID_UPDATE = wx.NewId()            # update self
+
+
 #----------------------------------------------------------------------
 
 
@@ -40,23 +78,23 @@ def save_pasted_images(shapes, utility):
             if isinstance(shape, tools.Image):
                 img = shape.image.ConvertToImage()
                 img_data = img.GetData()
-    
+
                 if not shape.path:
                     for k, v in data.items():
                         if v == img_data:
                             shape.path = k
                             break
-    
+
                     #  the above iteration didn't find any common pastes
                     if not shape.path:
                         path = get_home_dir("pastes")
                         tmp_file = path + make_filename() + ".jpg"
                         shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
-                        shape.path = tmp_file                    
+                        shape.path = tmp_file
                         utility.to_archive.append(tmp_file)
                         data[shape.path] = img_data
 
-    
+
 
 def get_home_dir(extra_path=None):
     """
@@ -104,7 +142,7 @@ def make_bitmap(colour):
     Draws a small coloured bitmap for a colour grid button. Can take a name,
     RGB tupple or RGB-packed int.
     """
-    bmp = wx.EmptyBitmap(19, 19)
+    bmp = wx.EmptyBitmap(20, 20)
     dc = wx.MemoryDC()
     dc.SelectObject(bmp)
     dc.SetBackground(wx.Brush(colour))

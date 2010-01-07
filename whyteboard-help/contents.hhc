@@ -21,6 +21,10 @@
             <param name="Local" value="notes.htm">
             </OBJECT></LI>
         <LI> <OBJECT type="text/sitemap">
+            <param name="Name" value="The Select Tool">
+            <param name="Local" value="select.htm">
+            </OBJECT></LI>            
+        <LI> <OBJECT type="text/sitemap">
             <param name="Name" value="Saving Annotations">
             <param name="Local" value="saving.htm">
             </OBJECT></LI>   

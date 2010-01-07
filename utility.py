@@ -99,7 +99,10 @@ default_width = integer(min=1, max=12000, default=640)
 default_height = integer(min=1, max=12000, default=480)
 imagemagick_path = string
 handle_size = integer(min=3, max=15, default=6)
-language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', 'Portugese', 'Japanese', 'French', 'Traditional Chinese', 'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', 'galician', default='English')
+language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', \
+                  'Portugese', 'Japanese', 'French', 'Traditional Chinese',  \
+                  'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', \
+                  'Galician', default='English')
 print_title = boolean(default=True)
 statusbar = boolean(default=True)
 toolbar = boolean(default=True)
@@ -241,7 +244,7 @@ class Utility(object):
 
                 for m in board.medias:
                     m.save()
-                
+
                 temp[x] = list(board.shapes)
                 canvas_sizes.append(board.area)
                 medias.append(board.medias)

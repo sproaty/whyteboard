@@ -54,7 +54,8 @@ import wx
 import wx.lib.dragscroller
 
 from tools import (Image, Text, Line, Note, Select, OverlayShape, Media, Polygon,
-                   TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT)
+                   TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER_TOP,
+                   CENTER_RIGHT, CENTER_BOTTOM, CENTER_LEFT)
 import utility
 
 #----------------------------------------------------------------------
@@ -124,6 +125,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
+
     def left_down(self, event):
         """Starts drawing"""
         x, y = self.convert_coords(event)
@@ -153,22 +155,8 @@ class Whyteboard(wx.ScrolledWindow):
             self.resize_canvas((x, y), self.resize_direction)
             return
         else:
-            direction = self.check_canvas_resize(x, y)
-
-            if not self.drawing and direction:
-                if not self.shape.drawing:
-                    if not self.resize_direction:
-                        self.resize_direction = direction
-                    if( not self.cursor_control or direction != self.resize_direction):
-                        self.resize_direction = direction
-                        self.cursor_control = True
-                        self.resize_cursor(direction) # change cursor
-                    return
-            else:
-                if self.cursor_control:
-                    self.change_cursor()
-                    self.cursor_control = False
-                    return  # don't want to update status text
+            if not self.check_mouse_for_resize(x, y):
+                return
 
         if self.gui.bar_shown:
             self.gui.SetStatusText(" %s, %s" % (x, y))
@@ -178,28 +166,7 @@ class Whyteboard(wx.ScrolledWindow):
             if not self.shape.drawing:  # polygon
                 self.draw_shape(self.shape)
         elif isinstance(self.shape, Select):  # change cursor to indicate action
-            for shape in reversed(self.shapes):
-                res = shape.handle_hit_test(x, y)
-
-                if res and (isinstance(shape, Line) or isinstance(shape, Polygon)):
-                    self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
-                    break
-                if res and isinstance(shape, Image):
-                    img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
-                                                "cursors", "") + "rotate.png")
-                    self.SetCursor(wx.CursorFromImage(img))
-                    break
-                elif res in [TOP_LEFT, BOTTOM_RIGHT]:
-                    self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
-                    break
-                elif res in [TOP_RIGHT, BOTTOM_LEFT]:
-                    self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
-                    break
-                if shape.hit_test(x, y):
-                    self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
-                    break
-            else:
-                self.change_cursor()
+            self.select_tool_cursor(x, y)
 
 
     def left_up(self, event):
@@ -225,6 +192,7 @@ class Whyteboard(wx.ScrolledWindow):
                     self.update_thumb()
             self.drawing = False
 
+
     def right_up(self, event):
         """Called when the right mouse button is released - used for zoom"""
         self.shape.right_up(*self.convert_coords(event))
@@ -235,7 +203,64 @@ class Whyteboard(wx.ScrolledWindow):
         self.shape.double_click(*self.convert_coords(event))
 
 
+
+    def select_tool_cursor(self, x, y):
+        for shape in reversed(self.shapes):
+            res = shape.handle_hit_test(x, y)
+
+            if res and (isinstance(shape, Line) or isinstance(shape, Polygon)):
+                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
+                break
+            if res and isinstance(shape, Image):
+                img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
+                                            "cursors", "") + "rotate.png")
+                self.SetCursor(wx.CursorFromImage(img))
+                break
+            elif res in [TOP_LEFT, BOTTOM_RIGHT]:
+                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
+                break
+            elif res in [TOP_RIGHT, BOTTOM_LEFT]:
+                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
+                break
+            elif res in [CENTER_TOP, CENTER_BOTTOM]:
+                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))
+                break
+            elif res in [CENTER_LEFT, CENTER_RIGHT]:
+                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))
+                break
+            if shape.hit_test(x, y):
+                self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
+                break
+        else:
+            self.change_cursor()
+
+
+    def check_mouse_for_resize(self, x, y):
+        """
+        Sees if the user's mouse is outside of the canvas, and updates their
+        cursor if it's in a different resizable area than it previously was
+        Returns the cursor to its normal state if it's moved back in
+        """
+        direction = self.check_canvas_resize(x, y)
+        if not self.drawing and direction:
+            if not self.shape.drawing:
+                if not self.resize_direction:
+                    self.resize_direction = direction
+                if( not self.cursor_control or direction != self.resize_direction):
+                    self.resize_direction = direction
+                    self.cursor_control = True
+                    self.resize_cursor(direction) # change cursor
+                return False
+        else:
+            if self.cursor_control:
+                self.change_cursor()
+                self.cursor_control = False
+                return False
+        return True
+
+
     def check_canvas_resize(self, x, y):
+        """Which direction the canvas can be resized in, if any"""
         if x > self.area[0] and y > self.area[1]:
             return DIAGONAL
         elif x > self.area[0]:
@@ -255,7 +280,7 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def resize_canvas(self, size, direction=None):
-        """ Resizes the canvas. Size = (w, h) tuple """
+        """ Performs the canvas resizing. Size = (w, h) tuple """
         if size[0] < 1 or size[1] < 1:
             return
 
@@ -353,7 +378,7 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def add_undo(self):
-        """ Creates an undo point """
+        """Creates an undo point. NEED to change this for memory improvements"""
         l = [copy.copy(x) for x in self.shapes]
         self.undo_list.append(l)
 
@@ -372,7 +397,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.perform(self.redo_list, self.undo_list)
 
     def perform(self, list_a, list_b):
-        """ list_a: to remove from / list b: append to """
+        """ perform undo/redo. list_a: to remove from / list b: append to """
         if not list_a:
             return
         list_b.append(list(self.shapes))
@@ -430,6 +455,9 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def check_move(self, pos):
+        """
+        Checks whether a selected shape can be moved in the shape order
+        """
         if not self.selected or isinstance(self.selected, Media):
             return False
         if pos in ["top", "up"]:
@@ -565,6 +593,8 @@ class Whyteboard(wx.ScrolledWindow):
 
 
 #----------------------------------------------------------------------
+
+
 
 if __name__ == '__main__':
     from gui import WhyteboardApp

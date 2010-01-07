@@ -24,6 +24,8 @@ Note: the list "items" at the bottom contains all the classes that can be drawn
 with by the user (e.g. they can't draw an image directly)
 """
 
+from __future__ import division
+
 import os
 import time
 import math
@@ -32,7 +34,7 @@ import ntpath
 import wx
 
 from dialogs import TextInput
-from panels import MediaPanel
+from panels import MediaPanel, ShapePopup
 
 _ = wx.GetTranslation
 
@@ -194,13 +196,9 @@ class OverlayShape(Tool):
 
     def sort_handles(self):
         """Sets the shape's handles"""
-        top_left, top_right, bottom_left, bottom_right = self.get_handles()[:4]
-        size = HANDLE_SIZE
-        rect1 = wx.Rect(top_left[0], top_left[1], size, size)
-        rect2 = wx.Rect(top_right[0], top_right[1], size, size)
-        rect3 = wx.Rect(bottom_left[0], bottom_left[1], size, size)
-        rect4 = wx.Rect(bottom_right[0], bottom_right[1], size, size)
-        self.handles = [rect1, rect2, rect3, rect4]
+        self.handles = []
+        for x in self.get_handles():
+            self.handles.append(wx.Rect(long(x[0]), long(x[1]), HANDLE_SIZE, HANDLE_SIZE))
 
 
     def handle_hit_test(self, x, y):
@@ -314,7 +312,20 @@ class Pen(OverlayShape):
 
 
     def hit_test(self, x, y):
-        pass
+        bitmap = wx.EmptyBitmap(self.board.area[0], self.board.area[1])
+        dc = wx.MemoryDC()
+        dc.SelectObject(bitmap)
+        dc.SetBackground(wx.WHITE_BRUSH)
+        dc.Clear()
+        dc.SetPen(wx.Pen(wx.BLACK, self.thickness + 2, wx.SOLID))
+        dc.SetBrush(wx.BLACK_BRUSH)
+        dc.DrawLineList(self.points)
+        pixel = dc.GetPixel(x + 2, y + 2)
+
+        if (pixel.Red() == 0) and (pixel.Green() == 0) and (pixel.Blue() == 0):
+            return True
+        else:
+            return False
 
     def get_handles(self):
         """Calculate the "bounding area" for the pen"""
@@ -324,6 +335,7 @@ class Pen(OverlayShape):
         bottom = max([point[1] for point in self.points])
 
         return [left, right, top, bottom]
+
 
 
     def properties(self):
@@ -365,28 +377,54 @@ class Rectangle(OverlayShape):
         self.width =  x - self.x
         self.height = y - self.y
 
+    def resize(self, x, y, direction=None):
+        if direction < CENTER_TOP:
+            self.motion(x, y)
+        elif direction in [CENTER_TOP, CENTER_BOTTOM]:
+            self.height = y - self.y
+        elif direction in [CENTER_LEFT, CENTER_RIGHT]:
+            self.width = x - self.x
+
     def get_args(self):
         x, y, w, h = self.x, self.y, self.width, self.height
         args = [min(x, w + x), min(y, h + y), abs(w), abs(h)]
         return args
 
     def get_handles(self):
+        """ ugh. """
         t = round(self.thickness / 2)
+        s = HANDLE_SIZE / 2
         x, y, w, h = self.get_args()[:4]  # RoundedRect has 5 args
-        return [(x - t - 5, y - t - 5),
-                (x + w + t, y - t - 5),
-                (x - t - 5, y + h + t),
-                (x + w + t, y + h + t)] #,
+        return [(x - t - 6, y - t - 6),               # top left
+                (x + w + t - 2, y - t - 6),           # top right
+                (x - t - 6, y + h + t - 2),           # bottom left
+                (x + w + t - 2, y + h + t - 2),       # bottom right
 
-                #(x - t - 5 + (w / 2), y - t - 5),  middle handles
-                #(x + w + t, y - t - 5 + (h / 2)),
-                #(x - t - 5 + (w / 2), y + h + t),
-                #(x - t - 5, y + h + t - (h / 2) - 5)]
+                (x - t - s + (w / 2), y - t - 6),     # top center
+                (x + w + t - 2, y - t - s + (h / 2)), # right center
+                (x - t - s + (w / 2), y + h + t - 2), # bottom center                
+                (x - t - 6, y - t - s + (h / 2))]     # left center
+
+
+    def handle_hit_test(self, x, y):
+        """Returns which handle has been clicked on"""
+        result = super(Rectangle, self).handle_hit_test(x, y)
+        if not result:
+            keys = {2: BOTTOM_LEFT, 3: BOTTOM_RIGHT, 4: CENTER_TOP,
+                    5: CENTER_RIGHT, 6: CENTER_BOTTOM, 7: CENTER_LEFT}
+
+            for k, v in keys.items():
+                if self.handles[k].InsideXY(x, y):
+                    return v
+            return False
+        return result
+
 
     def anchor(self, direction):
         """
         Avoids an issue when resizing, anchors shape's x/y point to the opposite
-        corner of the corner being dragged
+        corner of the corner being dragged.
+        I'll be honest - I can't remember what's going on here - it just works!
         """
         r = self.get_args()[:4]
 
@@ -410,17 +448,26 @@ class Rectangle(OverlayShape):
             self.y = r[1]
             self.width = r[2]
             self.height = r[3]
+        elif direction == CENTER_TOP:
+            self.y =  r[1] + r[3]
+            self.height = -(r[1] - r[1])
+        elif direction == CENTER_BOTTOM:
+            self.y = r[1]
+            self.height = -r[1]
+        elif direction == CENTER_LEFT:
+            self.x = r[0] + r[2]
+            self.width = -r[0]
+        elif direction == CENTER_RIGHT:
+            self.x = r[0]
+            self.width = r[2]
 
         self.sort_handles()
 
+
     def sort_handles(self):
-        """
-        Do some rectangle conversions instead of many if statements.
-        Thickness is added to allow the Select tool to select the shape via
-        its lines (as opposed to its x/y point)
-        """
         super(Rectangle, self).sort_handles()
         self.update_rect()
+
 
     def update_rect(self):
         """Need to pad out the rectangle with the line thickness"""
@@ -436,11 +483,14 @@ class Rectangle(OverlayShape):
             self.sort_handles()
         return self.rect.InsideXY(x, y)
 
-
+    def make_pen(self, dc=None):
+        """ Creates a pen, usually after loading in a save file """
+        super(Rectangle, self).make_pen(dc)
+        self.pen.SetJoin(wx.JOIN_MITER)
+        
     def properties(self):
-        # return "X: %i, Y: %i, " + _("Width:")+" %i, " + _("Height:")+" %i" % (self.x, self.y, self.width, self.height)
-        w, h = _("Width:"), _("Height:")
-        return "X: %i, Y: %i, %s %i, %s %i" % (self.x, self.y, w, self.width, h, self.height)
+        return "X: %i, Y: %i, %s %i, %s %i" % (self.x, self.y, _("Width:"),
+                                               self.width, _("Height:"), self.height)
 
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
@@ -571,12 +621,6 @@ class Line(OverlayShape):
         """Returns two tupples (unlike the others) - one for each point"""
         return ((x - self.x, y - self.y), (x - self.x2, y - self.y2))
 
-    def sort_handles(self):
-        handles = self.get_handles()
-        size = HANDLE_SIZE
-        rect1 = wx.Rect(handles[0][0], handles[0][1], size, size)
-        rect2 = wx.Rect(handles[1][0], handles[1][1], size, size)
-        self.handles = [rect1, rect2]
 
     def draw(self, dc, replay=False):
         super(Line, self).draw(dc, replay, "Line")
@@ -704,9 +748,6 @@ class Media(Tool):
             if self.filename:
                 self.mc.do_load_file(self.filename)
 
-    def hit_test(self, x, y):
-        pass
-
     def properties(self):
         return _("Loaded file")+ ": " + str(self.filename)
 
@@ -722,7 +763,6 @@ class Media(Tool):
     def load(self):
         super(Media, self).load()
         self.make_panel()
-
 
 
 #---------------------------------------------------------------------
@@ -905,7 +945,6 @@ class Text(OverlayShape):
 
 
     def draw(self, dc, replay=False):
-        #self.text.replace("\t", "        ")
         if not self.font:
             self.restore_font()
         dc.SetFont(self.font)
@@ -920,7 +959,8 @@ class Text(OverlayShape):
         self.font = wx.FFont(0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
         if not self.font.IsOk():
-            self.font = wx.FFont(0, 0)
+            f = wx.SystemSettings_GetFont(wx.SYS_SYSTEM_FONT)
+            self.font = wx.FFont(f.GetPointSize(), f.GetFontFamily())
 
 
     def find_extent(self):
@@ -1066,11 +1106,12 @@ class Image(OverlayShape):
         self.path = path  # used to restore image on load
         self.filename = None
         if path:
-            self.filename = os.path.basename(path)  
+            self.filename = os.path.basename(path)
         self.resizing = False
         self.angle = 0  # for rotating
         self.img = None  # rotated wx.Image
-
+        self.previousposition = None
+        self.outline = None
 
     def left_down(self, x, y):
         self.x = x
@@ -1096,20 +1137,62 @@ class Image(OverlayShape):
 
     def resize(self, x, y, direction=None):
         """Rotate the image"""
-        self.angle += 1
-        if self.angle > 360:
-            self.angle = 0
-        self.rotate()
+        #self.angle += 1
+        #if self.angle > 360:
+        #    self.angle = 0
+        self.rotate((x, y))
+        #self.rescale(x, y, direction)
 
 
-    def rotate(self, angle=None):
-        """Rotate the image (in radians), turn it back into a bitmap"""
-        rad = (2 * math.pi * self.angle) / 360
-        if angle:
-            rad = (2 * math.pi * angle) / 360
-        img = self.img.Rotate(rad, (0, 0))
-        self.image = wx.BitmapFromImage(img)
+#    def rotate(self, angle=None):
+#        """Rotate the image (in radians), turn it back into a bitmap"""
+#        rad = (2 * math.pi * self.angle) / 360
+#        if angle:
+#            rad = (2 * math.pi * angle) / 360
+#        img = self.img.Rotate(rad, self.get_center())
+#        self.image = wx.BitmapFromImage(img)
 
+    def rescale(self, x, y, direction):
+        if not self.outline:
+            self.outline = Rectangle(self.board, "Black", 2)
+            self.outline.x = self.x
+            self.outline.y = self.y
+            self.outline.width = self.image.GetWidth()
+            self.outline.height = self.image.GetHeight()
+            self.board.shapes.append(self.outline)
+            self.board.redraw_all()
+
+        self.outline.resize(x, y, direction)
+        self.board.draw_shape(self.outline)
+
+
+
+    def rotate(self, position=None, angle=None):
+        origin = (self.x + (self.image.GetWidth() / 2), self.y + (self.image.GetHeight() / 2))
+
+        knob = self.handles[0]
+        knob_origin = (knob.GetX() + (knob.GetWidth() / 2), knob.GetY() + (knob.GetHeight() / 2))
+
+        if position:
+            knob_angle = self.find_angle(knob_origin, origin)
+            mouse_angle = self.find_angle(position, origin)
+            angle = mouse_angle - knob_angle
+        else:
+            angle = (2 * math.pi * angle) / 360
+
+        self.image = wx.BitmapFromImage( self.img.Rotate( angle, origin ) )
+
+
+    def find_angle( self, a, b ):
+        try:
+            answer = math.atan2((a[0] - b[0]) , (a[1] - b[1]))
+        except:
+            answer = 0
+        return answer
+
+
+
+#------------------------------
 
     def draw(self, dc, replay=False):
         super(Image, self).draw(dc, replay, "Bitmap")
@@ -1120,9 +1203,12 @@ class Image(OverlayShape):
 
 
     def properties(self):
-        return "X: %i, Y: %i %s %i %s %i" % (self.x, self.y, _("Width:"),
+        a, b = "", ""
+        if self.filename:
+            a, b = _("Filename:"), self.filename
+        return "X: %i, Y: %i %s %i %s %i %s %s" % (self.x, self.y, _("Width:"),
                                             self.image.GetWidth(), _("Height:"),
-                                            self.image.GetHeight())
+                                            self.image.GetHeight(), a, b)
 
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
@@ -1241,6 +1327,24 @@ class Select(Tool):
             self.board.deselect()
 
 
+    def right_up(self, x, y):
+        #self.left_down(x, y)  # do hit test
+        found = None
+        for shape in reversed(self.board.shapes):
+            if shape.hit_test(x, y) or shape.handle_hit_test(x, y):
+                found = shape
+
+        if not found:
+            return
+
+        selected = None
+        if self.board.selected:
+            selected = self.board.selected
+        self.board.selected = found
+        self.board.gui.PopupMenu(ShapePopup(self.board, self.board.gui, found))
+        if selected:
+            self.board.selected = selected
+
 
     def double_click(self, x, y):
         if isinstance(self.board.selected, Text):
@@ -1273,8 +1377,6 @@ class Select(Tool):
 
         self.board.update_thumb()
         self.board.select_tool()
-        #if self.dragging:
-        #    self.shape.draw(self.board.get_dc(), True)#self.board.redraw_all()
 
 
 
@@ -1348,7 +1450,12 @@ class Polygon(OverlayShape):
         OverlayShape.__init__(self, board, colour, thickness, background)
         self.points = []
         self.drawing = False  # class keeps track of its drawing, not whyteboard
-
+        self.center = None
+        self.bbox = (0, 0, 0, 0)
+        self.scale_factor = 0
+        self.float_points = []
+        self.orig_click = None
+        
     def left_up(self, x, y):
         pass
 
@@ -1373,8 +1480,8 @@ class Polygon(OverlayShape):
                 if pos < 0:
                     pos = 0
                 self.points[pos] = (x, y)
-
             self.board.draw_shape(self)
+
 
     def double_click(self, x, y):
         if len(self.points) == 2:
@@ -1390,16 +1497,28 @@ class Polygon(OverlayShape):
             self.sort_handles()
             self.board.select_tool()
             self.board.update_thumb()
-
+            self.points = [(float(x), float(y)) for x, y in self.points] 
             if self.board.HasCapture():
                 self.board.ReleaseMouse()
+            print self.points
+
+
+    def area(self):
+        return 0.5 * abs(sum(x0*y1 - x1*y0
+                             for ((x0, y0), (x1, y1)) in self.segments(self.points)))
+
+    def segments(self, p):
+        return zip(p, p[1:] + [p[0]])
+
 
 
     def hit_test(self, x, y):
         """http://ariel.com.au/a/python-point-int-poly.html"""
+        if x < self.bbox[0] or x > self.bbox[2] or y < self.bbox[1] or y > self.bbox[3]:
+            return False
         n = len(self.points)
         inside = False
-
+        
         p1x, p1y = self.points[0]
         for i in range(n + 1):
             p2x, p2y = self.points[i % n]
@@ -1414,11 +1533,13 @@ class Polygon(OverlayShape):
         return inside
 
 
-    def sort_handles(self):
-        self.handles = []
-        for x in self.get_handles():
-            self.handles.append(wx.Rect(x[0], x[1], HANDLE_SIZE, HANDLE_SIZE))
-
+    def bounding_box(self):
+        """Get the bounding rectangle for the polygon"""
+        xmin = min(x for x, y in self.points)
+        ymin = min(y for x, y in self.points)
+        xmax = max(x for x, y in self.points)
+        ymax = max(y for x, y in self.points)
+        self.bbox = (xmin, ymin, xmax,  ymax)
 
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
@@ -1432,6 +1553,7 @@ class Polygon(OverlayShape):
                 return count + 1
         return False  # nothing hit
 
+
     def resize(self, x, y, direction=None):
         self.points = list(self.points)
         pos = direction - 1
@@ -1440,6 +1562,91 @@ class Polygon(OverlayShape):
         self.points[pos] = (x, y)
         if pos == 0:  # first point
             self.x, self.y = x, y
+        #self.rotate((x, y), pos)
+        self.rescale(x, y, pos)
+        
+        
+    def rescale(self, x, y, direction):
+        if not self.center:
+            a = sum([x for x, y in self.points]) / len(self.points)
+            b = sum([y for x, y in self.points]) / len(self.points)
+            #print (a, b) 
+            self.center = (a, b)
+        if not self.orig_click:
+            self.orig_click = (x, y)
+            
+        #knob = self.handles[direction]
+        #knoborigin = ( knob.GetX() + ( knob.GetWidth() / 2 ), knob.GetY() + ( knob.GetHeight() / 2 ) )            
+        
+        orig_click = self.orig_click
+        original_distance = math.sqrt((orig_click[0] - self.center[0])**2 + (orig_click[1] - self.center[1])**2)
+        current_distance = math.sqrt((x - self.center[0])**2 + (y - self.center[1])**2)
+        self.scale_factor = current_distance / original_distance
+                
+        print original_distance, current_distance, self.scale_factor
+
+        for count, point in enumerate(self.points): 
+            dist = (point[0] - self.center[0], point[1] - self.center[1]) 
+            self.points[count] = (self.scale_factor * dist[0] + self.center[0], self.scale_factor * dist[1] + self.center[1])  
+          
+          
+        #mousedvector = self.distance1d( (x, y), knoborigin )
+        #knobdvector = self.distance1d( knoborigin, self.center )
+        #ratio = self.distanceratio( mousedvector, knobdvector )
+
+        #for count, point in enumerate(self.points):
+        #    distance = self.distance1d( point, self.center )
+        #    self.points[count] = self.applyratio( distance, ratio )
+
+
+    def distance1d( self, ( x1, y1 ), ( x2, y2 ) ):
+        return ( x2 - x1, y2 - y1 )
+
+    def distanceratio( self, ( x1, y1 ), ( x2, y2 ) ):
+        try:
+            return ( ( x1 / x2 ), ( y1 / y2 ) )
+        except ZeroDivisionError:
+            return ( 0, 0 )
+
+    def applyratio( self, p, ratio ):
+        return ( p[0] * ratio[0], p[1] * ratio[1] )
+
+        
+
+    def rotate( self, position, direction ):
+        """
+        http://stackoverflow.com/questions/786472/rotate-a-point-by-an-angle
+        """
+        if not self.center:
+            box = self.bbox
+            origin = (self.x + ((box[2] - box[0]) / 2), 
+                      self.y + ((box[3] - box[1]) / 2))
+            self.center = origin
+
+        knob = self.handles[direction]
+
+        knoborigin = ( knob.GetX() + ( knob.GetWidth() / 2 ), knob.GetY() + ( knob.GetHeight() / 2 ) )
+
+        knobangle = self.findangle( knoborigin, self.center )
+        mouseangle = self.findangle( position, self.center )
+
+        angle = mouseangle - knobangle
+
+        for x, p in enumerate(self.points):
+            a = (math.cos(angle) * (p[0] - self.center[0]) - math.sin(angle) *
+                                    (p[1] - self.center[1]) + self.center[0])
+            b = (math.sin(angle) * (p[0] - self.center[0]) + math.cos(angle) *
+                                    (p[1] - self.center[1]) + self.center[1])
+            self.points[x] = (a, b)
+
+
+    def findangle( self, a, b ):
+        try:
+            answer = math.atan2( ( a[0] - b[0] ) , ( a[1] - b[1] ) )
+        except:
+            answer = 0
+        return answer
+
 
     def move(self, x, y, offset):
         """Gotta update every point relative to how much the first has moved"""
@@ -1451,6 +1658,11 @@ class Polygon(OverlayShape):
             self.points[count] = (point[0] + diff[0], point[1] + diff[1])
 
 
+    def sort_handles(self):
+        super(Polygon, self).sort_handles()
+       # self.float_points = [(float(x), float(y)) for x, y in self.points]
+        self.bounding_box()
+
     def get_args(self):
         return [self.points]
 
@@ -1459,6 +1671,9 @@ class Polygon(OverlayShape):
 
     def draw(self, dc, replay=False):
         super(Polygon, self).draw(dc, replay, "Polygon")
+        if self.center:
+            dc.SetPen(wx.Pen("Black", 10))
+            dc.DrawCircle(int(self.center[0]), int(self.center[1]), 2)
 
     def preview(self, dc, width, height):
         dc.DrawPolygon(((7, 13), (54, 9), (60, 38), (27, 34)))
