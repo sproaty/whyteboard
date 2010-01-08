@@ -111,20 +111,37 @@ class ControlPanel(wx.Panel):
         self.colour = csel.ColourSelect(panel, pos=(0, 0), size=(60, 60))
         parent = panel
         if os.name == "nt":
-            parent = self.colour
-
-        self.background = csel.ColourSelect(parent, pos=(0, 30), size=(30, 30),
-                                            style=wx.NO_BORDER)
+            parent = self.colour  # segfaults otherwise
+            
+        sizer = wx.BoxSizer()
+        swap_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.background = csel.ColourSelect(parent, pos=(0, 30), size=(30, 30))
         self.background.SetValue("White")
         self.transparent = wx.CheckBox(panel, label=_("Transparent"), pos=(0, 69))
         self.transparent.SetValue(True)
+        icon = os.path.join(self.gui.util.get_path().decode("latin-1"), "images", 
+                            "icons", "swap_colours.png")
+                        
+        swap = GenBitmapToggleButton(panel, bitmap=wx.Bitmap(icon), pos=(70, 0),
+                                     style=wx.NO_BORDER)
 
         self.colour.Bind(csel.EVT_COLOURSELECT, self.change_colour)
         self.background.Bind(csel.EVT_COLOURSELECT, self.change_background)
         self.transparent.Bind(wx.EVT_CHECKBOX, self.on_transparency)
+        swap.Bind(wx.EVT_BUTTON, self.on_swap)
+        
         self.colour.SetToolTipString(_("Set the foreground color"))
         self.background.SetToolTipString(_("Set the background color"))
         self.transparent.SetToolTipString(_("Ignores the background color"))
+        swap.SetToolTipString(_("Swaps the foreground and background colors"))
+        
+        sizer.Add(self.background)
+        sizer.Add(self.colour)
+        sizer.Add(self.transparent)
+        swap_sizer.Add(sizer)
+        swap_sizer.Add(swap, flag=wx.ALIGN_RIGHT)
+        self.SetSizer(swap_sizer)
 
         return panel
 
@@ -219,7 +236,7 @@ class ControlPanel(wx.Panel):
 
 
     def on_transparency(self, event):
-        """Toggles the pane and its widgets"""
+        """Toggles transparency in the shapes' background"""
         if event.Checked() and not self.gui.board.selected:
             self.gui.util.transparent = True
         else:
@@ -239,6 +256,12 @@ class ControlPanel(wx.Panel):
         self.gui.board.select_tool()
 
 
+    def on_swap(self, event):
+        """Swaps foreground/background colours"""
+        a, b = self.background.GetColour(), self.colour.GetColour()
+        self.background.SetColour(b)
+        self.colour.SetColour(a)
+        
 
     def change_colour(self, event=None, colour=None):
         """Event can also be a string representing a colour (from the grid)"""
@@ -547,14 +570,14 @@ class Notes(wx.Panel):
     def __init__(self, parent, gui):
         wx.Panel.__init__(self, parent)
         self.gui = gui
-        self.tree = wx.TreeCtrl(self, style=wx.TR_HAS_BUTTONS)# | wx.NO_BORDER)
+        self.tree = wx.TreeCtrl(self, style=wx.TR_HAS_BUTTONS)
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
         self.add_tab()
         self.tree.Expand(self.root)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.tree, 1, wx.EXPAND | wx.TOP, 10)  # fills vert space
+        self.sizer.Add(self.tree, 1, wx.EXPAND)  # fills vert space
         self.SetSizer(self.sizer)
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
@@ -729,7 +752,7 @@ class NotesPopup(Popup):
             self.AppendItem(wx.MenuItem(self, ID, text))
             self.AppendItem(wx.MenuItem(self, ID2, _("&Edit Note...")))
             self.AppendSeparator()
-            self.AppendItem(wx.MenuItem(self, ID3, _("&Delete")))
+            self.AppendItem(wx.MenuItem(self, ID3, _("&Delete")+"\tDelete"))
 
             self.Bind(wx.EVT_MENU, lambda x: self.parent.select(extra), id=ID)
             self.Bind(wx.EVT_MENU, self.select_tab_method(extra), id=ID2)
@@ -764,7 +787,7 @@ class SheetsPopup(Popup):
 #----------------------------------------------------------------------
 
 
-class ShapePopup(Popup):
+class ShapePopup(SheetsPopup):
     """
     Brought up by right-clicking on a shape with the Select tool
     """
@@ -779,7 +802,7 @@ class ShapePopup(Popup):
         self.AppendItem(wx.MenuItem(self, ID2, _("&Edit...")))
         if not self.item.name == "Text" and not self.item.name == "Note":
             self.Enable(ID2, False)
-        self.AppendItem(wx.MenuItem(self, ID3, _("&Delete")))
+        self.AppendItem(wx.MenuItem(self, wx.ID_DELETE, _("&Delete")+"\tDelete"))
         self.AppendSeparator()
 
         self.AppendItem(wx.MenuItem(self, ID_MOVE_UP, _("Move &Up")+"\tCtrl-Up"))
@@ -791,9 +814,6 @@ class ShapePopup(Popup):
         self.Bind(wx.EVT_MENU, lambda x: self.edit(), id=ID2)
         self.Bind(wx.EVT_MENU, lambda x: self.delete(), id=ID3)
 
-    def set_item(self, extra):
-        """Hit test on the tab bar"""
-        self.item = extra
 
     def edit(self):
         self.item.edit()
@@ -815,13 +835,12 @@ class ShapePopup(Popup):
 
 #----------------------------------------------------------------------
 
-
 class ThumbsPopup(SheetsPopup):
     """
-    Just need to set the item to the current tab number, parent: tab number
+    Just need to set the item to the current tab number, parent: thumb panel
     """
-
     def bleh(self,):
+        print self.parent
         self.parent.gui.tabs.SetSelection(self.item)
         self.parent.gui.on_change_tab()
 

@@ -25,6 +25,7 @@ xx Jan 2010 -- 0.39.4
 * Changing sheets scrolls the new sheet's thumbnail into view
 * Few UI changes, program now looks neater with less borders, also takes up less
   vertical space (takes up ~700 pixels vertically at a minimum)
+* Foreground/background colour swap button added
 * Help files updated and improved with more detail
 * Thick rectangles now don't have a "roundness" to their edges
 

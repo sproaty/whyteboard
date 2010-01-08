@@ -262,7 +262,8 @@ class Pen(OverlayShape):
         self.background = None
         self.x_tmp = 0
         self.y_tmp = 0
-
+        
+        
     def left_down(self, x, y):
         self.x = x  # original mouse coords
         self.y = y
@@ -1328,7 +1329,6 @@ class Select(Tool):
 
 
     def right_up(self, x, y):
-        #self.left_down(x, y)  # do hit test
         found = None
         for shape in reversed(self.board.shapes):
             if shape.hit_test(x, y) or shape.handle_hit_test(x, y):
@@ -1342,8 +1342,11 @@ class Select(Tool):
             selected = self.board.selected
         self.board.selected = found
         self.board.gui.PopupMenu(ShapePopup(self.board, self.board.gui, found))
+
         if selected:
             self.board.selected = selected
+        if not found.selected:
+            self.board.selected = None
 
 
     def double_click(self, x, y):
@@ -1453,7 +1456,7 @@ class Polygon(OverlayShape):
         self.center = None
         self.bbox = (0, 0, 0, 0)
         self.scale_factor = 0
-        self.float_points = []
+        self.original_points = []
         self.orig_click = None
         
     def left_up(self, x, y):
@@ -1559,57 +1562,34 @@ class Polygon(OverlayShape):
         pos = direction - 1
         if pos < 0:
             pos = 0
-        self.points[pos] = (x, y)
+        #self.points[pos] = (x, y)
         if pos == 0:  # first point
             self.x, self.y = x, y
-        #self.rotate((x, y), pos)
-        self.rescale(x, y, pos)
+        self.rotate((x, y), pos)
+        #self.rescale(x, y, pos)
         
         
     def rescale(self, x, y, direction):
+        """
+        Thanks to Mark Ransom -- http://stackoverflow.com/questions/2014859/
+        """
         if not self.center:
             a = sum([x for x, y in self.points]) / len(self.points)
             b = sum([y for x, y in self.points]) / len(self.points)
-            #print (a, b) 
             self.center = (a, b)
         if not self.orig_click:
             self.orig_click = (x, y)
+        if not self.original_points:
+            self.original_points = list(self.points)
             
-        #knob = self.handles[direction]
-        #knoborigin = ( knob.GetX() + ( knob.GetWidth() / 2 ), knob.GetY() + ( knob.GetHeight() / 2 ) )            
-        
         orig_click = self.orig_click
         original_distance = math.sqrt((orig_click[0] - self.center[0])**2 + (orig_click[1] - self.center[1])**2)
         current_distance = math.sqrt((x - self.center[0])**2 + (y - self.center[1])**2)
         self.scale_factor = current_distance / original_distance
                 
-        print original_distance, current_distance, self.scale_factor
-
-        for count, point in enumerate(self.points): 
+        for count, point in enumerate(self.original_points): 
             dist = (point[0] - self.center[0], point[1] - self.center[1]) 
             self.points[count] = (self.scale_factor * dist[0] + self.center[0], self.scale_factor * dist[1] + self.center[1])  
-          
-          
-        #mousedvector = self.distance1d( (x, y), knoborigin )
-        #knobdvector = self.distance1d( knoborigin, self.center )
-        #ratio = self.distanceratio( mousedvector, knobdvector )
-
-        #for count, point in enumerate(self.points):
-        #    distance = self.distance1d( point, self.center )
-        #    self.points[count] = self.applyratio( distance, ratio )
-
-
-    def distance1d( self, ( x1, y1 ), ( x2, y2 ) ):
-        return ( x2 - x1, y2 - y1 )
-
-    def distanceratio( self, ( x1, y1 ), ( x2, y2 ) ):
-        try:
-            return ( ( x1 / x2 ), ( y1 / y2 ) )
-        except ZeroDivisionError:
-            return ( 0, 0 )
-
-    def applyratio( self, p, ratio ):
-        return ( p[0] * ratio[0], p[1] * ratio[1] )
 
         
 
@@ -1617,17 +1597,15 @@ class Polygon(OverlayShape):
         """
         http://stackoverflow.com/questions/786472/rotate-a-point-by-an-angle
         """
-        if not self.center:
-            box = self.bbox
-            origin = (self.x + ((box[2] - box[0]) / 2), 
-                      self.y + ((box[3] - box[1]) / 2))
-            self.center = origin
+        #if not self.center:
+        a = sum([x for x, y in self.points]) / len(self.points)
+        b = sum([y for x, y in self.points]) / len(self.points)
+        self.center = (a, b)
+        if not self.orig_click:
+            self.orig_click = (x, y)
+            
 
-        knob = self.handles[direction]
-
-        knoborigin = ( knob.GetX() + ( knob.GetWidth() / 2 ), knob.GetY() + ( knob.GetHeight() / 2 ) )
-
-        knobangle = self.findangle( knoborigin, self.center )
+        knobangle = self.findangle( self.orig_click, self.center )
         mouseangle = self.findangle( position, self.center )
 
         angle = mouseangle - knobangle
@@ -1671,9 +1649,6 @@ class Polygon(OverlayShape):
 
     def draw(self, dc, replay=False):
         super(Polygon, self).draw(dc, replay, "Polygon")
-        if self.center:
-            dc.SetPen(wx.Pen("Black", 10))
-            dc.DrawCircle(int(self.center[0]), int(self.center[1]), 2)
 
     def preview(self, dc, width, height):
         dc.DrawPolygon(((7, 13), (54, 9), (60, 38), (27, 34)))
