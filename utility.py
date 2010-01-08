@@ -105,8 +105,10 @@ language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', \
                   'Galician', default='English')
 print_title = boolean(default=True)
 statusbar = boolean(default=True)
+tool_preview = boolean(default=True)
 toolbar = boolean(default=True)
 toolbox = option('icon', 'text', default='icon')
+toolbox_columns = option(2, 3, default=2)
 undo_sheets = integer(min=5, max=50, default=10)
 """
 
@@ -664,8 +666,8 @@ class Utility(object):
         Ask the user to save, quit or cancel (quitting) if they haven't saved.
         Can be called through "Update", "Open (.wtbd)", or "Exit". If updating,
         don't show a cancel button, and explicitly restart if the user cancels
-        out of the "save file" dialog (
-        Method(*args) specifies the action to perform if user selects yes or no
+        out of the "save file" dialog
+        method(*args) specifies the action to perform if user selects yes or no
         """
         if not args:
             args = []

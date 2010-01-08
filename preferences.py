@@ -35,6 +35,7 @@ import os
 import wx
 from copy import copy
 from wx.lib.wordwrap import wordwrap as wordwrap
+from wx.lib import scrolledpanel as scrolled
 
 import tools
 import whyteboard
@@ -116,10 +117,16 @@ class Preferences(wx.Dialog):
             self.gui.on_statusbar(None, True)
         else:
             self.gui.on_statusbar(None, False)
+
         if self.config['toolbar']:
             self.gui.on_toolbar(None, True)
         else:
             self.gui.on_toolbar(None, False)
+
+        if self.config['tool_preview']:
+            self.gui.on_tool_preview(None, True)
+        else:
+            self.gui.on_tool_preview(None, False)
 
         self.config.write()
         self.gui.util.config = self.config
@@ -128,16 +135,29 @@ class Preferences(wx.Dialog):
         if self.config['bmp_select_transparent'] != old['bmp_select_transparent']:
             self.gui.board.copy = None
 
+        if self.config['toolbox_columns'] != old['toolbox_columns']:
+            ctrl.toolsizer.SetCols(self.config['toolbox_columns'])
+            ctrl.toolsizer.Layout()
+
+        if not self.config['tool_preview']:
+            ctrl.preview.Hide()
+        else:
+            ctrl.preview.Show()
+            ctrl.preview.Refresh()
+
         if self.config['toolbox'] != old['toolbox']:
             ctrl.toolsizer.Clear(True)
             if self.config['toolbox'] == 'text':
+                print 'aaaaaaye'
                 ctrl.toolsizer.SetCols(1)
             else:
-                ctrl.toolsizer.SetCols(2)
+                ctrl.toolsizer.SetCols(int(self.config['toolbox_columns']))
             ctrl.make_toolbox(self.config['toolbox'])
             ctrl.toolsizer.Layout()
 
-        #  too lazy to check if each colour has changed
+
+
+        #  too lazy to check if each colour has changed - just remake it all
         self.gui.board.redraw_all()
         ctrl.grid.Clear(True)
         ctrl.make_colour_grid()
@@ -390,26 +410,30 @@ class FontAndColours(wx.Panel):
 #----------------------------------------------------------------------
 
 
-class View(wx.Panel):
+class View(scrolled.ScrolledPanel):
     """
     Select language and toolbar/status bar visiblity
     """
     def __init__(self, parent, gui, config):
-        wx.Panel.__init__(self, parent)
+        scrolled.ScrolledPanel.__init__(self, parent)
         self.config = config
         self.gui = gui
         if os.name == "posix":
             self.SetBackgroundColour("White")
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
+        self.SetupScrolling(False, True)
 
         statusbar = wx.CheckBox(self, label=_("View the status bar"))
         toolbar = wx.CheckBox(self, label=_("View the toolbar"))
         title = wx.CheckBox(self, label=_("Show the title when printing"))
+        preview = wx.CheckBox(self, label=_("Show the tool preview"))
         radio1 = wx.RadioButton(self, label=" " + _("Icons"))
         radio2 = wx.RadioButton(self, label=" " + _("Text"))
-        label = wx.StaticText(self, label=_("Toolbox View:"))
+        cols = wx.ComboBox(self, choices=('2', '3'), size=(60, -1), style=wx.CB_READONLY)
 
+        label = wx.StaticText(self, label=_("Toolbox View:"))
+        cols_label = wx.StaticText(self, label=_("Number of Toolbox Columns:"))
         width = wx.StaticText(self, label=_("Default Canvas Width"))
         self.width = wx.SpinCtrl(self, min=1, max=12000)
         height = wx.StaticText(self, label=_("Default Canvas Height"))
@@ -419,6 +443,7 @@ class View(wx.Panel):
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         label.SetFont(font)
         width.SetFont(font)
+        cols_label.SetFont(font)
         height.SetFont(font)
         sizer.Add(label, 0, wx.ALL, 15)
 
@@ -432,7 +457,10 @@ class View(wx.Panel):
             toolbar.SetValue(True)
         if self.config['print_title']:
             title.SetValue(True)
+        if self.config['tool_preview']:
+            preview.SetValue(True)
 
+        cols.SetValue(str(self.config['toolbox_columns']))
         self.width.SetValue(self.config['default_width'])
         self.height.SetValue(self.config['default_height'])
 
@@ -442,6 +470,9 @@ class View(wx.Panel):
             method = lambda evt, id=x: self.on_view(evt, id)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
 
+        sizer.Add(cols_label, 0, wx.ALL, 15)
+        sizer.Add(cols, 0, wx.LEFT, 30)
+        sizer.Add((10, 15))
         sizer.Add(width, 0, wx.ALL, 15)
         sizer.Add(self.width, 0, wx.LEFT, 30)
         sizer.Add(height, 0, wx.ALL, 15)
@@ -449,10 +480,14 @@ class View(wx.Panel):
         sizer.Add((10, 15))
         sizer.Add(statusbar, 0, wx.ALL, 10)
         sizer.Add(toolbar, 0, wx.LEFT | wx.BOTTOM, 10)
-        sizer.Add(title, 0, wx.LEFT, 10)
+        sizer.Add(title, 0, wx.LEFT | wx.BOTTOM, 10)
+        sizer.Add(preview, 0, wx.LEFT, 10)
+
+        cols.Bind(wx.EVT_COMBOBOX, self.on_columns)
         statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
         toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)
         title.Bind(wx.EVT_CHECKBOX, self.on_title)
+        preview.Bind(wx.EVT_CHECKBOX, self.on_preview)
         self.width.Bind(wx.EVT_SPINCTRL, self.on_width)
         self.height.Bind(wx.EVT_SPINCTRL, self.on_height)
 
@@ -460,8 +495,14 @@ class View(wx.Panel):
     def on_statusbar(self, event):
         self.config['statusbar'] = event.Checked()
 
+    def on_columns(self, event):
+        self.config['toolbox_columns'] = int(event.GetEventObject().GetValue())
+
     def on_toolbar(self, event):
         self.config['toolbar'] = event.Checked()
+
+    def on_preview(self, event):
+        self.config['tool_preview'] = event.Checked()
 
     def on_title(self, event):
         self.config['print_title'] = event.Checked()

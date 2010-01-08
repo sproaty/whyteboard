@@ -101,6 +101,16 @@ class Tool(object):
         """ Returns the position of the handle the user has clicked on """
         pass
 
+    def start_select_action(self):
+        """Do something before being resized/moved/scaled"""
+        pass
+
+    def end_select_action(self):
+        """
+        Gives the shape a chance to do cleanup when it finishes moving/resizing
+        """
+        pass
+
     def make_pen(self, dc=None):
         """ Creates a pen, usually after loading in a save file """
         self.pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
@@ -218,10 +228,11 @@ class OverlayShape(Tool):
                 return BOTTOM_RIGHT
         return False  # nothing hit
 
+
     def anchor(self, direction):
         """
         Avoids an issue when resizing, anchors shape's x/y point to the opposite
-        corner of the corner being dragged
+        side of the handle that is being dragged
         """
         pass
 
@@ -241,10 +252,222 @@ class OverlayShape(Tool):
     def load(self):
         super(OverlayShape, self).load()
         self.selected = False
+        #self.sort_handles()
+
 
 #----------------------------------------------------------------------
 
-class Pen(OverlayShape):
+class Polygon(OverlayShape):
+    """
+    Draws a polygon with [x] number of points, each of which can be repositioned
+    Due to it working different to every other shape it has to do some canvas
+    manipulation here
+    """
+    tooltip = _("Draw a polygon")
+    name = _("Polygon")
+    icon = "polygon"
+    hotkey = "y"
+
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+                 cursor=wx.CURSOR_CROSS):
+        OverlayShape.__init__(self, board, colour, thickness, background,
+                              cursor)
+        self.points = []
+        self.drawing = False  # class keeps track of its drawing, not whyteboard
+        self.center = None
+        self.bbox = None  # bounding box
+        self.scale_factor = 0
+        self.original_points = []  # when scaling, we scale vs these
+        self.orig_click = None  # when scaling - x/y of original click
+
+    def left_up(self, x, y):
+        pass
+
+    def left_down(self, x, y):
+        if not self.drawing:
+            if not self.board.HasCapture():
+                self.board.CaptureMouse()
+
+        self.drawing = True
+        self.points.append((x, y))
+        if not self.x or not self.y:
+            self.x = x
+            self.y = y
+            self.points.append((x, y))
+            self.board.draw_shape(self)
+
+
+    def motion(self, x, y):
+        if self.drawing:
+            if self.points:
+                pos = len(self.points) - 1
+                if pos < 0:
+                    pos = 0
+                self.points[pos] = (x, y)
+            self.board.draw_shape(self)
+
+
+    def double_click(self, x, y):
+        if len(self.points) == 2:
+            return
+        del self.points[len(self.points) - 1]  # dbl clicking fires 2 click evts
+        self.right_up(x, y)
+
+
+    def right_up(self, x, y):
+        if len(self.points) > 2:
+            self.drawing = False
+            self.board.add_shape(self)
+            self.sort_handles()
+            self.board.select_tool()
+            self.board.update_thumb()
+            if self.board.HasCapture():
+                self.board.ReleaseMouse()
+
+    def start_select_action(self):
+        self.points = list(self.points)
+
+    def end_select_action(self):
+        pass
+
+
+    def center_and_bbox(self):
+        """Get the bounding rectangle for the polygon"""
+        xmin = min(x for x, y in self.points)
+        ymin = min(y for x, y in self.points)
+        xmax = max(x for x, y in self.points)
+        ymax = max(y for x, y in self.points)
+        self.bbox = (xmin, ymin, xmax,  ymax)
+
+        a = sum([x for x, y in self.points]) / len(self.points)
+        b = sum([y for x, y in self.points]) / len(self.points)
+        self.center = (a, b)
+
+
+    def hit_test(self, x, y):
+        """http://ariel.com.au/a/python-point-int-poly.html"""
+        if x < self.bbox[0] or x > self.bbox[2] or y < self.bbox[1] or y > self.bbox[3]:
+            return False
+        n = len(self.points)
+        inside = False
+
+        p1x, p1y = self.points[0]
+        for i in range(n + 1):
+            p2x, p2y = self.points[i % n]
+            if y > min(p1y, p2y):
+                if y <= max(p1y, p2y):
+                    if x <= max(p1x, p2x):
+                        if p1y != p2y:
+                            xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                        if p1x == p2x or x <= xinters:
+                            inside = not inside
+            p1x, p1y = p2x, p2y
+        return inside
+
+
+    def get_handles(self):
+        d = lambda x, y: (x - 2, y - 2)
+        handles = [d(x[0], x[1]) for x in self.points]
+        return handles
+
+
+    def handle_hit_test(self, x, y):
+        for count, handle in enumerate(self.handles):
+            if handle.ContainsXY(x, y):
+                return count + 1
+        return False  # nothing hit
+
+
+    def resize(self, x, y, direction=None):
+        pos = direction - 1
+        if pos < 0:
+            pos = 0
+        #self.points[pos] = (x, y)  - MOVING A POINT
+        #if pos == 0:  # first point
+        #    self.x, self.y = x, y
+        self.rotate((x, y))
+        #self.rescale(x, y)
+        self.x, self.y = self.points[0]  # for the correct offset when moving
+
+    def rescale(self, x, y):
+        """
+        Thanks to Mark Ransom -- http://stackoverflow.com/questions/2014859/
+        """
+        if not self.orig_click:
+            self.orig_click = (x, y)
+
+        orig_click = self.orig_click
+        original_distance = math.sqrt((orig_click[0] - self.center[0])**2 + (orig_click[1] - self.center[1])**2)
+        current_distance = math.sqrt((x - self.center[0])**2 + (y - self.center[1])**2)
+        self.scale_factor = current_distance / original_distance
+
+        for count, point in enumerate(self.original_points):
+            dist = (point[0] - self.center[0], point[1] - self.center[1])
+            self.points[count] = (self.scale_factor * dist[0] + self.center[0], self.scale_factor * dist[1] + self.center[1])
+
+
+
+    def rotate(self, position):
+        """
+        http://stackoverflow.com/questions/786472/rotate-a-point-by-an-angle
+        """
+        if not self.orig_click:
+            self.orig_click = position
+
+        knobangle = self.findangle( self.orig_click, self.center )
+        mouseangle = self.findangle( position, self.center )
+
+        angle = knobangle - mouseangle
+        for x, p in enumerate(self.original_points):
+            a = (math.cos(angle) * (p[0] - self.center[0]) - math.sin(angle) *
+                                    (p[1] - self.center[1]) + self.center[0])
+            b = (math.sin(angle) * (p[0] - self.center[0]) + math.cos(angle) *
+                                    (p[1] - self.center[1]) + self.center[1])
+            self.points[x] = (a, b)
+
+
+
+    def findangle( self, a, b ):
+        try:
+            return math.atan2( ( a[0] - b[0] ) , ( a[1] - b[1] ) )
+        except:
+            return 0
+
+
+    def move(self, x, y, offset):
+        """Gotta update every point relative to how much the first has moved"""
+        super(Polygon, self).move(x, y, offset)
+        diff = (x - self.points[0][0] - offset[0], y - self.points[0][1] - offset[1])
+
+        for count, point in enumerate(self.points):
+            self.points[count] = (point[0] + diff[0], point[1] + diff[1])
+
+
+    def sort_handles(self):
+        super(Polygon, self).sort_handles()
+        self.points = [(float(x), float(y)) for x, y in self.points]
+        self.center_and_bbox()
+        self.original_points = list(self.points)
+        self.orig_click = None
+
+    def get_args(self):
+        return [self.points]
+
+    def properties(self):
+        return _("Number of points: %s") % len(self.points)
+
+    def draw(self, dc, replay=False, _type="Polygon"):
+        super(Polygon, self).draw(dc, replay, _type)
+
+    def preview(self, dc, width, height):
+        dc.DrawPolygon(((7, 13), (54, 9), (60, 38), (27, 34)))
+
+
+
+#----------------------------------------------------------------------
+
+
+class Pen(Polygon):
     """
     A free-hand pen. Has been turned into an OverlayShape to allow it to be
     selected and moved.
@@ -256,14 +479,13 @@ class Pen(OverlayShape):
 
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL):
-        OverlayShape.__init__(self, board, colour, thickness, background, cursor)
-        self.points = []  # ALL x1, y1, x2, y2 coords to render
+        Polygon.__init__(self, board, colour, thickness, background, cursor)
         self.time = []  # list of times for each point, for redrawing
         self.background = None
         self.x_tmp = 0
         self.y_tmp = 0
-        
-        
+
+
     def left_down(self, x, y):
         self.x = x  # original mouse coords
         self.y = y
@@ -285,6 +507,11 @@ class Pen(OverlayShape):
         self.x_tmp = x
         self.y_tmp = y  # swap for the next call to this function
 
+    def right_up(self, x, y):
+        pass
+
+    def sort_handles(self):
+        pass#self.center_and_bbox()
 
     def draw(self, dc, replay=True):
         super(Pen, self).draw(dc, replay, "LineList")
@@ -292,27 +519,19 @@ class Pen(OverlayShape):
     def get_args(self):
         return [self.points]
 
-    def sort_handles(self):
-        self.handles = self.get_handles()
-
-    def handle_hit_test(self, x, y):
-        pass
-
-    def draw_selected(self, dc):
-        pass
 
     def move(self, x, y, offset):
         """Gotta update every point relative to how much the first has moved"""
-        super(Pen, self).move(x, y, offset)
+        OverlayShape.move(self, x, y, offset)
         diff = (x - self.points[0][0] - offset[0], y - self.points[0][1] - offset[1])
 
-        self.points = list(self.points)
         for count, point in enumerate(self.points):
             self.points[count] = [point[0] + diff[0], point[1] + diff[1],
                                   point[2] + diff[0], point[3] + diff[1]]
 
 
     def hit_test(self, x, y):
+
         bitmap = wx.EmptyBitmap(self.board.area[0], self.board.area[1])
         dc = wx.MemoryDC()
         dc.SelectObject(bitmap)
@@ -328,19 +547,7 @@ class Pen(OverlayShape):
         else:
             return False
 
-    def get_handles(self):
-        """Calculate the "bounding area" for the pen"""
-        left = min([point[0] for point in self.points])
-        right = max([point[0] for point in self.points])
-        top = min([point[1] for point in self.points])
-        bottom = max([point[1] for point in self.points])
 
-        return [left, right, top, bottom]
-
-
-
-    def properties(self):
-        return _("Number of points: %s") % len(self.points)
 
     def preview(self, dc, width, height):
         """Points below make a curly line to show an example Pen drawing"""
@@ -403,7 +610,7 @@ class Rectangle(OverlayShape):
 
                 (x - t - s + (w / 2), y - t - 6),     # top center
                 (x + w + t - 2, y - t - s + (h / 2)), # right center
-                (x - t - s + (w / 2), y + h + t - 2), # bottom center                
+                (x - t - s + (w / 2), y + h + t - 2), # bottom center
                 (x - t - 6, y - t - s + (h / 2))]     # left center
 
 
@@ -488,7 +695,7 @@ class Rectangle(OverlayShape):
         """ Creates a pen, usually after loading in a save file """
         super(Rectangle, self).make_pen(dc)
         self.pen.SetJoin(wx.JOIN_MITER)
-        
+
     def properties(self):
         return "X: %i, Y: %i, %s %i, %s %i" % (self.x, self.y, _("Width:"),
                                                self.width, _("Height:"), self.height)
@@ -496,7 +703,8 @@ class Rectangle(OverlayShape):
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
 
-#----------------------------------------------------------------------
+#----------------------------------------------------------------------
+
 
 class Ellipse(Rectangle):
     """
@@ -1329,12 +1537,13 @@ class Select(Tool):
 
 
     def right_up(self, x, y):
+        """Pops up a shape menu if a shape was clicked on"""
         found = None
         for shape in reversed(self.board.shapes):
             if shape.hit_test(x, y) or shape.handle_hit_test(x, y):
                 found = shape
-
-        if not found:
+                break
+        else:
             return
 
         selected = None
@@ -1360,6 +1569,7 @@ class Select(Tool):
             if not self.undone:  # add a single undo point, not one per call
                 self.board.add_undo()
                 self.undone = True
+                self.shape.start_select_action()
             if not self.direction:  # moving
                 self.shape.move(x, y, self.offset)
             else:
@@ -1377,6 +1587,7 @@ class Select(Tool):
     def left_up(self, x, y):
         if self.dragging:
             self.shape.sort_handles()
+            self.shape.end_select_action()
 
         self.board.update_thumb()
         self.board.select_tool()
@@ -1434,224 +1645,6 @@ class BitmapSelect(Rectangle):
         dc.SetPen(wx.BLACK_DASHED_PEN)
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         dc.DrawRectangle(10, 10, width - 20, height - 20)
-
-
-#----------------------------------------------------------------------
-
-class Polygon(OverlayShape):
-    """
-    Draws a polygon with [x] number of points, each of which can be repositioned
-    Due to it working different to every other shape it has to do some canvas
-    manipulation here
-    """
-    tooltip = _("Draw a polygon")
-    name = _("Polygon")
-    icon = "polygon"
-    hotkey = "y"
-
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        OverlayShape.__init__(self, board, colour, thickness, background)
-        self.points = []
-        self.drawing = False  # class keeps track of its drawing, not whyteboard
-        self.center = None
-        self.bbox = (0, 0, 0, 0)
-        self.scale_factor = 0
-        self.original_points = []
-        self.orig_click = None
-        
-    def left_up(self, x, y):
-        pass
-
-    def left_down(self, x, y):
-        if not self.drawing:
-            if not self.board.HasCapture():
-                self.board.CaptureMouse()
-
-        self.drawing = True
-        self.points.append((x, y))
-        if not self.x or not self.y:
-            self.x = x
-            self.y = y
-            self.points.append((x, y))
-            self.board.draw_shape(self)
-
-
-    def motion(self, x, y):
-        if self.drawing:
-            if self.points:
-                pos = len(self.points) - 1
-                if pos < 0:
-                    pos = 0
-                self.points[pos] = (x, y)
-            self.board.draw_shape(self)
-
-
-    def double_click(self, x, y):
-        if len(self.points) == 2:
-            return
-        del self.points[len(self.points) - 1]
-        self.right_up(x, y)
-
-
-    def right_up(self, x, y):
-        if len(self.points) > 2:
-            self.drawing = False
-            self.board.add_shape(self)
-            self.sort_handles()
-            self.board.select_tool()
-            self.board.update_thumb()
-            self.points = [(float(x), float(y)) for x, y in self.points] 
-            if self.board.HasCapture():
-                self.board.ReleaseMouse()
-            print self.points
-
-
-    def area(self):
-        return 0.5 * abs(sum(x0*y1 - x1*y0
-                             for ((x0, y0), (x1, y1)) in self.segments(self.points)))
-
-    def segments(self, p):
-        return zip(p, p[1:] + [p[0]])
-
-
-
-    def hit_test(self, x, y):
-        """http://ariel.com.au/a/python-point-int-poly.html"""
-        if x < self.bbox[0] or x > self.bbox[2] or y < self.bbox[1] or y > self.bbox[3]:
-            return False
-        n = len(self.points)
-        inside = False
-        
-        p1x, p1y = self.points[0]
-        for i in range(n + 1):
-            p2x, p2y = self.points[i % n]
-            if y > min(p1y, p2y):
-                if y <= max(p1y, p2y):
-                    if x <= max(p1x, p2x):
-                        if p1y != p2y:
-                            xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
-                        if p1x == p2x or x <= xinters:
-                            inside = not inside
-            p1x, p1y = p2x, p2y
-        return inside
-
-
-    def bounding_box(self):
-        """Get the bounding rectangle for the polygon"""
-        xmin = min(x for x, y in self.points)
-        ymin = min(y for x, y in self.points)
-        xmax = max(x for x, y in self.points)
-        ymax = max(y for x, y in self.points)
-        self.bbox = (xmin, ymin, xmax,  ymax)
-
-    def get_handles(self):
-        d = lambda x, y: (x - 2, y - 2)
-        handles = [d(x[0], x[1]) for x in self.points]
-        return handles
-
-
-    def handle_hit_test(self, x, y):
-        for count, handle in enumerate(self.handles):
-            if handle.ContainsXY(x, y):
-                return count + 1
-        return False  # nothing hit
-
-
-    def resize(self, x, y, direction=None):
-        self.points = list(self.points)
-        pos = direction - 1
-        if pos < 0:
-            pos = 0
-        #self.points[pos] = (x, y)
-        if pos == 0:  # first point
-            self.x, self.y = x, y
-        self.rotate((x, y), pos)
-        #self.rescale(x, y, pos)
-        
-        
-    def rescale(self, x, y, direction):
-        """
-        Thanks to Mark Ransom -- http://stackoverflow.com/questions/2014859/
-        """
-        if not self.center:
-            a = sum([x for x, y in self.points]) / len(self.points)
-            b = sum([y for x, y in self.points]) / len(self.points)
-            self.center = (a, b)
-        if not self.orig_click:
-            self.orig_click = (x, y)
-        if not self.original_points:
-            self.original_points = list(self.points)
-            
-        orig_click = self.orig_click
-        original_distance = math.sqrt((orig_click[0] - self.center[0])**2 + (orig_click[1] - self.center[1])**2)
-        current_distance = math.sqrt((x - self.center[0])**2 + (y - self.center[1])**2)
-        self.scale_factor = current_distance / original_distance
-                
-        for count, point in enumerate(self.original_points): 
-            dist = (point[0] - self.center[0], point[1] - self.center[1]) 
-            self.points[count] = (self.scale_factor * dist[0] + self.center[0], self.scale_factor * dist[1] + self.center[1])  
-
-        
-
-    def rotate( self, position, direction ):
-        """
-        http://stackoverflow.com/questions/786472/rotate-a-point-by-an-angle
-        """
-        #if not self.center:
-        a = sum([x for x, y in self.points]) / len(self.points)
-        b = sum([y for x, y in self.points]) / len(self.points)
-        self.center = (a, b)
-        if not self.orig_click:
-            self.orig_click = (x, y)
-            
-
-        knobangle = self.findangle( self.orig_click, self.center )
-        mouseangle = self.findangle( position, self.center )
-
-        angle = mouseangle - knobangle
-
-        for x, p in enumerate(self.points):
-            a = (math.cos(angle) * (p[0] - self.center[0]) - math.sin(angle) *
-                                    (p[1] - self.center[1]) + self.center[0])
-            b = (math.sin(angle) * (p[0] - self.center[0]) + math.cos(angle) *
-                                    (p[1] - self.center[1]) + self.center[1])
-            self.points[x] = (a, b)
-
-
-    def findangle( self, a, b ):
-        try:
-            answer = math.atan2( ( a[0] - b[0] ) , ( a[1] - b[1] ) )
-        except:
-            answer = 0
-        return answer
-
-
-    def move(self, x, y, offset):
-        """Gotta update every point relative to how much the first has moved"""
-        super(Polygon, self).move(x, y, offset)
-        self.points = list(self.points)
-        diff = (x - self.points[0][0] - offset[0], y - self.points[0][1] - offset[1])
-
-        for count, point in enumerate(self.points):
-            self.points[count] = (point[0] + diff[0], point[1] + diff[1])
-
-
-    def sort_handles(self):
-        super(Polygon, self).sort_handles()
-       # self.float_points = [(float(x), float(y)) for x, y in self.points]
-        self.bounding_box()
-
-    def get_args(self):
-        return [self.points]
-
-    def properties(self):
-        return _("Number of points: %s") % len(self.points)
-
-    def draw(self, dc, replay=False):
-        super(Polygon, self).draw(dc, replay, "Polygon")
-
-    def preview(self, dc, width, height):
-        dc.DrawPolygon(((7, 13), (54, 9), (60, 38), (27, 34)))
 
 
 #----------------------------------------------------------------------

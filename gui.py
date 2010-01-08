@@ -124,7 +124,6 @@ class GUI(wx.Frame):
         self.help = None
         self.directory = None  # last opened directory
         self.make_toolbar()
-        self.make_menu()
         self.bar_shown = True  # slight performance optimisation
         self.find_help()
         self.__class__.instances += 1
@@ -139,6 +138,7 @@ class GUI(wx.Frame):
                                      | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS)
         self.board = Whyteboard(self.tabs, self)  # the active whyteboard tab
         self.panel = SidePanel(self)
+        self.make_menu()
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
         self.tabs.AddPage(self.board, _("Sheet")+" 1")
@@ -233,6 +233,7 @@ class GUI(wx.Frame):
         view.AppendSeparator()
         self.showtool = view.Append(ID_TOOLBAR, " "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
         self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
+        self.showprev = view.Append(ID_TOOL_PREVIEW, " "+_("Tool &Preview"), _("Show and hide the tool preview"), kind=wx.ITEM_CHECK)
         view.Append(ID_FULLSCREEN, " "+_("&Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
 
         shapes.Append(ID_MOVE_UP, _("Move Shape &Up")+"\tCtrl-Up", _("Moves the currently selected shape up"))
@@ -283,7 +284,10 @@ class GUI(wx.Frame):
             view.Check(ID_STATUSBAR, True)
         else:
             self.on_statusbar(None, False)
-
+        if self.util.config['tool_preview']:
+            view.Check(ID_TOOL_PREVIEW, True)
+        else:
+            self.on_tool_preview(None, False)
 
     def do_bindings(self):
         """
@@ -330,12 +334,12 @@ class GUI(wx.Frame):
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
                   "copy", "paste", "rotate", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
                   "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
-                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences"]
+                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
                wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
                ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
-               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT, ID_RELOAD_PREF]
+               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT, ID_RELOAD_PREF, ID_TOOL_PREVIEW]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -1032,6 +1036,20 @@ class GUI(wx.Frame):
         if force is False:
             self.toolbar.Hide()
             self.showtool.Check(False)
+        self.SendSizeEvent()
+
+
+    def on_tool_preview(self, event=None, force=None):
+        """ Toggles the toolbar """
+        if self.showprev.IsChecked() or force:
+            self.control.preview.Show()
+            self.showprev.Check(True)
+        else:
+            self.control.preview.Hide()
+            self.showprev.Check(False)
+        if force is False:
+            self.control.preview.Hide()
+            self.showprev.Check(False)
         self.SendSizeEvent()
 
 

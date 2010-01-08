@@ -73,10 +73,10 @@ class ControlPanel(wx.Panel):
         colour = self.colour_buttons()
         self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
         self.make_colour_grid()
-        self.toolsizer = wx.GridSizer(cols=1, hgap=1, vgap=2)
+        self.toolsizer = wx.GridSizer(cols=1, hgap=5, vgap=5)
         self.make_toolbox(gui.util.config['toolbox'])
 
-        choices = ''.join(str(i) + " " for i in range(1, 26) ).split()
+        choices = ''.join(str(i) + " " for i in range(1, 35) ).split()
         self.thickness = wx.ComboBox(self.pane, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
@@ -88,6 +88,7 @@ class ControlPanel(wx.Panel):
         box.Add(self.toolsizer, 0, wx.ALIGN_CENTER | wx.ALL, spacing)
         box.Add((5, 8))
         box.Add(self.grid, 0, wx.EXPAND | wx.ALL, spacing)
+        box.Add((5, 8))
         box.Add(colour, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add((5, 8))
         #box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
@@ -101,6 +102,9 @@ class ControlPanel(wx.Panel):
         self.SetSizer(sizer)
         self.cp.GetPane().SetSizer(csizer)
         self.cp.Expand()
+        if not self.gui.util.config['tool_preview']:
+            self.preview.Hide()
+
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.Bind(wx.EVT_COMBOBOX, self.change_thickness, self.thickness)
@@ -112,17 +116,17 @@ class ControlPanel(wx.Panel):
         parent = panel
         if os.name == "nt":
             parent = self.colour  # segfaults otherwise
-            
+
         sizer = wx.BoxSizer()
         swap_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        
+
         self.background = csel.ColourSelect(parent, pos=(0, 30), size=(30, 30))
         self.background.SetValue("White")
         self.transparent = wx.CheckBox(panel, label=_("Transparent"), pos=(0, 69))
         self.transparent.SetValue(True)
-        icon = os.path.join(self.gui.util.get_path().decode("latin-1"), "images", 
+        icon = os.path.join(self.gui.util.get_path().decode("latin-1"), "images",
                             "icons", "swap_colours.png")
-                        
+
         swap = GenBitmapToggleButton(panel, bitmap=wx.Bitmap(icon), pos=(70, 0),
                                      style=wx.NO_BORDER)
 
@@ -130,12 +134,12 @@ class ControlPanel(wx.Panel):
         self.background.Bind(csel.EVT_COLOURSELECT, self.change_background)
         self.transparent.Bind(wx.EVT_CHECKBOX, self.on_transparency)
         swap.Bind(wx.EVT_BUTTON, self.on_swap)
-        
+
         self.colour.SetToolTipString(_("Set the foreground color"))
         self.background.SetToolTipString(_("Set the background color"))
         self.transparent.SetToolTipString(_("Ignores the background color"))
         swap.SetToolTipString(_("Swaps the foreground and background colors"))
-        
+
         sizer.Add(self.background)
         sizer.Add(self.colour)
         sizer.Add(self.transparent)
@@ -153,7 +157,7 @@ class ControlPanel(wx.Panel):
 
         if _type == "icon":
             items = [_(i.icon) for i in self.gui.util.items]
-            self.toolsizer.SetCols(2)
+            self.toolsizer.SetCols(int(self.gui.util.config['toolbox_columns']))
 
         for x, val in enumerate(items):
             if _type == "icon":
@@ -259,9 +263,9 @@ class ControlPanel(wx.Panel):
     def on_swap(self, event):
         """Swaps foreground/background colours"""
         a, b = self.background.GetColour(), self.colour.GetColour()
-        self.background.SetColour(b)
-        self.colour.SetColour(a)
-        
+        self.change_background(colour=b)
+        self.change_colour(colour=a)
+
 
     def change_colour(self, event=None, colour=None):
         """Event can also be a string representing a colour (from the grid)"""
@@ -863,6 +867,13 @@ class Thumbs(scrolled.ScrolledPanel):
         self.text = []  # StaticTexts
         self.new_thumb()  # inital thumb
         self.thumbs[0].current = True
+        self.transparent = True
+        try:
+            dc = wx.MemoryDC()
+            dc.SelectObject(gui.board.buffer)
+            x = wx.GCDC(dc)
+        except NotImplementedError:
+            self.transparent = False
 
 
     def new_thumb(self, _id=0, name=None):
@@ -970,7 +981,7 @@ class Thumbs(scrolled.ScrolledPanel):
         thumb.SetBitmapLabel(bmp)
         self.thumbs[_id].buffer = bmp
 
-        if thumb.current:
+        if thumb.current and self.transparent:
             thumb.highlight()
 
 
@@ -978,7 +989,7 @@ class Thumbs(scrolled.ScrolledPanel):
         """
         Updates all thumbnails (i.e. upon loading a Whyteboard file).
         """
-        for x in range(0, len(self.thumbs)):
+        for x, i in enumerate(self.thumbs):
             self.update(x)
 
 
@@ -1027,9 +1038,8 @@ class ThumbButton(wx.BitmapButton):
 
     def highlight(self):
         """
-        Highlights the current thumbnail with a light overlay.
+        Highlights the current thumbnail with a light transparent overlay.
         """
-        #_copy = copy(self.buffer)
         dc = wx.MemoryDC()
         dc.SelectObject(self.buffer)
 

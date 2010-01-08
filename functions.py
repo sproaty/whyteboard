@@ -55,6 +55,7 @@ ID_RESIZE = wx.NewId()            # resize dialog
 ID_ROTATE = wx.NewId()            # rotate dialog for image 90/180/270
 ID_SHAPE_VIEWER = wx.NewId()      # view/edit shapes
 ID_STATUSBAR = wx.NewId()         # toggle statusbar
+ID_TOOL_PREVIEW = wx.NewId()      # toggle preview of tool
 ID_TOOLBAR = wx.NewId()           # toggle toolbar
 ID_TRANSLATE = wx.NewId()         # open translation URL
 ID_UNDO_SHEET = wx.NewId()        # undo close sheet

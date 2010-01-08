@@ -17,15 +17,20 @@ xx Jan 2010 -- 0.39.4
   instead of *actually* rotating the image (which performed slow, before)
 * Image re-scaling using its selection handles. Also draws a transparent
   rectangle to indicate its new size
+* Scaling of Polygon shapes - increase or decrease their size!
 
 * 8-way selection handle on rectangle, rounded rectangle and ellipse, allowing
   vertical-only / horizontal-only resizing
 * Right clicking a shape with the select tool pops up a menu with select/delete/
   edit/move operations
 * Changing sheets scrolls the new sheet's thumbnail into view
+
 * Few UI changes, program now looks neater with less borders, also takes up less
   vertical space (takes up ~700 pixels vertically at a minimum)
 * Foreground/background colour swap button added
+* New preference, under "View": number of toolbox columns, can be set to 2 or 3
+  to decrease the vertical space taken by the toolbox
+* New preference: toggle tool preview on/off (to gain more vertical space)
 * Help files updated and improved with more detail
 * Thick rectangles now don't have a "roundness" to their edges
 
@@ -35,6 +40,8 @@ xx Jan 2010 -- 0.39.4
 * Bugfix: the "rotate image" dialog was broken
 * Bugfix: menu icons appearing for 3 menu items on Windows, when no other menu
   item had icons - now removed
+* Bugfix: stopped a crash when wx.GCDC was not implemented on the system, due
+  to a misconfigured Linux install
 
 ----------------------------------------------------------------------
 
