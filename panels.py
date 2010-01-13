@@ -68,11 +68,11 @@ class ControlPanel(wx.Panel):
         csizer = wx.BoxSizer(wx.VERTICAL)
         thickness = wx.StaticText(self.pane, label=_("Thickness:"))
         #prev = wx.StaticText(self.pane, label=_("Preview:"))
-        
+
         colour = self.colour_buttons()
         self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
         self.make_colour_grid()
-        
+
         self.toolsizer = wx.GridSizer(cols=1, hgap=5, vgap=5)
         self.make_toolbox(gui.util.config['toolbox'])
 
@@ -104,12 +104,12 @@ class ControlPanel(wx.Panel):
         self.cp.Expand()
         self.control_sizer = box
         self.background.Raise()
-                
+
         if not self.gui.util.config['tool_preview']:
             self.preview.Hide()
         if not self.gui.util.config['colour_grid']:
             box.Hide(self.grid)
-            
+
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.Bind(wx.EVT_COMBOBOX, self.change_thickness, self.thickness)
@@ -811,13 +811,13 @@ class ShapePopup(SheetsPopup):
         self.AppendItem(wx.MenuItem(self, ID2, _("&Edit...")))
         if not self.item.name == "Text" and not self.item.name == "Note":
             self.Enable(ID2, False)
-            
+
         if self.item.name == "Polygon":
             ID4 = wx.NewId()
-            self.AppendItem(wx.MenuItem(self, ID4, _("Add New Point"))) 
-            self.Bind(wx.EVT_MENU, lambda x: self.add_point(), id=ID4)           
+            self.AppendItem(wx.MenuItem(self, ID4, _("&Add New Point")))
+            self.Bind(wx.EVT_MENU, lambda x: self.add_point(), id=ID4)
 
-        self.AppendItem(wx.MenuItem(self, ID5, _("Swap Colors")))                           
+        self.AppendItem(wx.MenuItem(self, ID5, _("Swap &Colors")))
         self.AppendItem(wx.MenuItem(self, wx.ID_DELETE, _("&Delete")+"\tDelete"))
         self.AppendSeparator()
 
@@ -845,7 +845,7 @@ class ShapePopup(SheetsPopup):
             b = (255, 255, 255)
 
         self.gui.control.change_background(colour=b)
-        self.gui.control.change_colour(colour=a)        
+        self.gui.control.change_colour(colour=a)
 
     def select(self, draw=True):
         if not self.item.selected:
@@ -857,10 +857,10 @@ class ShapePopup(SheetsPopup):
 
         if draw:
             self.gui.board.redraw_all()
-            
+
     def add_point(self):
         x, y = self.gui.board.ScreenToClient(wx.GetMousePosition())
-        x, y = self.gui.board.CalcUnscrolledPosition(x, y)        
+        x, y = self.gui.board.CalcUnscrolledPosition(x, y)
         self.item.points.append((float(x), float(y)))
         self.gui.board.redraw_all()
 

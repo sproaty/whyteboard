@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-13 22:37+0000\n"
+"POT-Creation-Date: 2010-01-13 23:39+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,6 +39,10 @@ msgstr ""
 
 #: whyteboard/gui.py:272
 msgid "&About"
+msgstr ""
+
+#: whyteboard/panels.py:817
+msgid "&Add New Point"
 msgstr ""
 
 #: whyteboard/dialogs.py:632 whyteboard/dialogs.py:717
@@ -226,10 +230,6 @@ msgstr ""
 
 #: whyteboard/gui.py:1317
 msgid "A simple whiteboard and PDF annotator"
-msgstr ""
-
-#: whyteboard/panels.py:817
-msgid "Add New Point"
 msgstr ""
 
 #: whyteboard/gui.py:206
@@ -1134,7 +1134,7 @@ msgid "Spanish"
 msgstr ""
 
 #: whyteboard/panels.py:820
-msgid "Swap Colors"
+msgid "Swap &Colors"
 msgstr ""
 
 #: whyteboard/panels.py:146
