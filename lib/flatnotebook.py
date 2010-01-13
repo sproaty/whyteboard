@@ -4045,7 +4045,6 @@ class PageContainer(wx.Panel):
         elif self._nLeftClickZone == FNB_TAB_X:
             self._nTabXButtonStatus = FNB_BTN_PRESSED
             self.Refresh()
-
         elif self._nLeftClickZone == FNB_TAB:
 
             if self._iActivePage != tabIdx:
@@ -4133,8 +4132,12 @@ class PageContainer(wx.Panel):
 
             self._nTabXButtonStatus = FNB_BTN_HOVER
 
-            self.DeletePage(self._iActivePage)
-
+            #self.DeletePage(self._iActivePage)
+            # hack specific to Whyteboard, here.
+            self.Parent.Parent.current_tab = tabIdx
+            self.Parent.Parent.board = self.Parent.GetPage(tabIdx)
+            self.Parent.Parent.on_close_tab() 
+            
         elif where == FNB_DROP_DOWN_ARROW:
 
             # Make sure that the button was pressed before

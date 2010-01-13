@@ -1,7 +1,7 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#!/usr/bin/python
 
-# Copyright (c) 2009 by Steven Sproat
+# Copyright (c) 2009, 2010 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
 #
@@ -84,6 +84,7 @@ import whyteboard
 cfg = """
 bmp_select_transparent = boolean(default=False)
 canvas_border = integer(min=10, max=35, default=15)
+colour_grid = boolean(default=True)
 colour1 = list(min=3, max=3, default=list('280', '0', '0'))
 colour2 = list(min=3, max=3, default=list('255', '255', '0'))
 colour3 = list(min=3, max=3, default=list('0', '255', '0'))

@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2009 by Steven Sproat
+# Copyright (c) 2009, 2010 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
 #
@@ -55,7 +55,7 @@ import wx.lib.dragscroller
 
 from tools import (Image, Text, Line, Note, Select, OverlayShape, Media, Polygon,
                    TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER_TOP,
-                   CENTER_RIGHT, CENTER_BOTTOM, CENTER_LEFT)
+                   CENTER_RIGHT, CENTER_BOTTOM, CENTER_LEFT, HANDLE_ROTATE)
 import utility
 
 #----------------------------------------------------------------------
@@ -211,7 +211,7 @@ class Whyteboard(wx.ScrolledWindow):
             if res and (isinstance(shape, Line) or isinstance(shape, Polygon)):
                 self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
                 break
-            if res and isinstance(shape, Image):
+            if res == HANDLE_ROTATE:
                 img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
                                             "cursors", "") + "rotate.png")
                 self.SetCursor(wx.CursorFromImage(img))

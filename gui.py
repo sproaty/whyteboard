@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2009 by Steven Sproat
+# Copyright (c) 2009, 2010 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
 #
@@ -65,6 +65,7 @@ import lib.icon
 from whyteboard import Whyteboard
 from tools import Image, Note, Text
 from utility import Utility, WhyteboardDropTarget, languages, cfg
+import functions as fnc
 from functions import *
 from dialogs import (History, ProgressDialog, Resize, Rotate, UpdateDialog,
                      MyPrintout, ExceptionHook, ShapeViewer)
@@ -134,7 +135,7 @@ class GUI(wx.Frame):
         self.hotkeys = []
 
         self.control = ControlPanel(self)
-        self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8
+        self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_X_ON_TAB | fnb.FNB_VC8
                                      | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS)
         self.board = Whyteboard(self.tabs, self)  # the active whyteboard tab
         self.panel = SidePanel(self)
@@ -234,6 +235,8 @@ class GUI(wx.Frame):
         self.showtool = view.Append(ID_TOOLBAR, " "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
         self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
         self.showprev = view.Append(ID_TOOL_PREVIEW, " "+_("Tool &Preview"), _("Show and hide the tool preview"), kind=wx.ITEM_CHECK)
+        self.showcolour = view.Append(ID_COLOUR_GRID, " "+_("&Colour Grid"), _("Show and hide the colour grid"), kind=wx.ITEM_CHECK)
+        view.AppendSeparator()
         view.Append(ID_FULLSCREEN, " "+_("&Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
 
         shapes.Append(ID_MOVE_UP, _("Move Shape &Up")+"\tCtrl-Up", _("Moves the currently selected shape up"))
@@ -259,11 +262,12 @@ class GUI(wx.Frame):
         sheets.Append(ID_CLEAR_SHEETS, _("Clear All Sheets' &Drawings"), _("Clear all sheets' drawings (keep images)"))
         sheets.Append(ID_CLEAR_ALL_SHEETS, _("Clear &All Sheets"), _("Clear all sheets"))
 
-        _help.Append(wx.ID_HELP, _("&Contents")+"\tF1", _("View information about Whyteboard"))
+        _help.Append(wx.ID_HELP, _("&Contents")+"\tF1", _("View Whyteboard's help documents"))
         _help.AppendSeparator()
         _help.Append(ID_UPDATE, _("Check for &Updates...")+"\tF12", _("Search for updates to Whyteboard"))
         _help.Append(ID_REPORT_BUG, _("&Report a Problem"), _("Report any bugs or issues with Whyteboard"))
         _help.Append(ID_TRANSLATE, _("&Translate Whyteboard"), _("Translate Whyteboard to your language"))
+        _help.Append(ID_FEEDBACK, _("Send &Feedback"), _("Send feedback directly to Whyteboard's developer"))
         _help.AppendSeparator()
         _help.Append(wx.ID_ABOUT, _("&About"), _("View information about Whyteboard"))
         self.menu.Append(_file, _("&File"))
@@ -276,18 +280,14 @@ class GUI(wx.Frame):
         self.menu.Enable(wx.ID_PASTE, self.can_paste)
         self.menu.Enable(ID_PASTE_NEW, self.can_paste)
 
-        if self.util.config['toolbar']:
-            view.Check(ID_TOOLBAR, True)
-        else:
-            self.on_toolbar(None, False)
-        if self.util.config['statusbar']:
-            view.Check(ID_STATUSBAR, True)
-        else:
-            self.on_statusbar(None, False)
-        if self.util.config['tool_preview']:
-            view.Check(ID_TOOL_PREVIEW, True)
-        else:
-            self.on_tool_preview(None, False)
+        # Note: using the import "functions" module here to get the ID 
+        keys = ['toolbar', 'statusbar', 'tool_preview', 'colour_grid']
+        for x in keys:
+            if self.util.config[x]:
+                view.Check(getattr(fnc, "ID_" + x.upper()), True)
+            else:
+                getattr(self, "on_" + x)(None, False)
+
 
     def do_bindings(self):
         """
@@ -334,12 +334,13 @@ class GUI(wx.Frame):
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
                   "copy", "paste", "rotate", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
                   "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
-                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview"]
+                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview", "colour_grid", "feedback"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
                wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
                ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
-               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT, ID_RELOAD_PREF, ID_TOOL_PREVIEW]
+               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT, ID_RELOAD_PREF, ID_TOOL_PREVIEW, ID_COLOUR_GRID,
+               ID_FEEDBACK]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -980,6 +981,7 @@ class GUI(wx.Frame):
     def on_change_tool(self, event, _id):
         self.control.change_tool(_id=_id)
 
+
     def hotkey(self, event=None):
         """
         Processes a hotkey (escape / home / end / page up / page down)
@@ -993,6 +995,9 @@ class GUI(wx.Frame):
                     return
 
         if event.GetKeyCode() == wx.WXK_ESCAPE:  # close fullscreen
+            if self.board.selected:
+                self.board.deselect()
+                return
             if self.IsFullScreen():
                 flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION |
                    wx.FULLSCREEN_NOSTATUSBAR)
@@ -1008,65 +1013,62 @@ class GUI(wx.Frame):
             if event.ControlDown():
                 self.board.Scroll(-1, self.board.area[1])
             else:
-                self.board.Scroll(self.board.area[1], -1)
-        elif event.GetKeyCode() == wx.WXK_PAGEUP:
+                self.board.Scroll(self.board.area[0], -1)
+                
+        elif event.GetKeyCode() in [wx.WXK_PAGEUP, wx.WXK_PAGEDOWN]:
             x, y = self.board.GetViewStart()
             x2, y2 = self.board.GetClientSizeTuple()
-
-            size = y - y2
-            self.board.Scroll(-1, size)
-        elif event.GetKeyCode() == wx.WXK_PAGEDOWN:
-            x, y = self.board.GetViewStart()
-            x2, y2 = self.board.GetClientSizeTuple()
-
-            size = y + y2
-            self.board.Scroll(-1, size)
+            if event.GetKeyCode() == wx.WXK_PAGEUP:
+                self.board.Scroll(-1, y - y2)
+            else:
+                self.board.Scroll(-1, y + y2)
         else:
             event.Skip()   # propogate
 
 
-    def on_toolbar(self, event=None, force=None):
-        """ Toggles the toolbar """
-        if self.showtool.IsChecked() or force:
-            self.toolbar.Show()
-            self.showtool.Check(True)
+    def toggle_view(self, menu, view, force=None):
+        """Menu: MenuItem to check/enable/disable, view: Control to show/hide"""
+        if menu.IsChecked() or force:
+            view.Show()
+            menu.Check(True)
         else:
-            self.toolbar.Hide()
-            self.showtool.Check(False)
+            view.Hide()
+            menu.Check(False)
         if force is False:
-            self.toolbar.Hide()
-            self.showtool.Check(False)
+            view.Hide()
+            menu.Check(False)
         self.SendSizeEvent()
 
+
+    def on_toolbar(self, event=None, force=None):
+        self.toggle_view(self.showtool, self.toolbar, force)
 
     def on_tool_preview(self, event=None, force=None):
-        """ Toggles the toolbar """
-        if self.showprev.IsChecked() or force:
-            self.control.preview.Show()
-            self.showprev.Check(True)
-        else:
-            self.control.preview.Hide()
-            self.showprev.Check(False)
-        if force is False:
-            self.control.preview.Hide()
-            self.showprev.Check(False)
-        self.SendSizeEvent()
+        self.toggle_view(self.showprev, self.control.preview, force)
 
 
     def on_statusbar(self, event=None, force=None):
+        self.bar_shown = False
         if self.showstat.IsChecked() or force:
-            self.statusbar.Show()
-            self.showstat.Check(True)
             self.bar_shown = True
+
+        self.toggle_view(self.showstat, self.statusbar, force)
+
+
+    def on_colour_grid(self, event=None, force=None):
+        """ugly, has to show/hide an item from a sizer, not a panel"""
+        if self.showcolour.IsChecked() or force:
+            self.control.control_sizer.Show(self.control.grid, True)
+            self.showcolour.Check(True)
         else:
-            self.statusbar.Hide()
-            self.showstat.Check(False)
-            self.bar_shown = False
+            self.control.control_sizer.Hide(self.control.grid)
+            self.showcolour.Check(False)
         if force is False:
-            self.statusbar.Hide()
-            self.showstat.Check(False)
-            self.bar_shown = False
-        self.SendSizeEvent()
+            self.control.control_sizer.Hide(self.control.grid)
+            self.showcolour.Check(False)
+
+        self.control.pane.Layout()
+        self.control.preview.Refresh()
 
 
     def convert_dialog(self, cmd):
@@ -1224,7 +1226,11 @@ class GUI(wx.Frame):
         webbrowser.open_new_tab("https://translations.launchpad.net/whyteboard")
         wx.CallAfter(wx.EndBusyCursor)
 
-
+    def on_feedback(self, event):
+        wx.BeginBusyCursor()
+        webbrowser.open_new_tab("mailto:sproaty@gmail.com?subject=Whyteboard Feedback")
+        wx.CallAfter(wx.EndBusyCursor)
+        
     def on_report_bug(self, event):
         wx.BeginBusyCursor()
         webbrowser.open_new_tab("https://bugs.launchpad.net/whyteboard")
@@ -1421,6 +1427,12 @@ class WhyteboardApp(wx.App):
 #----------------------------------------------------------------------
 
 def main():
+    try:
+       import psyco
+       psyco.full()
+    except ImportError:
+       pass
+    
     app = WhyteboardApp(redirect=False)
     app.MainLoop()
 

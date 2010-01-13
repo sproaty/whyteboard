@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2009 by Steven Sproat
+# Copyright (c) 2009, 2010 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
 #
@@ -113,20 +113,16 @@ class Preferences(wx.Dialog):
                 self.gui.util.font = wx.FFont(0, 0)
                 self.gui.util.font.SetNativeFontInfoFromString(self.config['default_font'])
 
-        if self.config['statusbar']:
-            self.gui.on_statusbar(None, True)
-        else:
-            self.gui.on_statusbar(None, False)
+        # view toggles/menu. do the colour grid later
+        keys = ['statusbar', 'toolbar', 'tool_preview']
 
-        if self.config['toolbar']:
-            self.gui.on_toolbar(None, True)
-        else:
-            self.gui.on_toolbar(None, False)
+        for x in keys:
+            method = getattr(self.gui, "on_" + x)
+            if self.config[x]:
+                method(None, True)
+            else:
+                method(None, False)
 
-        if self.config['tool_preview']:
-            self.gui.on_tool_preview(None, True)
-        else:
-            self.gui.on_tool_preview(None, False)
 
         self.config.write()
         self.gui.util.config = self.config
@@ -137,7 +133,9 @@ class Preferences(wx.Dialog):
 
         if self.config['toolbox_columns'] != old['toolbox_columns']:
             ctrl.toolsizer.SetCols(self.config['toolbox_columns'])
-            ctrl.toolsizer.Layout()
+            ctrl.toolsizer.SetHGap(5)
+            ctrl.toolsizer.SetVGap(5)
+            wx.CallAfter(ctrl.toolsizer.Layout)
 
         if not self.config['tool_preview']:
             ctrl.preview.Hide()
@@ -148,14 +146,16 @@ class Preferences(wx.Dialog):
         if self.config['toolbox'] != old['toolbox']:
             ctrl.toolsizer.Clear(True)
             if self.config['toolbox'] == 'text':
-                print 'aaaaaaye'
                 ctrl.toolsizer.SetCols(1)
             else:
                 ctrl.toolsizer.SetCols(int(self.config['toolbox_columns']))
             ctrl.make_toolbox(self.config['toolbox'])
             ctrl.toolsizer.Layout()
 
-
+        if self.config['colour_grid']:
+            wx.CallAfter(self.gui.on_colour_grid, None, True)  # just has to be
+        else:
+            wx.CallAfter(self.gui.on_colour_grid, None, False) # done
 
         #  too lazy to check if each colour has changed - just remake it all
         self.gui.board.redraw_all()
@@ -428,6 +428,7 @@ class View(scrolled.ScrolledPanel):
         toolbar = wx.CheckBox(self, label=_("View the toolbar"))
         title = wx.CheckBox(self, label=_("Show the title when printing"))
         preview = wx.CheckBox(self, label=_("Show the tool preview"))
+        colour = wx.CheckBox(self, label=_("Show the color grid"))
         radio1 = wx.RadioButton(self, label=" " + _("Icons"))
         radio2 = wx.RadioButton(self, label=" " + _("Text"))
         cols = wx.ComboBox(self, choices=('2', '3'), size=(60, -1), style=wx.CB_READONLY)
@@ -459,7 +460,9 @@ class View(scrolled.ScrolledPanel):
             title.SetValue(True)
         if self.config['tool_preview']:
             preview.SetValue(True)
-
+        if self.config['colour_grid']:
+            colour.SetValue(True)
+            
         cols.SetValue(str(self.config['toolbox_columns']))
         self.width.SetValue(self.config['default_width'])
         self.height.SetValue(self.config['default_height'])
@@ -481,13 +484,15 @@ class View(scrolled.ScrolledPanel):
         sizer.Add(statusbar, 0, wx.ALL, 10)
         sizer.Add(toolbar, 0, wx.LEFT | wx.BOTTOM, 10)
         sizer.Add(title, 0, wx.LEFT | wx.BOTTOM, 10)
-        sizer.Add(preview, 0, wx.LEFT, 10)
+        sizer.Add(preview, 0, wx.LEFT | wx.BOTTOM, 10)
+        sizer.Add(colour, 0, wx.LEFT, 10)
 
         cols.Bind(wx.EVT_COMBOBOX, self.on_columns)
         statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
         toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)
         title.Bind(wx.EVT_CHECKBOX, self.on_title)
         preview.Bind(wx.EVT_CHECKBOX, self.on_preview)
+        colour.Bind(wx.EVT_CHECKBOX, self.on_colour)
         self.width.Bind(wx.EVT_SPINCTRL, self.on_width)
         self.height.Bind(wx.EVT_SPINCTRL, self.on_height)
 
@@ -503,7 +508,10 @@ class View(scrolled.ScrolledPanel):
 
     def on_preview(self, event):
         self.config['tool_preview'] = event.Checked()
-
+        
+    def on_colour(self, event):
+        self.config['colour_grid'] = event.Checked()
+        
     def on_title(self, event):
         self.config['print_title'] = event.Checked()
 

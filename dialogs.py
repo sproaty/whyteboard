@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2009 by Steven Sproat
+# Copyright (c) 2009, 2010 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
 #
@@ -131,8 +131,8 @@ class History(wx.Dialog):
         for pen in shapes:
             # draw pen outline
             if isinstance(pen, tools.Pen):
-                pen.make_pen()
-                dc.SetPen(pen.pen)
+                #pen.make_pen()
+                dc.SetPen(wx.Pen(pen.colour, pen.thickness))
 
                 for x, p in enumerate(pen.points):
 

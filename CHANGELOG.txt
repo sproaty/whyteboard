@@ -10,34 +10,47 @@ xx Jan 2010 -- 0.39.4
 
 * Improvements to rotating an image with the mouse: now "follows" the mouse's
   position, and can be rotated clockwise and counter-clockwise.
-  Thanks to Zack Buhman for help with the coding
+  Thanks to Zack Buhman and members of Stack Overflow for help with the coding
 
-* Image rotation is now performed from a rotation "handle". Rotating draws a
-  transparent rectangle "over" the image to show where its rotation will end up,
-  instead of *actually* rotating the image (which performed slow, before)
+* Image rotation is now performed from a special "handle" for rotating. Rotating 
+  draws a transparent rectangle "over" the image to show where its rotation will 
+  end up, instead of drawing the image as it rotates (which was slow)
 * Image re-scaling using its selection handles. Also draws a transparent
   rectangle to indicate its new size
 * Scaling of Polygon shapes - increase or decrease their size!
-
+* Rotating Polygon shapes. Note that all scaling/rotating operations are from 
+  the *center of the shape*
+ 
 * 8-way selection handle on rectangle, rounded rectangle and ellipse, allowing
   vertical-only / horizontal-only resizing
 * Right clicking a shape with the select tool pops up a menu with select/delete/
-  edit/move operations
+  edit/move operations. Also, from here, new points may be added to a polygon
+  
 * Changing sheets scrolls the new sheet's thumbnail into view
-
 * Few UI changes, program now looks neater with less borders, also takes up less
   vertical space (takes up ~700 pixels vertically at a minimum)
 * Foreground/background colour swap button added
-* New preference, under "View": number of toolbox columns, can be set to 2 or 3
+* Thick rectangles now don't have a "roundness" to their edges
+* Help files updated and improved with more detail
+* Improved a few icons
+* Little "close" button drawn on the current tab
+* Escape key will deselect the currently selected shape
+
+* New preference: under "View", number of toolbox columns, can be set to 2 or 3
   to decrease the vertical space taken by the toolbox
 * New preference: toggle tool preview on/off (to gain more vertical space)
-* Help files updated and improved with more detail
-* Thick rectangles now don't have a "roundness" to their edges
+* New preference: toggle colour grid on/off
+* 'Send Feedback' added to the Help menu
 
+* Important Windows bugfix: drawing a shape would create extra Windows "GDI"
+  objects; which was taking up unneeded resources. This bug has been present
+  since version 0.25 (3rd release) - released back in January 2009!
+  
 * Bugfix: possible crash on Mac when loading/saving .wtbd files containing text
 * Bugfix: using next/previous sheet buttons in the Shape Viewer wouldn't set
   the drop-down control to the changed-to sheet
-* Bugfix: the "rotate image" dialog was broken
+* Bugfix: the "rotate image" dialog was not working correctly
+* Bugfix: "End" key would not jump to the end of the document correctly
 * Bugfix: menu icons appearing for 3 menu items on Windows, when no other menu
   item had icons - now removed
 * Bugfix: stopped a crash when wx.GCDC was not implemented on the system, due

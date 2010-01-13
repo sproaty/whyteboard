@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2009 by Steven Sproat
+# Copyright (c) 2009, 2010 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
 #
@@ -66,13 +66,13 @@ class ControlPanel(wx.Panel):
         self.tools = {}
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
-
-
-        #width = wx.StaticText(self.pane, label=_("Thickness:"))
+        thickness = wx.StaticText(self.pane, label=_("Thickness:"))
         #prev = wx.StaticText(self.pane, label=_("Preview:"))
+        
         colour = self.colour_buttons()
-        self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
+        self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
         self.make_colour_grid()
+        
         self.toolsizer = wx.GridSizer(cols=1, hgap=5, vgap=5)
         self.make_toolbox(gui.util.config['toolbox'])
 
@@ -90,8 +90,8 @@ class ControlPanel(wx.Panel):
         box.Add(self.grid, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add((5, 8))
         box.Add(colour, 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add((5, 8))
-        #box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
+        box.Add((5, 10))
+        box.Add(thickness, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.thickness, 0, wx.EXPAND | wx.ALL, spacing)
         box.Add((5, 5))
         #box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
@@ -102,9 +102,14 @@ class ControlPanel(wx.Panel):
         self.SetSizer(sizer)
         self.cp.GetPane().SetSizer(csizer)
         self.cp.Expand()
+        self.control_sizer = box
+        self.background.Raise()
+                
         if not self.gui.util.config['tool_preview']:
             self.preview.Hide()
-
+        if not self.gui.util.config['colour_grid']:
+            box.Hide(self.grid)
+            
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.Bind(wx.EVT_COMBOBOX, self.change_thickness, self.thickness)
@@ -127,7 +132,7 @@ class ControlPanel(wx.Panel):
         icon = os.path.join(self.gui.util.get_path().decode("latin-1"), "images",
                             "icons", "swap_colours.png")
 
-        swap = GenBitmapToggleButton(panel, bitmap=wx.Bitmap(icon), pos=(70, 0),
+        swap = wx.BitmapButton(panel, bitmap=wx.Bitmap(icon), pos=(70, 0),
                                      style=wx.NO_BORDER)
 
         self.colour.Bind(csel.EVT_COLOURSELECT, self.change_colour)
@@ -145,8 +150,6 @@ class ControlPanel(wx.Panel):
         sizer.Add(self.transparent)
         swap_sizer.Add(sizer)
         swap_sizer.Add(swap, flag=wx.ALIGN_RIGHT)
-        self.SetSizer(swap_sizer)
-
         return panel
 
 
@@ -201,6 +204,7 @@ class ControlPanel(wx.Panel):
         """Toggles the pane and its widgets"""
         frame = self.GetTopLevelParent()
         frame.Layout()
+        frame.board.redraw_all()
 
 
     def scroll(self, event):
@@ -264,35 +268,36 @@ class ControlPanel(wx.Panel):
         """Swaps foreground/background colours"""
         a, b = self.background.GetColour(), self.colour.GetColour()
         self.change_background(colour=b)
-        self.change_colour(colour=a)
+        self.change_colour(colour=a, undo=False)
 
 
-    def change_colour(self, event=None, colour=None):
+    def change_colour(self, event=None, colour=None, undo=True):
         """Event can also be a string representing a colour (from the grid)"""
         if event and not colour:
             colour = event.GetValue()  # from the colour button
         self.colour.SetColour(colour)
-        self.update(colour, "colour")
+        self.update(colour, "colour", undo)
 
 
-    def change_background(self, event=None, colour=None):
+    def change_background(self, event=None, colour=None, undo=True):
         """Event can also be a string representing a colour (from the grid)"""
         if event and not colour:
             colour = event.GetValue()  # from the colour button
         self.background.SetColour(colour)
-        self.update(colour, "background")
+        self.update(colour, "background", undo)
 
 
     def change_thickness(self, event=None):
         self.update(self.thickness.GetSelection(), "thickness")
 
 
-    def update(self, value, var_name):
+    def update(self, value, var_name, undo=True):
         """Updates the given utility variable and the selected shape"""
         setattr(self.gui.util, var_name, value)
 
         if self.gui.board.selected:
-            self.gui.board.add_undo()
+            if undo:
+                self.gui.board.add_undo()
             if var_name == "background" and not self.transparent.IsChecked():
                 setattr(self.gui.board.selected, var_name, value)
             elif var_name != "background":
@@ -319,7 +324,7 @@ class DrawingPreview(wx.Window):
         self.SetBackgroundColour(wx.WHITE)
         self.SetSize((45, 45))
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        self.SetToolTipString(_("A preview of your drawing"))
+        self.SetToolTipString(_("A preview of your current tool"))
 
     def on_paint(self, event=None):
         """
@@ -328,7 +333,7 @@ class DrawingPreview(wx.Window):
         """
         if self.gui.board:
             dc = wx.PaintDC(self)
-            dc.SetPen(self.gui.board.shape.pen)
+            dc.SetPen(wx.Pen(self.gui.board.shape.colour, self.gui.board.shape.thickness, wx.SOLID))
             if self.gui.util.transparent:
                 dc.SetBrush(wx.TRANSPARENT_BRUSH)
             else:
@@ -796,7 +801,7 @@ class ShapePopup(SheetsPopup):
     Brought up by right-clicking on a shape with the Select tool
     """
     def make_menu(self, extra):
-        ID, ID2, ID3 = wx.NewId(), wx.NewId(), wx.NewId()
+        ID, ID2, ID3, ID5 = wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId()
         text = _("&Select")
 
         if self.item.selected:
@@ -806,6 +811,13 @@ class ShapePopup(SheetsPopup):
         self.AppendItem(wx.MenuItem(self, ID2, _("&Edit...")))
         if not self.item.name == "Text" and not self.item.name == "Note":
             self.Enable(ID2, False)
+            
+        if self.item.name == "Polygon":
+            ID4 = wx.NewId()
+            self.AppendItem(wx.MenuItem(self, ID4, _("Add New Point"))) 
+            self.Bind(wx.EVT_MENU, lambda x: self.add_point(), id=ID4)           
+
+        self.AppendItem(wx.MenuItem(self, ID5, _("Swap Colors")))                           
         self.AppendItem(wx.MenuItem(self, wx.ID_DELETE, _("&Delete")+"\tDelete"))
         self.AppendSeparator()
 
@@ -817,6 +829,7 @@ class ShapePopup(SheetsPopup):
         self.Bind(wx.EVT_MENU, lambda x: self.select(), id=ID)
         self.Bind(wx.EVT_MENU, lambda x: self.edit(), id=ID2)
         self.Bind(wx.EVT_MENU, lambda x: self.delete(), id=ID3)
+        self.Bind(wx.EVT_MENU, lambda x: self.swap(), id=ID5)
 
 
     def edit(self):
@@ -825,6 +838,14 @@ class ShapePopup(SheetsPopup):
     def delete(self):
         self.select(False)
         self.gui.board.delete_selected()
+
+    def swap(self):
+        a, b = self.item.colour, self.item.background
+        if b == wx.TRANSPARENT:
+            b = (255, 255, 255)
+
+        self.gui.control.change_background(colour=b)
+        self.gui.control.change_colour(colour=a)        
 
     def select(self, draw=True):
         if not self.item.selected:
@@ -836,6 +857,12 @@ class ShapePopup(SheetsPopup):
 
         if draw:
             self.gui.board.redraw_all()
+            
+    def add_point(self):
+        x, y = self.gui.board.ScreenToClient(wx.GetMousePosition())
+        x, y = self.gui.board.CalcUnscrolledPosition(x, y)        
+        self.item.points.append((float(x), float(y)))
+        self.gui.board.redraw_all()
 
 #----------------------------------------------------------------------
 
@@ -844,7 +871,6 @@ class ThumbsPopup(SheetsPopup):
     Just need to set the item to the current tab number, parent: thumb panel
     """
     def bleh(self,):
-        print self.parent
         self.parent.gui.tabs.SetSelection(self.item)
         self.parent.gui.on_change_tab()
 
@@ -870,7 +896,7 @@ class Thumbs(scrolled.ScrolledPanel):
         self.transparent = True
         try:
             dc = wx.MemoryDC()
-            dc.SelectObject(gui.board.buffer)
+            #dc.SelectObject(gui.board.buffer)
             x = wx.GCDC(dc)
         except NotImplementedError:
             self.transparent = False

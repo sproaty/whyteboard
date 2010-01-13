@@ -1,7 +1,7 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#!/usr/bin/python
 
-# Copyright (c) 2009 by Steven Sproat
+# Copyright (c) 2009, 2010 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
 #
@@ -20,6 +20,7 @@
 import os
 import random
 import wx
+import sys
 
 import tools
 
@@ -29,10 +30,12 @@ ID_CHANGE_TOOL = wx.NewId()       # change tool hotkey
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
 ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
+ID_COLOUR_GRID = wx.NewId()       # toggle colour grid
 ID_DESELECT = wx.NewId()          # deselect shape
 ID_EXPORT = wx.NewId()            # export sheet to image file
 ID_EXPORT_ALL = wx.NewId()        # export every sheet to numbered image files
 ID_EXPORT_PDF = wx.NewId()        # export->PDF
+ID_FEEDBACK = wx.NewId()          # help->feedback
 ID_EXPORT_PREF = wx.NewId()       # export->preferences
 ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
 ID_HISTORY = wx.NewId()           # history viewer
