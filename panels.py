@@ -896,7 +896,7 @@ class Thumbs(scrolled.ScrolledPanel):
         self.transparent = True
         try:
             dc = wx.MemoryDC()
-            #dc.SelectObject(gui.board.buffer)
+            dc.SelectObject(gui.board.buffer)
             x = wx.GCDC(dc)
         except NotImplementedError:
             self.transparent = False

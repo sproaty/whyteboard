@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-13 20:46+0000\n"
+"POT-Creation-Date: 2010-01-13 22:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,7 +59,7 @@ msgid "&Clear Sheets' Drawings"
 msgstr ""
 
 #: whyteboard/gui.py:238
-msgid "&Colour Grid"
+msgid "&Color Grid"
 msgstr ""
 
 #: whyteboard/gui.py:265
@@ -1094,7 +1094,7 @@ msgid "Shortcut Key:"
 msgstr ""
 
 #: whyteboard/gui.py:238
-msgid "Show and hide the colour grid"
+msgid "Show and hide the color grid"
 msgstr ""
 
 #: whyteboard/gui.py:236

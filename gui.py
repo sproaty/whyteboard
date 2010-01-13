@@ -235,7 +235,7 @@ class GUI(wx.Frame):
         self.showtool = view.Append(ID_TOOLBAR, " "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
         self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
         self.showprev = view.Append(ID_TOOL_PREVIEW, " "+_("Tool &Preview"), _("Show and hide the tool preview"), kind=wx.ITEM_CHECK)
-        self.showcolour = view.Append(ID_COLOUR_GRID, " "+_("&Colour Grid"), _("Show and hide the colour grid"), kind=wx.ITEM_CHECK)
+        self.showcolour = view.Append(ID_COLOUR_GRID, " "+_("&Color Grid"), _("Show and hide the color grid"), kind=wx.ITEM_CHECK)
         view.AppendSeparator()
         view.Append(ID_FULLSCREEN, " "+_("&Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
 
@@ -280,7 +280,7 @@ class GUI(wx.Frame):
         self.menu.Enable(wx.ID_PASTE, self.can_paste)
         self.menu.Enable(ID_PASTE_NEW, self.can_paste)
 
-        # Note: using the import "functions" module here to get the ID 
+        # Note: using the import "functions" module here to get the ID
         keys = ['toolbar', 'statusbar', 'tool_preview', 'colour_grid']
         for x in keys:
             if self.util.config[x]:
@@ -1014,7 +1014,7 @@ class GUI(wx.Frame):
                 self.board.Scroll(-1, self.board.area[1])
             else:
                 self.board.Scroll(self.board.area[0], -1)
-                
+
         elif event.GetKeyCode() in [wx.WXK_PAGEUP, wx.WXK_PAGEDOWN]:
             x, y = self.board.GetViewStart()
             x2, y2 = self.board.GetClientSizeTuple()
@@ -1230,7 +1230,7 @@ class GUI(wx.Frame):
         wx.BeginBusyCursor()
         webbrowser.open_new_tab("mailto:sproaty@gmail.com?subject=Whyteboard Feedback")
         wx.CallAfter(wx.EndBusyCursor)
-        
+
     def on_report_bug(self, event):
         wx.BeginBusyCursor()
         webbrowser.open_new_tab("https://bugs.launchpad.net/whyteboard")
@@ -1432,7 +1432,7 @@ def main():
        psyco.full()
     except ImportError:
        pass
-    
+
     app = WhyteboardApp(redirect=False)
     app.MainLoop()
 
