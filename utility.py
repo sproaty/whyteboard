@@ -154,7 +154,7 @@ class Utility(object):
         self.is_zipped = False
         self.zip = None  # zip archive to read images from
         self.saved = True
-        self.colour = "Black"
+        self.colour = wx.BLACK
         self.background = "White"
         self.transparent = True  # overwrites background
         self.thickness = 1

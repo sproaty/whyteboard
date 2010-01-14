@@ -36,6 +36,7 @@ import wx
 
 from dialogs import TextInput
 from panels import MediaPanel, ShapePopup
+from event_ids import *
 
 _ = wx.GetTranslation
 
@@ -141,7 +142,7 @@ class Tool(object):
             self.drawing = False
         if not hasattr(self, "join"):
             self.join = wx.JOIN_ROUND
-            
+
 #----------------------------------------------------------------------
 
 class OverlayShape(Tool):
@@ -187,7 +188,7 @@ class OverlayShape(Tool):
         if self.selected:
             self.draw_selected(dc)
         if not replay:
-            del odc        
+            del odc
 
     def get_args(self):
         """The drawing arguments that this class uses to draw itself"""
@@ -525,7 +526,7 @@ class Pen(Polygon):
 
     def handle_hit_test(self, x, y):
         pass
-    
+
     def draw(self, dc, replay=True):
         super(Pen, self).draw(dc, replay, "LineList")
 
@@ -709,11 +710,11 @@ class Rectangle(OverlayShape):
     def properties(self):
         return "X: %i, Y: %i, %s %i, %s %i" % (self.x, self.y, _("Width:"),
                                                self.width, _("Height:"), self.height)
-        
+
     def load(self):
         super(Rectangle, self).load()
         self.sort_handles()
-        
+
     def preview(self, dc, width, height):
         dc.DrawRectangle(5, 5, width - 15, height - 15)
 
@@ -1316,14 +1317,14 @@ class Image(OverlayShape):
     """
     name = _("Image")
     def __init__(self, board, image, path):
-        OverlayShape.__init__(self, board, "Black", 1)
+        OverlayShape.__init__(self, board, wx.BLACK, 1)
         self.image = image  # of type wx.Bitmap
         self.path = path  # not really needed anymore
         self.filename = None  # used to restore image on load
         if path:
             self.filename = os.path.basename(path)
         self.resizing = False
-        self.img = wx.ImageFromBitmap(image)  # original wx.Image to rotate/scale        
+        self.img = wx.ImageFromBitmap(image)  # original wx.Image to rotate/scale
         self.angle = 0
         self.img_size = None
         self.outline = None  # Rectangle/Polygon, used to rotate/resize
@@ -1350,7 +1351,7 @@ class Image(OverlayShape):
         if not self.img:
             self.img = wx.ImageFromBitmap(self.image)
 
-        self.rotate_handle = wx.Rect(self.x + self.image.GetWidth() / 2 - 6, 
+        self.rotate_handle = wx.Rect(self.x + self.image.GetWidth() / 2 - 6,
                                      self.y + self.image.GetHeight() / 2 - 6,
                                      HANDLE_SIZE, HANDLE_SIZE)
 
@@ -1361,7 +1362,7 @@ class Image(OverlayShape):
     def handle_hit_test(self, x, y):
         """Returns which handle has been clicked on"""
         result = super(Image, self).handle_hit_test(x, y)
-        if not result:        
+        if not result:
             if self.rotate_handle.ContainsXY(x, y):
                 return HANDLE_ROTATE
         return result  # nothing hit
@@ -1370,10 +1371,10 @@ class Image(OverlayShape):
     def draw_selected(self, dc):
         super(Image, self).draw_selected(dc)
         dc.SetBrush(wx.Brush((0, 255, 0)))
-        dc.DrawCircle(self.x + self.image.GetWidth() / 2, 
+        dc.DrawCircle(self.x + self.image.GetWidth() / 2,
                       self.y + self.image.GetHeight() / 2, 6)
-        
-        
+
+
     def resize(self, x, y, handle=None):
         """Rotate the image"""
         if handle == HANDLE_ROTATE:
@@ -1413,7 +1414,7 @@ class Image(OverlayShape):
             overlay = self.board.overlay  # init.ing the rect resets the overlay
 
         if handle == HANDLE_ROTATE:
-            self.outline = Polygon(self.board, "Black", 2)
+            self.outline = Polygon(self.board, wx.BLACK, 2)
             self.outline.x = self.x
             self.outline.y = self.y
             self.outline.points.append((self.x, self.y))
@@ -1421,12 +1422,12 @@ class Image(OverlayShape):
             self.outline.points.append((self.x + self.image.GetWidth(), self.y + + self.image.GetHeight()))
             self.outline.points.append((self.x, self.y + self.image.GetHeight()))
         elif handle in [TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT]:
-            self.outline = Rectangle(self.board, "Black", 2)
+            self.outline = Rectangle(self.board, wx.BLACK, 2)
             self.outline.x = self.x
             self.outline.y = self.y
             self.outline.width = self.image.GetWidth()
             self.outline.height = self.image.GetHeight()
-        
+
         if not handle:
             self.board.overlay = overlay  # so restore it
         else:
@@ -1443,9 +1444,9 @@ class Image(OverlayShape):
                 img = wx.BitmapFromImage(self.img)
                 img = wx.ImageFromBitmap(img)
                 img.Rescale(self.outline.width, self.outline.height, wx.IMAGE_QUALITY_HIGH)
-            
+
             self.image = wx.BitmapFromImage(img)
-                        
+
         self.dragging = False
         self.orig_click = None
         self.angle = 0
@@ -1491,7 +1492,7 @@ class Image(OverlayShape):
             self.outline = None
         if not hasattr(self, "dragging"):
             self.dragging = False
-            
+
         if not hasattr(self, "filename") or not self.filename:
             self.filename = os.path.basename(self.path)
             if self.filename.find("\\"):  # loading windows file on linux
@@ -1514,7 +1515,7 @@ class Image(OverlayShape):
                 wx.MessageBox(_("File %s not found in the save") % self.filename)
 
         self.img = wx.ImageFromBitmap(self.image)
-        self.colour = "Black"
+        self.colour = wx.BLACK
         self.sort_handles()
 
 
@@ -1584,8 +1585,10 @@ class Select(Tool):
 
                 if shape.background == wx.TRANSPARENT:
                     self.board.gui.control.transparent.SetValue(True)
+                    self.board.gui.menu.Check(ID_TRANSPARENT, True)
                 else:
                     self.board.gui.control.transparent.SetValue(False)
+                    self.board.gui.menu.Check(ID_TRANSPARENT, False)
                 break  # breaking is vital to selecting the correct shape
         else:
             self.board.deselect()

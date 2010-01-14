@@ -63,10 +63,13 @@ from lib.validate import Validator
 
 import lib.icon
 from whyteboard import Whyteboard
-from tools import Image, Note, Text
+from tools import Image, Note, Text, Media
 from utility import Utility, WhyteboardDropTarget, languages, cfg
-import functions as fnc
-from functions import *
+
+import event_ids as event_ids
+from event_ids import *
+
+from functions import get_home_dir
 from dialogs import (History, ProgressDialog, Resize, Rotate, UpdateDialog,
                      MyPrintout, ExceptionHook, ShapeViewer)
 from panels import ControlPanel, SidePanel, SheetsPopup
@@ -125,7 +128,7 @@ class GUI(wx.Frame):
         self.help = None
         self.directory = None  # last opened directory
         self.make_toolbar()
-        self.bar_shown = True  # slight performance optimisation
+        self.bar_shown = True  # slight ? performance optimisation
         self.find_help()
         self.__class__.instances += 1
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
@@ -135,8 +138,8 @@ class GUI(wx.Frame):
         self.hotkeys = []
 
         self.control = ControlPanel(self)
-        self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_X_ON_TAB | fnb.FNB_VC8
-                                     | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS)
+        self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON |
+                                     fnb.FNB_VC8 | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS)
         self.board = Whyteboard(self.tabs, self)  # the active whyteboard tab
         self.panel = SidePanel(self)
         self.make_menu()
@@ -247,6 +250,7 @@ class GUI(wx.Frame):
         shapes.Append(wx.ID_DELETE, _("&Delete Shape")+"\tDelete", _("Delete the currently selected shape"))
         shapes.Append(ID_DESELECT, _("&Deselect Shape")+"\tCtrl-D", _("Deselects the currently selected shape"))
         shapes.Append(ID_ROTATE, _("R&otate Image...")+"\tCtrl-I", _("Rotate the selected image"))
+        shapes.AppendCheckItem(ID_TRANSPARENT, " "+_("T&ransparent"), _("Toggles the selected shape's transparency"))
 
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl+W", _("Close the current sheet"))
         sheets.Append(ID_RENAME, _("&Rename Sheet...")+"\tF2", _("Rename the current sheet"))
@@ -284,7 +288,7 @@ class GUI(wx.Frame):
         keys = ['toolbar', 'statusbar', 'tool_preview', 'colour_grid']
         for x in keys:
             if self.util.config[x]:
-                view.Check(getattr(fnc, "ID_" + x.upper()), True)
+                view.Check(getattr(event_ids, "ID_" + x.upper()), True)
             else:
                 getattr(self, "on_" + x)(None, False)
 
@@ -305,7 +309,7 @@ class GUI(wx.Frame):
         # idle event handlers
         ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_ROTATE, ID_MOVE_UP, ID_DESELECT,
                ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, wx.ID_COPY,
-               wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE,]
+               wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE, ID_TRANSPARENT]
         [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
 
         # hotkeys
@@ -334,13 +338,13 @@ class GUI(wx.Frame):
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
                   "copy", "paste", "rotate", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
                   "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
-                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview", "colour_grid", "feedback"]
+                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview", "colour_grid", "feedback", "transparent"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
                wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
                ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
                ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT, ID_RELOAD_PREF, ID_TOOL_PREVIEW, ID_COLOUR_GRID,
-               ID_FEEDBACK]
+               ID_FEEDBACK, ID_TRANSPARENT]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -872,9 +876,10 @@ class GUI(wx.Frame):
         if not _id == wx.ID_COPY:
             # update the GUI to the inverse of the bool value if the button
             # should be enabled
-            if _id == wx.ID_REDO and self.board.redo_list:
+            board = self.board
+            if _id == wx.ID_REDO and board.redo_list:
                 do = True
-            elif _id == wx.ID_UNDO and self.board.undo_list:
+            elif _id == wx.ID_UNDO and board.undo_list:
                 do = True
             elif _id == ID_PREV and self.current_tab:
                 do = True
@@ -883,18 +888,23 @@ class GUI(wx.Frame):
                 do = True
             elif _id == ID_UNDO_SHEET and self.closed_tabs:
                 do = True
-            elif _id in [wx.ID_DELETE, ID_DESELECT] and self.board.selected:
+            elif _id in [wx.ID_DELETE, ID_DESELECT] and board.selected:
                 do = True
-            elif _id == ID_MOVE_UP and self.board.check_move("up"):
+            elif _id == ID_MOVE_UP and board.check_move("up"):
                 do = True
-            elif _id == ID_MOVE_DOWN and self.board.check_move("down"):
+            elif _id == ID_MOVE_DOWN and board.check_move("down"):
                 do = True
-            elif _id == ID_MOVE_TO_TOP and self.board.check_move("top"):
+            elif _id == ID_MOVE_TO_TOP and board.check_move("top"):
                 do = True
-            elif _id == ID_MOVE_TO_BOTTOM and self.board.check_move("bottom"):
+            elif _id == ID_MOVE_TO_BOTTOM and board.check_move("bottom"):
                 do = True
-            elif (_id == ID_ROTATE and self.board.selected
-                  and isinstance(self.board.selected, Image)):
+            elif (_id == ID_ROTATE and board.selected
+                  and isinstance(board.selected, Image)):
+                do = True
+            elif (_id == ID_TRANSPARENT and board.selected
+                  and not isinstance(board.selected, Media)
+                  and not isinstance(board.selected, Image)
+                  and not isinstance(board.selected, Text)):
                 do = True
         elif self.board:
             if self.board.copy:
@@ -1177,6 +1187,10 @@ class GUI(wx.Frame):
     def on_refresh(self):
         """Refresh all thumbnails."""
         self.thumbs.update_all()
+
+
+    def on_transparent(self, event=None):
+        self.board.toggle_transparent()
 
 
     def on_page_setup(self, evt):

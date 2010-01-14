@@ -34,7 +34,9 @@ from wx.lib.buttons import GenBitmapToggleButton
 from copy import copy
 
 from utility import MediaDropTarget
-from functions import *
+from event_ids import *
+from functions import make_bitmap, get_time
+
 _ = wx.GetTranslation
 
 
@@ -199,7 +201,6 @@ class ControlPanel(wx.Panel):
             b.Bind(wx.EVT_RIGHT_UP, method2)
 
 
-
     def toggle(self, evt):
         """Toggles the pane and its widgets"""
         frame = self.GetTopLevelParent()
@@ -251,16 +252,7 @@ class ControlPanel(wx.Panel):
             self.gui.util.transparent = False
 
         if self.gui.board.selected:
-            self.gui.board.add_undo()
-            val = wx.TRANSPARENT
-
-            if self.gui.board.selected.background == wx.TRANSPARENT:
-                val = self.background.GetColour()
-
-            self.gui.board.selected.background = val
-
-            self.gui.board.selected.make_pen()
-            self.gui.board.redraw_all(True)
+            self.gui.board.toggle_transparent()
         self.gui.board.select_tool()
 
 
@@ -801,35 +793,42 @@ class ShapePopup(SheetsPopup):
     Brought up by right-clicking on a shape with the Select tool
     """
     def make_menu(self, extra):
-        ID, ID2, ID3, ID5 = wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId()
-        text = _("&Select")
+        SELECT, EDIT, DELETE, POINT, SWAP = wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId()
 
+        text, help = _("&Select"), _("Selects this shape")
         if self.item.selected:
-           text =  _("De&select")
-        self.AppendItem(wx.MenuItem(self, ID, text))
+           text, help =  _("De&select"), _("Deselects this shape")
+        self.Append(SELECT, text, help)
 
-        self.AppendItem(wx.MenuItem(self, ID2, _("&Edit...")))
-        if not self.item.name == "Text" and not self.item.name == "Note":
-            self.Enable(ID2, False)
-
-        if self.item.name == "Polygon":
-            ID4 = wx.NewId()
-            self.AppendItem(wx.MenuItem(self, ID4, _("&Add New Point")))
-            self.Bind(wx.EVT_MENU, lambda x: self.add_point(), id=ID4)
-
-        self.AppendItem(wx.MenuItem(self, ID5, _("Swap &Colors")))
-        self.AppendItem(wx.MenuItem(self, wx.ID_DELETE, _("&Delete")+"\tDelete"))
+        self.Append(EDIT, _("&Edit..."), _("Edit the text"))
+        self.Append(POINT, _("&Add New Point"), _("Adds a new point to the Polygon"))
+        self.Append(wx.ID_DELETE, _("&Delete")+"\tDelete")
         self.AppendSeparator()
+        self.AppendCheckItem(ID_TRANSPARENT, _("T&ransparent"))
+        self.Append(SWAP, _("Swap &Colors"), _("Swaps the foreground and background colors"))
+        self.AppendSeparator()
+        self.Append(ID_MOVE_UP, _("Move &Up")+"\tCtrl-Up")
+        self.Append(ID_MOVE_DOWN,_("Move &Down")+"\tCtrl-Down")
+        self.Append(ID_MOVE_TO_TOP, _("Move To &Top")+"\tCtrl-Shift-Up")
+        self.Append(ID_MOVE_TO_BOTTOM, _("Move To &Bottom")+"\tCtrl-Shift-Down")
 
-        self.AppendItem(wx.MenuItem(self, ID_MOVE_UP, _("Move &Up")+"\tCtrl-Up"))
-        self.AppendItem(wx.MenuItem(self, ID_MOVE_DOWN,_("Move &Down")+"\tCtrl-Down"))
-        self.AppendItem(wx.MenuItem(self, ID_MOVE_TO_TOP, _("Move To &Top")+"\tCtrl-Shift-Up"))
-        self.AppendItem(wx.MenuItem(self, ID_MOVE_TO_BOTTOM, _("Move To &Bottom")+"\tCtrl-Shift-Down"))
+        if not self.item.name in ["Text", "Note"]:
+            self.Enable(EDIT, False)
+        if not self.item.name == "Polygon":
+            self.Enable(POINT, False)
 
-        self.Bind(wx.EVT_MENU, lambda x: self.select(), id=ID)
-        self.Bind(wx.EVT_MENU, lambda x: self.edit(), id=ID2)
-        self.Bind(wx.EVT_MENU, lambda x: self.delete(), id=ID3)
-        self.Bind(wx.EVT_MENU, lambda x: self.swap(), id=ID5)
+        if not self.item.name in ["Image", "Text", "Note"]:
+            if self.item.background == wx.TRANSPARENT:
+                self.Check(ID_TRANSPARENT, True)
+        else:
+            self.Enable(ID_TRANSPARENT, False)
+            self.Enable(SWAP, False)
+
+        self.Bind(wx.EVT_MENU, lambda x: self.select(), id=SELECT)
+        self.Bind(wx.EVT_MENU, lambda x: self.edit(), id=EDIT)
+        self.Bind(wx.EVT_MENU, lambda x: self.delete(), id=DELETE)
+        self.Bind(wx.EVT_MENU, lambda x: self.add_point(), id=POINT)
+        self.Bind(wx.EVT_MENU, lambda x: self.swap(), id=SWAP)
 
 
     def edit(self):
@@ -847,6 +846,7 @@ class ShapePopup(SheetsPopup):
         self.gui.control.change_background(colour=b)
         self.gui.control.change_colour(colour=a)
 
+
     def select(self, draw=True):
         if not self.item.selected:
             self.gui.board.deselect()
@@ -857,6 +857,7 @@ class ShapePopup(SheetsPopup):
 
         if draw:
             self.gui.board.redraw_all()
+
 
     def add_point(self):
         x, y = self.gui.board.ScreenToClient(wx.GetMousePosition())

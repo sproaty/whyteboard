@@ -396,6 +396,21 @@ class Whyteboard(wx.ScrolledWindow):
         """ Redoes an action, and adds it to the undo list. """
         self.perform(self.redo_list, self.undo_list)
 
+    def toggle_transparent(self):
+        """Toggles the selected item's transparency"""
+        if (not self.selected or isinstance(self.selected, Image)
+                        or isinstance(self.selected, Media) or isinstance(self.selected, Text)):
+            return
+        self.add_undo()
+        val = wx.TRANSPARENT
+
+        if self.selected.background == wx.TRANSPARENT:
+            val = self.gui.control.background.GetColour()
+
+        self.selected.background = val
+        self.selected.make_pen()
+        self.redraw_all(True)
+
     def perform(self, list_a, list_b):
         """ perform undo/redo. list_a: to remove from / list b: append to """
         if not list_a:
