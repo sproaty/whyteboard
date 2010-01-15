@@ -185,6 +185,7 @@ class OverlayShape(Tool):
         dc.SetBrush(self.brush)
         getattr(dc, "Draw" + _type)(*self.get_args())
 
+
         if self.selected:
             self.draw_selected(dc)
         if not replay:

@@ -78,6 +78,7 @@ from preferences import Preferences
 
 _ = wx.GetTranslation             # Define a translation string
 
+
 #----------------------------------------------------------------------
 
 
@@ -1441,14 +1442,16 @@ class WhyteboardApp(wx.App):
 #----------------------------------------------------------------------
 
 def main():
-    try:
-       import psyco
-       psyco.full()
-    except ImportError:
-       pass
+    #try:
+    #   import psyco
+    #   psyco.full()
+    #except ImportError:
+    #   pass
 
     app = WhyteboardApp(redirect=False)
     app.MainLoop()
+    #cProfile.runctx( """app.MainLoop()""", globals(), locals(), filename="/home/steve/Documents/whyteboard/blah.txt")
+
 
 if __name__ == '__main__':
     main()

@@ -3969,7 +3969,7 @@ class PageContainer(wx.Panel):
             # hack specific to Whyteboard, here.
             self.Parent.Parent.current_tab = tabIdx
             self.Parent.Parent.board = self.Parent.GetPage(tabIdx)
-            self.Parent.Parent.on_close_tab()           
+            self.Parent.Parent.on_close_tab()
 
         event.Skip()
 
@@ -4136,8 +4136,8 @@ class PageContainer(wx.Panel):
             # hack specific to Whyteboard, here.
             self.Parent.Parent.current_tab = tabIdx
             self.Parent.Parent.board = self.Parent.GetPage(tabIdx)
-            self.Parent.Parent.on_close_tab() 
-            
+            self.Parent.Parent.on_close_tab()
+
         elif where == FNB_DROP_DOWN_ARROW:
 
             # Make sure that the button was pressed before
