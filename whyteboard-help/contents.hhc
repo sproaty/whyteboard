@@ -9,6 +9,10 @@
 </OBJECT>
 <UL>
         <LI> <OBJECT type="text/sitemap">
+            <param name="Name" value="Menu Commands">
+            <param name="Local" value="menu.htm">
+            </OBJECT></LI>
+        <LI> <OBJECT type="text/sitemap">
             <param name="Name" value="Drawing">
             <param name="Local" value="drawing.htm">
             </OBJECT></LI>
@@ -23,23 +27,23 @@
         <LI> <OBJECT type="text/sitemap">
             <param name="Name" value="The Select Tool">
             <param name="Local" value="select.htm">
-            </OBJECT></LI>            
+            </OBJECT></LI>
         <LI> <OBJECT type="text/sitemap">
             <param name="Name" value="Saving Annotations">
             <param name="Local" value="saving.htm">
-            </OBJECT></LI>   
+            </OBJECT></LI>
         <LI> <OBJECT type="text/sitemap">
             <param name="Name" value="Preferences">
             <param name="Local" value="preferences.htm">
-            </OBJECT></LI> 
+            </OBJECT></LI>
         <LI> <OBJECT type="text/sitemap">
             <param name="Name" value="Shape Viewer">
             <param name="Local" value="shape_viewer.htm">
-            </OBJECT></LI>             
+            </OBJECT></LI>
         <LI> <OBJECT type="text/sitemap">
             <param name="Name" value="Miscellaneous Tips">
             <param name="Local" value="misc.htm">
-            </OBJECT></LI>                       
+            </OBJECT></LI>
 </UL>
 </BODY></HTML>
 

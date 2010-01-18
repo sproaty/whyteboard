@@ -258,43 +258,41 @@ class ControlPanel(wx.Panel):
 
     def on_swap(self, event):
         """Swaps foreground/background colours"""
-        a, b = self.background.GetColour(), self.colour.GetColour()
-        self.change_background(colour=b)
-        self.change_colour(colour=a, undo=False)
 
 
-    def change_colour(self, event=None, colour=None, undo=True):
+
+    def change_colour(self, event=None, colour=None):
         """Event can also be a string representing a colour (from the grid)"""
         if event and not colour:
             colour = event.GetValue()  # from the colour button
         self.colour.SetColour(colour)
-        self.update(colour, "colour", undo)
+        self.update(colour, "colour")
 
 
-    def change_background(self, event=None, colour=None, undo=True):
+    def change_background(self, event=None, colour=None):
         """Event can also be a string representing a colour (from the grid)"""
         if event and not colour:
             colour = event.GetValue()  # from the colour button
         self.background.SetColour(colour)
-        self.update(colour, "background", undo)
+        self.update(colour, "background")
 
 
     def change_thickness(self, event=None):
         self.update(self.thickness.GetSelection(), "thickness")
 
 
-    def update(self, value, var_name, undo=True):
+    def update(self, value, var_name):
         """Updates the given utility variable and the selected shape"""
         setattr(self.gui.util, var_name, value)
 
         if self.gui.board.selected:
-            if undo:
-                self.gui.board.add_undo()
+            self.gui.board.add_undo()
             if var_name == "background" and not self.transparent.IsChecked():
                 setattr(self.gui.board.selected, var_name, value)
             elif var_name != "background":
                 setattr(self.gui.board.selected, var_name, value)
             self.gui.board.redraw_all(True)
+            
         self.gui.board.select_tool()
         self.preview.Refresh()
 
@@ -694,17 +692,16 @@ class Popup(wx.Menu):
 
     def make_menu(self, extra):
         ID, ID2, ID3 = wx.NewId(), wx.NewId(), wx.NewId()
-        method = self.select_tab_method(extra)
 
-        self.AppendItem(wx.MenuItem(self, ID, _("&Select")))
+        self.Append(ID, _("&Select"), help="blah")
         self.AppendSeparator()
-        self.AppendItem(wx.MenuItem(self, wx.ID_NEW, _("&New Sheet")+"\tCtrl-T"))
-        self.AppendItem(wx.MenuItem(self, wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl-W"))
+        self.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T")
+        self.Append(wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl-W")
         self.AppendSeparator()
-        self.AppendItem(wx.MenuItem(self, ID2, _("&Rename...")+"\tF2"))
-        self.AppendItem(wx.MenuItem(self, ID3, _("&Export...")+"\tCtrl+E"))
+        self.Append(ID2, _("&Rename...")+"\tF2")
+        self.Append(ID3, _("&Export...")+"\tCtrl+E")
 
-        self.Bind(wx.EVT_MENU, method, id=ID)
+        self.Bind(wx.EVT_MENU, self.select_tab_method(extra), id=ID)
         self.Bind(wx.EVT_MENU, self.rename, id=ID2)
         self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
         self.Bind(wx.EVT_MENU, self.export, id=ID3)
@@ -728,7 +725,7 @@ class Popup(wx.Menu):
         pass
 
     def set_item(self, extra):
-        pass
+        self.item = extra
 
 
 #----------------------------------------------------------------------
@@ -750,10 +747,10 @@ class NotesPopup(Popup):
 
             if self.item.selected:
                text =  _("De&select")
-            self.AppendItem(wx.MenuItem(self, ID, text))
-            self.AppendItem(wx.MenuItem(self, ID2, _("&Edit Note...")))
+            self.Append(ID, text)
+            self.Append(ID2, _("&Edit Note..."))
             self.AppendSeparator()
-            self.AppendItem(wx.MenuItem(self, ID3, _("&Delete")+"\tDelete"))
+            self.Append(ID3, _("&Delete")+"\tDelete")
 
             self.Bind(wx.EVT_MENU, lambda x: self.parent.select(extra), id=ID)
             self.Bind(wx.EVT_MENU, self.select_tab_method(extra), id=ID2)
@@ -773,10 +770,6 @@ class SheetsPopup(Popup):
     """
     Brought up by right-clicking the tab list. Its parent is the GUI
     """
-    def set_item(self, extra):
-        """Hit test on the tab bar"""
-        self.item = extra
-
     def select_tab_method(self, extra):
         return lambda x: self.bleh()
 
@@ -788,7 +781,7 @@ class SheetsPopup(Popup):
 #----------------------------------------------------------------------
 
 
-class ShapePopup(SheetsPopup):
+class ShapePopup(Popup):
     """
     Brought up by right-clicking on a shape with the Select tool
     """
@@ -805,7 +798,7 @@ class ShapePopup(SheetsPopup):
         self.Append(wx.ID_DELETE, _("&Delete")+"\tDelete")
         self.AppendSeparator()
         self.AppendCheckItem(ID_TRANSPARENT, _("T&ransparent"))
-        self.Append(SWAP, _("Swap &Colors"), _("Swaps the foreground and background colors"))
+        self.Append(ID_SWAP_COLOURS, _("Swap &Colors"))
         self.AppendSeparator()
         self.Append(ID_MOVE_UP, _("Move &Up")+"\tCtrl-Up")
         self.Append(ID_MOVE_DOWN,_("Move &Down")+"\tCtrl-Down")
@@ -820,9 +813,10 @@ class ShapePopup(SheetsPopup):
         if not self.item.name in ["Image", "Text", "Note"]:
             if self.item.background == wx.TRANSPARENT:
                 self.Check(ID_TRANSPARENT, True)
+                self.Enable(ID_SWAP_COLOURS, False)
         else:
             self.Enable(ID_TRANSPARENT, False)
-            self.Enable(SWAP, False)
+            self.Enable(ID_SWAP_COLOURS, False)
 
         self.Bind(wx.EVT_MENU, lambda x: self.select(), id=SELECT)
         self.Bind(wx.EVT_MENU, lambda x: self.edit(), id=EDIT)
@@ -839,12 +833,7 @@ class ShapePopup(SheetsPopup):
         self.gui.board.delete_selected()
 
     def swap(self):
-        a, b = self.item.colour, self.item.background
-        if b == wx.TRANSPARENT:
-            b = (255, 255, 255)
-
-        self.gui.control.change_background(colour=b)
-        self.gui.control.change_colour(colour=a)
+        self.gui.on_swap_colour()
 
 
     def select(self, draw=True):
@@ -860,6 +849,8 @@ class ShapePopup(SheetsPopup):
 
 
     def add_point(self):
+        self.gui.board.add_undo()
+        self.item.points = list(self.item.points)
         x, y = self.gui.board.ScreenToClient(wx.GetMousePosition())
         x, y = self.gui.board.CalcUnscrolledPosition(x, y)
         self.item.points.append((float(x), float(y)))

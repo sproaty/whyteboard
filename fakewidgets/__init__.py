@@ -20,3 +20,7 @@ import core
 import html
 import sized
 import lib.scrolledpanel
+import lib.colourselect
+import lib.buttons
+import version
+import flatnotebook

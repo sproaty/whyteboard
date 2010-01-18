@@ -4,6 +4,9 @@ class ScrolledPanel(core.ScrolledWindow):
         
     def Scroll(self, width, height):
         pass
+    
+    def ScrollChildIntoView(self, child):
+        pass
         
     def __getattr__(self, attr):
         """Just fake any other methods"""

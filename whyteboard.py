@@ -140,7 +140,7 @@ class Whyteboard(wx.ScrolledWindow):
 
         self.shape.left_down(x, y)
         #  Crashes without the Text check
-        if not isinstance(self.shape, Text) and not isinstance(self.shape, Media):
+        if not isinstance(self.shape, (Text, Media)):
             self.drawing = True
 
 
@@ -205,36 +205,40 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def select_tool_cursor(self, x, y):
+        if self.selected:
+            if self.select_tool_cursor_change(self.selected, x, y):
+                return
+            
         for shape in reversed(self.shapes):
-            res = shape.handle_hit_test(x, y)
-
-            if res and (isinstance(shape, Line) or isinstance(shape, Polygon)):
-                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
-                break
-            if res == HANDLE_ROTATE:
-                img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
-                                            "cursors", "") + "rotate.png")
-                self.SetCursor(wx.CursorFromImage(img))
-                break
-            elif res in [TOP_LEFT, BOTTOM_RIGHT]:
-                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
-                break
-            elif res in [TOP_RIGHT, BOTTOM_LEFT]:
-                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
-                break
-            elif res in [CENTER_TOP, CENTER_BOTTOM]:
-                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))
-                break
-            elif res in [CENTER_LEFT, CENTER_RIGHT]:
-                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))
-                break
-            if shape.hit_test(x, y):
-                self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
+            if self.select_tool_cursor_change(shape, x, y):
                 break
         else:
             self.change_cursor()
 
 
+    def select_tool_cursor_change(self, shape, x, y):
+        res = shape.handle_hit_test(x, y)
+        ret = True
+        if res and isinstance(shape, (Line, Polygon)):
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))            
+        elif res == HANDLE_ROTATE:
+            img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
+                                        "cursors", "") + "rotate.png")
+            self.SetCursor(wx.CursorFromImage(img))
+        elif res in [TOP_LEFT, BOTTOM_RIGHT]:
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))            
+        elif res in [TOP_RIGHT, BOTTOM_LEFT]:
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))        
+        elif res in [CENTER_TOP, CENTER_BOTTOM]:
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))            
+        elif res in [CENTER_LEFT, CENTER_RIGHT]:
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))        
+        elif shape.hit_test(x, y):
+            self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))            
+        else:
+            ret = False
+        return ret    
+            
     def check_mouse_for_resize(self, x, y):
         """
         Sees if the user's mouse is outside of the canvas, and updates their
@@ -338,6 +342,8 @@ class Whyteboard(wx.ScrolledWindow):
         int, corresponding to new - 1 = Tool ID in Utility.items
         Can be called with no new ID to reset itself with the current tool
         """
+        if self.HasCapture():
+            self.ReleaseMouse()
         if not new:
             new = self.gui.util.tool
         else:
@@ -396,20 +402,6 @@ class Whyteboard(wx.ScrolledWindow):
         """ Redoes an action, and adds it to the undo list. """
         self.perform(self.redo_list, self.undo_list)
 
-    def toggle_transparent(self):
-        """Toggles the selected item's transparency"""
-        if (not self.selected or isinstance(self.selected, Image)
-                        or isinstance(self.selected, Media) or isinstance(self.selected, Text)):
-            return
-        self.add_undo()
-        val = wx.TRANSPARENT
-
-        if self.selected.background == wx.TRANSPARENT:
-            val = self.gui.control.background.GetColour()
-
-        self.selected.background = val
-        self.selected.make_pen()
-        self.redraw_all(True)
 
     def perform(self, list_a, list_b):
         """ perform undo/redo. list_a: to remove from / list b: append to """
@@ -428,6 +420,21 @@ class Whyteboard(wx.ScrolledWindow):
             if isinstance(x, Note):
                 self.gui.notes.add_note(x)
 
+
+    def toggle_transparent(self):
+        """Toggles the selected item's transparency"""
+        if not self.selected or isinstance(self.selected, (Media, Image, Text)):
+            return
+        self.add_undo()
+        val = wx.TRANSPARENT
+
+        if self.selected.background == wx.TRANSPARENT:
+            val = self.gui.control.background.GetColour()
+
+        self.selected.background = val
+        self.selected.make_pen()
+        self.redraw_all(True)
+        
 
     def delete_selected(self):
         """Deletes the selected shape"""
@@ -582,8 +589,11 @@ class Whyteboard(wx.ScrolledWindow):
         else:
             shape.draw(dc)
         self.redraw_dirty(dc)
-
-
+        
+    def swap_colours(self):
+        self.selected.colour, self.selected.background = self.selected.background, self.selected.colour
+        self.redraw_all()
+        
     def get_tab(self):
         """ Returns the current tab number of this Whyteboard instance. """
         return self.tab.GetSelection()

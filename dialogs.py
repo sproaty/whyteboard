@@ -234,6 +234,8 @@ class ProgressDialog(wx.Dialog):
 
     def on_cancel(self, event):
         """Cancels the conversion process"""
+        self.SetTitle(_("Cancelling..."))
+        self.timer.Stop()
         self.gui.convert_cancelled = True
         if os.name == "nt":
             wx.Kill(self.gui.pid, wx.SIGKILL)
@@ -388,7 +390,6 @@ class UpdateDialog(wx.Dialog):
             rem = "%.2i" % (done % 1024)
             done //= 1024
             _type = "MB"
-
 
         _type2 = "KB"
         total /= 1024
@@ -680,107 +681,6 @@ class Resize(wx.Dialog):
     def cancel(self, event):
         self.gui.board.resize_canvas(self.size)
         self.Close()
-
-#----------------------------------------------------------------------
-
-
-class Rotate(wx.Dialog):
-    """
-    Allows the user to rotate the select image by a given amount. An image
-    must be selected before calling this dialog
-    """
-    def __init__(self, gui):
-        """
-        Show 4 radio buttons, allowing 90/180/270 or custom degree rotation
-        """
-        wx.Dialog.__init__(self, gui, title=_("Rotate Image"))
-        self.gui = gui
-        self.image = gui.board.selected
-        self.bmp = self.image.image
-
-        label = wx.StaticText(self, label=_("Rotate by angle"))
-        font = label.GetFont()
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        label.SetFont(font)
-
-        radio1 = wx.RadioButton(self, label=" 90")
-        radio2 = wx.RadioButton(self, label=" 180")
-        radio3 = wx.RadioButton(self, label=" 270")
-        radio4 = wx.RadioButton(self, label=" " + _("Custom:"))
-        self.custom = wx.SpinCtrl(self, min=-365, max=359)
-        self.custom.SetValue(self.image.angle)
-        radio4.SetValue(True)
-
-        okButton = wx.Button(self, wx.ID_OK, _("&OK"))
-        okButton.SetDefault()
-        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        applyButton = wx.Button(self, wx.ID_APPLY, _("&Apply"))
-
-        btnSizer = wx.StdDialogButtonSizer()
-        btnSizer.AddButton(okButton)
-        btnSizer.AddButton(cancelButton)
-        btnSizer.AddButton(applyButton)
-        btnSizer.Realize()
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(label, 0, wx.ALL, 15)
-
-        for x, btn in enumerate([radio1, radio2, radio3, radio4]):
-            sizer.Add(btn, 0, wx.LEFT, 30)
-            sizer.Add((10, 5))
-            method = lambda evt, id=x: self.on_rotate(evt, id)
-            btn.Bind(wx.EVT_RADIOBUTTON, method)
-
-        hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        hsizer.Add((45, 10))
-        hsizer.Add(self.custom, 0)
-
-        sizer.Add(hsizer, 0, wx.RIGHT, 15)
-        sizer.Add((10, 5))
-        sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
-        self.SetSizer(sizer)
-        self.SetFocus()
-        sizer.Fit(self)
-
-        cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
-        okButton.Bind(wx.EVT_BUTTON, self.ok)
-        applyButton.Bind(wx.EVT_BUTTON, self.apply)
-        #self.custom.Bind(wx.EVT_SPINCTRL, self.rotate)
-
-
-    def apply(self, event):
-        if self.custom.IsEnabled():
-            self.gui.board.add_undo()
-            self.rotate()
-        self.bmp = self.gui.board.selected.image
-
-    def ok(self, event):
-        self.gui.board.add_undo()
-        self.rotate()
-        self.Close()
-
-
-    def cancel(self, event=None):
-        self.gui.board.selected.image = self.bmp
-        self.gui.board.draw_shape(self.gui.board.selected)
-        self.Close()
-
-
-    def on_rotate(self, event, id):
-        """ Radio buttons """
-        if id == 3:
-            self.custom.Enable()
-            self.rotate()
-        else:
-            self.custom.Disable()
-            angle = (id + 1) * 90
-            self.image.rotate(angle=angle)
-            self.gui.board.draw_shape(self.image)
-            self.custom.SetValue(angle)
-
-
-    def rotate(self, event=None):
-        self.image.rotate(angle=self.custom.GetValue())
-        self.gui.board.draw_shape(self.image)
 
 #----------------------------------------------------------------------
 

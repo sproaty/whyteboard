@@ -70,8 +70,8 @@ import event_ids as event_ids
 from event_ids import *
 
 from functions import get_home_dir
-from dialogs import (History, ProgressDialog, Resize, Rotate, UpdateDialog,
-                     MyPrintout, ExceptionHook, ShapeViewer)
+from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout, 
+                     ExceptionHook, ShapeViewer)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
@@ -250,7 +250,7 @@ class GUI(wx.Frame):
         shapes.AppendSeparator()
         shapes.Append(wx.ID_DELETE, _("&Delete Shape")+"\tDelete", _("Delete the currently selected shape"))
         shapes.Append(ID_DESELECT, _("&Deselect Shape")+"\tCtrl-D", _("Deselects the currently selected shape"))
-        shapes.Append(ID_ROTATE, _("R&otate Image...")+"\tCtrl-I", _("Rotate the selected image"))
+        shapes.Append(ID_SWAP_COLOURS, _("&Swap &Colors"),  _("Swaps the foreground and background colors"))
         shapes.AppendCheckItem(ID_TRANSPARENT, " "+_("T&ransparent"), _("Toggles the selected shape's transparency"))
 
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl+W", _("Close the current sheet"))
@@ -308,9 +308,10 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
 
         # idle event handlers
-        ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_ROTATE, ID_MOVE_UP, ID_DESELECT,
+        ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_MOVE_UP, ID_DESELECT,
                ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, wx.ID_COPY,
-               wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE, ID_TRANSPARENT]
+               wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE, ID_TRANSPARENT,
+               ID_SWAP_COLOURS]
         [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
 
         # hotkeys
@@ -337,15 +338,15 @@ class GUI(wx.Frame):
 
         # menu bindings
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
-                  "copy", "paste", "rotate", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
+                  "copy", "paste", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
                   "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
-                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview", "colour_grid", "feedback", "transparent"]
+                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview", "colour_grid", "feedback", "transparent", "swap_colours"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
-               wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, ID_ROTATE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
+               wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
                ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
                ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT, ID_RELOAD_PREF, ID_TOOL_PREVIEW, ID_COLOUR_GRID,
-               ID_FEEDBACK, ID_TRANSPARENT]
+               ID_FEEDBACK, ID_TRANSPARENT, ID_SWAP_COLOURS]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -899,14 +900,13 @@ class GUI(wx.Frame):
                 do = True
             elif _id == ID_MOVE_TO_BOTTOM and board.check_move("bottom"):
                 do = True
-            elif (_id == ID_ROTATE and board.selected
-                  and isinstance(board.selected, Image)):
-                do = True
             elif (_id == ID_TRANSPARENT and board.selected
-                  and not isinstance(board.selected, Media)
-                  and not isinstance(board.selected, Image)
-                  and not isinstance(board.selected, Text)):
+                  and not isinstance(board.selected, (Media, Image, Text))):
                 do = True
+            elif (_id == ID_SWAP_COLOURS and board.selected 
+                  and not self.board.selected.background == wx.TRANSPARENT
+                  and not isinstance(board.selected, (Media, Image, Text))):
+                do = True                
         elif self.board:
             if self.board.copy:
                 do = True
@@ -1192,7 +1192,9 @@ class GUI(wx.Frame):
 
     def on_transparent(self, event=None):
         self.board.toggle_transparent()
-
+        
+    def on_swap_colours(self, event=None):
+        self.board.swap_colours()
 
     def on_page_setup(self, evt):
         psdd = wx.PageSetupDialogData(self.printData)
@@ -1256,10 +1258,6 @@ class GUI(wx.Frame):
         dlg = Resize(self)
         dlg.ShowModal()
 
-
-    def on_rotate(self, event=None):
-        dlg = Rotate(self)
-        dlg.ShowModal()
 
 
     def on_shape_viewer(self, event=None):
@@ -1442,15 +1440,8 @@ class WhyteboardApp(wx.App):
 #----------------------------------------------------------------------
 
 def main():
-    #try:
-    #   import psyco
-    #   psyco.full()
-    #except ImportError:
-    #   pass
-
     app = WhyteboardApp(redirect=False)
     app.MainLoop()
-    #cProfile.runctx( """app.MainLoop()""", globals(), locals(), filename="/home/steve/Documents/whyteboard/blah.txt")
 
 
 if __name__ == '__main__':

@@ -58,6 +58,7 @@ import time
 import traceback
 import wx
 
+
 #----------------------------------------------------------------------------#
 # Globals
 
@@ -203,6 +204,7 @@ class ErrorDialog(wx.Dialog):
         info.append("#---- End System Information ----#")
         info.append("")
         info.append("")
+
         return os.linesep.join(info)
 
     def GetProgramName(self):

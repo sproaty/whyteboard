@@ -108,7 +108,7 @@ class Preferences(wx.Dialog):
             self.gui.board.resize_canvas(self.gui.board.area)
 
 
-        if self.config.has_key('default_font'):
+        if 'default_font' in self.config:
             if self.config['default_font'] and not self.gui.util.font:
                 self.gui.util.font = wx.FFont(0, 0)
                 self.gui.util.font.SetNativeFontInfoFromString(self.config['default_font'])
@@ -300,7 +300,7 @@ class FontAndColours(wx.Panel):
         if self.config['bmp_select_transparent']:
             transparency.SetValue(True)
 
-        if self.config.has_key('default_font'):
+        if 'default_font' in self.config:
             f = wx.FFont(0, 0)
             f.SetNativeFontInfoFromString(self.config['default_font'])
             self.font = f
@@ -599,7 +599,7 @@ class PDF(wx.Panel):
 
     def set_im_button(self):
         s = _("Find...")
-        if self.config.has_key("imagemagick_path"):
+        if "imagemagick_path" in self.config:
             s = self.config["imagemagick_path"]
         self.im_button.SetLabel(s)
         self.GetSizer().Layout()

@@ -14,6 +14,8 @@ modified by Steven Sproat @ Fri 22 May 2009 08:20:10 GMT
 - cleaned up the code, added more methods/static classes (i.e. The Clipboard)
 """
 
+import os
+
 __version__ = "0.32"
 __author__ = "Ryan Ginstrom / Steven Sproat"
 
@@ -123,18 +125,31 @@ class Mask(object):
 
 class Font(object):
     def __init__(self, *args, **kwds):
-        self.__dict__.update(kwds)
-        self.calls = []
+        pass
 
-    def __getattr__(self, attr):
-        """Just fake any other methods"""
-        self.calls.append(attr)
-        return lambda *args, **kwds: None
+    def GetPointSize(self):
+        return 12
+
+    def GetFamily(self):
+        return 2
+
+    def SetWeight(self, weight):
+        pass
+
+    def SetNativeFontInfoFromString(self, string):
+        pass
+
+    def IsOk(self):
+        return True
+
 
 class Pen(object):
     def __init__(self, *args, **kwds):
         self.__dict__.update(kwds)
         self.calls = []
+
+    def SetJoin(self, join):
+        pass
 
 class Brush(object):
     def __init__(self, *args, **kwds):
@@ -191,6 +206,9 @@ class WindowDC(DC):
 class ClientDC(DC):
     pass
 
+class GCDC(DC):
+    pass
+
 def BitmapFromIcon(icon):
     return Bitmap()
 
@@ -228,6 +246,9 @@ class Window(object):
         pass
 
     def Refresh(self):
+        pass
+
+    def SetDropTarget(self, target):
         pass
 
     def GetSize(self):
@@ -632,7 +653,7 @@ class Notebook(Window):
             return self.pages[0]
         return self.pages[self.selection - 1]
 
-    def GetPageText(self):
+    def GetPageText(self, page):
         return self.texts[self.selection - 1]
 
     def SetPageText(self, sel, text):
@@ -721,6 +742,20 @@ class MenuItem(Window):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
+
+
+class FileHistory(object):
+    def __init__(self, files):
+        self.files = files
+
+    def Load(self, config):
+        pass
+
+    def UseMenu(self, menu):
+        pass
+
+    def AddFilesToMenu(self):
+        pass
 
 ###############
 # Main windows
@@ -975,7 +1010,9 @@ class StaticBoxSizer(Sizer):
         Sizer.__init__(self, None, **kwds)
 
 class GridSizer(StaticBoxSizer):
-    pass
+    def SetCols(self, cols):
+        self.cols = cols
+
 
 class FlexGridSizer(Sizer):
     def __init__(self, rows, cols, vgap, hgap):
@@ -1001,6 +1038,7 @@ class FlexGridSizer(Sizer):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
+
 
 
 
@@ -1044,6 +1082,23 @@ class TheClipboard(object):
     def Close():
         pass
     Close = staticmethod(Close)
+
+
+class StandardPaths(object):
+    def Get():
+        pass
+    Get = staticmethod(Get)
+
+    def GetUserLocalDataDir(path=None):
+        return os.getcwd()
+    GetUserLocalDataDir = staticmethod(GetUserLocalDataDir)
+
+
+class SystemSettings(object):
+    def GetFont(what):
+        pass
+    GetFont = staticmethod(GetFont)
+
 
 class ArtProvider(object):
     def GetBitmap(bmp, id):

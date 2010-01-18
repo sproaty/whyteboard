@@ -30,31 +30,42 @@ xx Jan 2010 -- 0.39.4
 * Few UI changes, program now looks neater with less borders, also takes up less
   vertical space (takes up ~700 pixels vertically at a minimum)
 * Foreground/background colour swap button added
+* "Swap Colours" menu item for when you select a shape that's not transparent
 * Thick rectangles now don't have a "roundness" to their edges
 * Help files updated and improved with more detail
 * Improved a few icons
 * Little "close" button drawn on the current tab
-* Escape key will deselect the currently selected shape
+* Escape key will de-select the currently selected shape (as well as Ctrl-D)
+* Cancelling PDF Conversion on Linux takes a few seconds, so the progress bar no
+  longer "pumps", and the dialog title changes from "Converting" to "Cancelling"
 
 * New preference: under "View", number of toolbox columns, can be set to 2 or 3
   to decrease the vertical space taken by the toolbox
 * New preference: toggle tool preview on/off (to gain more vertical space)
 * New preference: toggle colour grid on/off
-* 'Send Feedback' added to the Help menu
+* "Send Feedback" added to the Help menu
+* Removed the "Rotate Image" dialog
 
 * Important Windows bugfix: drawing a shape would create extra Windows "GDI"
   objects; which was taking up unneeded resources. This bug has been present
   since version 0.25 (3rd release) - released back in January 2009!
   
 * Bugfix: possible crash on Mac when loading/saving .wtbd files containing text
+* Bugfix: after selecting a shape (and being brought to the front), any shapes 
+  that were on top of the shape would prevent the user from selecting the 
+  handles of the selected shape.  
+
+* Bugfix: rotated images weren't being saved as rotated
 * Bugfix: using next/previous sheet buttons in the Shape Viewer wouldn't set
   the drop-down control to the changed-to sheet
-* Bugfix: the "rotate image" dialog was not working correctly
 * Bugfix: "End" key would not jump to the end of the document correctly
 * Bugfix: menu icons appearing for 3 menu items on Windows, when no other menu
-  item had icons - now removed
+  items had icons - now removed
 * Bugfix: stopped a crash when wx.GCDC was not implemented on the system, due
   to a misconfigured Linux install
+ 
+* Fixed unit tests so that they at least run -- need to improve the test's code
+  coverage
 
 ----------------------------------------------------------------------
 

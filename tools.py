@@ -328,6 +328,7 @@ class Polygon(OverlayShape):
             if self.board.HasCapture():
                 self.board.ReleaseMouse()
 
+
     def start_select_action(self, handle):
         self.points = list(self.points)
 
@@ -389,10 +390,17 @@ class Polygon(OverlayShape):
         #self.points[pos] = (x, y) # - MOVING A POINT
         #if pos == 0:  # first point
         #    self.x, self.y = x, y
-        self.rotate((x, y))
-        #self.rescale(x, y)
-        self.x, self.y = self.points[0]  # for the correct offset when moving
-
+        if wx.GetKeyState(wx.WXK_CONTROL) :
+            self.rotate((x, y))
+            self.x, self.y = self.points[0]  # for the correct offset when moving
+        elif wx.GetKeyState(wx.WXK_SHIFT):
+            self.rescale(x, y)
+            self.x, self.y = self.points[0] 
+        else:
+            self.points[pos] = (x, y) 
+            if pos == 0:  # first point
+                self.x, self.y = x, y
+        
     def rescale(self, x, y):
         """
         Thanks to Mark Ransom -- http://stackoverflow.com/questions/2014859/
@@ -401,7 +409,7 @@ class Polygon(OverlayShape):
             self.orig_click = (x, y)
 
         orig_click = self.orig_click
-        original_distance = math.sqrt((orig_click[0] - self.center[0])**2 + (orig_click[1] - self.center[1])**2)
+        original_distance = math.sqrt((orig_click[0] - self.center[0]) ** 2 + (orig_click[1] - self.center[1]) ** 2)
         current_distance = math.sqrt((x - self.center[0])**2 + (y - self.center[1])**2)
         self.scale_factor = current_distance / original_distance
 
@@ -433,9 +441,6 @@ class Polygon(OverlayShape):
             b = (math.sin(angle) * (p[0] - self.center[0]) + math.cos(angle) *
                                     (p[1] - self.center[1]) + self.center[1])
             self.points[x] = (a, b)
-
-
-
 
 
 
@@ -1177,8 +1182,8 @@ class Text(OverlayShape):
         self.font = wx.FFont(0, 0)
         self.font.SetNativeFontInfoFromString(self.font_data)
         if not self.font.IsOk():
-            f = wx.SystemSettings_GetFont(wx.SYS_SYSTEM_FONT)
-            self.font = wx.FFont(f.GetPointSize(), f.GetFontFamily())
+            f = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
+            self.font = wx.FFont(f.GetPointSize(), f.GetFamily())
 
 
     def find_extent(self):
@@ -1392,17 +1397,14 @@ class Image(OverlayShape):
             self.outline.height = 10
 
 
-    def rotate(self, position=None, angle=None):
-        """Angle may be passed in from the rotate dialog."""
-        if position:
-            if not self.orig_click:
-                self.orig_click = position
+    def rotate(self, position):
+        """Rotate the outline."""
+        if not self.orig_click:
+            self.orig_click = position
 
-            knob_angle = self.outline.find_angle(self.orig_click, self.outline.center)
-            mouse_angle = self.outline.find_angle(position, self.outline.center)
-            self.angle = knob_angle - mouse_angle
-        else:
-            self.angle = (2 * math.pi * angle) / 360
+        knob_angle = self.outline.find_angle(self.orig_click, self.outline.center)
+        mouse_angle = self.outline.find_angle(position, self.outline.center)
+        self.angle = knob_angle - mouse_angle
 
         self.outline.do_rotate(self.angle)
 
@@ -1410,7 +1412,6 @@ class Image(OverlayShape):
     def start_select_action(self, handle):
         if handle:
             self.dragging = True
-
         if not handle:
             overlay = self.board.overlay  # init.ing the rect resets the overlay
 
@@ -1547,60 +1548,79 @@ class Select(Tool):
         self.dragging = False
         self.undone = False  # Adds an undo point once per class
         self.anchored = False  # Anchor shape's x point -once-, when resizing
-        self.direction = None  # handle that was clicked on (if any)
+        self.handle = None  # handle that was clicked on (if any)
         self.offset = (0, 0)
 
 
     def left_down(self, x, y):
         """
-        Sees if a shape is underneath the mouse coords, and allows the shape to
-        be re-dragged to place
+        First, check the selected shape (which will be drawn on top of the 
+        others) so that's selected first.
         """
         self.board.redraw_all()
-        found = False
+        if self.board.selected:
+            if self.check_for_hit(self.board.selected, x, y):
+                return
+        
         for shape in reversed(self.board.shapes):
-            direction = shape.handle_hit_test(x, y)  # test handle before area
-
-            if direction:
-                self.direction = direction
-                found = True
-            elif shape.hit_test(x, y):
-                found = True
-
-            if found:
-                self.board.overlay = wx.Overlay()
-                self.shape = shape
-                self.dragging = True
-                self.offset = self.shape.offset(x, y)
-
-                if self.board.selected:
-                    self.board.deselect()
-                self.board.selected = shape
-                shape.selected = True
-
-                x = self.board.shapes.index(shape)
-                self.board.shapes.pop(x)
-                self.board.redraw_all()  # hide 'original'
-                self.board.shapes.insert(x, shape)
-                shape.draw(self.board.get_dc(), False)  # draw 'new'
-
-                if shape.background == wx.TRANSPARENT:
-                    self.board.gui.control.transparent.SetValue(True)
-                    self.board.gui.menu.Check(ID_TRANSPARENT, True)
-                else:
-                    self.board.gui.control.transparent.SetValue(False)
-                    self.board.gui.menu.Check(ID_TRANSPARENT, False)
+            if self.check_for_hit(shape, x, y):
                 break  # breaking is vital to selecting the correct shape
         else:
             self.board.deselect()
 
 
+    def check_for_hit(self, shape, x, y):
+        """
+        Sees if a shape is underneath the mouse coords, and allows the shape to
+        be re-dragged to place
+        """        
+        found = False
+        handle = shape.handle_hit_test(x, y)  # test handle before area
+
+        if handle:
+            self.handle = handle
+            found = True
+        elif shape.hit_test(x, y):
+            found = True
+
+        if found:
+            self.board.overlay = wx.Overlay()
+            self.shape = shape
+            self.dragging = True
+            self.offset = self.shape.offset(x, y)
+
+            if self.board.selected:
+                self.board.deselect()
+            self.board.selected = shape
+            shape.selected = True
+
+            x = self.board.shapes.index(shape)
+            self.board.shapes.pop(x)
+            self.board.redraw_all()  # hide 'original'
+            self.board.shapes.insert(x, shape)
+            shape.draw(self.board.get_dc(), False)  # draw 'new'
+
+            if shape.background == wx.TRANSPARENT:
+                self.board.gui.control.transparent.SetValue(True)
+                self.board.gui.menu.Check(ID_TRANSPARENT, True)
+            else:
+                self.board.gui.control.transparent.SetValue(False)
+                self.board.gui.menu.Check(ID_TRANSPARENT, False)
+            
+        return found
+    
+
     def right_up(self, x, y):
         """Pops up a shape menu if a shape was clicked on"""
         found = None
         for shape in reversed(self.board.shapes):
-            if shape.hit_test(x, y) or shape.handle_hit_test(x, y):
+            if shape.handle_hit_test(x, y):
                 found = shape
+            elif shape.hit_test(x, y):
+                found = shape
+            if found:
+                break
+            
         if not found:
             return
 
@@ -1627,14 +1647,14 @@ class Select(Tool):
             if not self.undone:  # add a single undo point, not one per call
                 self.board.add_undo()
                 self.undone = True
-                self.shape.start_select_action(self.direction)
-            if not self.direction:  # moving
+                self.shape.start_select_action(self.handle)
+            if not self.handle:  # moving
                 self.shape.move(x, y, self.offset)
             else:
                 if not self.anchored:  # don't want to keep anchoring
-                    self.shape.anchor(self.direction)
+                    self.shape.anchor(self.handle)
                     self.anchored = True
-                self.shape.resize(x, y, self.direction)
+                self.shape.resize(x, y, self.handle)
 
 
     def draw(self, dc, replay=False):
@@ -1645,7 +1665,7 @@ class Select(Tool):
     def left_up(self, x, y):
         if self.dragging:
             self.shape.sort_handles()
-            self.shape.end_select_action(self.direction)
+            self.shape.end_select_action(self.handle)
 
         self.board.update_thumb()
         self.board.select_tool()

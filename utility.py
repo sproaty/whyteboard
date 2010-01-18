@@ -60,6 +60,7 @@ but are restored with it upon loading the file.
 
 import os
 import sys
+import cStringIO
 import webbrowser
 import urllib
 import tarfile
@@ -74,8 +75,8 @@ except ImportError:
     import pickle
 
 from dialogs import ProgressDialog, FindIM
-from functions import (save_pasted_images, get_home_dir, load_image,
-                       convert_quality, make_filename)
+from functions import (get_home_dir, load_image, convert_quality, make_filename,
+                       get_wx_image_type)
 
 import tools
 import whyteboard
@@ -171,7 +172,7 @@ class Utility(object):
 
         tools.HANDLE_SIZE = self.config['handle_size']
         whyteboard.CANVAS_BORDER = self.config['canvas_border']
-        if self.config.has_key('default_font'):
+        if 'default_font' in self.config:
             self.font = wx.FFont(0, 0)
             self.font.SetNativeFontInfoFromString(self.config['default_font'])
 
@@ -207,35 +208,43 @@ class Utility(object):
         if self.filename:
             self.gui.dialog = ProgressDialog(self.gui, _("Saving..."), 30)
             self.gui.dialog.Show()
-            mode = 'w'  # to open zip file
 
-            if os.path.exists(self.filename):  # need to remove save.data
-                do = True
-                try:
-                    _zip = zipfile.ZipFile(self.filename, "r")
-                except zipfile.BadZipfile:  # old save format
-                    do = False
+            _zip = zipfile.ZipFile('whyteboard_temp_new.wtbd', 'w')
 
-                if do:
-                    zout = zipfile.ZipFile('whyteboard_temp_new.wtbd', 'w')
-                    for item in _zip.infolist():
-                        if item.filename != 'save.data':
-                            zout.writestr(item, _zip.read(item.filename))
-                    zout.close()
-                    _zip.close()
+            data = {}  # list of bitmap data, check if image has been pasted
+            to_remove = []
+            for x in range(0, self.gui.tab_count):
+                board = self.gui.tabs.GetPage(x)
+                for shape in board.shapes:
+                    if isinstance(shape, tools.Image):
+                        img = shape.image.ConvertToImage()                       
+                        img_data = img.GetData()
+        
+                        if not shape.filename:
+                            for k, v in data.items():
+                                if v == img_data:
+                                    shape.filename = k
+                                    break
+        
+                            #  the above iteration didn't find any common pastes
+                            if not shape.filename:
+                                name = make_filename() + ".jpg"
+                                shape.image.SaveFile(name, wx.BITMAP_TYPE_JPEG)
+                                shape.filename = name
+                                data[shape.filename] = img_data
+                                _zip.write(name, os.path.join("data", name))
+                                to_remove.append(name)
+                                                                            
+                        else:
+                            name = shape.filename
+                            
+                            if not name in to_remove:
+                                img.SaveFile(name, get_wx_image_type(name))
+                                _zip.write(name, os.path.join("data", name))
+                                to_remove.append(name)
+                        
+            [os.remove(x) for x in to_remove]
 
-                    os.remove(self.filename)
-                    shutil.move('whyteboard_temp_new.wtbd', self.filename)
-
-                    if os.stat(self.filename).st_size:  # not a 0-byte file
-                        mode = 'a'
-                else:
-                    for x in range(0, self.gui.tab_count):
-                        board = self.gui.tabs.GetPage(x)
-                        for shape in board.shapes:
-                            if isinstance(shape, tools.Image):
-                                if shape.path not in self.to_archive:
-                                    self.to_archive.append(shape.path)
 
             temp = {}
             names, medias, canvas_sizes = [], [], []
@@ -253,14 +262,6 @@ class Utility(object):
                 medias.append(board.medias)
                 names.append(self.gui.tabs.GetPageText(x))
 
-            save_pasted_images(temp, self)
-            #  now write all the new images for the save
-            _zip = zipfile.ZipFile(self.filename, mode)
-
-            for x in self.to_archive:
-                f = open(x)
-                _zip.write(x, os.path.join("data", os.path.basename(x)))
-                f.close()
 
             if temp:
                 for x in temp:
@@ -303,8 +304,11 @@ class Utility(object):
                 _zip.write("save.data")
                 _zip.close()
                 os.remove("save.data")
-                self.to_archive = []
 
+                if os.path.exists(self.filename):
+                    os.remove(self.filename)
+                os.rename('whyteboard_temp_new.wtbd', self.filename)
+                    
                 self.zip = zipfile.ZipFile(self.filename, "r")
 
                 # Fix bug in Windows where the current shapes get reset above
@@ -329,7 +333,7 @@ class Utility(object):
                 self.saved = False
                 self.filename = None
 
-            self.gui.dialog.Destroy()
+            self.gui.dialog.Destroy()  # remove progress bar
 
 
     def load_file(self, filename=None):
@@ -631,13 +635,7 @@ class Utility(object):
         Exports the current view as a file. Select the appropriate wx constant
         depending on the filetype. gif is buggered for some reason :-/
         """
-        _name = os.path.splitext(filename)[1].replace(".", "").lower()
-
-        types = {"png": wx.BITMAP_TYPE_PNG, "jpg": wx.BITMAP_TYPE_JPEG, "jpeg":
-                 wx.BITMAP_TYPE_JPEG, "bmp": wx.BITMAP_TYPE_BMP, "tiff":
-                 wx.BITMAP_TYPE_TIF, "pcx": wx.BITMAP_TYPE_PCX }
-
-        const = types[_name]  # grab the right image type from dict. above
+        const = get_wx_image_type(filename)  
         self.gui.board.deselect()
         self.gui.board.redraw_all()
 
@@ -719,7 +717,7 @@ class Utility(object):
                 self.im_location = "convert"
         elif os.name == "nt":
 
-            if not self.config.has_key('imagemagick_path'):
+            if not 'imagemagick_path' in self.config:
                 dlg = FindIM(self, self.gui, self.check_im_path)
                 dlg.ShowModal()
                 if self.im_location:
@@ -872,7 +870,7 @@ class WhyteboardDropTarget(wx.PyDropTarget):
         if self.GetData():
             df = self.do.GetReceivedFormat().GetType()
 
-            if df == wx.DF_UNICODETEXT or df == wx.DF_TEXT:
+            if df in [wx.DF_UNICODETEXT, wx.DF_TEXT]:
 
                 shape = tools.Text(self.gui.board, self.gui.util.colour, 1)
                 shape.text = self.textdo.GetText()

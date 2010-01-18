@@ -28,38 +28,6 @@ import tools
 #----------------------------------------------------------------------
 
 
-def save_pasted_images(shapes, utility):
-    """
-    When saving a Whyteboard file, any pasted Images (with path == None)
-    will be saved to a directory in the user's home directory, and the image
-    reference changed.
-    If the same image is pasted many times, it will be only stored once and
-    all images with that common image filepath will be updated.
-    """
-    data = {}
-    for key, value in shapes.items():  # each tab
-        for shape in value:  # each tab's shapes
-            if isinstance(shape, tools.Image):
-                img = shape.image.ConvertToImage()
-                img_data = img.GetData()
-
-                if not shape.path:
-                    for k, v in data.items():
-                        if v == img_data:
-                            shape.path = k
-                            break
-
-                    #  the above iteration didn't find any common pastes
-                    if not shape.path:
-                        path = get_home_dir("pastes")
-                        tmp_file = path + make_filename() + ".jpg"
-                        shape.image.SaveFile(tmp_file, wx.BITMAP_TYPE_JPEG)
-                        shape.path = tmp_file
-                        utility.to_archive.append(tmp_file)
-                        data[shape.path] = img_data
-
-
-
 def get_home_dir(extra_path=None):
     """
     Returns the home directory for Whyteboard cross-platformally
@@ -97,8 +65,6 @@ def load_image(path, board):
     shape = tools.Image(board, image, path)
     shape.left_down(0, 0)  # renders, updates scrollbars
     board.update_thumb()
-    if not path in board.gui.util.to_archive:
-        board.gui.util.to_archive.append(path)
 
 
 def make_bitmap(colour):
@@ -113,6 +79,19 @@ def make_bitmap(colour):
     dc.Clear()
     dc.SelectObject(wx.NullBitmap)
     return bmp
+
+
+def get_wx_image_type(filename):
+    """
+    Returns the wx.BITMAP_TYPE_X for a given filename
+    """
+    _name = os.path.splitext(filename)[1].replace(".", "").lower()
+
+    types = {"png": wx.BITMAP_TYPE_PNG, "jpg": wx.BITMAP_TYPE_JPEG, "jpeg":
+             wx.BITMAP_TYPE_JPEG, "bmp": wx.BITMAP_TYPE_BMP, "tiff":
+             wx.BITMAP_TYPE_TIF, "pcx": wx.BITMAP_TYPE_PCX }
+
+    return types[_name]  # grab the right image type from dict. above
 
 
 def convert_quality(quality, im_location, _file, path):

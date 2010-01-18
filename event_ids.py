@@ -55,6 +55,7 @@ ID_RESIZE = wx.NewId()            # resize dialog
 ID_ROTATE = wx.NewId()            # rotate dialog for image 90/180/270
 ID_SHAPE_VIEWER = wx.NewId()      # view/edit shapes
 ID_STATUSBAR = wx.NewId()         # toggle statusbar
+ID_SWAP_COLOURS = wx.NewId()       # swap colour
 ID_TOOL_PREVIEW = wx.NewId()      # toggle preview of tool
 ID_TOOLBAR = wx.NewId()           # toggle toolbar
 ID_TRANSPARENT = wx.NewId()       # toggle shape transparency
