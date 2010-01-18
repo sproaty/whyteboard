@@ -109,8 +109,7 @@ class GUI(wx.Frame):
         self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
 
         self.filehistory = wx.FileHistory(8)
-        self.config = wx.Config("Whyteboard", "Whyteboard",
-                                style=wx.CONFIG_USE_LOCAL_FILE)
+        self.config = wx.Config("Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
         self.filehistory.Load(self.config)
 
         self._oldhook = sys.excepthook
@@ -454,6 +453,7 @@ class GUI(wx.Frame):
         self.directory = os.path.dirname(path)
         self.filehistory.AddFileToHistory(path)
         self.filehistory.Save(self.config)
+        self.config.Flush()
 
         if path.endswith(".wtbd"):
             self.util.load_wtbd(path)
@@ -1282,6 +1282,7 @@ class GUI(wx.Frame):
             self.help.AddBook(_file)
         else:
             self.help = None
+            wx.DATE_
 
 
     def on_help(self, event=None, page=None):

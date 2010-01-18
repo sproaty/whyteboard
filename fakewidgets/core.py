@@ -33,9 +33,10 @@ class PySimpleApp(object):
     def SetTopWindow(self, window):
         self.topwindow = window
 
+    @staticmethod
     def IsDisplayAvailable(*args, **kwds):
         return True
-    IsDisplayAvailable = staticmethod(IsDisplayAvailable)
+
 
 class App(PySimpleApp):
     """Mocks wx.App
@@ -1073,43 +1074,44 @@ def FFont(*args):
 #
 
 class TheClipboard(object):
+    @staticmethod
     def Open():
         pass
-    Open = staticmethod(Open)
 
+    @staticmethod
     def GetData(data):
         pass
-    GetData = staticmethod(GetData)
 
+    @staticmethod
     def SetData(data):
         pass
-    SetData = staticmethod(GetData)
 
+    @staticmethod
     def Close():
         pass
-    Close = staticmethod(Close)
 
 
 class StandardPaths(object):
+    @staticmethod
     def Get():
         pass
-    Get = staticmethod(Get)
 
+    @staticmethod
     def GetUserLocalDataDir(path=None):
         return os.getcwd()
-    GetUserLocalDataDir = staticmethod(GetUserLocalDataDir)
 
 
 class SystemSettings(object):
+    @staticmethod
     def GetFont(what):
         pass
-    GetFont = staticmethod(GetFont)
+
 
 
 class ArtProvider(object):
+    @staticmethod
     def GetBitmap(bmp, id):
         pass
-    GetBitmap = staticmethod(GetBitmap)
 
 
 class lib(object):

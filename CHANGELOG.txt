@@ -55,6 +55,7 @@ xx Jan 2010 -- 0.39.4
   that were on top of the shape would prevent the user from selecting the 
   handles of the selected shape.  
 
+* Bugfix: "Recent Files" wasn't working on Linux
 * Bugfix: rotated images weren't being saved as rotated
 * Bugfix: using next/previous sheet buttons in the Shape Viewer wouldn't set
   the drop-down control to the changed-to sheet
