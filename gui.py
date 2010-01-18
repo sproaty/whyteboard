@@ -250,7 +250,7 @@ class GUI(wx.Frame):
         shapes.AppendSeparator()
         shapes.Append(wx.ID_DELETE, _("&Delete Shape")+"\tDelete", _("Delete the currently selected shape"))
         shapes.Append(ID_DESELECT, _("&Deselect Shape")+"\tCtrl-D", _("Deselects the currently selected shape"))
-        shapes.Append(ID_SWAP_COLOURS, _("&Swap &Colors"),  _("Swaps the foreground and background colors"))
+        shapes.Append(ID_SWAP_COLOURS, _("&Swap Colors"),  _("Swaps the foreground and background colors"))
         shapes.AppendCheckItem(ID_TRANSPARENT, " "+_("T&ransparent"), _("Toggles the selected shape's transparency"))
 
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl+W", _("Close the current sheet"))
