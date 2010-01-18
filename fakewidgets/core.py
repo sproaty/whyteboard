@@ -242,6 +242,12 @@ class Window(object):
     def Disable(self):
         self.Enabled=False
 
+    def HasCapture(self):
+        return False
+
+    def SetFocus(self):
+        pass
+
     def Show(self):
         pass
 

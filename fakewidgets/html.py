@@ -4,7 +4,7 @@ Fake wx.html module.
 
 """
 
-from core import Window
+from core import Control, Window
 
 class HtmlWindow(Window):
     def __init__(self, *args, **kwds):
@@ -19,6 +19,10 @@ class HtmlWindow(Window):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
+
+class HtmlHelpController(object):
+    def AddBook(self, book):
+        pass
 
 import wx.html
 wx.html.__dict__.update(locals())

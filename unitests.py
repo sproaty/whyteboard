@@ -116,9 +116,10 @@ class TestWhyteboard:
         self.board.shapes[-1].selected = True
         self.board.selected = self.board.shapes[-1]
         self.board.deselect()
-        assert not self.board.selected
+        assert not self.board.selected            
         for x in self.board.shapes:
-            assert not x.selected
+            if not isinstance(x, tools.Eyedrop):
+                assert not x.selected
 
     def test_undo_then_redo(self):
         """Test undoing/redoing together"""
