@@ -60,7 +60,6 @@ but are restored with it upon loading the file.
 
 import os
 import sys
-import cStringIO
 import webbrowser
 import urllib
 import tarfile

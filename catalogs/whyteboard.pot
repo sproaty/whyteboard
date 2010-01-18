@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-01-18 01:50+0000\n"
+"POT-Creation-Date: 2010-01-18 02:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,19 +20,19 @@ msgstr ""
 msgid " There is a new version available"
 msgstr ""
 
-#: whyteboard/utility.py:679
+#: whyteboard/utility.py:678
 #, python-format
 msgid ""
 "\"%s\" has been modified.\n"
 "Do you want to save your changes?"
 msgstr ""
 
-#: whyteboard/utility.py:405 whyteboard/utility.py:417
+#: whyteboard/utility.py:404 whyteboard/utility.py:416
 #, python-format
 msgid "\"%s\" has corrupt Whyteboard data. No action taken."
 msgstr ""
 
-#: whyteboard/utility.py:379
+#: whyteboard/utility.py:378
 #, python-format
 msgid "\"%s\" is missing the file save.data"
 msgstr ""
@@ -202,10 +202,6 @@ msgstr ""
 msgid "&Status Bar"
 msgstr ""
 
-#: whyteboard/gui.py:253
-msgid "&Swap Colors"
-msgstr ""
-
 #: whyteboard/gui.py:239
 msgid "&Toolbar"
 msgstr ""
@@ -242,11 +238,11 @@ msgstr ""
 msgid "Adds a new point to the Polygon"
 msgstr ""
 
-#: whyteboard/utility.py:185
+#: whyteboard/utility.py:184
 msgid "All files"
 msgstr ""
 
-#: whyteboard/utility.py:185
+#: whyteboard/utility.py:184
 msgid "All supported files"
 msgstr ""
 
@@ -254,7 +250,7 @@ msgstr ""
 msgid "An error has occured - please report it"
 msgstr ""
 
-#: whyteboard/utility.py:126
+#: whyteboard/utility.py:125
 msgid "Arabic"
 msgstr ""
 
@@ -354,7 +350,7 @@ msgstr ""
 msgid "Connecting to server..."
 msgstr ""
 
-#: whyteboard/utility.py:598
+#: whyteboard/utility.py:597
 msgid "Conversion Failed"
 msgstr ""
 
@@ -375,11 +371,11 @@ msgid "Copy a Bitmap Selection region"
 msgstr ""
 
 #: whyteboard/dialogs.py:301 whyteboard/dialogs.py:354
-#: whyteboard/utility.py:754
+#: whyteboard/utility.py:753
 msgid "Could not connect to server."
 msgstr ""
 
-#: whyteboard/utility.py:132
+#: whyteboard/utility.py:131
 msgid "Czech"
 msgstr ""
 
@@ -447,7 +443,7 @@ msgstr ""
 msgid "Draw strokes with a brush"
 msgstr ""
 
-#: whyteboard/utility.py:123
+#: whyteboard/utility.py:122
 msgid "Dutch"
 msgstr ""
 
@@ -459,11 +455,11 @@ msgstr ""
 msgid "Ellipse"
 msgstr ""
 
-#: whyteboard/utility.py:119
+#: whyteboard/utility.py:118
 msgid "English"
 msgstr ""
 
-#: whyteboard/utility.py:120
+#: whyteboard/utility.py:119
 msgid "English (United Kingdom)"
 msgstr ""
 
@@ -479,7 +475,7 @@ msgstr ""
 msgid "Eraser"
 msgstr ""
 
-#: whyteboard/panels.py:457 whyteboard/panels.py:493 whyteboard/utility.py:754
+#: whyteboard/panels.py:457 whyteboard/panels.py:493 whyteboard/utility.py:753
 msgid "Error"
 msgstr ""
 
@@ -491,11 +487,11 @@ msgstr ""
 msgid "Error getting file list from the server."
 msgstr ""
 
-#: whyteboard/utility.py:298
+#: whyteboard/utility.py:297
 msgid "Error saving file data"
 msgstr ""
 
-#: whyteboard/utility.py:332
+#: whyteboard/utility.py:331
 msgid "Error saving file data - no data to save"
 msgstr ""
 
@@ -539,7 +535,7 @@ msgstr ""
 msgid "Eyedropper"
 msgstr ""
 
-#: whyteboard/utility.py:598
+#: whyteboard/utility.py:597
 msgid "Failed to convert file. Ensure GhostScript is installed; http://pages.cs.wisc.edu/~ghost/"
 msgstr ""
 
@@ -572,11 +568,11 @@ msgstr ""
 msgid "Fonts and Color"
 msgstr ""
 
-#: whyteboard/utility.py:129
+#: whyteboard/utility.py:128
 msgid "French"
 msgstr ""
 
-#: whyteboard/utility.py:134
+#: whyteboard/utility.py:133
 msgid "Galician"
 msgstr ""
 
@@ -584,7 +580,7 @@ msgstr ""
 msgid "General"
 msgstr ""
 
-#: whyteboard/utility.py:124
+#: whyteboard/utility.py:123
 msgid "German"
 msgstr ""
 
@@ -612,7 +608,7 @@ msgstr ""
 msgid "Highest"
 msgstr ""
 
-#: whyteboard/utility.py:127
+#: whyteboard/utility.py:126
 msgid "Hindi"
 msgstr ""
 
@@ -632,7 +628,7 @@ msgstr ""
 msgid "Image"
 msgstr ""
 
-#: whyteboard/gui.py:427 whyteboard/utility.py:186
+#: whyteboard/gui.py:427 whyteboard/utility.py:185
 msgid "Image Files"
 msgstr ""
 
@@ -644,7 +640,7 @@ msgstr ""
 msgid "ImageMagick Notification"
 msgstr ""
 
-#: whyteboard/utility.py:715
+#: whyteboard/utility.py:714
 msgid "ImageMagick was not found. You will be unable to load PDF and PS files until it is installed."
 msgstr ""
 
@@ -676,11 +672,11 @@ msgstr ""
 msgid "Invalid filetype to export as:"
 msgstr ""
 
-#: whyteboard/utility.py:133
+#: whyteboard/utility.py:132
 msgid "Italian"
 msgstr ""
 
-#: whyteboard/utility.py:121
+#: whyteboard/utility.py:120
 msgid "Japanese"
 msgstr ""
 
@@ -700,7 +696,7 @@ msgstr ""
 msgid "Loaded file"
 msgstr ""
 
-#: whyteboard/gui.py:683 whyteboard/utility.py:436 whyteboard/utility.py:613
+#: whyteboard/gui.py:683 whyteboard/utility.py:435 whyteboard/utility.py:612
 msgid "Loading..."
 msgstr ""
 
@@ -878,7 +874,7 @@ msgstr ""
 msgid "Polygon"
 msgstr ""
 
-#: whyteboard/utility.py:122
+#: whyteboard/utility.py:121
 msgid "Portugese"
 msgstr ""
 
@@ -986,7 +982,7 @@ msgstr ""
 msgid "Rounded Rect"
 msgstr ""
 
-#: whyteboard/utility.py:125
+#: whyteboard/utility.py:124
 msgid "Russian"
 msgstr ""
 
@@ -998,7 +994,7 @@ msgstr ""
 msgid "Save Drawing"
 msgstr ""
 
-#: whyteboard/utility.py:680
+#: whyteboard/utility.py:679
 msgid "Save File?"
 msgstr ""
 
@@ -1014,7 +1010,7 @@ msgstr ""
 msgid "Save the Whyteboard data in a new file"
 msgstr ""
 
-#: whyteboard/utility.py:209
+#: whyteboard/utility.py:208
 msgid "Saving..."
 msgstr ""
 
@@ -1131,11 +1127,11 @@ msgstr ""
 msgid "Skip to a position "
 msgstr ""
 
-#: whyteboard/utility.py:128
+#: whyteboard/utility.py:127
 msgid "Spanish"
 msgstr ""
 
-#: whyteboard/panels.py:801
+#: whyteboard/gui.py:253 whyteboard/panels.py:801
 msgid "Swap &Colors"
 msgstr ""
 
@@ -1185,7 +1181,7 @@ msgstr ""
 msgid "Toolbox View:"
 msgstr ""
 
-#: whyteboard/utility.py:131
+#: whyteboard/utility.py:130
 msgid "Traditional Chinese"
 msgstr ""
 
@@ -1227,7 +1223,7 @@ msgid "Undo the last operation"
 msgstr ""
 
 #: whyteboard/dialogs.py:690 whyteboard/dialogs.py:742 whyteboard/gui.py:100
-#: whyteboard/utility.py:676
+#: whyteboard/utility.py:675
 msgid "Untitled"
 msgstr ""
 
@@ -1283,7 +1279,7 @@ msgstr ""
 msgid "View the toolbar"
 msgstr ""
 
-#: whyteboard/utility.py:130
+#: whyteboard/utility.py:129
 msgid "Welsh"
 msgstr ""
 
@@ -1291,7 +1287,7 @@ msgstr ""
 msgid "Whyteboard Preference Files"
 msgstr ""
 
-#: whyteboard/utility.py:357
+#: whyteboard/utility.py:356
 msgid "Whyteboard doesn't support the filetype"
 msgstr ""
 
@@ -1299,7 +1295,7 @@ msgstr ""
 msgid "Whyteboard file "
 msgstr ""
 
-#: whyteboard/utility.py:186
+#: whyteboard/utility.py:185
 msgid "Whyteboard files"
 msgstr ""
 
