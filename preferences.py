@@ -275,7 +275,7 @@ class FontAndColours(wx.Panel):
             colours.append([int(c) for c in col])
 
         for x, colour in enumerate(colours):
-            method = lambda evt, id=x: self.on_colour(evt, id)
+            method = lambda evt, _id=x: self.on_colour(evt, _id)
             b = wx.BitmapButton(self, bitmap=make_bitmap(colour))
             self.buttons.append(b)
             self.grid.Add(b, 0)
@@ -377,31 +377,22 @@ class FontAndColours(wx.Panel):
         self.button.SetLabel("%s %s %s %s" % (font.GetFaceName() , w, s, size))
 
 
-    def on_colour(self, event, id):
+    def on_colour(self, event, _id):
         """
         Change the colour of the selected button. We need to remove the current
-        button, create a new one with the newly selected colour, Bind this
-        method to that new button and re-layout the sizer
+        button's button, recreate it with the new colour and re-layout the sizer
         """
-        pref = "colour%s" % (id + 1)
+        pref = "colour%s" % (_id + 1)
         colour = ([int(c) for c in self.config[pref]])
         data = wx.ColourData()
         data.SetColour(colour)
         dlg = wx.ColourDialog(self, data)
 
         if dlg.ShowModal() == wx.ID_OK:
-
             self.config[pref] = list(dlg.GetColourData().Colour.Get())
 
-            #self.grid.Remove(self.buttons[id])
             col = make_bitmap(dlg.GetColourData().Colour)
-            self.buttons[id].SetBitmapLabel(col)
-            #b = wx.BitmapButton(self, bitmap=col)
-            #self.buttons[id] = b
-            #self.grid.Insert(before=id, item=b, proportion=0)
-
-            #method = lambda evt, x=id: self.on_colour(evt, x)
-            #self.buttons[id].Bind(wx.EVT_BUTTON, method)
+            self.buttons[_id].SetBitmapLabel(col)
             self.grid.Layout()
 
         dlg.Destroy()
@@ -462,7 +453,7 @@ class View(scrolled.ScrolledPanel):
             preview.SetValue(True)
         if self.config['colour_grid']:
             colour.SetValue(True)
-            
+
         cols.SetValue(str(self.config['toolbox_columns']))
         self.width.SetValue(self.config['default_width'])
         self.height.SetValue(self.config['default_height'])
@@ -470,7 +461,7 @@ class View(scrolled.ScrolledPanel):
         for x, btn in enumerate([radio1, radio2]):
             sizer.Add(btn, 0, wx.LEFT, 30)
             sizer.Add((10, 5))
-            method = lambda evt, id=x: self.on_view(evt, id)
+            method = lambda evt, _id=x: self.on_view(evt, _id)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
 
         sizer.Add(cols_label, 0, wx.ALL, 15)
@@ -508,10 +499,10 @@ class View(scrolled.ScrolledPanel):
 
     def on_preview(self, event):
         self.config['tool_preview'] = event.Checked()
-        
+
     def on_colour(self, event):
         self.config['colour_grid'] = event.Checked()
-        
+
     def on_title(self, event):
         self.config['print_title'] = event.Checked()
 
@@ -522,8 +513,8 @@ class View(scrolled.ScrolledPanel):
         self.config['default_height'] = self.height.GetValue()
 
 
-    def on_view(self, event, id):
-        if id == 0:
+    def on_view(self, event, _id):
+        if _id == 0:
             self.config['toolbox'] = 'icon'
         else:
             self.config['toolbox'] = 'text'
@@ -561,7 +552,7 @@ class PDF(wx.Panel):
         for x, btn in enumerate([radio1, radio2, radio3]):
             sizer.Add(btn, 0, wx.LEFT, 30)
             sizer.Add((10, 5))
-            method = lambda evt, id=x: self.on_quality(evt, id)
+            method = lambda evt, _id=x: self.on_quality(evt, _id)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
 
         sizer.Add((10, 10))
@@ -588,10 +579,10 @@ class PDF(wx.Panel):
 
 
 
-    def on_quality(self, event, id):
-        if id == 0:
+    def on_quality(self, event, _id):
+        if _id == 0:
             self.config['convert_quality'] = 'highest'
-        elif id == 1:
+        elif _id == 1:
             self.config['convert_quality'] = 'high'
         else:
             self.config['convert_quality'] = 'normal'

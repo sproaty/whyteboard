@@ -64,7 +64,6 @@ import webbrowser
 import urllib
 import tarfile
 import zipfile
-import shutil
 import distutils.dir_util
 import wx
 
@@ -216,15 +215,15 @@ class Utility(object):
                 board = self.gui.tabs.GetPage(x)
                 for shape in board.shapes:
                     if isinstance(shape, tools.Image):
-                        img = shape.image.ConvertToImage()                       
+                        img = shape.image.ConvertToImage()
                         img_data = img.GetData()
-        
+
                         if not shape.filename:
                             for k, v in data.items():
                                 if v == img_data:
                                     shape.filename = k
                                     break
-        
+
                             #  the above iteration didn't find any common pastes
                             if not shape.filename:
                                 name = make_filename() + ".jpg"
@@ -233,15 +232,15 @@ class Utility(object):
                                 data[shape.filename] = img_data
                                 _zip.write(name, os.path.join("data", name))
                                 to_remove.append(name)
-                                                                            
+
                         else:
                             name = shape.filename
-                            
+
                             if not name in to_remove:
                                 img.SaveFile(name, get_wx_image_type(name))
                                 _zip.write(name, os.path.join("data", name))
                                 to_remove.append(name)
-                        
+
             [os.remove(x) for x in to_remove]
 
 
@@ -307,7 +306,7 @@ class Utility(object):
                 if os.path.exists(self.filename):
                     os.remove(self.filename)
                 os.rename('whyteboard_temp_new.wtbd', self.filename)
-                    
+
                 self.zip = zipfile.ZipFile(self.filename, "r")
 
                 # Fix bug in Windows where the current shapes get reset above
@@ -634,7 +633,7 @@ class Utility(object):
         Exports the current view as a file. Select the appropriate wx constant
         depending on the filetype. gif is buggered for some reason :-/
         """
-        const = get_wx_image_type(filename)  
+        const = get_wx_image_type(filename)
         self.gui.board.deselect()
         self.gui.board.redraw_all()
 

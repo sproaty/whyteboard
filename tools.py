@@ -31,7 +31,6 @@ import time
 import math
 import cStringIO
 import ntpath
-import copy
 import wx
 
 from dialogs import TextInput
@@ -395,12 +394,12 @@ class Polygon(OverlayShape):
             self.x, self.y = self.points[0]  # for the correct offset when moving
         elif wx.GetKeyState(wx.WXK_SHIFT):
             self.rescale(x, y)
-            self.x, self.y = self.points[0] 
+            self.x, self.y = self.points[0]
         else:
-            self.points[pos] = (x, y) 
+            self.points[pos] = (x, y)
             if pos == 0:  # first point
                 self.x, self.y = x, y
-        
+
     def rescale(self, x, y):
         """
         Thanks to Mark Ransom -- http://stackoverflow.com/questions/2014859/
@@ -1554,14 +1553,14 @@ class Select(Tool):
 
     def left_down(self, x, y):
         """
-        First, check the selected shape (which will be drawn on top of the 
+        First, check the selected shape (which will be drawn on top of the
         others) so that's selected first.
         """
         self.board.redraw_all()
         if self.board.selected:
             if self.check_for_hit(self.board.selected, x, y):
                 return
-        
+
         for shape in reversed(self.board.shapes):
             if self.check_for_hit(shape, x, y):
                 break  # breaking is vital to selecting the correct shape
@@ -1573,7 +1572,7 @@ class Select(Tool):
         """
         Sees if a shape is underneath the mouse coords, and allows the shape to
         be re-dragged to place
-        """        
+        """
         found = False
         handle = shape.handle_hit_test(x, y)  # test handle before area
 
@@ -1606,9 +1605,9 @@ class Select(Tool):
             else:
                 self.board.gui.control.transparent.SetValue(False)
                 self.board.gui.menu.Check(ID_TRANSPARENT, False)
-            
+
         return found
-    
+
 
     def right_up(self, x, y):
         """Pops up a shape menu if a shape was clicked on"""
@@ -1620,7 +1619,7 @@ class Select(Tool):
                 found = shape
             if found:
                 break
-            
+
         if not found:
             return
 
@@ -1704,7 +1703,8 @@ class BitmapSelect(Rectangle):
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
 
-        if not replay and self.board.gui.util.config['bmp_select_transparent']:
+        if (not replay and self.board.gui.util.config['bmp_select_transparent']
+            and self.board.gui.thumbs.transparent):
             dc = wx.GCDC(dc)
             dc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 50)))  # light blue
             dc.SetPen(wx.Pen(self.colour, self.thickness, wx.SOLID))

@@ -20,7 +20,6 @@
 import os
 import random
 import wx
-import sys
 
 import tools
 

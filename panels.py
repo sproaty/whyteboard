@@ -31,8 +31,6 @@ from wx.lib.wordwrap import wordwrap as wordwrap
 from wx.lib import scrolledpanel as scrolled
 from wx.lib.buttons import GenBitmapToggleButton
 
-from copy import copy
-
 from utility import MediaDropTarget
 from event_ids import *
 from functions import make_bitmap, get_time
@@ -292,7 +290,7 @@ class ControlPanel(wx.Panel):
             elif var_name != "background":
                 setattr(self.gui.board.selected, var_name, value)
             self.gui.board.redraw_all(True)
-            
+
         self.gui.board.select_tool()
         self.preview.Refresh()
 
@@ -746,7 +744,7 @@ class NotesPopup(Popup):
             text = _("&Select")
 
             if self.item.selected:
-               text =  _("De&select")
+                text =  _("De&select")
             self.Append(ID, text)
             self.Append(ID2, _("&Edit Note..."))
             self.AppendSeparator()
@@ -788,10 +786,10 @@ class ShapePopup(Popup):
     def make_menu(self, extra):
         SELECT, EDIT, DELETE, POINT, SWAP = wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId()
 
-        text, help = _("&Select"), _("Selects this shape")
+        text, _help = _("&Select"), _("Selects this shape")
         if self.item.selected:
-           text, help =  _("De&select"), _("Deselects this shape")
-        self.Append(SELECT, text, help)
+            text, _help =  _("De&select"), _("Deselects this shape")
+        self.Append(SELECT, text, _help)
 
         self.Append(EDIT, _("&Edit..."), _("Edit the text"))
         self.Append(POINT, _("&Add New Point"), _("Adds a new point to the Polygon"))
@@ -801,7 +799,7 @@ class ShapePopup(Popup):
         self.Append(ID_SWAP_COLOURS, _("Swap &Colors"))
         self.AppendSeparator()
         self.Append(ID_MOVE_UP, _("Move &Up")+"\tCtrl-Up")
-        self.Append(ID_MOVE_DOWN,_("Move &Down")+"\tCtrl-Down")
+        self.Append(ID_MOVE_DOWN, _("Move &Down")+"\tCtrl-Down")
         self.Append(ID_MOVE_TO_TOP, _("Move To &Top")+"\tCtrl-Shift-Up")
         self.Append(ID_MOVE_TO_BOTTOM, _("Move To &Bottom")+"\tCtrl-Shift-Down")
 
@@ -1007,8 +1005,8 @@ class Thumbs(scrolled.ScrolledPanel):
         """
         Updates all thumbnails (i.e. upon loading a Whyteboard file).
         """
-        for x, i in enumerate(self.thumbs):
-            self.update(x)
+        for count, item in enumerate(self.thumbs):
+            self.update(count)
 
 
 #----------------------------------------------------------------------

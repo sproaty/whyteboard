@@ -36,6 +36,14 @@ to produce the error.
 Giving your e-mail address will allow me to get back in touch with you to follow
 up on the bug, and to confirm a fix. Several people have done this, thanks.
 
+**
+
+Feedback can be sent from the program, click on "Help", then "Send Feedback",
+which will bring up a dialog. Please enter an e-mail address so I can reply
+about any issues/feature suggestions.
+
+
+**
 
 If you are getting an error on Windows,
 "Application failed to start because the application configuration is incorrect.
@@ -53,7 +61,7 @@ http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14
 
 * Media Tool may take several file loads to actually load the file correctly.
 * Media Tool may not resize the video/control panel properly
-* Dragging and dropping text from Firefox will 'hang' the program until the text 
+* Dragging and dropping text from Firefox will 'hang' the program until the text
   dialog is closed
 * Copying/pasting text with tab characters do not display the tabs on Windows
 

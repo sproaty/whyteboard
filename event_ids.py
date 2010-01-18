@@ -23,7 +23,6 @@ import wx
 IDs used by the program for event binding
 """
 
-ID_CHANGE_TOOL = wx.NewId()       # change tool hotkey
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
 ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
@@ -52,7 +51,6 @@ ID_RELOAD_PREF = wx.NewId()       # reload preferences
 ID_RENAME = wx.NewId()            # rename sheet
 ID_REPORT_BUG = wx.NewId()        # report a problem
 ID_RESIZE = wx.NewId()            # resize dialog
-ID_ROTATE = wx.NewId()            # rotate dialog for image 90/180/270
 ID_SHAPE_VIEWER = wx.NewId()      # view/edit shapes
 ID_STATUSBAR = wx.NewId()         # toggle statusbar
 ID_SWAP_COLOURS = wx.NewId()      # swap colour

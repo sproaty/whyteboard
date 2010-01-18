@@ -359,9 +359,9 @@ class UpdateDialog(wx.Dialog):
             # rename current exe, extract zip which contains whyteboard.exe
             if os.name == "nt":
                 os.rename(path[1], "wtbd-bckup.exe")
-                zip = zipfile.ZipFile(tmp_file)
-                zip.extractall()
-                zip.close()
+                _zip = zipfile.ZipFile(tmp_file)
+                _zip.extractall()
+                _zip.close()
                 os.remove(tmp_file)
                 wb = os.path.abspath(sys.argv[0])
                 args = [wb, [wb]]
@@ -593,6 +593,66 @@ class FindIM(wx.Dialog):
         self.Close()
 
 #----------------------------------------------------------------------
+
+class Feedback(wx.Dialog):
+    """
+    Sends feedback to myself by POSTing to a PHP script
+    """
+    def __init__(self, gui):
+        wx.Dialog.__init__(self, gui)
+
+        t_lbl = wx.StaticText(self, label=_("Your Feedback:"))
+        email_label = wx.StaticText(self, label=_("E-mail Address"))
+        self.feedback = wx.TextCtrl(self, size=(350, 250), style=wx.TE_MULTILINE)
+        self.email = wx.TextCtrl(self)
+
+        cancel_b = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        send_b = wx.Button(self, wx.ID_OK, _("Send &Feedback"))
+        send_b.SetDefault()
+        btnSizer = wx.StdDialogButtonSizer()
+        btnSizer.AddButton(send_b)
+        btnSizer.AddButton(cancel_b)
+        btnSizer.Realize()
+
+        font = t_lbl.GetClassDefaultAttributes().font
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        t_lbl.SetFont(font)
+        email_label.SetFont(font)
+
+        vsizer = wx.BoxSizer(wx.VERTICAL)
+        vsizer.Add((10, 10))
+        vsizer.Add(t_lbl, 0, wx.LEFT | wx.RIGHT, 10)
+        vsizer.Add(self.feedback, 0, wx.EXPAND | wx.ALL, 10)
+        vsizer.Add((10, 10))
+        vsizer.Add(email_label, 0, wx.ALL, 10)
+        vsizer.Add(self.email, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
+        vsizer.Add((10, 10))
+        vsizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
+
+        self.SetSizerAndFit(vsizer)
+        self.SetFocus()
+        self.SetAutoLayout(True)
+
+        self.Bind(wx.EVT_BUTTON, self.submit, send_b)
+
+
+    def submit(self, event):
+        """
+        Submit feedback.
+        """
+        if not self.email.GetValue() or self.email.GetValue().find("@") == -1:
+            wx.MessageBox(_("Please fill out your email address"), _("Error"))
+            return
+        params = urlencode({'submitted': 'fgdg',
+                            'feedback': self.feedback.GetValue(),
+                            'email': self.email.GetValue()})
+        f = urlopen("http://www.basicrpg.com/feedback_submit.php", params)
+        wx.MessageBox(_("Thanks for your feedback!"), _("Feedback Sent"))
+        self.Destroy()
+
+
+#----------------------------------------------------------------------
+
 
 class Resize(wx.Dialog):
     """

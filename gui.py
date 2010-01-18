@@ -34,7 +34,6 @@ of Notes that the user has inputted.
 import os
 import sys
 import time
-import pickle
 import locale
 import webbrowser
 
@@ -70,8 +69,8 @@ import event_ids as event_ids
 from event_ids import *
 
 from functions import get_home_dir
-from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout, 
-                     ExceptionHook, ShapeViewer)
+from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
+                     ExceptionHook, ShapeViewer, Feedback)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
@@ -399,7 +398,7 @@ class GUI(wx.Frame):
         now = time.strftime("%Y-%m-%d-%H-%M-%S")
 
         if self.util.filename:
-           now = self.util.filename
+            now = self.util.filename
 
         dlg = wx.FileDialog(self, _("Save Whyteboard As..."), os.getcwd(),
                 style=wx.SAVE | wx.OVERWRITE_PROMPT,  defaultFile=now,
@@ -581,21 +580,21 @@ class GUI(wx.Frame):
             pref.config = config
             pref.config.filename = home
             pref.on_okay()
-            #self.SendSizeEvent()
+
 
 
     def on_reload_preferences(self, event):
-            home =  os.path.join(get_home_dir(), "user.pref")
-            if os.path.exists(home):
-                config = ConfigObj(home, configspec=cfg.split("\n"))
-                validator = Validator()
-                config.validate(validator)
-                pref = Preferences(self)
-                pref.config = config
-                pref.config.filename = home
-                pref.on_okay()
-            else:
-                wx.MessageBox(_("No preferences file to reload"))
+        home =  os.path.join(get_home_dir(), "user.pref")
+        if os.path.exists(home):
+            config = ConfigObj(home, configspec=cfg.split("\n"))
+            validator = Validator()
+            config.validate(validator)
+            pref = Preferences(self)
+            pref.config = config
+            pref.config.filename = home
+            pref.on_okay()
+        else:
+            wx.MessageBox(_("No preferences file to reload"))
 
 
     def export_prompt(self):
@@ -903,10 +902,10 @@ class GUI(wx.Frame):
             elif (_id == ID_TRANSPARENT and board.selected
                   and not isinstance(board.selected, (Media, Image, Text))):
                 do = True
-            elif (_id == ID_SWAP_COLOURS and board.selected 
+            elif (_id == ID_SWAP_COLOURS and board.selected
                   and not self.board.selected.background == wx.TRANSPARENT
                   and not isinstance(board.selected, (Media, Image, Text))):
-                do = True                
+                do = True
         elif self.board:
             if self.board.copy:
                 do = True
@@ -1192,7 +1191,7 @@ class GUI(wx.Frame):
 
     def on_transparent(self, event=None):
         self.board.toggle_transparent()
-        
+
     def on_swap_colours(self, event=None):
         self.board.swap_colours()
 
@@ -1238,49 +1237,40 @@ class GUI(wx.Frame):
         printout.Destroy()
 
 
-    def on_translate(self, event):
+    def open_url(self, url):
         wx.BeginBusyCursor()
-        webbrowser.open_new_tab("https://translations.launchpad.net/whyteboard")
+        webbrowser.open_new_tab(url)
         wx.CallAfter(wx.EndBusyCursor)
 
-    def on_feedback(self, event):
-        wx.BeginBusyCursor()
-        webbrowser.open_new_tab("mailto:sproaty@gmail.com?subject=Whyteboard Feedback")
-        wx.CallAfter(wx.EndBusyCursor)
+    def show_dialog(self, _class, modal=True):
+        if modal:
+            _class.ShowModal()
+        else:
+            _class.Show()
+
+    def on_translate(self, event):
+        self.open_url("https://translations.launchpad.net/whyteboard")
 
     def on_report_bug(self, event):
-        wx.BeginBusyCursor()
-        webbrowser.open_new_tab("https://bugs.launchpad.net/whyteboard")
-        wx.CallAfter(wx.EndBusyCursor)
-
+        self.open_url("https://bugs.launchpad.net/whyteboard")
 
     def on_resize(self, event=None):
-        dlg = Resize(self)
-        dlg.ShowModal()
-
-
+        self.show_dialog(Resize(self))
 
     def on_shape_viewer(self, event=None):
-        dlg = ShapeViewer(self)
-        dlg.Show()
-
+        self.show_dialog(ShapeViewer(self), False)
 
     def on_preferences(self, event=None):
-        """ Checks for new versions of the program ***"""
-        dlg = Preferences(self)
-        dlg.ShowModal()
-
+        self.show_dialog(Preferences(self))
 
     def on_update(self, event=None):
-        """ Checks for new versions of the program ***"""
-        dlg = UpdateDialog(self)
-        dlg.ShowModal()
-
+        self.show_dialog(UpdateDialog(self))
 
     def on_history(self, event=None):
-        dlg = History(self)
-        dlg.ShowModal()
-        dlg.Destroy()
+        self.show_dialog(History(self))
+
+    def on_feedback(self, event):
+        self.show_dialog(Feedback(self), False)
 
 
     def find_help(self):
