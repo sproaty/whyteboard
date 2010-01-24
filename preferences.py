@@ -74,7 +74,6 @@ class Preferences(wx.Dialog):
         btnSizer.AddButton(okay)
         btnSizer.AddButton(cancel)
         btnSizer.Add(_help, 0, wx.ALIGN_LEFT | wx.LEFT, 10)
-        btnSizer.SetCancelButton(cancel)
         btnSizer.Realize()
 
         sizer.Add(self.tabs, 2, wx.EXPAND | wx.ALL, 10)

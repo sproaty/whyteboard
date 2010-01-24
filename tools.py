@@ -33,6 +33,7 @@ import cStringIO
 import ntpath
 import wx
 
+import meta
 from dialogs import TextInput
 from panels import MediaPanel, ShapePopup
 from event_ids import *
@@ -280,6 +281,7 @@ class Polygon(OverlayShape):
         self.center = None
         self.bbox = None  # bounding box
         self.scale_factor = 0
+        self.operation = None  # scaling/rotating
         self.original_points = []  # when scaling, we scale vs these
         self.orig_click = None  # when scaling - x/y of original click
 
@@ -330,9 +332,14 @@ class Polygon(OverlayShape):
 
     def start_select_action(self, handle):
         self.points = list(self.points)
+        if wx.GetKeyState(wx.WXK_CONTROL):
+            self.operation = "rotate"
+        elif wx.GetKeyState(wx.WXK_SHIFT):
+            self.operation = "rescale"
+
 
     def end_select_action(self, handle):
-        pass
+        self.operation = None
 
 
     def center_and_bbox(self):
@@ -386,19 +393,18 @@ class Polygon(OverlayShape):
         pos = handle - 1
         if pos < 0:
             pos = 0
-        #self.points[pos] = (x, y) # - MOVING A POINT
-        #if pos == 0:  # first point
-        #    self.x, self.y = x, y
-        if wx.GetKeyState(wx.WXK_CONTROL) :
+
+        if self.operation == "rotate":
             self.rotate((x, y))
             self.x, self.y = self.points[0]  # for the correct offset when moving
-        elif wx.GetKeyState(wx.WXK_SHIFT):
+        elif self.operation == "rescale":
             self.rescale(x, y)
             self.x, self.y = self.points[0]
         else:
             self.points[pos] = (x, y)
             if pos == 0:  # first point
                 self.x, self.y = x, y
+
 
     def rescale(self, x, y):
         """
@@ -527,13 +533,13 @@ class Pen(Polygon):
         pass
 
     def sort_handles(self):
-        pass#self.center_and_bbox()
+        pass
 
     def handle_hit_test(self, x, y):
         pass
 
-    def draw(self, dc, replay=True):
-        super(Pen, self).draw(dc, replay, "LineList")
+    def draw(self, dc, replay=True, _type="LineList"):
+        super(Pen, self).draw(dc, replay, _type)
 
     def get_args(self):
         return [self.points]
@@ -550,21 +556,7 @@ class Pen(Polygon):
 
 
     def hit_test(self, x, y):
-
-        bitmap = wx.EmptyBitmap(self.board.area[0], self.board.area[1])
-        dc = wx.MemoryDC()
-        dc.SelectObject(bitmap)
-        dc.SetBackground(wx.WHITE_BRUSH)
-        dc.Clear()
-        dc.SetPen(wx.Pen(wx.BLACK, self.thickness + 2, wx.SOLID))
-        dc.SetBrush(wx.BLACK_BRUSH)
-        dc.DrawLineList(self.points)
-        pixel = dc.GetPixel(x + 2, y + 2)
-
-        if (pixel.Red() == 0) and (pixel.Green() == 0) and (pixel.Blue() == 0):
-            return True
-        else:
-            return False
+        pass
 
 
 
@@ -580,6 +572,68 @@ class Pen(Polygon):
                  (40, 30), (40, 31), (38, 31), (37, 32), (35, 33), (33, 33),
                  (31, 34), (28, 35), (25, 36), (22, 36), (20, 37), (17, 37),
                  (14, 37), (12, 37), (10, 37), (9, 37), (8, 37), (7, 37)])
+
+
+#----------------------------------------------------------------------
+
+class Highlighter(Pen):
+    tooltip = _("Highlight with a transparent pen")
+    name = _("Highlighter")
+    icon = "highlighter"
+    hotkey = "h"
+    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+                 cursor=wx.CURSOR_PENCIL, join=wx.JOIN_ROUND):
+        Pen.__init__(self, board, colour, thickness + 6)
+        self.current = (0, 0)
+
+
+    def left_down(self, x, y):
+        super(Highlighter, self).left_down(x, y)
+        self.current = (x, y)
+
+    def motion(self, x, y):
+        self.points.append( [self.x_tmp, self.y_tmp, x, y] )
+        self.current = (x, y)
+        self.draw(None)
+        self.x_tmp = x
+        self.y_tmp = y
+
+    def left_up(self, x, y):
+        super(Highlighter, self).left_up(x, y)
+        wx.CallAfter(self.board.redraw_all)
+
+        
+
+    def draw(self, dc, replay=False, _type="LineList"):
+        if not dc:
+            dc = self.board.get_dc()
+           
+        gc = wx.GraphicsContext.Create(dc)
+        path = gc.CreatePath()
+        colour = (self.colour[0], self.colour[1], self.colour[2], 50)
+        gc.SetPen(wx.Pen(colour, self.thickness, wx.SOLID))
+
+        if not replay:
+            path.MoveToPoint(*self.current)
+            path.AddLineToPoint(self.x_tmp, self.y_tmp)
+        else:
+            for line in self.points:
+                path.MoveToPoint(line[0], line[1])
+                path.AddLineToPoint(line[2], line[3])
+        gc.StrokePath(path)
+
+
+        
+    def preview(self, dc, width, height):
+        """Points below make a curly line to show an example Pen drawing"""
+        gc = wx.GraphicsContext.Create(dc)
+        path = gc.CreatePath()
+        colour = (self.colour[0], self.colour[1], self.colour[2], 30)
+        gc.SetPen(wx.Pen(colour, self.thickness, wx.SOLID))
+
+        path.MoveToPoint(10, 25)
+        path.AddLineToPoint(70, 25)
+        gc.StrokePath(path)        
 
 
 #----------------------------------------------------------------------
@@ -1331,7 +1385,7 @@ class Image(OverlayShape):
         self.resizing = False
         self.img = wx.ImageFromBitmap(image)  # original wx.Image to rotate/scale
         self.angle = 0
-        self.img_size = None
+        self.scale_size = (image.GetWidth(), image.GetHeight())
         self.outline = None  # Rectangle/Polygon, used to rotate/resize
         self.dragging = False  # controls whether to draw the outline
         self.orig_click = None
@@ -1355,6 +1409,7 @@ class Image(OverlayShape):
         super(Image, self).sort_handles()
         if not self.img:
             self.img = wx.ImageFromBitmap(self.image)
+        self.find_center()
 
         self.rotate_handle = wx.Rect(self.x + self.image.GetWidth() / 2 - 6,
                                      self.y + self.image.GetHeight() / 2 - 6,
@@ -1362,6 +1417,11 @@ class Image(OverlayShape):
 
         if not self.img.HasAlpha():  # black background otherwise
             self.img.InitAlpha()
+
+
+    def find_center(self):
+        self.center = (self.x + self.image.GetWidth() / 2,
+                       self.y + self.image.GetHeight() / 2)
 
 
     def handle_hit_test(self, x, y):
@@ -1389,11 +1449,13 @@ class Image(OverlayShape):
 
 
     def rescale(self, x, y, handle):
-        self.outline.resize(x, y, handle)
-        if self.outline.width < 10:
-            self.outline.width = 10
-        if self.outline.height < 10:
-            self.outline.height = 10
+        outline = self.outline
+        outline.resize(x, y, handle)
+        if outline.width < 10:
+            outline.width = 10
+        if outline.height < 10:
+            outline.height = 10
+        self.scale_size = (outline.width, outline.height)
 
 
     def rotate(self, position):
@@ -1440,11 +1502,13 @@ class Image(OverlayShape):
         """Performs the rescale/rotation, resets attributes"""
         if self.outline and self.dragging:
             if handle == HANDLE_ROTATE:
-                img = self.img.Rotate(-self.angle, self.outline.center)
+                img = self.img.Rotate(-self.angle, self.center)
+            #if handle == HANDLE_ROTATE:
+            #    self.scale_size = (self.img.GetWidth(), self.img.GetHeight())
             else:
                 img = wx.BitmapFromImage(self.img)
                 img = wx.ImageFromBitmap(img)
-                img.Rescale(self.outline.width, self.outline.height, wx.IMAGE_QUALITY_HIGH)
+                img.Rescale(*self.scale_size, quality=wx.IMAGE_QUALITY_HIGH)
 
             self.image = wx.BitmapFromImage(img)
 
@@ -1698,13 +1762,13 @@ class BitmapSelect(Rectangle):
         self.board.copy = self
 
 
-    def draw(self, dc, replay=False):
+    def draw(self, dc, replay=False):       
         if not replay:
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
 
         if (not replay and self.board.gui.util.config['bmp_select_transparent']
-            and self.board.gui.thumbs.transparent):
+            and meta.transparent):
             dc = wx.GCDC(dc)
             dc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 50)))  # light blue
             dc.SetPen(wx.Pen(self.colour, self.thickness, wx.SOLID))
@@ -1721,6 +1785,7 @@ class BitmapSelect(Rectangle):
         """ Doesn't affect the shape list """
         if not (x != self.x and y != self.y):
             self.board.copy = None
+
 
     def preview(self, dc, width, height):
         dc.SetPen(wx.BLACK_DASHED_PEN)
@@ -1814,5 +1879,5 @@ RoundRect = RoundedRect
 RectSelect = BitmapSelect
 
 # items to draw with
-items = [Pen, Eraser, Rectangle, RoundedRect, Ellipse, Circle, Polygon, Line, Arrow, Text,
-         Note, Media, Eyedrop, BitmapSelect, Select]
+items = [Pen, Eraser, Rectangle, RoundedRect, Ellipse, Circle, Polygon, Line, 
+         Arrow, Text, Note, Media, Eyedrop, BitmapSelect, Select]

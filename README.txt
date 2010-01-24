@@ -77,11 +77,9 @@ ImageMagick, image editing suite - http://www.imagemagick.net
 BeautifulSoup, Python HTML parser - http://www.crummy.com/software/BeautifulSoup/
 ConfigObj, Python configuration files - http://www.voidspace.org.uk/python/configobj.html
 Editra Control Library, extra wxPython widgets - http://editra.org/eclib
-Crystal Project, icons - http://www.everaldo.com/crystal/
 
 Tango Icon Library - http://tango.freedesktop.org/Tango_Icon_Library
 py2exe, compiled python to windows exes - http://www.py2exe.org/
 GUI2Exe, python compiler front-end -  http://code.google.com/p/gui2exe/
 InnoSetup - windows installer creator - http://www.jrsoftware.org/isinfo.php
 UPX, exe compressor - http://upx.sourceforge.net/
-Tango Icon Library - http://tango.freedesktop.org/Tango_Icon_Library

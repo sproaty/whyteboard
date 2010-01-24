@@ -35,6 +35,7 @@ from urllib import urlopen, urlretrieve, urlencode
 import lib.errdlg
 from lib.BeautifulSoup import BeautifulSoup
 
+import meta
 import tools
 from functions import get_home_dir
 _ = wx.GetTranslation
@@ -62,7 +63,8 @@ class History(wx.Dialog):
         icons = ["play", "pause", "stop"]
 
         for icon in icons:
-            btn = wx.BitmapButton(self, bitmap=wx.Bitmap(path + icon + ".png"))
+            btn = wx.BitmapButton(self, bitmap=wx.Bitmap(path + icon + ".png"),
+                                  style=wx.NO_BORDER)
             btn.SetToolTipString(icon.capitalize())
             btn.Bind(wx.EVT_BUTTON, getattr(self, icon))
             historySizer.Add(btn, 0,  wx.ALL, 2)
@@ -320,7 +322,7 @@ class UpdateDialog(wx.Dialog):
                 _all = soup.findAll("td", {"class": "vt col_3"})
                 size = _all[i].findNext('a').renderContents().strip()
 
-                if version != self.gui.version:
+                if version != meta.version:
                     s = (_(" There is a new version available")+", %s\n File: %s\n"+
                         " Size: %s") % (version, _file, size)
                     self.text.SetLabel(s)
@@ -845,7 +847,7 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
         return os.linesep.join(info)
 
     def GetProgramName(self):
-        return "Whyteboard " + wx.GetTopLevelWindows()[0].version
+        return "Whyteboard " + meta.version
 
 
     def Send(self):
@@ -909,6 +911,10 @@ class ShapeViewer(wx.Dialog):
         self.shapes = copy(self.gui.board.shapes)
         self.SetSizeHints(450, 300)
         self.buttons = []  # move up/down/top/bottom buttons
+        if os.name == "nt":
+            style = wx.RAISED_BORDER
+        else:
+            style = wx.NO_BORDER
 
         label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -930,18 +936,21 @@ class ShapeViewer(wx.Dialog):
         tips = ["To Top", "Up", "Down", "To Bottom"]
 
         for icon, tip in zip(icons, tips):
-            btn = wx.BitmapButton(self, bitmap=wx.Bitmap(path+"move-" + icon + ".png"))
+            btn = wx.BitmapButton(self, bitmap=wx.Bitmap(path+"move-" + icon + ".png"),
+                                  style=style)
             btn.SetToolTipString("Move Shape "+tip)
             btn.Bind(wx.EVT_BUTTON, getattr(self, "on_"+icon))
             bsizer.Add(btn, 0, wx.RIGHT, 5)
             self.buttons.append(btn)
 
-        self.prev = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "prev_sheet.png"))
+        self.prev = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "prev_sheet.png"),
+                                    style=style)
         self.prev.SetToolTipString(_("Previous Sheet"))
         self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
         nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
 
-        self.next = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "next_sheet.png"))
+        self.next = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "next_sheet.png"),
+                                    style=style)
         self.next.SetToolTipString(_("Next Sheet"))
         self.next.Bind(wx.EVT_BUTTON, self.on_next)
         nextprevsizer.Add(self.next)
@@ -952,9 +961,9 @@ class ShapeViewer(wx.Dialog):
         self.pages.SetSelection(self.gui.current_tab)
 
         bsizer.Add((1, 1), 1, wx.EXPAND)  # align to the right
-        bsizer.Add(self.pages, 0, wx.RIGHT, 10)
         bsizer.Add(nextprevsizer, 0, wx.RIGHT, 10)
-
+        bsizer.Add(self.pages, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
+        
         okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         okButton.SetDefault()
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))

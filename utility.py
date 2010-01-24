@@ -76,6 +76,7 @@ from dialogs import ProgressDialog, FindIM
 from functions import (get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type)
 
+import meta
 import tools
 import whyteboard
 
@@ -269,7 +270,7 @@ class Utility(object):
                             shape.tree_id = None
                         shape.save()  # need to unlink unpickleable items;
 
-                version = self.gui.version
+                version = meta.version
                 if not self.update_version:
                     version = self.saved_version
 
@@ -388,7 +389,9 @@ class Utility(object):
         Loads in the old .wtbd format (just a pickled file). Takes in either
         a filename (path) or a Python file object (from the zip archive)
         Pretty messy code, to support old save files written in "w", not "wb"
-        """
+        """      
+        sys.modules['tools'] = tools  # monkey patch for new src layout (0.39.4)
+             
         temp = {}
         method = pickle.load
         if not pickle_data:
@@ -422,7 +425,7 @@ class Utility(object):
             if not pickle_data:
                 f.close()
 
-
+        del sys.modules['tools']
         self.recreate_save(filename, temp)
 
 
@@ -503,7 +506,7 @@ class Utility(object):
 
         #  Don't save .wtbd file of future versions as current, older version
         num = [int(x) for x in version.split(".")]
-        ver = [int(x) for x in self.gui.version.split(".")]
+        ver = [int(x) for x in meta.version.split(".")]
         if len(num) == 2:
             num.append(0)
 

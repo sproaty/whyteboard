@@ -61,8 +61,9 @@ from lib.configobj import ConfigObj
 from lib.validate import Validator
 
 import lib.icon
+import meta
 from whyteboard import Whyteboard
-from tools import Image, Note, Text, Media
+from tools import Image, Note, Text, Media, Highlighter
 from utility import Utility, WhyteboardDropTarget, languages, cfg
 
 import event_ids as event_ids
@@ -87,8 +88,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    version = "0.39.4"
-    title = "Whyteboard " + version
+    title = "Whyteboard " + meta.version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
     instances = 0
 
@@ -114,6 +114,9 @@ class GUI(wx.Frame):
 
         self._oldhook = sys.excepthook
         sys.excepthook = ExceptionHook
+        meta.find_transparent()  # important
+        if meta.transparent:
+            self.util.items.insert(1, Highlighter)        
 
         self.can_paste = False
         if self.util.get_clipboard():
@@ -157,12 +160,13 @@ class GUI(wx.Frame):
 
         self.count = 5  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(50)
-        wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
+        wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)        
         self.board.update_thumb()
         self.do_bindings()
         self.update_panels(True)  # bold first items
         self.UpdateWindowUI()
 
+        
 
     def __del__(self):
         sys.excepthook = self._oldhook
@@ -1316,7 +1320,7 @@ class GUI(wx.Frame):
     def on_about(self, event=None):
         inf = wx.AboutDialogInfo()
         inf.Name = "Whyteboard"
-        inf.Version = self.version
+        inf.Version = meta.version
         inf.Copyright = "(C) 2009 Steven Sproat"
         inf.Description = _("A simple whiteboard and PDF annotator")
         inf.Developers = ["Steven Sproat <sproaty@gmail.com>"]
@@ -1366,6 +1370,7 @@ class WhyteboardApp(wx.App):
         Load config file, apply translation, parse arguments and delete any
         temporary filse left over from an update
         """
+        wx.SetDefaultPyEncoding("utf-8")
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
 
         path = os.path.join(get_home_dir(), "user.pref")

@@ -31,6 +31,7 @@ from wx.lib.wordwrap import wordwrap as wordwrap
 from wx.lib import scrolledpanel as scrolled
 from wx.lib.buttons import GenBitmapToggleButton
 
+import meta
 from utility import MediaDropTarget
 from event_ids import *
 from functions import make_bitmap, get_time
@@ -129,7 +130,7 @@ class ControlPanel(wx.Panel):
         self.background.SetValue("White")
         self.transparent = wx.CheckBox(panel, label=_("Transparent"), pos=(0, 69))
         self.transparent.SetValue(True)
-        icon = os.path.join(self.gui.util.get_path().decode("latin-1"), "images",
+        icon = os.path.join(self.gui.util.get_path(), "images",
                             "icons", "swap_colours.png")
 
         swap = wx.BitmapButton(panel, bitmap=wx.Bitmap(icon), pos=(70, 0),
@@ -164,9 +165,8 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             if _type == "icon":
-                path = os.path.join(self.gui.util.get_path().decode("latin-1"),
-                                    "images", "tools", val.decode("latin-1") +
-                                    ".png")
+                path = os.path.join(self.gui.util.get_path(), "images", "tools", 
+                                    val + ".png")
                 b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
                                           style=wx.NO_BORDER)
                 evt = wx.EVT_BUTTON
@@ -174,8 +174,10 @@ class ControlPanel(wx.Panel):
                 b = wx.ToggleButton(self.pane, x + 1, val)
                 evt = wx.EVT_TOGGLEBUTTON
 
-            b.SetToolTipString(_(self.gui.util.items[x].tooltip)+"\n"+_("Shortcut Key:")
-                               + " " + self.gui.util.items[x].hotkey.upper())
+            b.SetToolTipString("%s\n%s %s" % (_(self.gui.util.items[x].tooltip),
+                                            _("Shortcut Key:"),
+                                            self.gui.util.items[x].hotkey.upper()))
+            
             b.Bind(evt, self.change_tool, id=x + 1)
             self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             self.tools[x + 1] = b
@@ -883,13 +885,13 @@ class Thumbs(scrolled.ScrolledPanel):
         self.text = []  # StaticTexts
         self.new_thumb()  # inital thumb
         self.thumbs[0].current = True
-        self.transparent = True
-        try:
-            dc = wx.MemoryDC()
-            dc.SelectObject(gui.board.buffer)
-            x = wx.GCDC(dc)
-        except NotImplementedError:
-            self.transparent = False
+        #self.transparent = True
+        #try:
+        #    dc = wx.MemoryDC()
+        #    dc.SelectObject(wx.EmptyBitmap(10, 10))
+        #    x = wx.GCDC(dc)
+        #except NotImplementedError:
+        #    self.transparent = False
 
 
     def new_thumb(self, _id=0, name=None):
@@ -997,7 +999,7 @@ class Thumbs(scrolled.ScrolledPanel):
         thumb.SetBitmapLabel(bmp)
         self.thumbs[_id].buffer = bmp
 
-        if thumb.current and self.transparent:
+        if thumb.current and meta.transparent:
             thumb.highlight()
 
 

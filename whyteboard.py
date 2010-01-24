@@ -32,23 +32,8 @@ larger than the client size, then scrollbars are displayed, and a slight
 """
 
 import os
-import sys
 import copy
-import webbrowser
 
-if not hasattr(sys, 'frozen'):
-    WXVER = '2.8.9'
-    import wxversion
-    if wxversion.checkInstalled(WXVER):
-        wxversion.select([WXVER, '2.8.10'])
-    else:
-        import wx
-        app = wx.PySimpleApp()
-        wx.MessageBox("The requested version of wxPython is not installed.\n"+
-                     "Please install version "+ WXVER, "wxPython Version Error")
-        app.MainLoop()
-        webbrowser.open("http://wxPython.org/download.php")
-        sys.exit()
 
 import wx
 import wx.lib.dragscroller
@@ -112,6 +97,11 @@ class Whyteboard(wx.ScrolledWindow):
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
+
+        img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
+                                    "cursors", "") + "rotate.png")
+        self.rotate_cursor = wx.CursorFromImage(img)
+
         self.select_tool()
         self.redraw_all()
 
@@ -158,8 +148,8 @@ class Whyteboard(wx.ScrolledWindow):
             if not self.check_mouse_for_resize(x, y):
                 return
 
-        if self.gui.bar_shown:
-            self.gui.SetStatusText(" %s, %s" % (x, y))
+        #if self.gui.bar_shown:
+        #    self.gui.SetStatusText(" %s, %s" % (x, y))
 
         if self.drawing or self.shape.drawing:
             self.shape.motion(x, y)
@@ -208,7 +198,7 @@ class Whyteboard(wx.ScrolledWindow):
         if self.selected:
             if self.select_tool_cursor_change(self.selected, x, y):
                 return
-            
+
         for shape in reversed(self.shapes):
             if self.select_tool_cursor_change(shape, x, y):
                 break
@@ -220,25 +210,30 @@ class Whyteboard(wx.ScrolledWindow):
         res = shape.handle_hit_test(x, y)
         ret = True
         if res and isinstance(shape, (Line, Polygon)):
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))            
+            if wx.GetKeyState(wx.WXK_SHIFT):
+                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
+            elif wx.GetKeyState(wx.WXK_CONTROL):
+                self.SetCursor(self.rotate_cursor)
+            else:
+                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
         elif res == HANDLE_ROTATE:
-            img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
-                                        "cursors", "") + "rotate.png")
-            self.SetCursor(wx.CursorFromImage(img))
+
+            self.SetCursor(self.rotate_cursor)
         elif res in [TOP_LEFT, BOTTOM_RIGHT]:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))            
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
         elif res in [TOP_RIGHT, BOTTOM_LEFT]:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))        
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
         elif res in [CENTER_TOP, CENTER_BOTTOM]:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))            
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))
         elif res in [CENTER_LEFT, CENTER_RIGHT]:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))        
+            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))
         elif shape.hit_test(x, y):
-            self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))            
+            self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
         else:
             ret = False
-        return ret    
-            
+        return ret
+
+
     def check_mouse_for_resize(self, x, y):
         """
         Sees if the user's mouse is outside of the canvas, and updates their
@@ -275,12 +270,10 @@ class Whyteboard(wx.ScrolledWindow):
 
 
     def resize_cursor(self, direction):
-        if direction == DIAGONAL:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
-        elif direction == RIGHT:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))
-        elif direction == BOTTOM:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))
+        cursors = {DIAGONAL: wx.CURSOR_SIZENWSE, RIGHT: wx.CURSOR_SIZEWE,
+                   BOTTOM: wx.CURSOR_SIZENS}
+        self.SetCursor(wx.StockCursor(cursors.get(direction)))
+
 
 
     def resize_canvas(self, size, direction=None):
@@ -297,11 +290,31 @@ class Whyteboard(wx.ScrolledWindow):
         elif direction is not None:
             self.Scroll(*size)
 
-        self.buffer = wx.EmptyBitmap(*size)
+        #self.buffer = wx.EmptyBitmap(*size)
+        #self.area = size
+        #size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
+        #self.SetVirtualSize(size)
+        #self.redraw_all()
+
+        self.buffer, self.oldbuffer = wx.EmptyBitmap(*size), self.buffer
+        dc = wx.BufferedDC(None, self.buffer)
+        dc.DrawBitmap(self.oldbuffer, 0, 0)
+
         self.area = size
         size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
         self.SetVirtualSize(size)
-        self.redraw_all()
+
+        x1, y1 = self.oldbuffer.GetSize()
+        x2, y2 = self.buffer.GetSize()
+        if x1 > x2 and y1 > y2:
+            self.Refresh()
+        else:
+            clip = wx.Region(0, 0, *size)
+            bufrect = wx.Rect(0, 0, *self.oldbuffer.GetSize())
+            clip.SubtractRect(bufrect)
+            dc.SetClippingRegionAsRegion(clip)
+            dc.Clear()
+            self.redraw_all(dc=dc)
 
 
     def redraw_dirty(self, dc):
@@ -434,7 +447,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.selected.background = val
         self.selected.make_pen()
         self.redraw_all(True)
-        
+
 
     def delete_selected(self):
         """Deletes the selected shape"""
@@ -589,11 +602,11 @@ class Whyteboard(wx.ScrolledWindow):
         else:
             shape.draw(dc)
         self.redraw_dirty(dc)
-        
+
     def swap_colours(self):
         self.selected.colour, self.selected.background = self.selected.background, self.selected.colour
         self.redraw_all()
-        
+
     def get_tab(self):
         """ Returns the current tab number of this Whyteboard instance. """
         return self.tab.GetSelection()
@@ -615,11 +628,3 @@ class Whyteboard(wx.ScrolledWindow):
 
         if size[0] < self.area[0] or size[1] < self.area[1]:
             self.SetVirtualSize((self.area[0] + 20, self.area[1] + 20))
-
-
-#----------------------------------------------------------------------
-
-if __name__ == '__main__':
-    from gui import WhyteboardApp
-    app = WhyteboardApp()
-    app.MainLoop()
