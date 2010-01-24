@@ -8,8 +8,11 @@ xx xx January 2010
 
 xx Jan 2010 -- 0.39.4
 
+* New tool: Highlighter. It behaves as the Pen, but draws in a semi-transparent
+  ink; perfect for drawing attention to portions of a PDF image
+
 * Improvements to rotating an image with the mouse: now "follows" the mouse's
-  position, and can be rotated clockwise and counter-clockwise.
+  position, and can be rotated both clockwise and counter-clockwise.
   Thanks to Zack Buhman and members of Stack Overflow for help with the coding
 
 * Image rotation is now performed from a special "handle" for rotating. Rotating 
@@ -46,6 +49,9 @@ xx Jan 2010 -- 0.39.4
 * "Send Feedback" added to the Help menu
 * Removed the "Rotate Image" dialog
 
+* Restructured source code directories -- now just run whyteboard.py from the
+  main directory to start the program
+
 * Important Windows bugfix: drawing a shape would create extra Windows "GDI"
   objects; which was taking up unneeded resources. This bug has been present
   since version 0.25 (3rd release) - released back in January 2009!
@@ -59,11 +65,14 @@ xx Jan 2010 -- 0.39.4
 * Bugfix: rotated images weren't being saved as rotated
 * Bugfix: using next/previous sheet buttons in the Shape Viewer wouldn't set
   the drop-down control to the changed-to sheet
+  
 * Bugfix: "End" key would not jump to the end of the document correctly
 * Bugfix: menu icons appearing for 3 menu items on Windows, when no other menu
   items had icons - now removed
 * Bugfix: stopped a crash when wx.GCDC was not implemented on the system, due
   to a misconfigured Linux install
+ 
+* Bugfix: Hopefully (the problem doesn't happen with me; hard to test) 
  
 * Fixed unit tests so that they at least run -- need to improve the test's code
   coverage

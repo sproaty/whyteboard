@@ -37,20 +37,6 @@ import time
 import locale
 import webbrowser
 
-if not hasattr(sys, 'frozen'):
-    WXVER = '2.8.9'
-    import wxversion
-    if wxversion.checkInstalled(WXVER):
-        wxversion.select([WXVER, '2.8.10'])
-    else:
-        import wx
-        app = wx.PySimpleApp()
-        wx.MessageBox("The requested version of wxPython is not installed.\n"+
-                     "Please install version "+ WXVER, "wxPython Version Error")
-        app.MainLoop()
-        webbrowser.open("http://wxPython.org/download.php")
-        sys.exit()
-
 import wx
 import wx.lib.newevent
 import lib.flatnotebook as fnb
@@ -1432,13 +1418,3 @@ class WhyteboardApp(wx.App):
             for f in os.listdir(path):
                 if f.find(self.frame.util.backup_ext) is not -1:
                     os.remove(os.path.join(path, f))
-
-#----------------------------------------------------------------------
-
-def main():
-    app = WhyteboardApp(redirect=False)
-    app.MainLoop()
-
-
-if __name__ == '__main__':
-    main()

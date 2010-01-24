@@ -21,10 +21,10 @@ http://pages.cs.wisc.edu/~ghost/ - Windows users may need this for ImageMagick
 
 ***
 
-Run gui.py to launch the application, no installation needed!
+Run whyteboard.py to launch the application, no installation needed!
 If nothing happens, try launching one of the scripts from the console:
 
-$ python gui.py
+$ python whyteboard.py
 
 see what error occurred and let me know at, <sproaty@gmail.com>, report a bug at
 Launchpad at the link below.
@@ -79,7 +79,7 @@ ConfigObj, Python configuration files - http://www.voidspace.org.uk/python/confi
 Editra Control Library, extra wxPython widgets - http://editra.org/eclib
 
 Tango Icon Library - http://tango.freedesktop.org/Tango_Icon_Library
-py2exe, compiled python to windows exes - http://www.py2exe.org/
+py2exe, helps compile python files to windows .exe - http://www.py2exe.org/
 GUI2Exe, python compiler front-end -  http://code.google.com/p/gui2exe/
 InnoSetup - windows installer creator - http://www.jrsoftware.org/isinfo.php
-UPX, exe compressor - http://upx.sourceforge.net/
+UPX, .exe compressor - http://upx.sourceforge.net/
