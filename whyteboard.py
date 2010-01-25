@@ -34,11 +34,11 @@ if not hasattr(sys, 'frozen'):
         wxversion.select([WXVER, '2.8.10'])
     else:
         import wx
-        app = wx.PySimpleApp()
+        app = wx.App(False)
         wx.MessageBox("The requested version of wxPython is not installed.\n"+
                      "Please install version "+ WXVER, "wxPython Version Error")
         app.MainLoop()
-        webbrowser.open("http://wxPython.org/download.php")
+        webbrowser.open("http://www.wxpython.org/download.php")
         sys.exit()
 
 

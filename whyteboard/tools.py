@@ -591,6 +591,10 @@ class Highlighter(Pen):
         super(Highlighter, self).left_down(x, y)
         self.current = (x, y)
 
+    def left_up(self, x, y):
+        super(Highlighter, self).left_up(x, y)
+        wx.CallAfter(self.draw, self.board.get_dc(), True)
+        
     def motion(self, x, y):
         self.points.append( [self.x_tmp, self.y_tmp, x, y] )
         self.current = (x, y)
@@ -598,9 +602,6 @@ class Highlighter(Pen):
         self.x_tmp = x
         self.y_tmp = y
 
-    def left_up(self, x, y):
-        super(Highlighter, self).left_up(x, y)
-        wx.CallAfter(self.board.redraw_all)
 
         
 
@@ -1508,7 +1509,7 @@ class Image(OverlayShape):
             else:
                 img = wx.BitmapFromImage(self.img)
                 img = wx.ImageFromBitmap(img)
-                img.Rescale(*self.scale_size, quality=wx.IMAGE_QUALITY_HIGH)
+                img.Rescale(self.scale_size[0], self.scale_size[1], wx.IMAGE_QUALITY_HIGH)
 
             self.image = wx.BitmapFromImage(img)
 

@@ -219,30 +219,32 @@ class Utility(object):
                         img = shape.image.ConvertToImage()
                         img_data = img.GetData()
 
-                        if not shape.filename:
-                            for k, v in data.items():
-                                if v == img_data:
-                                    shape.filename = k
-                                    break
+                        for k, v in data.items():
+                            if v == img_data:
+                                shape.filename = k
+                                break
 
-                            #  the above iteration didn't find any common pastes
-                            if not shape.filename:
-                                name = make_filename() + ".jpg"
-                                shape.image.SaveFile(name, wx.BITMAP_TYPE_JPEG)
-                                shape.filename = name
-                                data[shape.filename] = img_data
-                                _zip.write(name, os.path.join("data", name))
-                                to_remove.append(name)
+                        #  the above iteration didn't find any common pastes
+                        if not shape.filename:
+                            name = make_filename() + ".jpg"
+                            shape.image.SaveFile(name, wx.BITMAP_TYPE_JPEG)
+                            shape.filename = name
+                            data[shape.filename] = img_data
+                            _zip.write(name, os.path.join("data", name))
+                            to_remove.append(name)
 
                         else:
                             name = shape.filename
 
                             if not name in to_remove:
+                                data[name] = img_data
                                 img.SaveFile(name, get_wx_image_type(name))
                                 _zip.write(name, os.path.join("data", name))
                                 to_remove.append(name)
 
             [os.remove(x) for x in to_remove]
+
+
 
 
             temp = {}

@@ -70,10 +70,11 @@ xx Jan 2010 -- 0.39.4
 * Bugfix: menu icons appearing for 3 menu items on Windows, when no other menu
   items had icons - now removed
 * Bugfix: stopped a crash when wx.GCDC was not implemented on the system, due
-  to a misconfigured Linux install
+  to a misconfigured wxPython install. Now, the program just doesn't use 
+  transparency for these users
  
-* Bugfix: Hopefully (the problem doesn't happen with me; hard to test) 
- 
+* Bugfix: Hopefully fixed problem with "UnicodeError" (the problem doesn't 
+  happen with me; hard to test if my fix works) 
 * Fixed unit tests so that they at least run -- need to improve the test's code
   coverage
 

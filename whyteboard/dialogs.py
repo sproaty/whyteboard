@@ -237,6 +237,7 @@ class ProgressDialog(wx.Dialog):
     def on_cancel(self, event):
         """Cancels the conversion process"""
         self.SetTitle(_("Cancelling..."))
+        self.FindWindowById(wx.ID_CANCEL).Disable()
         self.timer.Stop()
         self.gui.convert_cancelled = True
         if os.name == "nt":

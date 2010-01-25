@@ -885,13 +885,7 @@ class Thumbs(scrolled.ScrolledPanel):
         self.text = []  # StaticTexts
         self.new_thumb()  # inital thumb
         self.thumbs[0].current = True
-        #self.transparent = True
-        #try:
-        #    dc = wx.MemoryDC()
-        #    dc.SelectObject(wx.EmptyBitmap(10, 10))
-        #    x = wx.GCDC(dc)
-        #except NotImplementedError:
-        #    self.transparent = False
+
 
 
     def new_thumb(self, _id=0, name=None):

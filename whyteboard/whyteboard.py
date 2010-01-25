@@ -148,8 +148,8 @@ class Whyteboard(wx.ScrolledWindow):
             if not self.check_mouse_for_resize(x, y):
                 return
 
-        #if self.gui.bar_shown:
-        #    self.gui.SetStatusText(" %s, %s" % (x, y))
+        if self.gui.bar_shown:
+            self.gui.SetStatusText(" %s, %s" % (x, y))
 
         if self.drawing or self.shape.drawing:
             self.shape.motion(x, y)
