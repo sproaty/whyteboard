@@ -33,6 +33,9 @@ import cStringIO
 import ntpath
 import wx
 
+from lib.pubsub import pub
+
+
 import meta
 from dialogs import TextInput
 from panels import MediaPanel, ShapePopup
@@ -163,7 +166,7 @@ class OverlayShape(Tool):
     def left_up(self, x, y):
         """ Only adds the shape if it was actually dragged out """
         if x != self.x and y != self.y:
-            self.board.add_shape(self)
+            pub.sendMessage('shape.add', shape=self)
             self.sort_handles()
 
 
@@ -322,9 +325,9 @@ class Polygon(OverlayShape):
     def right_up(self, x, y):
         if len(self.points) > 2:
             self.drawing = False
-            self.board.add_shape(self)
+            pub.sendMessage('shape.add', shape=self)
             self.sort_handles()
-            self.board.select_tool()
+            self.board.change_current_tool()
             self.board.update_thumb()
             if self.board.HasCapture():
                 self.board.ReleaseMouse()
@@ -517,14 +520,14 @@ class Pen(Polygon):
 
     def left_up(self, x, y):
         if self.points:
-            self.board.add_shape(self)
+            pub.sendMessage('shape.add', shape=self)
             self.sort_handles()
             if len(self.points) == 1:  # a single click
                 self.board.redraw_all()
 
 
     def motion(self, x, y):
-        self.points.append( [self.x_tmp, self.y_tmp, x, y] )
+        self.points.append([self.x_tmp, self.y_tmp, x, y])
         self.time.append(time.time())
         self.x_tmp = x
         self.y_tmp = y  # swap for the next call to this function
@@ -538,26 +541,14 @@ class Pen(Polygon):
     def handle_hit_test(self, x, y):
         pass
 
+    def hit_test(self, x, y):
+        pass
+
     def draw(self, dc, replay=True, _type="LineList"):
         super(Pen, self).draw(dc, replay, _type)
 
     def get_args(self):
         return [self.points]
-
-
-    def move(self, x, y, offset):
-        """Gotta update every point relative to how much the first has moved"""
-        OverlayShape.move(self, x, y, offset)
-        diff = (x - self.points[0][0] - offset[0], y - self.points[0][1] - offset[1])
-
-        for count, point in enumerate(self.points):
-            self.points[count] = [point[0] + diff[0], point[1] + diff[1],
-                                  point[2] + diff[0], point[3] + diff[1]]
-
-
-    def hit_test(self, x, y):
-        pass
-
 
 
     def preview(self, dc, width, height):
@@ -593,8 +584,9 @@ class Highlighter(Pen):
 
     def left_up(self, x, y):
         super(Highlighter, self).left_up(x, y)
-        wx.CallAfter(self.draw, self.board.get_dc(), True)
-        
+        #wx.CallAfter(self.draw, self.board.get_dc(), True)
+        self.board.redraw_all()
+
     def motion(self, x, y):
         self.points.append( [self.x_tmp, self.y_tmp, x, y] )
         self.current = (x, y)
@@ -603,15 +595,16 @@ class Highlighter(Pen):
         self.y_tmp = y
 
 
-        
+
 
     def draw(self, dc, replay=False, _type="LineList"):
         if not dc:
             dc = self.board.get_dc()
-           
+
         gc = wx.GraphicsContext.Create(dc)
         path = gc.CreatePath()
-        colour = (self.colour[0], self.colour[1], self.colour[2], 50)
+        col = self.colour.Get()
+        colour = (col[0], col[1], col[2], 50)
         gc.SetPen(wx.Pen(colour, self.thickness, wx.SOLID))
 
         if not replay:
@@ -624,7 +617,7 @@ class Highlighter(Pen):
         gc.StrokePath(path)
 
 
-        
+
     def preview(self, dc, width, height):
         """Points below make a curly line to show an example Pen drawing"""
         gc = wx.GraphicsContext.Create(dc)
@@ -634,7 +627,7 @@ class Highlighter(Pen):
 
         path.MoveToPoint(10, 25)
         path.AddLineToPoint(70, 25)
-        gc.StrokePath(path)        
+        gc.StrokePath(path)
 
 
 #----------------------------------------------------------------------
@@ -898,7 +891,7 @@ class Line(OverlayShape):
     def left_up(self, x, y):
         """ Don't add a 'blank' line """
         if self.x != self.x2 or self.y != self.y2:
-            self.board.add_shape(self)
+            pub.sendMessage('shape.add', shape=self)
             self.sort_handles()
 
     def offset(self, x, y):
@@ -1022,7 +1015,7 @@ class Media(Tool):
         self.y = y
         self.board.medias.append(self)
         self.make_panel()
-        self.board.select_tool()
+        self.board.change_current_tool()
 
     def make_panel(self):
         if not self.mc:
@@ -1114,18 +1107,18 @@ class Eyedrop(Tool):
     def left_down(self, x, y):
         dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
         colour = dc.GetPixel(x, y)  # get colour
-        board = self.board.gui
-        board.control.colour.SetColour(colour)
-        board.util.colour = colour
-        board.control.preview.Refresh()
+        gui = self.board.gui
+        gui.control.colour.SetColour(colour)
+        gui.util.colour = colour
+        gui.control.preview.Refresh()
 
     def right_up(self, x, y):
         dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
         colour = dc.GetPixel(x, y)  # get colour
-        board = self.board.gui
-        board.control.background.SetColour(colour)
-        board.util.background = colour
-        board.control.preview.Refresh()
+        gui = self.board.gui
+        gui.control.background.SetColour(colour)
+        gui.util.background = colour
+        gui.control.preview.Refresh()
 
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush(self.board.gui.util.colour))
@@ -1179,14 +1172,14 @@ class Text(OverlayShape):
             dlg.Destroy()
             self.board.text = None
             self.board.redraw_all()
-            self.board.select_tool()
+            self.board.change_current_tool()
             return False
 
         dlg.transfer_data(self)  # grab font and text data
         self.font_data = self.font.GetNativeFontInfoDesc()
 
         if self.text:
-            self.board.add_shape(self)
+            pub.sendMessage('shape.add', shape=self)
             return True
         self.board.text = None
         return False
@@ -1308,17 +1301,14 @@ class Note(Text):
     def left_up(self, x, y,):
         """ Don't add a blank note """
         if super(Note, self).left_up(x, y):
-            self.board.gui.notes.add_note(self)
+            pub.sendMessage('note.add', note=self)
         else:
             self.board.redraw_all()
 
 
     def edit(self):
-        """Edit a non-blank Note by changing the tree item's text"""
         if super(Note, self).edit():
-            tree = self.board.gui.notes.tree
-            text = self.text.replace("\n", " ")[:15]
-            tree.SetItemText(self.tree_id, text)
+            pub.sendMessage('note.edit', tree_id=self.tree_id, text=self.text)
 
 
     def find_extent(self):
@@ -1365,7 +1355,7 @@ class Note(Text):
         """Recreates the note in the tree"""
         super(Note, self).load()
         if add_note:
-            self.board.gui.notes.add_note(self, self.board.gui.tab_count - 1)
+            pub.sendMessage('note.add', note=self, _id=self.board.gui.tab_count - 1)
 
 
 #----------------------------------------------------------------------
@@ -1396,7 +1386,7 @@ class Image(OverlayShape):
     def left_down(self, x, y):
         self.x = x
         self.y = y
-        self.board.add_shape(self)
+        pub.sendMessage('shape.add', shape=self)
         self.board.check_resize((self.image.GetWidth(), self.image.GetHeight()))
         self.sort_handles()
 
@@ -1658,19 +1648,7 @@ class Select(Tool):
             self.board.selected = shape
             shape.selected = True
 
-            x = self.board.shapes.index(shape)
-            self.board.shapes.pop(x)
-            self.board.redraw_all()  # hide 'original'
-            self.board.shapes.insert(x, shape)
-            shape.draw(self.board.get_dc(), False)  # draw 'new'
-
-            if shape.background == wx.TRANSPARENT:
-                self.board.gui.control.transparent.SetValue(True)
-                self.board.gui.menu.Check(ID_TRANSPARENT, True)
-            else:
-                self.board.gui.control.transparent.SetValue(False)
-                self.board.gui.menu.Check(ID_TRANSPARENT, False)
-
+            pub.sendMessage('shape.selected', shape=shape)
         return found
 
 
@@ -1732,7 +1710,7 @@ class Select(Tool):
             self.shape.end_select_action(self.handle)
 
         self.board.update_thumb()
-        self.board.select_tool()
+        self.board.change_current_tool()
 
     def preview(self, dc, width, height):
         dc.DrawBitmap(wx.Bitmap(os.path.join(self.board.gui.util.get_path(), "images",
@@ -1756,6 +1734,7 @@ class BitmapSelect(Rectangle):
         Rectangle.__init__(self, board, (0, 0, 0), 1)
 
     def left_down(self, x, y):
+        self.board.overlay = wx.Overlay()
         super(BitmapSelect, self).left_down(x, y)
         self.board.deselect()
         self.board.copy = None
@@ -1763,7 +1742,8 @@ class BitmapSelect(Rectangle):
         self.board.copy = self
 
 
-    def draw(self, dc, replay=False):       
+
+    def draw(self, dc, replay=False):
         if not replay:
             odc = wx.DCOverlay(self.board.overlay, dc)
             odc.Clear()
@@ -1786,6 +1766,8 @@ class BitmapSelect(Rectangle):
         """ Doesn't affect the shape list """
         if not (x != self.x and y != self.y):
             self.board.copy = None
+            wx.CallAfter(self.board.change_current_tool)
+            self = BitmapSelect.__init__(self.board)
 
 
     def preview(self, dc, width, height):
@@ -1842,7 +1824,7 @@ class Flood(Tool):
         self.x = x
         self.y = y
         self.board.draw_shape(self)
-        self.board.add_shape(self)
+        pub.sendMessage('shape.add', shape=self)
 
     def draw(self, dc, replay=False):
         dc.SetPen(self.pen)
@@ -1879,6 +1861,6 @@ class RectSelect:
 RoundRect = RoundedRect
 RectSelect = BitmapSelect
 
-# items to draw with
-items = [Pen, Eraser, Rectangle, RoundedRect, Ellipse, Circle, Polygon, Line, 
+# items to draw with. Note: the GUI inserts the highlighter
+items = [Pen, Eraser, Rectangle, RoundedRect, Ellipse, Circle, Polygon, Line,
          Arrow, Text, Note, Media, Eyedrop, BitmapSelect, Select]

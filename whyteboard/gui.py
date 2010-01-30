@@ -36,13 +36,14 @@ import sys
 import time
 import locale
 import webbrowser
+import shutil
 
 import wx
 import wx.lib.newevent
 import lib.flatnotebook as fnb
 from wx.html import HtmlHelpController
 
-from shutil import copy
+from lib.pubsub import pub
 from lib.configobj import ConfigObj
 from lib.validate import Validator
 
@@ -50,7 +51,7 @@ import lib.icon
 import meta
 from whyteboard import Whyteboard
 from tools import Image, Note, Text, Media, Highlighter
-from utility import Utility, WhyteboardDropTarget, languages, cfg
+from utility import Utility, WhyteboardDropTarget
 
 import event_ids as event_ids
 from event_ids import *
@@ -102,7 +103,7 @@ class GUI(wx.Frame):
         sys.excepthook = ExceptionHook
         meta.find_transparent()  # important
         if meta.transparent:
-            self.util.items.insert(1, Highlighter)        
+            self.util.items.insert(1, Highlighter)
 
         self.can_paste = False
         if self.util.get_clipboard():
@@ -113,6 +114,7 @@ class GUI(wx.Frame):
         self.pid = None
         self.dialog = None
         self.convert_cancelled = False
+        self.viewer = False  # Shape Viewer dialog open?
         self.help = None
         self.directory = None  # last opened directory
         self.make_toolbar()
@@ -130,7 +132,7 @@ class GUI(wx.Frame):
                                      fnb.FNB_VC8 | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS)
         self.board = Whyteboard(self.tabs, self)  # the active whyteboard tab
         self.panel = SidePanel(self)
-        self.make_menu()
+
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
         self.tabs.AddPage(self.board, _("Sheet")+" 1")
@@ -146,13 +148,14 @@ class GUI(wx.Frame):
 
         self.count = 5  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(50)
-        wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)        
+        wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         self.board.update_thumb()
         self.do_bindings()
         self.update_panels(True)  # bold first items
-        self.UpdateWindowUI()
 
-        
+        wx.CallAfter(self.make_menu)
+        wx.CallAfter(self.UpdateWindowUI)
+
 
     def __del__(self):
         sys.excepthook = self._oldhook
@@ -295,6 +298,10 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_CHAR_HOOK, self.hotkey)
         self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
 
+        topics = {'shape.add': self.shape_add, 'shape.selected': self.shape_selected}
+        [pub.subscribe(value, key) for key, value in topics.items()]
+
+
         # idle event handlers
         ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_MOVE_UP, ID_DESELECT,
                ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, wx.ID_COPY,
@@ -319,12 +326,12 @@ class GUI(wx.Frame):
         self.SetAcceleratorTable(tbl)
 
 
-        # toolbar bindings
+        # import sub-menu bindings
         ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
         [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        # menu bindings
+        # other menu bindings
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
                   "copy", "paste", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
                   "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
@@ -344,21 +351,40 @@ class GUI(wx.Frame):
     def make_toolbar(self):
         """
         Creates a toolbar, Pythonically :D
+        Move to top/up/down/bottom must be created with a custom bitmap.
         """
         self.toolbar = self.CreateToolBar()
+        _move = [ID_MOVE_TO_TOP, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM]
+        move = _("Move Shape")+" "
 
         ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_COPY, wx.ID_PASTE,
                wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE]
+
         arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_COPY,
                 wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO, wx.ART_DELETE]
         tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"),
                 _("Paste an Image/Text"), _("Undo the Last Action"), _("Redo the Last Undone Action"),
-                _("Delete the currently selected shape")]
+                _("Delete the currently selected shape"), move + _("To Top"), move + _("Up"),
+                move + _("Down"), move + _("To Bottom")]
+
+        ids.extend(_move)
+        arts.extend(_move)
+        path = os.path.join(self.util.get_path(), "images", "icons", "")
+        icons = ["top", "up", "down", "bottom"]
+
+        bmps = {}
+        for icon, _id in zip(icons, _move):
+            bmps[_id] = wx.Bitmap(path + "move-" + icon +"-small.png")
 
         # add tools, add a separator and bind paste/undo/redo for UI updating
         x = 0
         for _id, art_id, tip in zip(ids, arts, tips):
-            art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
+
+            if _id in _move:
+                art = bmps[_id]
+            else:
+                art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
+
             self.toolbar.AddSimpleTool(_id, art, tip)
 
             if x == 2 or x == 6:
@@ -366,6 +392,37 @@ class GUI(wx.Frame):
             x += 1
         self.toolbar.EnableTool(wx.ID_PASTE, self.can_paste)
         self.toolbar.Realize()
+
+
+    def shape_selected(self, shape):
+        """
+        Shape getting selected (by Select tool)
+        """
+        x = self.board.shapes.index(shape)
+        self.board.shapes.pop(x)
+        self.board.redraw_all()  # hide 'original'
+        self.board.shapes.insert(x, shape)
+        shape.draw(self.board.get_dc(), False)  # draw 'new'
+
+        ctrl, menu = True, True
+        if not shape.background == wx.TRANSPARENT:
+            ctrl, menu = False, False
+
+        self.control.transparent.SetValue(ctrl)
+        self.menu.Check(ID_TRANSPARENT, menu)
+
+
+
+
+    def shape_add(self, shape):
+        self.board.add_shape(shape)
+        self.update_shape_viewer()
+
+
+    def update_shape_viewer(self):
+        if self.viewer:
+            self.viewer.shapes = list(self.board.shapes)
+            self.viewer.populate()
 
 
     def on_save(self, event=None):
@@ -410,7 +467,7 @@ class GUI(wx.Frame):
         an unsaved file and calls do_open().
         text is img/pdf/ps for the "import file" menu item
         """
-        wc = self.util.wildcard
+        wc = meta.dialog_wildcard
         if text == "img":
             wc = wc[ wc.find(_("Image Files")) : wc.find("|PDF") ]  # image to page
         elif text:
@@ -486,7 +543,7 @@ class GUI(wx.Frame):
             self.process = wx.Process(self)
             files = ""
             for x in names:
-                files += '"'+x+'" '  # quotes for windows
+                files += '"%s" ' % x  # quote filenames for windows
 
             self.pid = wx.Execute(self.util.im_location+ ' -define pdf:use-trimbox=true '+ files +'"'+filename+'"', wx.EXEC_ASYNC, self.process)
 
@@ -537,7 +594,7 @@ class GUI(wx.Frame):
 
             if not ext:
                 filename += ".pref"
-            copy(os.path.join(get_home_dir(), "user.pref"), filename)
+            shutil.copy(os.path.join(get_home_dir(), "user.pref"), filename)
 
 
     def on_import_pref(self, event=None):
@@ -553,7 +610,7 @@ class GUI(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
 
-            config = ConfigObj(filename, configspec=cfg.split("\n"))
+            config = ConfigObj(filename, configspec=meta.config_scheme.split("\n"))
             validator = Validator()
             config.validate(validator)
             _dir = os.path.join(get_home_dir(), "pref-bkup")
@@ -576,7 +633,7 @@ class GUI(wx.Frame):
     def on_reload_preferences(self, event):
         home =  os.path.join(get_home_dir(), "user.pref")
         if os.path.exists(home):
-            config = ConfigObj(home, configspec=cfg.split("\n"))
+            config = ConfigObj(home, configspec=meta.config_scheme.split("\n"))
             validator = Validator()
             config.validate(validator)
             pref = Preferences(self)
@@ -604,7 +661,7 @@ class GUI(wx.Frame):
                 _name = types[dlg.GetFilterIndex()]
                 filename += "." + _name
                 val = filename
-            if not _name in self.util.types[2:]:
+            if not _name in meta.types[2:]:
                 wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % _name,
                               _("Invalid filetype"))
             else:
@@ -659,6 +716,7 @@ class GUI(wx.Frame):
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
+        self.update_shape_viewer()
 
 
     def on_drop_tab(self, event):
@@ -801,7 +859,7 @@ class GUI(wx.Frame):
         for shape in self.board.shapes:
             shape.board = self.board
             if isinstance(shape, Note):
-                self.notes.add_note(shape)
+                pub.sendMessage('note.add', note=shape)
 
         wx.Yield()  # doesn't draw thumbnail otherwise...
         self.board.resize_canvas(board[3])
@@ -954,7 +1012,7 @@ class GUI(wx.Frame):
             shape.left_down(x, y)
             shape.left_up(x, y)
             self.board.text = None
-            self.board.select_tool()
+            self.board.change_current_tool()
             self.board.redraw_all(True)
         else:
             bmp = data.GetBitmap()
@@ -1123,34 +1181,40 @@ class GUI(wx.Frame):
     def on_undo(self, event=None):
         """ Calls undo on the active tab and updates the menus """
         self.board.undo()
-
+        self.update_shape_viewer()
 
     def on_redo(self, event=None):
         """ Calls redo on the active tab and updates the menus """
         self.board.redo()
+        self.update_shape_viewer()
 
     def on_move_top(self, event=None):
         self.board.move_top(self.board.selected)
+        self.update_shape_viewer()
 
     def on_move_bottom(self, event=None):
         self.board.move_bottom(self.board.selected)
+        self.update_shape_viewer()
 
     def on_move_up(self, event=None):
         self.board.move_up(self.board.selected)
+        self.update_shape_viewer()
 
     def on_move_down(self, event=None):
         self.board.move_down(self.board.selected)
+        self.update_shape_viewer()
+
 
     def on_prev(self, event=None):
         """ Changes to the previous sheet """
         self.tabs.SetSelection(self.current_tab - 1)
         self.on_change_tab()
 
-
     def on_next(self, event=None):
         """ Changes to the next sheet """
         self.tabs.SetSelection(self.current_tab + 1)
         self.on_change_tab()
+
 
     def on_clear(self, event=None):
         """ Clears current sheet's drawings, except images. """
@@ -1248,7 +1312,10 @@ class GUI(wx.Frame):
         self.show_dialog(Resize(self))
 
     def on_shape_viewer(self, event=None):
-        self.show_dialog(ShapeViewer(self), False)
+        if not self.viewer:
+            dlg = ShapeViewer(self)
+            self.show_dialog(dlg, False)
+            self.viewer = dlg
 
     def on_preferences(self, event=None):
         self.show_dialog(Preferences(self))
@@ -1272,7 +1339,6 @@ class GUI(wx.Frame):
             self.help.AddBook(_file)
         else:
             self.help = None
-            wx.DATE_
 
 
     def on_help(self, event=None, page=None):
@@ -1310,38 +1376,7 @@ class GUI(wx.Frame):
         inf.Copyright = "(C) 2009 Steven Sproat"
         inf.Description = _("A simple whiteboard and PDF annotator")
         inf.Developers = ["Steven Sproat <sproaty@gmail.com>"]
-        t = ['A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
-             'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
-             '"Amy" https://launchpad.net/~anthropofobe (German)',
-             '"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
-             'Cristian Asenjo https://launchpad.net/~apu2009 (Spanish)',
-             'David Aller https://launchpad.net/~niclamus (Italian)',
-             '"Dennis" https://launchpad.net/~dlinn83 (German)',
-             'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
-             'Federico Vera https://launchpad.net/~fedevera (Spanish)',
-             'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',
-             'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
-             '"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
-             '"Lauren" https://launchpad.net/~lewakefi (French)',
-             'Javier Acuña Ditzel https://launchpad.net/~santoposmoderno (Spanish)',
-             'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
-             'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
-             'Medina https://launchpad.net/~medina-colpaca (Spanish)',
-             'Miguel Anxo Bouzada https://launchpad.net/~mbouzada/ (Galician)',
-             'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
-             '"MixCool" https://launchpad.net/~mixcool (German)',
-             'Nkolay Parukhin https://launchpad.net/~parukhin (Russian)',
-             '"Rarulis" https://launchpad.net/~rarulis (French)',
-             'Roberto Bondi https://launchpad.net/~bondi (Italian)',
-             '"RodriT" https://launchpad.net/~rodri316 (Spanish)',
-             'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
-             '"Tobberoth" https://launchpad.net/~tobberoth (Japanese)',
-             '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
-             '"ucnj" https://launchpad.net/~ucn (German)',
-             '"Vonlist" https://launchpad.net/~hengartt (Spanish)',
-             'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']
-
-        inf.Translators = t
+        inf.Translators = meta.translators
         x = "http://www.launchpad.net/whyteboard"
         inf.WebSite = (x, x)
         inf.Licence = s
@@ -1360,11 +1395,11 @@ class WhyteboardApp(wx.App):
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
 
         path = os.path.join(get_home_dir(), "user.pref")
-        config = ConfigObj(path, configspec=cfg.split("\n"))
+        config = ConfigObj(path, configspec=meta.config_scheme.split("\n"))
         validator = Validator()
         config.validate(validator)
 
-        for x in languages:
+        for x in meta.languages:
             if config['language'].capitalize() == 'Welsh':
                 self.locale = wx.Locale()
                 self.locale.Init("Cymraeg", "cy", "cy_GB.utf8")
@@ -1387,6 +1422,8 @@ class WhyteboardApp(wx.App):
             locale.setlocale(locale.LC_ALL, '')
             self.locale.AddCatalogLookupPathPrefix(langdir)
             self.locale.AddCatalog("whyteboard")
+            self.locale.AddCatalog('wxstd')
+
 
         self.frame = GUI(None, config)
         self.frame.Show(True)

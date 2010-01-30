@@ -29,8 +29,8 @@ import sys
 import zipfile
 import wx
 import wx.lib.mixins.listctrl as listmix
+from wx.lib.buttons import GenBitmapButton
 
-from copy import copy
 from urllib import urlopen, urlretrieve, urlencode
 import lib.errdlg
 from lib.BeautifulSoup import BeautifulSoup
@@ -63,7 +63,7 @@ class History(wx.Dialog):
         icons = ["play", "pause", "stop"]
 
         for icon in icons:
-            btn = wx.BitmapButton(self, bitmap=wx.Bitmap(path + icon + ".png"),
+            btn = GenBitmapButton(self, bitmap=wx.Bitmap(path + icon + ".png"),
                                   style=wx.NO_BORDER)
             btn.SetToolTipString(icon.capitalize())
             btn.Bind(wx.EVT_BUTTON, getattr(self, icon))
@@ -76,8 +76,9 @@ class History(wx.Dialog):
         btnSizer.Realize()
 
         #sizer.Add(self.slider, 0, wx.EXPAND | wx.ALL, 10)
-        sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
-        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 8)
+        sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 13)
+        sizer.Add((10, 5))
+        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 13)
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
@@ -94,11 +95,10 @@ class History(wx.Dialog):
         if self.looping:
             self.paused = False
             return
-
         if self.paused:
             self.paused = False
 
-        tmp_shapes = copy(self.gui.board.shapes)
+        tmp_shapes = list(self.gui.board.shapes)
         shapes = []
         for shape in tmp_shapes:
             if not isinstance(shape, tools.Image):
@@ -132,7 +132,7 @@ class History(wx.Dialog):
 
         for pen in shapes:
             # draw pen outline
-            if isinstance(pen, tools.Pen):
+            if isinstance(pen, tools.Pen) and not isinstance(pen, tools.Highlighter):
                 #pen.make_pen()
                 dc.SetPen(wx.Pen(pen.colour, pen.thickness))
 
@@ -907,64 +907,57 @@ class ShapeViewer(wx.Dialog):
         """
         wx.Dialog.__init__(self, gui, title=_("Shape Viewer"), size=(550, 400),
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
-                           wx.RESIZE_BORDER)
+                           wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
         self.gui = gui
-        self.shapes = copy(self.gui.board.shapes)
+        self.shapes = list(self.gui.board.shapes)
         self.SetSizeHints(450, 300)
         self.buttons = []  # move up/down/top/bottom buttons
-        if os.name == "nt":
-            style = wx.RAISED_BORDER
-        else:
-            style = wx.NO_BORDER
-
-        label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
-        sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.list = ShapeList(self, style=wx.LC_REPORT)
-        self.populate()
+        self.pages = wx.ComboBox(self, size=(125, 25), style=wx.CB_READONLY)
+        label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
+        sizer = wx.BoxSizer(wx.VERTICAL)
 
         if os.name == "nt":
             font = label.GetClassDefaultAttributes().font
             font.SetPointSize(font.GetPointSize() + 2)
             self.list.SetFont(font)
-        self.list.RefreshRows()
 
+        self.list.RefreshRows()
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
 
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
         icons = ["top", "up", "down", "bottom"]
-        tips = ["To Top", "Up", "Down", "To Bottom"]
+        tips = [_("To Top"), ("Up"), ("Down"), ("To Bottom")]
 
         for icon, tip in zip(icons, tips):
-            btn = wx.BitmapButton(self, bitmap=wx.Bitmap(path+"move-" + icon + ".png"),
-                                  style=style)
-            btn.SetToolTipString("Move Shape "+tip)
+            btn = GenBitmapButton(self, bitmap=wx.Bitmap(path + "move-" + icon + ".png"),
+                                  style=wx.NO_BORDER)
+            btn.SetToolTipString(_("Move Shape")+" "+tip)
             btn.Bind(wx.EVT_BUTTON, getattr(self, "on_"+icon))
             bsizer.Add(btn, 0, wx.RIGHT, 5)
             self.buttons.append(btn)
 
-        self.prev = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "prev_sheet.png"),
-                                    style=style)
+        self.prev = GenBitmapButton(self, bitmap=wx.Bitmap(path + "prev_sheet.png"),
+                                    style=wx.NO_BORDER)
         self.prev.SetToolTipString(_("Previous Sheet"))
         self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
         nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
 
-        self.next = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "next_sheet.png"),
-                                    style=style)
+        self.next = GenBitmapButton(self, bitmap=wx.Bitmap(path + "next_sheet.png"),
+                                    style=wx.NO_BORDER)
         self.next.SetToolTipString(_("Next Sheet"))
         self.next.Bind(wx.EVT_BUTTON, self.on_next)
         nextprevsizer.Add(self.next)
 
-        choices = [self.gui.tabs.GetPageText(x) for x in range(self.gui.tab_count)]
 
-        self.pages = wx.ComboBox(self, choices=choices, size=(125, 25), style=wx.CB_READONLY)
-        self.pages.SetSelection(self.gui.current_tab)
+
 
         bsizer.Add((1, 1), 1, wx.EXPAND)  # align to the right
         bsizer.Add(nextprevsizer, 0, wx.RIGHT, 10)
         bsizer.Add(self.pages, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
-        
+
         okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         okButton.SetDefault()
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
@@ -984,13 +977,14 @@ class ShapeViewer(wx.Dialog):
         sizer.Add((10, 5))
         sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
         self.SetSizer(sizer)
+        self.populate()
         self.check_buttons()
-        self.SetFocus()
 
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
 
 
@@ -998,6 +992,10 @@ class ShapeViewer(wx.Dialog):
         """
         Creates all columns and populates with the current sheets' data
         """
+        choices = [self.gui.tabs.GetPageText(x) for x in range(self.gui.tab_count)]
+        self.pages.SetItems(choices)
+        self.pages.SetSelection(self.gui.current_tab)
+
         self.list.ClearAll()
         self.list.InsertColumn(0, _("Position"), width=65)
         self.list.InsertColumn(1, _("Type"), wx.LIST_AUTOSIZE)
@@ -1043,8 +1041,8 @@ class ShapeViewer(wx.Dialog):
         else:
             self.buttons[2].Enable()
             self.buttons[3].Enable()
-
-
+        self.Refresh()
+        self.SetFocus()
 
 
     def find_shape(self):
@@ -1095,7 +1093,7 @@ class ShapeViewer(wx.Dialog):
         self.gui.tabs.SetSelection(selection)
         self.pages.SetSelection(selection)
         self.gui.on_change_tab()
-        self.shapes = copy(self.gui.board.shapes)
+        self.shapes = list(self.gui.board.shapes)
         self.populate()
         self.check_buttons()
 
@@ -1128,5 +1126,9 @@ class ShapeViewer(wx.Dialog):
 
     def cancel(self, event=None):
         self.Close()
+
+    def on_close(self, event):
+        self.gui.viewer= False
+        event.Skip()
 
 #----------------------------------------------------------------------

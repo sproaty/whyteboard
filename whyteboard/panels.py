@@ -31,6 +31,8 @@ from wx.lib.wordwrap import wordwrap as wordwrap
 from wx.lib import scrolledpanel as scrolled
 from wx.lib.buttons import GenBitmapToggleButton
 
+from lib.pubsub import pub
+
 import meta
 from utility import MediaDropTarget
 from event_ids import *
@@ -165,8 +167,8 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             if _type == "icon":
-                path = os.path.join(self.gui.util.get_path(), "images", "tools", 
-                                    val + ".png")
+                path = os.path.join(self.gui.util.get_path(), "images", "tools",
+                                    val.decode("utf-8") + ".png")
                 b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
                                           style=wx.NO_BORDER)
                 evt = wx.EVT_BUTTON
@@ -177,7 +179,7 @@ class ControlPanel(wx.Panel):
             b.SetToolTipString("%s\n%s %s" % (_(self.gui.util.items[x].tooltip),
                                             _("Shortcut Key:"),
                                             self.gui.util.items[x].hotkey.upper()))
-            
+
             b.Bind(evt, self.change_tool, id=x + 1)
             self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             self.tools[x + 1] = b
@@ -225,7 +227,7 @@ class ControlPanel(wx.Panel):
 
     def change_tool(self, event=None, _id=None):
         """
-        Toggles the tool buttons on/off and calls select_tool on the drawing
+        Toggles the tool buttons on/off and calls change_current_tool on the drawing
         panel.
         """
         new = self.gui.util.tool
@@ -241,7 +243,7 @@ class ControlPanel(wx.Panel):
 
         self.toggled = new
         if self.gui.board:
-            self.gui.board.select_tool(new)
+            self.gui.board.change_current_tool(new)
 
 
     def on_transparency(self, event):
@@ -253,12 +255,19 @@ class ControlPanel(wx.Panel):
 
         if self.gui.board.selected:
             self.gui.board.toggle_transparent()
-        self.gui.board.select_tool()
+        self.gui.board.change_current_tool()
 
 
     def on_swap(self, event):
         """Swaps foreground/background colours"""
+        a, b = self.background.GetColour(), self.colour.GetColour()
+        self.background.SetColour(b)
+        self.colour.SetColour(a)
 
+        self.gui.util.colour = a
+        if not self.transparent.IsChecked():
+            self.gui.util.background = a
+        self.gui.board.change_current_tool()
 
 
     def change_colour(self, event=None, colour=None):
@@ -293,7 +302,7 @@ class ControlPanel(wx.Panel):
                 setattr(self.gui.board.selected, var_name, value)
             self.gui.board.redraw_all(True)
 
-        self.gui.board.select_tool()
+        self.gui.board.change_current_tool()
         self.preview.Refresh()
 
 
@@ -580,6 +589,13 @@ class Notes(wx.Panel):
         self.SetSizer(self.sizer)
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
+        pub.subscribe(self.add_note, 'note.add')
+        pub.subscribe(self.psOnEdit, 'note.edit')
+
+    def psOnEdit(self, tree_id, text):
+        """Edit a non-blank Note by changing its tree item's text"""
+        text = text.replace("\n", " ")[:15]
+        self.tree.SetItemText(tree_id, text)
 
 
     def add_tab(self, name=None):

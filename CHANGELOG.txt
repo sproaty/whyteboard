@@ -1,6 +1,6 @@
 Whyteboard 0.39.4 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-xx xx January 2010
+xx xx February 2010
 
 ---- VERSION HISTORY ----
 
@@ -8,75 +8,92 @@ xx xx January 2010
 
 xx Jan 2010 -- 0.39.4
 
+-- New features/changes:
+
 * New tool: Highlighter. It behaves as the Pen, but draws in a semi-transparent
   ink; perfect for drawing attention to portions of a PDF image
+
+* Image rotation is now performed from a special "handle" for rotating. Rotating
+  draws a transparent rectangle "over" the image to show where its rotation will
+  end up, instead of drawing the image as it rotates (which was slow)
+* Image re-scaling using its selection handles. Also draws a transparent rectangle
+  to indicate its new size
 
 * Improvements to rotating an image with the mouse: now "follows" the mouse's
   position, and can be rotated both clockwise and counter-clockwise.
   Thanks to Zack Buhman and members of Stack Overflow for help with the coding
-
-* Image rotation is now performed from a special "handle" for rotating. Rotating 
-  draws a transparent rectangle "over" the image to show where its rotation will 
-  end up, instead of drawing the image as it rotates (which was slow)
-* Image re-scaling using its selection handles. Also draws a transparent
-  rectangle to indicate its new size
 * Scaling of Polygon shapes - increase or decrease their size!
-* Rotating Polygon shapes. Note that all scaling/rotating operations are from 
-  the *center of the shape*
- 
+
+* Rotating Polygon shapes. Note that all scaling/rotating operations are from
+  the *center* of the shape
 * 8-way selection handle on rectangle, rounded rectangle and ellipse, allowing
   vertical-only / horizontal-only resizing
 * Right clicking a shape with the select tool pops up a menu with select/delete/
   edit/move operations. Also, from here, new points may be added to a polygon
-  
+
 * Changing sheets scrolls the new sheet's thumbnail into view
 * Few UI changes, program now looks neater with less borders, also takes up less
   vertical space (takes up ~700 pixels vertically at a minimum)
 * Foreground/background colour swap button added
 * "Swap Colours" menu item for when you select a shape that's not transparent
+* New toolbar items for Move Shape Up/Down/To Top/To Bottom
+
 * Thick rectangles now don't have a "roundness" to their edges
 * Help files updated and improved with more detail
-* Improved a few icons
+* Improved a few icons (circle/ellipse/polygon/rounded rectangle, move up/down
 * Little "close" button drawn on the current tab
 * Escape key will de-select the currently selected shape (as well as Ctrl-D)
 * Cancelling PDF Conversion on Linux takes a few seconds, so the progress bar no
   longer "pumps", and the dialog title changes from "Converting" to "Cancelling"
 
-* New preference: under "View", number of toolbox columns, can be set to 2 or 3
-  to decrease the vertical space taken by the toolbox
-* New preference: toggle tool preview on/off (to gain more vertical space)
-* New preference: toggle colour grid on/off
-* "Send Feedback" added to the Help menu
+* The "Shape Viewer" is now in sync with the canvas: adding, deleting, undoing,
+  redoing and changing shapes' order is now reflected when the Shape Viewer is
+  open
+* Minimise button added to the Shape Viewer
 * Removed the "Rotate Image" dialog
-
 * Restructured source code directories -- now just run whyteboard.py from the
   main directory to start the program
+* Started improving code: removing module dependencies and tight coupling, to
+  create more readable/maintainable code.
+
+-- New Preferences / Options:
+
+* Under "View", number of toolbox columns, can be set to 2 or 3
+  to decrease the vertical space taken by the toolbox
+* Toggle tool preview on/off (to gain more vertical space)
+* Toggle colour grid on/off
+* "Send Feedback" added to the Help menu
+
+
+-- Bugfixes:
 
 * Important Windows bugfix: drawing a shape would create extra Windows "GDI"
   objects; which was taking up unneeded resources. This bug has been present
   since version 0.25 (3rd release) - released back in January 2009!
-  
-* Bugfix: possible crash on Mac when loading/saving .wtbd files containing text
-* Bugfix: after selecting a shape (and being brought to the front), any shapes 
-  that were on top of the shape would prevent the user from selecting the 
-  handles of the selected shape.  
 
-* Bugfix: "Recent Files" wasn't working on Linux
-* Bugfix: rotated images weren't being saved as rotated
-* Bugfix: using next/previous sheet buttons in the Shape Viewer wouldn't set
-  the drop-down control to the changed-to sheet
-  
-* Bugfix: "End" key would not jump to the end of the document correctly
-* Bugfix: menu icons appearing for 3 menu items on Windows, when no other menu
-  items had icons - now removed
-* Bugfix: stopped a crash when wx.GCDC was not implemented on the system, due
-  to a misconfigured wxPython install. Now, the program just doesn't use 
-  transparency for these users
- 
-* Bugfix: Hopefully fixed problem with "UnicodeError" (the problem doesn't 
-  happen with me; hard to test if my fix works) 
+* Bitmap Select could cause some visual anomalies
+* Possible crash when loading/saving .wtbd files containing text
+* After selecting a shape (and being brought to the front), any shapes that
+  were on top of the shape would prevent the user from selecting the handles of
+  the selected shape.
+* "Recent Files" menu wasn't working on Linux
+* Rotated images weren't being saved as rotated
+
+* Using next/previous sheet buttons in the Shape Viewer wouldn't set the
+  drop-down control to the changed-to sheet
+* "End" key would not jump to the end of the document correctly
+* Menu were icons appearing for 3 menu items on Windows when no other menu items
+  had icons - now removed
+* Stopped a crash when wx.GCDC was not implemented on the system, due to a
+  misconfigured wxPython install. Now, the program just doesn't use transparency
+  for these users (new highlighter tool is also not available)
+
+* Hopefully stopped a visual oddity/black square appearing underneath the close
+  and maximise button on Windows
+* Hopefully fixed problem with various "UnicodeError" (the problem doesn't
+  happen on my machine, so it's hard to test if the issue is fixed)
 * Fixed unit tests so that they at least run -- need to improve the test's code
-  coverage
+  coverage, which will come with time.
 
 ----------------------------------------------------------------------
 

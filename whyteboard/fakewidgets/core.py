@@ -79,9 +79,6 @@ class EmptyIcon(object):
         self.calls.append(attr)
         return lambda *args, **kwds: None
 
-class EmptyBitmap(object):
-    def __init__(self, *args, **kwds):
-        self.calls = []
 
 class Bitmap(object):
     def __init__(self, filename=None, flag=None):
@@ -95,10 +92,17 @@ class Bitmap(object):
     def SetMask(self, mask):
         self.mask = mask
 
+    def GetSize(self):
+        return (1, 1)
+
     def __getattr__(self, attr):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
+
+class EmptyBitmap(Bitmap):
+    def __init__(self, *args, **kwds):
+        self.calls = []
 
 class Image(object):
     def __init__(self, filename=None, type=None):
@@ -162,6 +166,21 @@ class StockCursor(object):
         self.__dict__.update(kwds)
         self.calls = []
 
+class Colour(object):
+    def __init__(self, r=0, g=0, b=0, a=0):
+        self.colour = (r, g, b, a)
+
+    def Get(self):
+        return self.colour
+
+class Region(object):
+    def __init__(self, x, y, w, d):
+        pass
+
+    def SubtractRect(self, rect):
+        pass
+
+
 class ImageList(object):
     def __init__(self, width, height, *args):
         self.width = width
@@ -195,6 +214,14 @@ class DC(object):
 class BufferedDC(DC):
     pass
 
+class GraphicsContext(DC):
+    @staticmethod
+    def Create(dc):
+        return GraphicsContext()
+
+    def CreatePath(self):
+        pass
+
 class PaintDC(DC):
     pass
 
@@ -208,7 +235,8 @@ class ClientDC(DC):
     pass
 
 class GCDC(DC):
-    pass
+    def __init__(self, dc):
+        raise NotImplementedError
 
 def BitmapFromIcon(icon):
     return Bitmap()
@@ -1068,7 +1096,8 @@ def CursorFromImage(*args):
 def FFont(*args):
     return Font(*args)
 
-
+def CallAfter(func, *args, **kwargs):
+    func(*args, **kwargs)
 #
 # This is a static class which needs to be emulated
 #
@@ -1117,7 +1146,6 @@ class ArtProvider(object):
 class lib(object):
     class scrolledpanel():
         pass
-
 
 
 # Overwrite the wx namespace with the fake classes declared above

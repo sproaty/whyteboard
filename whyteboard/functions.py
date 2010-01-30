@@ -21,7 +21,7 @@ import os
 import random
 import wx
 
-import tools
+_ = wx.GetTranslation
 
 
 #----------------------------------------------------------------------
@@ -40,7 +40,7 @@ def get_home_dir(extra_path=None):
 
     if not os.path.isdir(path):
         os.makedirs(path)
-    return path
+    return path.decode("utf-8")
 
 
 def get_time(seconds):
@@ -55,13 +55,14 @@ def get_time(seconds):
     return h + "%02d:%02d" % (m, s)
 
 
-def load_image(path, board):
+def load_image(path, board, image_class):
     """
     Loads an image into the given Whyteboard tab. bitmap is the path to an
     image file to create a bitmap from.
+    image_class = tools.Image *CLASS ITSELF*
     """
     image = wx.Bitmap(path)
-    shape = tools.Image(board, image, path)
+    shape = image_class(board, image, path)
     shape.left_down(0, 0)  # renders, updates scrollbars
     board.update_thumb()
 
@@ -104,7 +105,8 @@ def convert_quality(quality, im_location, _file, path):
     if quality == 'high':
         density = 250
         resample = 100
-    cmd = '"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"' % (im_location, density, _file, resample, path)
+    cmd = ('"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"'
+           % (im_location.decode("utf-8"), density, _file.decode("utf-8"), resample, path.decode("utf-8")))
     return cmd
 
 
@@ -120,3 +122,18 @@ def make_filename():
 
     string = "".join(_list)
     return string +"-temp-%s" % (random.randrange(0, 999999))
+
+
+
+
+def transparent_supported():
+    """
+    Does this wxPython build support transparency?
+    """
+    try:
+        dc = wx.MemoryDC()
+        dc.SelectObject(wx.EmptyBitmap(10, 10))
+        x = wx.GCDC(dc)
+        return True
+    except NotImplementedError:
+        return False

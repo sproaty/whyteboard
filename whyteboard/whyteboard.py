@@ -34,9 +34,10 @@ larger than the client size, then scrollbars are displayed, and a slight
 import os
 import copy
 
-
 import wx
 import wx.lib.dragscroller
+
+from lib.pubsub import pub
 
 from tools import (Image, Text, Line, Note, Select, OverlayShape, Media, Polygon,
                    TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER_TOP,
@@ -102,7 +103,7 @@ class Whyteboard(wx.ScrolledWindow):
                                     "cursors", "") + "rotate.png")
         self.rotate_cursor = wx.CursorFromImage(img)
 
-        self.select_tool()
+        self.change_current_tool()
         self.redraw_all()
 
         self.Bind(wx.EVT_SIZE, self.on_size)
@@ -178,7 +179,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.shape.left_up(*self.convert_coords(event))
             if not isinstance(self.shape, Media):
                 if len(self.shapes) - before:
-                    self.select_tool()
+                    self.change_current_tool()
                     self.update_thumb()
             self.drawing = False
 
@@ -349,7 +350,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.update_thumb()
 
 
-    def select_tool(self, new=None):
+    def change_current_tool(self, new=None):
         """
         Changes the users' tool (and cursor) they are drawing with. new is an
         int, corresponding to new - 1 = Tool ID in Utility.items
@@ -431,7 +432,7 @@ class Whyteboard(wx.ScrolledWindow):
         notes.tree.DeleteChildren(notes.tabs[self.gui.tabs.GetSelection()])
         for x in shapes:
             if isinstance(x, Note):
-                self.gui.notes.add_note(x)
+                pub.sendMessage('note.add', note=x)
 
 
     def toggle_transparent(self):

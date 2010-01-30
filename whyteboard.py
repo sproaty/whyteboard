@@ -20,8 +20,8 @@
 
 """
 This is the main module which fires up the program. It checks if the wxPython
-version that is installed is recent enough, as the program uses many of its
-newer functionality.
+version that is installed is recent enough, as the program uses its newer 
+functionality and features.
 """
 
 import sys

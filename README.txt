@@ -1,6 +1,6 @@
 Whyteboard 0.39.4 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-xx xx January 2010
+xx xx February 2010
 
 ---- TO RUN WHYTEBOARD ----
 
@@ -31,7 +31,7 @@ Launchpad at the link below.
 
 You can also use the built-in error reporter to send me an e-mail directly,
 containing relevant system information and a log of the error. This is the best
-method to report errors. Please fill in as much detail about what you was doing
+method to report errors. Please fill in as much detail about what you were doing
 to produce the error.
 Giving your e-mail address will allow me to get back in touch with you to follow
 up on the bug, and to confirm a fix. Several people have done this, thanks.

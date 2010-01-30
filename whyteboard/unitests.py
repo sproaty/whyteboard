@@ -23,28 +23,30 @@ with mock classes. Doesn't test the GUI itself (i.e. parts of wx), but parts of
 the GUI event handling code (example: undo/redo closing tabs)
 """
 
-import random
 import os
 
 from lib.configobj import ConfigObj
 from lib.validate import Validator
 
 import fakewidgets
-from fakewidgets.core import Bitmap, Event
+from fakewidgets.core import Bitmap, Event, Colour
 import gui
+import meta
 import tools
+
+config = ConfigObj(configspec=meta.config_scheme.split("\n"))
+validator = Validator()
+config.validate(validator)
 
 
 def make_shapes(board):
     """
-    Generates random shapes. Needs a Whyteboard instance to add the shapes to
+    Generates shapes. Needs a Whyteboard instance to add the shapes to
     """
-    params = [board, "Black", 1]
-    items = board.gui.util.items
+    params = [board, Colour(0, 0, 0), 1]
 
-    for x in range(6):
-        item = items[random.randrange(0, len(items))]
-        if not isinstance(item, tools.Media):
+    for item in board.gui.util.items:
+        if not isinstance(item, (tools.Media, tools.Select)):
             board.add_shape(item(*params))
 
 
@@ -53,11 +55,8 @@ class SimpleApp(fakewidgets.core.PySimpleApp):
     Create a GUI instance and create a new
     """
     def __init__(self):
+        global config
         fakewidgets.core.PySimpleApp.__init__(self)
-
-        config = ConfigObj(configspec=gui.cfg.split("\n"))
-        validator = Validator()
-        config.validate(validator)
 
         g = gui.GUI(None, config)  # mock the GUI, referenced by all
         self.board = g.board
@@ -100,26 +99,26 @@ class TestWhyteboard:
     def test_select_tool(self):
         """
         This depends on the Tool list order not changing, unlikely from a UI
-        perspective; note: select_tool() called in Whyteboard.__init__
+        perspective; note: change_current_tool() called in Whyteboard.__init__
         """
         assert isinstance(self.board.shape, tools.Pen)
-        self.board.select_tool(1)  # passing in Pen explicitly
+        self.board.change_current_tool(1)  # passing in Pen explicitly
         assert isinstance(self.board.shape, tools.Pen)
-        self.board.select_tool()
+        self.board.change_current_tool()
         assert isinstance(self.board.shape, tools.Pen)
-        self.board.select_tool(2)
+        self.board.change_current_tool(2)
         assert isinstance(self.board.shape, tools.Eraser)
-        self.board.select_tool()
+        self.board.change_current_tool()
         assert isinstance(self.board.shape, tools.Eraser)
 
     def test_deselect(self):
         self.board.shapes[-1].selected = True
         self.board.selected = self.board.shapes[-1]
         self.board.deselect()
-        assert not self.board.selected            
+        assert not self.board.selected
         for x in self.board.shapes:
             if not isinstance(x, tools.Eyedrop):
-                assert not x.selected
+                assert not x.selected, x
 
     def test_undo_then_redo(self):
         """Test undoing/redoing together"""
@@ -192,7 +191,7 @@ class TestGuiFunctionality:
         for x in range(9):
             self.gui.on_new_tab()
             make_shapes(self.board)
-        assert len(self.gui.tabs.pages) == 10
+        assert len(self.gui.tabs.pages) == 10, len(self.gui.tabs.pages)
 
     def test_close_sheet(self):
         """Currently lacking a faked tab thing that's good enough"""

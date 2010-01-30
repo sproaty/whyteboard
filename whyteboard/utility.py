@@ -80,57 +80,7 @@ import meta
 import tools
 import whyteboard
 
-
-cfg = """
-bmp_select_transparent = boolean(default=False)
-canvas_border = integer(min=10, max=35, default=15)
-colour_grid = boolean(default=True)
-colour1 = list(min=3, max=3, default=list('280', '0', '0'))
-colour2 = list(min=3, max=3, default=list('255', '255', '0'))
-colour3 = list(min=3, max=3, default=list('0', '255', '0'))
-colour4 = list(min=3, max=3, default=list('255', '0', '0'))
-colour5 = list(min=3, max=3, default=list('0', '0', '255'))
-colour6 = list(min=3, max=3, default=list('160', '32', '240'))
-colour7 = list(min=3, max=3, default=list('0', '255', '255'))
-colour8 = list(min=3, max=3, default=list('255', '165', '0'))
-colour9 = list(min=3, max=3, default=list('211', '211', '211'))
-convert_quality = option('highest', 'high', 'normal', default='normal')
-default_font = string
-default_width = integer(min=1, max=12000, default=640)
-default_height = integer(min=1, max=12000, default=480)
-imagemagick_path = string
-handle_size = integer(min=3, max=15, default=6)
-language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', \
-                  'Portugese', 'Japanese', 'French', 'Traditional Chinese',  \
-                  'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', \
-                  'Galician', default='English')
-print_title = boolean(default=True)
-statusbar = boolean(default=True)
-tool_preview = boolean(default=True)
-toolbar = boolean(default=True)
-toolbox = option('icon', 'text', default='icon')
-toolbox_columns = option(2, 3, default=2)
-undo_sheets = integer(min=5, max=50, default=10)
-"""
-
 _ = wx.GetTranslation
-
-languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
-              (_("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
-              (_("Japanese"), wx.LANGUAGE_JAPANESE),
-              (_("Portugese"), wx.LANGUAGE_PORTUGUESE),
-              (_("Dutch"), wx.LANGUAGE_DUTCH),
-              (_("German"), wx.LANGUAGE_GERMAN),
-              (_("Russian"), wx.LANGUAGE_RUSSIAN),
-              (_("Arabic"), wx.LANGUAGE_ARABIC),
-              (_("Hindi"), wx.LANGUAGE_HINDI),
-              (_("Spanish"), wx.LANGUAGE_SPANISH),
-              (_("French"), wx.LANGUAGE_FRENCH),
-              (_("Welsh"), wx.LANGUAGE_WELSH),
-              (_("Traditional Chinese"), wx.LANGUAGE_CHINESE_TRADITIONAL),
-              (_("Czech"), wx.LANGUAGE_CZECH),
-              (_("Italian"), wx.LANGUAGE_ITALIAN),
-              (_("Galician"), wx.LANGUAGE_GALICIAN) )
 
 #----------------------------------------------------------------------
 
@@ -175,24 +125,6 @@ class Utility(object):
             self.font = wx.FFont(0, 0)
             self.font.SetNativeFontInfoFromString(self.config['default_font'])
 
-        # Make wxPython wildcard filter. Add a new item - new type supported!
-        # kinda (!) confusing code
-        self.types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff",
-                       "bmp", "pcx", "JPEG", "JPG", "PNG", "TIFF", "BMP", "PCX"]
-        images = ', '.join('*.' + i for i in self.types[2:])
-
-        label = [_("All supported files"), _("All files")+" (*.*)",
-                _("Whyteboard files")+" (*.wtbd)", _("Image Files")+" ("+images+")",
-                "PDF/PS/SVG"]
-
-        res1 = ';'.join('*.' + i for i in self.types[2:])
-        res2 = ';'.join('*.' + i for i in self.types[0:2])
-
-        wc_types = ["*.wtbd;" + res1 + res2, "*.*", "*.wtbd", res1, res2]
-
-        wc_list = [x + "|" + y for x, y in zip(label, wc_types)]
-        self.wildcard = '|'.join(wc_list)
-
 
 
     def save_file(self):
@@ -209,43 +141,7 @@ class Utility(object):
             self.gui.dialog.Show()
 
             _zip = zipfile.ZipFile('whyteboard_temp_new.wtbd', 'w')
-
-            data = {}  # list of bitmap data, check if image has been pasted
-            to_remove = []
-            for x in range(0, self.gui.tab_count):
-                board = self.gui.tabs.GetPage(x)
-                for shape in board.shapes:
-                    if isinstance(shape, tools.Image):
-                        img = shape.image.ConvertToImage()
-                        img_data = img.GetData()
-
-                        for k, v in data.items():
-                            if v == img_data:
-                                shape.filename = k
-                                break
-
-                        #  the above iteration didn't find any common pastes
-                        if not shape.filename:
-                            name = make_filename() + ".jpg"
-                            shape.image.SaveFile(name, wx.BITMAP_TYPE_JPEG)
-                            shape.filename = name
-                            data[shape.filename] = img_data
-                            _zip.write(name, os.path.join("data", name))
-                            to_remove.append(name)
-
-                        else:
-                            name = shape.filename
-
-                            if not name in to_remove:
-                                data[name] = img_data
-                                img.SaveFile(name, get_wx_image_type(name))
-                                _zip.write(name, os.path.join("data", name))
-                                to_remove.append(name)
-
-            [os.remove(x) for x in to_remove]
-
-
-
+            self.save_bitmap_data(_zip)
 
             temp = {}
             names, medias, canvas_sizes = [], [], []
@@ -337,6 +233,51 @@ class Utility(object):
             self.gui.dialog.Destroy()  # remove progress bar
 
 
+    def save_bitmap_data(self, _zip):
+        """
+        Will save all Image tools to disk as temporary files, and then removes
+        them. This function is length because it will not save two idential
+        images twice.
+        """
+        data = {}  # list of bitmap data, check if image has been pasted
+        to_remove = []
+        for x in range(0, self.gui.tab_count):
+            board = self.gui.tabs.GetPage(x)
+            for shape in board.shapes:
+                if isinstance(shape, tools.Image):
+                    img = shape.image.ConvertToImage()
+                    if not img.HasAlpha():
+                        img.InitAlpha()
+                    img_data = img.GetData()
+
+                    for k, v in data.items():
+                        if v == img_data:
+                            if not shape.filename:
+                                shape.filename = k
+                            break
+
+                    #  the above iteration didn't find any common pastes
+                    if not shape.filename:
+                        name = make_filename() + ".jpg"
+                        shape.image.SaveFile(name, wx.BITMAP_TYPE_JPEG)
+                        shape.filename = name
+                        data[shape.filename] = img_data
+                        _zip.write(name, os.path.join("data", name))
+                        to_remove.append(name)
+
+                    else:
+                        name = shape.filename
+
+                        if not name in to_remove:
+                            data[name] = img_data
+                            img.SaveFile(name, get_wx_image_type(name))
+                            _zip.write(name, os.path.join("data", name))
+                            to_remove.append(name)
+
+        [os.remove(x) for x in to_remove]
+
+
+
     def load_file(self, filename=None):
         """
         Loads in a file, passes it to convert if it is a convertable file,
@@ -348,11 +289,11 @@ class Utility(object):
         _file, _type = os.path.splitext(filename)  # convert to lowercase to
         _type = _type.replace(".", "").lower()  # save typing filename[1:] :)
 
-        if _type in self.types[:3]:
+        if _type in meta.types[:3]:
             self.convert()
 
-        elif _type in self.types[3:]:
-            load_image(self.temp_file, self.gui.board)
+        elif _type in meta.types[3:]:
+            load_image(self.temp_file, self.gui.board, tools.Image)
             self.gui.board.redraw_all()
         else:
             wx.MessageBox(_("Whyteboard doesn't support the filetype")+" .%s" % _type)
@@ -391,9 +332,9 @@ class Utility(object):
         Loads in the old .wtbd format (just a pickled file). Takes in either
         a filename (path) or a Python file object (from the zip archive)
         Pretty messy code, to support old save files written in "w", not "wb"
-        """      
+        """
         sys.modules['tools'] = tools  # monkey patch for new src layout (0.39.4)
-             
+
         temp = {}
         method = pickle.load
         if not pickle_data:
@@ -483,7 +424,7 @@ class Utility(object):
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
         self.saved = True
-        self.gui.board.select_tool()
+        self.gui.board.change_current_tool()
 
         try:
             self.gui.tabs.SetSelection(temp[0][3])
@@ -594,7 +535,7 @@ class Utility(object):
 
             if count == 1:
                 temp_path = path + tmp_file + ".png"
-                load_image(temp_path, self.gui.board)
+                load_image(temp_path, self.gui.board, tools.Image)
                 self.gui.board.redraw_all()
             else:
                 if not count:
@@ -628,7 +569,7 @@ class Utility(object):
         for x in range(0, len(images)):
             name = os.path.split(_file)[1][:15] + " - %s" % (x + 1)
             self.gui.on_new_tab(name=name)
-            load_image(images[x], self.gui.board)
+            load_image(images[x], self.gui.board, tools.Image)
 
         self.gui.board.redraw_all()
 
@@ -882,7 +823,7 @@ class WhyteboardDropTarget(wx.PyDropTarget):
                 shape.left_down(x, y)
                 shape.left_up(x, y)
                 self.gui.board.text = None
-                self.gui.board.select_tool()
+                self.gui.board.change_current_tool()
                 self.gui.board.redraw_all(True)
 
             elif df == wx.DF_FILENAME:

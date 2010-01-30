@@ -20,60 +20,137 @@
 
 """
 Contains meta data for the program, such as version, whether transparency is
-supported, language mappings.
+supported, language mappings, translator credits
+All attributes are global, but this module will always be imported, and can be
+used as a class in a way. There's simply *no need* to make it a class
 
-This is a static class with no dependencies besides wx, to allow it to be used 
-by other modules easily
+The function find_transparency is called from the GUI upon its creation,
+instead of before the GUI is created because wx must first initialise its
+App object before allowing DC operations
 """
 
 import wx
+from functions import transparent_supported
 
-class Singleton(type):
-    """
-    Singleton metaclass. Code taken from Task Coach, www.taskcoach.org
-    """             
-    def __call__(class_, *args, **kwargs):
-        if not class_.hasInstance():
-            class_.instance = super(Singleton, class_).__call__(*args, **kwargs)
-        return class_.instance
-    
-    def deleteInstance(class_):
-        """
-        Delete the (only) instance. This method is mainly for unittests so
-        they can start with a clean slate.
-        """
-        if class_.hasInstance():
-            del class_.instance
-    
-    def hasInstance(class_):
-        """
-        Has the (only) instance been created already?
-        """
-        return hasattr(class_, 'instance')
+_ = wx.GetTranslation
 
 
-#----------------------------------------------------------------------
+
+# Creates a wxPython wildcard filter from a list of known/supported filetypes.
+# From this list, we create multiple wildcard lists, e.g. images, all files,
+# whyteboard files.
+
+types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff", "bmp", "pcx", "JPEG",
+         "JPG", "PNG", "TIFF", "BMP", "PCX"]
+_images = ', '.join('*.' + i for i in types[2:8])  # image type labels
+
+_res1 = ';'.join('*.%s' % i for i in types[2:])   # image file formats
+_res2 = ';'.join('*.%s' % i for i in types[0:2])  # pdl types
+
+# map each label to its filetypes
+_labels = [_("All supported files"), _("All files")+" (*.*)", _("Whyteboard files")+" (*.wtbd)",
+           "%s (%s)" % (_("Image Files"), _images), "PDF/PS/SVG"]
+
+_files = ["*.wtbd;%s%s" % (_res1, _res2), "*.*",  "*.wtbd", _res1, _res2]
+
+wc_list = [_(label) + "|" + type for label, type in zip(_labels, _files)]
 
 
-#class MetaData(object):
-#    """
-#    The MetaData class containing static methods
-#    """
-#    __metaclass__ = Singleton
-#    #transparent = False
-#    version = "0.39.4"
-#    
-#    def __init__(self):
-#        pass
+dialog_wildcard = '|'.join(wc_list)
+transparent = True
 version = "0.39.4"
-#transparent = False
-    
+languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
+              (_("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
+              (_("Japanese"), wx.LANGUAGE_JAPANESE),
+              (_("Portugese"), wx.LANGUAGE_PORTUGUESE),
+              (_("Dutch"), wx.LANGUAGE_DUTCH),
+              (_("German"), wx.LANGUAGE_GERMAN),
+              (_("Russian"), wx.LANGUAGE_RUSSIAN),
+              (_("Arabic"), wx.LANGUAGE_ARABIC),
+              (_("Hindi"), wx.LANGUAGE_HINDI),
+              (_("Spanish"), wx.LANGUAGE_SPANISH),
+              (_("French"), wx.LANGUAGE_FRENCH),
+              (_("Welsh"), wx.LANGUAGE_WELSH),
+              (_("Traditional Chinese"), wx.LANGUAGE_CHINESE_TRADITIONAL),
+              (_("Czech"), wx.LANGUAGE_CZECH),
+              (_("Italian"), wx.LANGUAGE_ITALIAN),
+              (_("Galician"), wx.LANGUAGE_GALICIAN) )
+
+
+config_scheme = """
+bmp_select_transparent = boolean(default=False)
+canvas_border = integer(min=10, max=35, default=15)
+colour_grid = boolean(default=True)
+colour1 = list(min=3, max=3, default=list('280', '0', '0'))
+colour2 = list(min=3, max=3, default=list('255', '255', '0'))
+colour3 = list(min=3, max=3, default=list('0', '255', '0'))
+colour4 = list(min=3, max=3, default=list('255', '0', '0'))
+colour5 = list(min=3, max=3, default=list('0', '0', '255'))
+colour6 = list(min=3, max=3, default=list('160', '32', '240'))
+colour7 = list(min=3, max=3, default=list('0', '255', '255'))
+colour8 = list(min=3, max=3, default=list('255', '165', '0'))
+colour9 = list(min=3, max=3, default=list('211', '211', '211'))
+convert_quality = option('highest', 'high', 'normal', default='normal')
+default_font = string
+default_width = integer(min=1, max=12000, default=640)
+default_height = integer(min=1, max=12000, default=480)
+imagemagick_path = string
+handle_size = integer(min=3, max=15, default=6)
+language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', \
+                  'Portugese', 'Japanese', 'French', 'Traditional Chinese',  \
+                  'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', \
+                  'Galician', default='English')
+print_title = boolean(default=True)
+statusbar = boolean(default=True)
+tool_preview = boolean(default=True)
+toolbar = boolean(default=True)
+toolbox = option('icon', 'text', default='icon')
+toolbox_columns = option(2, 3, default=2)
+undo_sheets = integer(min=5, max=50, default=10)
+"""
+
+
+translators = [
+     'A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
+     'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
+     '"Amy" https://launchpad.net/~anthropofobe (German)',
+     '"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
+     'Cristian Asenjo https://launchpad.net/~apu2009 (Spanish)',
+     'David Aller https://launchpad.net/~niclamus (Italian)',
+     '"Dennis" https://launchpad.net/~dlinn83 (German)',
+     'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
+     'Federico Vera https://launchpad.net/~fedevera (Spanish)',
+     'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',
+     'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
+     'Javier Acuña Ditzel https://launchpad.net/~santoposmoderno (Spanish)',
+     'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
+     'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
+     '"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
+     '"Lauren" https://launchpad.net/~lewakefi (French)',
+     'Lorenzo Baracchi https://launchpad.net/~baracchi-lorenzo (Italian)',
+     'Medina https://launchpad.net/~medina-colpaca (Spanish)',
+     'Miguel Anxo Bouzada https://launchpad.net/~mbouzada/ (Galician)',
+     'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
+     '"MixCool" https://launchpad.net/~mixcool (German)',
+     'Nkolay Parukhin https://launchpad.net/~parukhin (Russian)',
+     '"Pallas" https://launchpad.net/~v-launchpad-geekin-de (German)',
+     '"pmkvodka" https://launchpad.net/~jazon23 (French)',
+     '"Rarulis" https://launchpad.net/~rarulis (French)',
+     'Roberto Bondi https://launchpad.net/~bondi (Italian)',
+     '"RodriT" https://launchpad.net/~rodri316 (Spanish)',
+     'Simon Junga https://launchpad.net/~simonthechipmunk (German)',
+     '"SimonimNetz" https://launchpad.net/~s-marquardt (German)',
+     'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
+     '"Tobberoth" https://launchpad.net/~tobberoth (Japanese)',
+     'Tobias Baldauf https://launchpad.net/~technopagan (German)',
+     '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
+     '"ucnj" https://launchpad.net/~ucn (German)',
+     '"Vonlist" https://launchpad.net/~hengartt (Spanish)',
+     'Will https://launchpad.net/~willbickerstaff (UK English)',
+     'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']
+
+
 def find_transparent():
+    """Has to be called by the GUI"""
     global transparent
-    try:
-        dc = wx.MemoryDC()
-        dc.SelectObject(wx.EmptyBitmap(10, 10))
-        x = wx.GCDC(dc)
-        transparent = True
-    except NotImplementedError:
-        transparent = False        
+    transparent = transparent_supported()

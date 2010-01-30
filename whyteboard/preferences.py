@@ -39,9 +39,9 @@ from wx.lib import scrolledpanel as scrolled
 
 import tools
 import whyteboard
+import meta
 from functions import make_bitmap
 from dialogs import FindIM
-from utility import languages
 
 _ = wx.GetTranslation
 
@@ -189,7 +189,7 @@ class General(wx.Panel):
 
         # we want to show the translated messages, but keep them in the same
         # order as the English ones, to set the config in English
-        self.options = [i[0] for i in languages]
+        self.options = [i[0] for i in meta.languages]
         self.options.sort()
         self.translated = [_(i) for i in self.options]
         translated = list(self.translated)
