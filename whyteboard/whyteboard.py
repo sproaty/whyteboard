@@ -291,31 +291,31 @@ class Whyteboard(wx.ScrolledWindow):
         elif direction is not None:
             self.Scroll(*size)
 
-        #self.buffer = wx.EmptyBitmap(*size)
-        #self.area = size
-        #size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
-        #self.SetVirtualSize(size)
-        #self.redraw_all()
-
-        self.buffer, self.oldbuffer = wx.EmptyBitmap(*size), self.buffer
-        dc = wx.BufferedDC(None, self.buffer)
-        dc.DrawBitmap(self.oldbuffer, 0, 0)
-
+        self.buffer = wx.EmptyBitmap(*size)
         self.area = size
         size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
         self.SetVirtualSize(size)
+        self.redraw_all()
 
-        x1, y1 = self.oldbuffer.GetSize()
-        x2, y2 = self.buffer.GetSize()
-        if x1 > x2 and y1 > y2:
-            self.Refresh()
-        else:
-            clip = wx.Region(0, 0, *size)
-            bufrect = wx.Rect(0, 0, *self.oldbuffer.GetSize())
-            clip.SubtractRect(bufrect)
-            dc.SetClippingRegionAsRegion(clip)
-            dc.Clear()
-            self.redraw_all(dc=dc)
+#        self.buffer, self.oldbuffer = wx.EmptyBitmap(*size), self.buffer
+#        dc = wx.BufferedDC(None, self.buffer)
+#        dc.DrawBitmap(self.oldbuffer, 0, 0)
+#
+#        self.area = size
+#        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
+#        self.SetVirtualSize(size)
+#
+#        x1, y1 = self.oldbuffer.GetSize()
+#        x2, y2 = self.buffer.GetSize()
+#        if x1 > x2 and y1 > y2:
+#            self.Refresh()
+#        else:
+#            clip = wx.Region(0, 0, *size)
+#            bufrect = wx.Rect(0, 0, *self.oldbuffer.GetSize())
+#            clip.SubtractRect(bufrect)
+#            dc.SetClippingRegionAsRegion(clip)
+#            dc.Clear()
+#            self.redraw_all(dc=dc)
 
 
     def redraw_dirty(self, dc):

@@ -26,13 +26,16 @@ from __future__ import with_statement
 
 import os
 import sys
+import cPickle
 import zipfile
 import wx
 import wx.lib.mixins.listctrl as listmix
 from wx.lib.buttons import GenBitmapButton
 
 from urllib import urlopen, urlretrieve, urlencode
+
 import lib.errdlg
+from lib.pubsub import pub
 from lib.BeautifulSoup import BeautifulSoup
 
 import meta
@@ -881,6 +884,7 @@ def ExceptionHook(exctype, value, trace):
 #----------------------------------------------------------------------
 
 
+
 class ShapeList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin,
                 listmix.ListRowHighlighter):
 
@@ -889,6 +893,7 @@ class ShapeList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin,
                              | wx.LC_SINGLE_SEL)
         listmix.ListCtrlAutoWidthMixin.__init__(self)
         listmix.ListRowHighlighter.__init__(self, (206, 218, 255))
+
 
 
 #----------------------------------------------------------------------
@@ -952,8 +957,6 @@ class ShapeViewer(wx.Dialog):
         nextprevsizer.Add(self.next)
 
 
-
-
         bsizer.Add((1, 1), 1, wx.EXPAND)  # align to the right
         bsizer.Add(nextprevsizer, 0, wx.RIGHT, 10)
         bsizer.Add(self.pages, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
@@ -986,8 +989,12 @@ class ShapeViewer(wx.Dialog):
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
+        pub.subscribe(self.shape_add, 'shape.add')
 
-
+    def shape_add(self, shape):
+        self.shapes.append(shape)
+        self.populate()
+        
     def populate(self):
         """
         Creates all columns and populates with the current sheets' data
@@ -1128,7 +1135,7 @@ class ShapeViewer(wx.Dialog):
         self.Close()
 
     def on_close(self, event):
-        self.gui.viewer= False
+        self.gui.viewer = False
         event.Skip()
 
 #----------------------------------------------------------------------

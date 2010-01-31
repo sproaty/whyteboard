@@ -584,7 +584,6 @@ class Highlighter(Pen):
 
     def left_up(self, x, y):
         super(Highlighter, self).left_up(x, y)
-        #wx.CallAfter(self.draw, self.board.get_dc(), True)
         self.board.redraw_all()
 
     def motion(self, x, y):
@@ -593,8 +592,6 @@ class Highlighter(Pen):
         self.draw(None)
         self.x_tmp = x
         self.y_tmp = y
-
-
 
 
     def draw(self, dc, replay=False, _type="LineList"):

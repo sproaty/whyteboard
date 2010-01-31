@@ -289,6 +289,8 @@ class Utility(object):
         _file, _type = os.path.splitext(filename)  # convert to lowercase to
         _type = _type.replace(".", "").lower()  # save typing filename[1:] :)
 
+        print meta.types
+        print _type
         if _type in meta.types[:3]:
             self.convert()
 

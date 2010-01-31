@@ -77,6 +77,7 @@ ImageMagick, image editing suite - http://www.imagemagick.net
 BeautifulSoup, Python HTML parser - http://www.crummy.com/software/BeautifulSoup/
 ConfigObj, Python configuration files - http://www.voidspace.org.uk/python/configobj.html
 Editra Control Library, extra wxPython widgets - http://editra.org/eclib
+Pubsub, publish/subscribe API -- http://pubsub.sourceforge.net
 
 Tango Icon Library - http://tango.freedesktop.org/Tango_Icon_Library
 py2exe, helps compile python files to windows .exe - http://www.py2exe.org/

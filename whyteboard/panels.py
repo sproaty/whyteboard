@@ -60,9 +60,8 @@ class ControlPanel(wx.Panel):
         """
         wx.Panel.__init__(self, gui, style=0 | wx.RAISED_BORDER)
 
-        self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
-                                     wx.CP_NO_TLW_RESIZE)
-        self.pane = self.cp.GetPane()  # every widget's parent
+        cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE | wx.CP_NO_TLW_RESIZE)
+        self.pane = cp.GetPane()  # every widget's parent
         self.gui = gui
         self.toggled = 1  # Pen, initallly
         self.preview = DrawingPreview(self.pane, self.gui)
@@ -74,9 +73,8 @@ class ControlPanel(wx.Panel):
 
         colour = self.colour_buttons()
         self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
-        self.make_colour_grid()
-
         self.toolsizer = wx.GridSizer(cols=1, hgap=5, vgap=5)
+        self.make_colour_grid()        
         self.make_toolbox(gui.util.config['toolbox'])
 
         choices = ''.join(str(i) + " " for i in range(1, 35) ).split()
@@ -100,11 +98,11 @@ class ControlPanel(wx.Panel):
         #box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
         box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
         csizer.Add(box, 1, wx.EXPAND)
-        sizer.Add(self.cp, 1, wx.EXPAND)
+        sizer.Add(cp, 1, wx.EXPAND)
 
         self.SetSizer(sizer)
-        self.cp.GetPane().SetSizer(csizer)
-        self.cp.Expand()
+        cp.GetPane().SetSizer(csizer)
+        cp.Expand()
         self.control_sizer = box
         self.background.Raise()
 
@@ -190,7 +188,7 @@ class ControlPanel(wx.Panel):
         """Builds a colour grid from the user's preferred colours"""
         colours = []
         for x in range(1, 10):
-            col = self.gui.util.config["colour"+str(x)]
+            col = self.gui.util.config["colour%s" % x]
             colours.append([int(c) for c in col])
 
         for colour in colours:
@@ -205,15 +203,13 @@ class ControlPanel(wx.Panel):
 
     def toggle(self, evt):
         """Toggles the pane and its widgets"""
-        frame = self.GetTopLevelParent()
-        frame.Layout()
-        frame.board.redraw_all()
+        self.gui.Layout()
+        self.gui.board.redraw_all()  # fixes a windows redraw bug
 
 
     def scroll(self, event):
         """Scrolls the thickness drop-down box (for Windows)"""
-        box = self.thickness
-        val = box.GetSelection()
+        val = self.thickness.GetSelection()
         if event.GetWheelRotation() > 0:  # mousewheel down
             val -= 1
             if val <= 0:
@@ -221,7 +217,7 @@ class ControlPanel(wx.Panel):
         else:
             val += 1
 
-        box.SetSelection(val)
+        self.thickness.SetSelection(val)
         self.change_thickness()
 
 
@@ -538,31 +534,29 @@ class SidePanel(wx.Panel):
     """
     def __init__(self, gui):
         wx.Panel.__init__(self, gui, style=wx.RAISED_BORDER)
-        self.cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
+        cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        csizer = wx.BoxSizer(wx.VERTICAL)
-
-        self.tabs = wx.Notebook(self.cp.GetPane())
+        
+        self.tabs = wx.Notebook(cp.GetPane())
         self.thumbs = Thumbs(self.tabs, gui)
         self.notes = Notes(self.tabs, gui)
         self.tabs.AddPage(self.thumbs, _("Thumbnails"))
         self.tabs.AddPage(self.notes, _("Notes"))
-
+        
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        csizer = wx.BoxSizer(wx.VERTICAL)
         csizer.Add(self.tabs, 1, wx.EXPAND)
-        sizer.Add(self.cp, 1, wx.EXPAND)
+        sizer.Add(cp, 1, wx.EXPAND)
 
         self.SetSizer(sizer)
-        self.cp.GetPane().SetSizer(csizer)
-        self.cp.Expand()
+        cp.GetPane().SetSizer(csizer)
+        cp.Expand()
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
-
+        
 
     def toggle(self, evt):
         """Toggles the pane and its widgets"""
-        frame = self.GetTopLevelParent()
-        frame.Layout()
+        self.GetTopLevelParent().Layout()
 
 
 #----------------------------------------------------------------------
@@ -590,13 +584,10 @@ class Notes(wx.Panel):
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
         pub.subscribe(self.add_note, 'note.add')
-        pub.subscribe(self.psOnEdit, 'note.edit')
-
-    def psOnEdit(self, tree_id, text):
-        """Edit a non-blank Note by changing its tree item's text"""
-        text = text.replace("\n", " ")[:15]
-        self.tree.SetItemText(tree_id, text)
-
+        pub.subscribe(self.edit_note, 'note.edit')
+        pub.subscribe(self.rename, 'sheet.rename')
+        pub.subscribe(self.sheet_moved, 'sheet.move')
+        
 
     def add_tab(self, name=None):
         """Adds a new tab as a child to the root element"""
@@ -640,9 +631,10 @@ class Notes(wx.Panel):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
 
 
-    def update_name(self, _id, name):
+    def rename(self, _id, text):
         """Renames a given sheet"""
-        self.tree.SetItemText(self.tabs[_id], name)
+        self.tree.SetItemText(self.tabs[_id], text)
+
 
     def remove_all(self):
         """Removes all tabs."""
@@ -683,10 +675,67 @@ class Notes(wx.Panel):
         if draw:
             self.gui.board.redraw_all()
 
+
     def delete(self, event):
         self.select(event, False)
         self.gui.board.delete_selected()
 
+    def edit_note(self, tree_id, text):
+        """Edit a non-blank Note by changing its tree item's text"""
+        text = text.replace("\n", " ")[:15]
+        self.tree.SetItemText(tree_id, text)
+
+
+    def sheet_moved(self, event, tab_count):
+        """Drag/drop sheet: move a tree item and its associated notes"""
+        tree = self.tree
+
+        old_item = self.tabs[event.GetOldSelection()]
+        text = tree.GetItemText(old_item)
+        children = []
+
+        # Save all Note item data to re-create it in the new Tree node
+        if tree.ItemHasChildren(old_item):
+            (child, cookie) = tree.GetFirstChild(old_item)
+            while child.IsOk():
+                item = (tree.GetItemPyData(child), tree.GetItemText(child))
+                children.append(item)
+                (child, cookie) = tree.GetNextChild(old_item, cookie)
+
+        # Remove the old tree node, re-add it
+        before = event.GetSelection()
+
+        if event.GetSelection() >= tab_count:
+            before = event.GetSelection() - 1
+        if event.GetOldSelection() < event.GetSelection():  # drag to the right
+            before += 1
+        if before < 0:
+            before = 0
+
+        new = tree.InsertItemBefore(self.root, before, text)
+        tree.Delete(old_item)
+
+        # Restore the notes to the new tree item
+        for item in children:
+            data = wx.TreeItemData(item[0])
+            item[0].tree_id = tree.AppendItem(new, item[1], data=data)
+
+        # Reposition the tab in the list of wx.TreeItemID's for the loop below
+        item = self.tabs.pop(event.GetOldSelection())
+        self.tabs.insert(event.GetSelection(), item)
+
+        # Update each tree's node data so it is pointing to the correct tab ID
+        (child, cookie) = tree.GetFirstChild(self.root)
+        count = 0
+
+        while child.IsOk():
+            self.tabs[count] = child
+            tree.SetItemData(self.tabs[count], wx.TreeItemData(count))
+            (child, cookie) = tree.GetNextChild(self.root, cookie)
+            count += 1
+
+        tree.Expand(new)
+        
 
 #----------------------------------------------------------------------
 
@@ -901,9 +950,24 @@ class Thumbs(scrolled.ScrolledPanel):
         self.text = []  # StaticTexts
         self.new_thumb()  # inital thumb
         self.thumbs[0].current = True
+        pub.subscribe(self.highlight_current, 'thumbs.text.highlight')
+        pub.subscribe(self.rename, 'sheet.rename')
 
 
-
+    def highlight_current(self, tab, select):
+        if self.text:
+            try:
+                font = self.text[tab].GetClassDefaultAttributes().font
+                font.SetWeight(wx.FONTWEIGHT_NORMAL)
+                if select:
+                    font.SetWeight(wx.FONTWEIGHT_BOLD)
+                                    
+                self.text[tab].SetFont(font)
+            except IndexError:
+                pass  # ignore a bug closing the last tab from the pop-up menu
+                      # temp fix, can't think how to solve it otherwise
+                      
+                      
     def new_thumb(self, _id=0, name=None):
         """
         Creates a new thumbnail button and manages its ID, along with a label.
@@ -996,8 +1060,8 @@ class Thumbs(scrolled.ScrolledPanel):
         return bitmap
 
 
-    def update_name(self, _id, name):
-        self.text[_id].SetLabel(name)
+    def rename(self, _id, text):
+        self.text[_id].SetLabel(text)
         self.Layout()
 
     def update(self, _id):

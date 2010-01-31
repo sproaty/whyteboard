@@ -37,23 +37,23 @@ _ = wx.GetTranslation
 
 
 # Creates a wxPython wildcard filter from a list of known/supported filetypes.
-# From this list, we create multiple wildcard lists, e.g. images, all files,
-# whyteboard files.
+all = [ (_('Image Files'), ["jpeg", "jpg", "png", "tiff", "bmp", "pcx"]),
+          (_('PDF/PS/SVG'), ['ps', 'pdf', 'svg']),
+          (_('Whyteboard files'), ['wtbd']) ]
 
-types = ["ps", "pdf", "svg", "jpeg", "jpg", "png", "tiff", "bmp", "pcx", "JPEG",
-         "JPG", "PNG", "TIFF", "BMP", "PCX"]
-_images = ', '.join('*.' + i for i in types[2:8])  # image type labels
+wc_list = []
+types = []
+for label, exts in all:
 
-_res1 = ';'.join('*.%s' % i for i in types[2:])   # image file formats
-_res2 = ';'.join('*.%s' % i for i in types[0:2])  # pdl types
+    exts = ['*.%s'%a for a in exts]
+    visexts = ', '.join(exts)
 
-# map each label to its filetypes
-_labels = [_("All supported files"), _("All files")+" (*.*)", _("Whyteboard files")+" (*.wtbd)",
-           "%s (%s)" % (_("Image Files"), _images), "PDF/PS/SVG"]
+    exts.extend([e.upper() for e in exts])
+    types.extend(exts)
+    wc_list.append('%s (%s)|%s'%(label, visexts, ';'.join(exts)))
 
-_files = ["*.wtbd;%s%s" % (_res1, _res2), "*.*",  "*.wtbd", _res1, _res2]
-
-wc_list = [_(label) + "|" + type for label, type in zip(_labels, _files)]
+wc_list.insert(0, '%s|%s'%(_('All files')+' (*.*)', '*.*'))
+wc_list.insert(0, '%s|%s'%(_("All suppported files"), ';'.join(types)))
 
 
 dialog_wildcard = '|'.join(wc_list)
@@ -75,6 +75,7 @@ languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
               (_("Czech"), wx.LANGUAGE_CZECH),
               (_("Italian"), wx.LANGUAGE_ITALIAN),
               (_("Galician"), wx.LANGUAGE_GALICIAN) )
+
 
 
 config_scheme = """

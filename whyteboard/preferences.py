@@ -191,7 +191,7 @@ class General(wx.Panel):
         # order as the English ones, to set the config in English
         self.options = [i[0] for i in meta.languages]
         self.options.sort()
-        self.translated = [_(i) for i in self.options]
+        self.translated = [_(i).capitalize() for i in self.options]
         translated = list(self.translated)
         translated.sort()
         self.lang = wx.ComboBox(self, choices=translated, style=wx.CB_READONLY)

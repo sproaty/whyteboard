@@ -416,7 +416,7 @@ class GUI(wx.Frame):
 
     def shape_add(self, shape):
         self.board.add_shape(shape)
-        self.update_shape_viewer()
+        #self.update_shape_viewer()
 
 
     def update_shape_viewer(self):
@@ -709,7 +709,6 @@ class GUI(wx.Frame):
 
         self.update_panels(True)
         self.thumbs.thumbs[self.current_tab].update()
-        #self.thumbs.Scroll(-1, self.current_tab - 1)
         self.thumbs.ScrollChildIntoView(self.thumbs.thumbs[self.current_tab])
         self.control.change_tool()
 
@@ -736,51 +735,7 @@ class GUI(wx.Frame):
         for x in range(self.tab_count):
             self.thumbs.text[x].SetLabel(self.tabs.GetPageText(x))
 
-        old_item = self.notes.tabs[event.GetOldSelection()]
-        text = tree.GetItemText(old_item)
-        children = []
-
-        # Save all Note item data to re-create it in the new Tree node
-        if tree.ItemHasChildren(old_item):
-            (child, cookie) = tree.GetFirstChild(old_item)
-            while child.IsOk():
-                item = (tree.GetItemPyData(child), tree.GetItemText(child))
-                children.append(item)
-                (child, cookie) = tree.GetNextChild(old_item, cookie)
-
-        # Remove the old tree node, re-add it
-        before = event.GetSelection()
-
-        if event.GetSelection() >= self.tab_count:
-            before = event.GetSelection() - 1
-        if event.GetOldSelection() < event.GetSelection():  # drag to the right
-            before += 1
-        if before < 0:
-            before = 0
-
-        new = tree.InsertItemBefore(self.notes.root, before, text)
-        tree.Delete(old_item)
-
-        # Restore the notes to the new tree item
-        for item in children:
-            data = wx.TreeItemData(item[0])
-            item[0].tree_id = tree.AppendItem(new, item[1], data=data)
-
-        # Reposition the tab in the list of wx.TreeItemID's for the loop below
-        item = self.notes.tabs.pop(event.GetOldSelection())
-        self.notes.tabs.insert(event.GetSelection(), item)
-
-        # Update each tree's node data so it is pointing to the correct tab ID
-        (child, cookie) = tree.GetFirstChild(self.notes.root)
-        count = 0
-
-        while child.IsOk():
-            self.notes.tabs[count] = child
-            tree.SetItemData(self.notes.tabs[count], wx.TreeItemData(count))
-            (child, cookie) = tree.GetNextChild(self.notes.root, cookie)
-            count += 1
-
-        tree.Expand(new)
+        pub.sendMessage('sheet.move', event=event, tab_count=self.tab_count)
         self.on_done_load()
 
         wx.MilliSleep(100)  # try and stop user dragging too many tabs quickly
@@ -788,20 +743,9 @@ class GUI(wx.Frame):
 
 
     def update_panels(self, select):
-        """Updates thumbnails and notes to indicate current tab"""
-        tab = self.current_tab
-
-        if self.thumbs.text:
-            try:
-                font = self.thumbs.text[tab].GetClassDefaultAttributes().font
-                if select:
-                    font.SetWeight(wx.FONTWEIGHT_BOLD)
-                else:
-                    font.SetWeight(wx.FONTWEIGHT_NORMAL)
-                self.thumbs.text[tab].SetFont(font)
-            except IndexError:
-                pass  # ignore a bug closing the last tab from the pop-up menu
-                      # temp fix, can't think how to solve it otherwise
+        """Updates thumbnail panel's text"""
+        pub.sendMessage('thumbs.text.highlight', tab=self.current_tab, 
+                        select=select)
 
 
     def on_close_tab(self, event=None):
@@ -864,13 +808,13 @@ class GUI(wx.Frame):
         wx.Yield()  # doesn't draw thumbnail otherwise...
         self.board.resize_canvas(board[3])
         self.board.redraw_all(True)
+        self.update_shape_viewer()
 
 
     def on_rename(self, event=None, sheet=None):
         if not sheet:
             sheet = self.current_tab
-        dlg = wx.TextEntryDialog(self, _("Rename this sheet to:"),
-                                                        _("Rename sheet"))
+        dlg = wx.TextEntryDialog(self, _("Rename this sheet to:"), _("Rename sheet"))
         dlg.SetValue(self.tabs.GetPageText(sheet))
 
         if dlg.ShowModal() == wx.ID_CANCEL:
@@ -879,8 +823,7 @@ class GUI(wx.Frame):
             val = dlg.GetValue()
             if val:
                 self.tabs.SetPageText(sheet, val)
-                self.thumbs.update_name(sheet, val)
-                self.notes.update_name(sheet, val)
+                pub.sendMessage('sheet.rename', _id=sheet, text=val)
 
 
     def on_delete_shape(self, event=None):
@@ -893,8 +836,8 @@ class GUI(wx.Frame):
     def update_menus(self, event):
         """
         Enables/disables the undo/redo/next/prev button as appropriate.
-        It is called every 65ms and uses a counter to update the GUI less often
-        than the 65ms, as it's too performance intense
+        It is called every 65ms and uses a counter to update the clipboard check
+        less often than the 65ms, as it's too performance intense
         """
         if not self.board:
             return
@@ -1158,8 +1101,13 @@ class GUI(wx.Frame):
 
 
     def on_file_history(self, evt):
-        fileNum = evt.GetId() - wx.ID_FILE1
-        path = self.filehistory.GetHistoryFile(fileNum)
+        """ Handle file load from the recent files menu """
+        num = evt.GetId() - wx.ID_FILE1
+        path = self.filehistory.GetHistoryFile(num)
+        if not os.path.exists(path):
+            wx.MessageBox(_("File not found"))
+            self.filehistory.RemoveFileFromHistory(num)
+            return
         self.filehistory.AddFileToHistory(path)  # move up the list
 
         if path.endswith(".wtbd"):
@@ -1239,15 +1187,14 @@ class GUI(wx.Frame):
 
 
     def on_refresh(self):
-        """Refresh all thumbnails."""
         self.thumbs.update_all()
-
 
     def on_transparent(self, event=None):
         self.board.toggle_transparent()
 
     def on_swap_colours(self, event=None):
         self.board.swap_colours()
+
 
     def on_page_setup(self, evt):
         psdd = wx.PageSetupDialogData(self.printData)
@@ -1422,7 +1369,6 @@ class WhyteboardApp(wx.App):
             locale.setlocale(locale.LC_ALL, '')
             self.locale.AddCatalogLookupPathPrefix(langdir)
             self.locale.AddCatalog("whyteboard")
-            self.locale.AddCatalog('wxstd')
 
 
         self.frame = GUI(None, config)
