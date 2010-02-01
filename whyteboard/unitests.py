@@ -27,12 +27,13 @@ import os
 
 from lib.configobj import ConfigObj
 from lib.validate import Validator
+from lib.pubsub import pub
 
 import fakewidgets
 from fakewidgets.core import Bitmap, Event, Colour
 import gui
 import meta
-import tools
+import tools as tools
 
 config = ConfigObj(configspec=meta.config_scheme.split("\n"))
 validator = Validator()
@@ -45,9 +46,12 @@ def make_shapes(board):
     """
     params = [board, Colour(0, 0, 0), 1]
 
-    for item in board.gui.util.items:
-        if not isinstance(item, (tools.Media, tools.Select)):
-            board.add_shape(item(*params))
+    for tool in board.gui.util.items:
+        #if not isinstance(item, (tools.Media, tools.Select)):
+        #print item
+        #pub.sendMessage('shape.add', shape=item)#board.add_shape(item(*params))
+        item = tool(*params)
+        item.left_down(5, 6)
 
 
 class SimpleApp(fakewidgets.core.PySimpleApp):

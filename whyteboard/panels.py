@@ -74,7 +74,7 @@ class ControlPanel(wx.Panel):
         colour = self.colour_buttons()
         self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
         self.toolsizer = wx.GridSizer(cols=1, hgap=5, vgap=5)
-        self.make_colour_grid()        
+        self.make_colour_grid()
         self.make_toolbox(gui.util.config['toolbox'])
 
         choices = ''.join(str(i) + " " for i in range(1, 35) ).split()
@@ -536,13 +536,13 @@ class SidePanel(wx.Panel):
         wx.Panel.__init__(self, gui, style=wx.RAISED_BORDER)
         cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
-        
+
         self.tabs = wx.Notebook(cp.GetPane())
         self.thumbs = Thumbs(self.tabs, gui)
         self.notes = Notes(self.tabs, gui)
         self.tabs.AddPage(self.thumbs, _("Thumbnails"))
         self.tabs.AddPage(self.notes, _("Notes"))
-        
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
         csizer.Add(self.tabs, 1, wx.EXPAND)
@@ -552,7 +552,7 @@ class SidePanel(wx.Panel):
         cp.GetPane().SetSizer(csizer)
         cp.Expand()
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
-        
+
 
     def toggle(self, evt):
         """Toggles the pane and its widgets"""
@@ -587,7 +587,7 @@ class Notes(wx.Panel):
         pub.subscribe(self.edit_note, 'note.edit')
         pub.subscribe(self.rename, 'sheet.rename')
         pub.subscribe(self.sheet_moved, 'sheet.move')
-        
+
 
     def add_tab(self, name=None):
         """Adds a new tab as a child to the root element"""
@@ -735,7 +735,7 @@ class Notes(wx.Panel):
             count += 1
 
         tree.Expand(new)
-        
+
 
 #----------------------------------------------------------------------
 
@@ -961,13 +961,13 @@ class Thumbs(scrolled.ScrolledPanel):
                 font.SetWeight(wx.FONTWEIGHT_NORMAL)
                 if select:
                     font.SetWeight(wx.FONTWEIGHT_BOLD)
-                                    
+
                 self.text[tab].SetFont(font)
             except IndexError:
                 pass  # ignore a bug closing the last tab from the pop-up menu
                       # temp fix, can't think how to solve it otherwise
-                      
-                      
+
+
     def new_thumb(self, _id=0, name=None):
         """
         Creates a new thumbnail button and manages its ID, along with a label.

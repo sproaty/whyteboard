@@ -22,5 +22,6 @@ import sized
 import lib.scrolledpanel
 import lib.colourselect
 import lib.buttons
+import media.mediactrl
 import version
 import flatnotebook

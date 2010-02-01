@@ -142,9 +142,11 @@ class GUI(wx.Frame):
         box.Add(self.panel, 0, wx.EXPAND)
         self.SetSizer(box)
         self.SetSizeWH(800, 600)
-        self.Maximize(True)
+
         if os.name == "posix":
             self.board.SetFocus()  # makes EVT_CHAR_HOOK trigger
+        if 'mac' != os.name:
+            self.Maximize(True)
 
         self.count = 5  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(50)
@@ -415,6 +417,7 @@ class GUI(wx.Frame):
 
 
     def shape_add(self, shape):
+        print 'ey'
         self.board.add_shape(shape)
         #self.update_shape_viewer()
 
@@ -728,7 +731,6 @@ class GUI(wx.Frame):
 
         self.dialog = ProgressDialog(self, _("Loading..."), 5)
         self.dialog.Show()
-        tree = self.notes.tree
         self.on_change_tab()
 
         # Update thumbnails
@@ -737,14 +739,13 @@ class GUI(wx.Frame):
 
         pub.sendMessage('sheet.move', event=event, tab_count=self.tab_count)
         self.on_done_load()
-
         wx.MilliSleep(100)  # try and stop user dragging too many tabs quickly
         wx.SafeYield()
 
 
     def update_panels(self, select):
         """Updates thumbnail panel's text"""
-        pub.sendMessage('thumbs.text.highlight', tab=self.current_tab, 
+        pub.sendMessage('thumbs.text.highlight', tab=self.current_tab,
                         select=select)
 
 

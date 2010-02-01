@@ -206,12 +206,18 @@ class DC(object):
     def GetMultiLineTextExtent(self, *args, **kwds):
         return (0, 0)
 
+    def GetBoundingBox(self):
+        return (100, 100, 150, 150)
+
     def __getattr__(self, attr):
         """Just fake any other methods"""
         self.calls.append(attr)
         return lambda *args, **kwds: None
 
 class BufferedDC(DC):
+    pass
+
+class DCOverlay(DC):
     pass
 
 class GraphicsContext(DC):
@@ -258,6 +264,7 @@ class Window(object):
         self.Enabled = True
         self.calls = []
         self.size = (0, 0)
+        self.captured = False
 
     def GetClientSizeTuple(self):
         return (0, 0)
@@ -271,10 +278,25 @@ class Window(object):
     def Disable(self):
         self.Enabled=False
 
+    def CaptureMouse(self):
+        self.captured = True
+
+    def ReleaseMouse(self):
+        self.captured = False
+
     def HasCapture(self):
-        return False
+        return self.captured
+
+    def Fit(self):
+        pass
 
     def SetFocus(self):
+        pass
+
+    def PrepareDC(self, dc):
+        pass
+
+    def Layout(self):
         pass
 
     def Show(self):
@@ -292,7 +314,7 @@ class Window(object):
     def SetSize(self, size):
         self.size = size
 
-    def RefreshRect(self):
+    def RefreshRect(self, rect):
         pass
 
     def Destroy(self):
@@ -356,6 +378,9 @@ class ScrolledWindow(Window):
         pass
 
     def GetBestVirtualSize(self, *size):
+        pass
+
+    def CalcScrolledPosition(self, x1, x2):
         pass
 
 class Panel(Window):
@@ -433,6 +458,16 @@ class StaticBox(Window):
 class StaticLine(Window):
     def __init__(self, parent, id=-1, label="", **kwds):
         Window.__init__(self, parent, **kwds)
+        self.Label = label
+
+    def __getattr__(self, attr):
+        """Just fake any other methods"""
+        self.calls.append(attr)
+        return lambda *args, **kwds: None
+
+class Slider(Control):
+    def __init__(self, parent, id=-1, label="", **kwds):
+        Control.__init__(self, parent, **kwds)
         self.Label = label
 
     def __getattr__(self, attr):
@@ -792,6 +827,18 @@ class FileHistory(object):
     def AddFilesToMenu(self):
         pass
 
+
+class Timer(object):
+    def __init__(self, owner):
+        self.owner = owner
+
+    def Start(self, interval):
+        pass
+
+    def Stop(self):
+        pass
+
+
 ###############
 # Main windows
 ###############
@@ -811,11 +858,7 @@ class TopWindow(Window):
     def SetIcon(self, icon):
         self.icon = icon
 
-    def Fit(self):
-        pass
 
-    def Layout(self):
-        pass
 
 class Frame(TopWindow):
     """Mocks wx.Frame"""
@@ -1044,13 +1087,17 @@ class StaticBoxSizer(Sizer):
     def __init__(self, *args, **kwds):
         Sizer.__init__(self, None, **kwds)
 
+
 class GridSizer(StaticBoxSizer):
+    def __init__(self, rows=1, cols=0, vgap=0, hgap=0):
+        Sizer.__init__(self, None)
+
     def SetCols(self, cols):
         self.cols = cols
 
 
 class FlexGridSizer(Sizer):
-    def __init__(self, rows, cols, vgap, hgap):
+    def __init__(self, rows=0, cols=0, vgap=0, hgap=0):
         Sizer.__init__(self)
 
         self.rows = rows
@@ -1075,6 +1122,9 @@ class FlexGridSizer(Sizer):
         return lambda *args, **kwds: None
 
 
+class GridBagSizer(FlexGridSizer):
+    def __init__(self, vgap=0, hgap=0):
+        FlexGridSizer.__init__(self, None)
 
 
 #############
