@@ -1299,8 +1299,6 @@ class Note(Text):
         """ Don't add a blank note """
         if super(Note, self).left_up(x, y):
             pub.sendMessage('note.add', note=self)
-        else:
-            self.board.redraw_all()
 
 
     def edit(self):

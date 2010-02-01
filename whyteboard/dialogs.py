@@ -638,14 +638,11 @@ class Feedback(wx.Dialog):
         self.SetSizerAndFit(vsizer)
         self.SetFocus()
         self.SetAutoLayout(True)
-
         self.Bind(wx.EVT_BUTTON, self.submit, send_b)
 
 
     def submit(self, event):
-        """
-        Submit feedback.
-        """
+        """Submit feedback."""
         if not self.email.GetValue() or self.email.GetValue().find("@") == -1:
             wx.MessageBox(_("Please fill out your email address"), _("Error"))
             return

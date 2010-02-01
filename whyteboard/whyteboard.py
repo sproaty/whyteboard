@@ -237,7 +237,7 @@ class Whyteboard(wx.ScrolledWindow):
 
     def check_mouse_for_resize(self, x, y):
         """
-        Sees if the user's mouse is outside of the canvas, and updates their
+        Sees if the user's mouse is outside of the canvas, and updates the
         cursor if it's in a different resizable area than it previously was
         Returns the cursor to its normal state if it's moved back in
         """

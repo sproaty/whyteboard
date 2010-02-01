@@ -553,7 +553,7 @@ class Utility(object):
                     images.append(temp_file)
 
                 self.display_converted(_file, images)
-                self.gui.util.library_write(_file, images, quality)
+                self.library_write(_file, images, quality)
 
         # Just in case it's a file with many pages
         self.gui.dialog = ProgressDialog(self.gui, _("Loading..."), 30)
@@ -583,7 +583,6 @@ class Utility(object):
         """
         const = get_wx_image_type(filename)
         self.gui.board.deselect()
-        self.gui.board.redraw_all()
 
         context = wx.MemoryDC(self.gui.board.buffer)
         memory = wx.MemoryDC()
@@ -616,7 +615,6 @@ class Utility(object):
         """
         if not args:
             args = []
-
 
         if not self.saved:
             name = _("Untitled")
