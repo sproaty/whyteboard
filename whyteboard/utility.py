@@ -289,12 +289,10 @@ class Utility(object):
         _file, _type = os.path.splitext(filename)  # convert to lowercase to
         _type = _type.replace(".", "").lower()  # save typing filename[1:] :)
 
-        print meta.types
-        print _type
         if _type in meta.types[:3]:
             self.convert()
 
-        elif _type in meta.types[3:]:
+        elif _type in meta.types:
             load_image(self.temp_file, self.gui.board, tools.Image)
             self.gui.board.redraw_all()
         else:

@@ -59,6 +59,9 @@ http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14
 
 ---- KNOWN BUGS ----
 
+* Printing quality may be bad
+* Exporting PDFs creates an image of your sheets and then places that image into
+  the PDF. Be careful with overwriting.
 * Media Tool may take several file loads to actually load the file correctly.
 * Media Tool may not resize the video/control panel properly
 * Dragging and dropping text from Firefox will 'hang' the program until the text
