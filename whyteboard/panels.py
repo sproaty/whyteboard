@@ -1023,7 +1023,7 @@ class Thumbs(scrolled.ScrolledPanel):
         """
         Removes all thumbnails.
         """
-        for x in range(0, len(self.thumbs)):
+        for x in range(len(self.thumbs)):
             self.sizer.Remove(self.thumbs[x])
             self.sizer.Remove(self.text[x])
             self.thumbs[x].Hide()  # 'visibly' remove

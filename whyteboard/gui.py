@@ -414,8 +414,6 @@ class GUI(wx.Frame):
         self.menu.Check(ID_TRANSPARENT, menu)
 
 
-
-
     def shape_add(self, shape):
         self.board.add_shape(shape)
         #self.update_shape_viewer()
@@ -512,7 +510,11 @@ class GUI(wx.Frame):
 
 
     def on_export_pdf(self, event=None):
-        """Exports the all the sheets as a PDF. Must first, export all as img"""
+        """
+        Exports the all the sheets as a PDF. Must first export all sheets as
+        imgages, convert to PDF (displaying a progress bar) and then remove
+        all the temporary files
+        """
         if not self.util.im_location:
             self.util.prompt_for_im()
         if not self.util.im_location:
@@ -535,9 +537,9 @@ class GUI(wx.Frame):
         if filename:
             names = []
             board = self.board
-            for x in range(0, self.tab_count):
+            for x in range(self.tab_count):
                 self.board = self.tabs.GetPage(x)
-                name = filename+"-tempblahhahh-%s-.jpg" % x
+                name = "%s-tempblahhahh-%s-.jpg" % (filename, x)
                 names.append(name)
                 self.util.export(name)
             self.board = board
@@ -547,13 +549,12 @@ class GUI(wx.Frame):
             for x in names:
                 files += '"%s" ' % x  # quote filenames for windows
 
-            self.pid = wx.Execute(self.util.im_location+ ' -define pdf:use-trimbox=true '+ files +'"'+filename+'"', wx.EXEC_ASYNC, self.process)
-
+            cmd = '%s -define pdf:use-trimbox=true %s"%s"' % (self.util.im_location.decode("utf-8"), files, filename)
+            self.pid = wx.Execute(cmd,  wx.EXEC_ASYNC, self.process)
             self.dialog = ProgressDialog(self, _("Converting..."))
             self.dialog.ShowModal()
 
-            for x in names:
-                os.remove(x)
+            [os.remove(x) for x in names]
 
 
 
@@ -573,10 +574,9 @@ class GUI(wx.Frame):
         if filename:
             name = os.path.splitext(filename)
             board = self.board
-            for x in range(0, self.tab_count):
+            for x in range(self.tab_count):
                 self.board = self.tabs.GetPage(x)
-                filename = name[0] + "-%s" % (x + 1) + name[1]
-                self.util.export(filename)
+                self.util.export("%s-%s%s" % (name[0], x + 1, name[1]))
             self.board = board
 
 
@@ -616,6 +616,7 @@ class GUI(wx.Frame):
             validator = Validator()
             config.validate(validator)
             _dir = os.path.join(get_home_dir(), "pref-bkup")
+
 
             if not os.path.isdir(_dir):
                 os.makedirs(_dir)
@@ -766,9 +767,8 @@ class GUI(wx.Frame):
             x.remove_panel()
 
         board = self.board
-        n = self.tabs.GetPageText(self.current_tab)
-        item = [board.shapes, board.undo_list, board.redo_list, board.area, n,
-                board.medias]
+        item = [board.shapes, board.undo_list, board.redo_list, board.area,
+                self.tabs.GetPageText(self.current_tab), board.medias]
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
@@ -829,6 +829,7 @@ class GUI(wx.Frame):
 
     def on_delete_shape(self, event=None):
         self.board.delete_selected()
+        self.update_shape_viewer()
 
     def on_deselect(self, event=None):
         self.board.deselect()
@@ -1126,7 +1127,6 @@ class GUI(wx.Frame):
         """ Pops up the tab context menu. """
         self.PopupMenu(SheetsPopup(self, self, event.GetSelection()))
 
-
     def on_undo(self, event=None):
         """ Calls undo on the active tab and updates the menus """
         self.board.undo()
@@ -1153,7 +1153,6 @@ class GUI(wx.Frame):
         self.board.move_down(self.board.selected)
         self.update_shape_viewer()
 
-
     def on_prev(self, event=None):
         """ Changes to the previous sheet """
         self.tabs.SetSelection(self.current_tab - 1)
@@ -1164,27 +1163,28 @@ class GUI(wx.Frame):
         self.tabs.SetSelection(self.current_tab + 1)
         self.on_change_tab()
 
-
     def on_clear(self, event=None):
         """ Clears current sheet's drawings, except images. """
         self.board.clear(keep_images=True)
-
+        self.update_shape_viewer()
 
     def on_clear_all(self, event=None):
         """ Clears current sheet """
         self.board.clear()
-
+        self.update_shape_viewer()
 
     def on_clear_sheets(self, event=None):
         """ Clears all sheets' drawings, except images. """
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear(keep_images=True)
+        self.update_shape_viewer()
 
 
     def on_clear_all_sheets(self, event=None):
         """ Clears all sheets ***"""
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear()
+        self.update_shape_viewer()
 
 
     def on_refresh(self):

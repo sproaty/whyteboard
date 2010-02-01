@@ -148,7 +148,7 @@ class Utility(object):
             tree_ids = []  # every note's tree ID to restore to
 
             # load in every shape from every tab
-            for x in range(0, self.gui.tab_count):
+            for x in range(self.gui.tab_count):
                 board = self.gui.tabs.GetPage(x)
 
                 for m in board.medias:
@@ -241,7 +241,7 @@ class Utility(object):
         """
         data = {}  # list of bitmap data, check if image has been pasted
         to_remove = []
-        for x in range(0, self.gui.tab_count):
+        for x in range(self.gui.tab_count):
             board = self.gui.tabs.GetPage(x)
             for shape in board.shapes:
                 if isinstance(shape, tools.Image):
@@ -547,7 +547,7 @@ class Utility(object):
                     wx.CallAfter(wx.EndBusyCursor)
                     return
                 images = []
-                for x in range(0, count):
+                for x in range(count):
                     # store the temp file path for this file in the dictionary
                     temp_file = path + tmp_file + "-%s" % x + ".png"
                     images.append(temp_file)
@@ -568,7 +568,7 @@ class Utility(object):
         if self.gui.tab_count == 1 and not self.gui.board.shapes:
             self.remove_all_sheets()
 
-        for x in range(0, len(images)):
+        for x in range(len(images)):
             name = os.path.split(_file)[1][:15] + " - %s" % (x + 1)
             self.gui.on_new_tab(name=name)
             load_image(images[x], self.gui.board, tools.Image)
@@ -832,7 +832,7 @@ class WhyteboardDropTarget(wx.PyDropTarget):
                         self.gui.on_new_tab()
 
                     if name.endswith(".wtbd"):
-                        self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
+                        self.prompt_for_save(self.gui.do_open, args=[name])
                     else:
                         self.gui.do_open(name)
 
