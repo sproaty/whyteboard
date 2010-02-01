@@ -1352,7 +1352,7 @@ class Note(Text):
         """Recreates the note in the tree"""
         super(Note, self).load()
         if add_note:
-            pub.sendMessage('note.add', note=self, _id=self.board.gui.tab_count - 1)
+            pub.sendMessage('note.add', note=self)
 
 
 #----------------------------------------------------------------------

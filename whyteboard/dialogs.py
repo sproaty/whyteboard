@@ -991,6 +991,7 @@ class ShapeViewer(wx.Dialog):
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
         pub.subscribe(self.shape_add, 'shape.add')
 
+
     def shape_add(self, shape):
         self.shapes.append(shape)
         self.populate()

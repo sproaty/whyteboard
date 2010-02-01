@@ -609,11 +609,8 @@ class Notes(wx.Panel):
         formatting becoming too wide.
         """
         text = note.text.replace("\n", " ")[:15]
+        _id = self.tabs[self.gui.tabs.GetSelection()]
 
-        if not _id:
-            _id = self.tabs[self.gui.tabs.GetSelection()]
-        else:
-            _id = self.tabs[_id]
         data = wx.TreeItemData(note)
         note.tree_id = self.tree.AppendItem(_id, text, data=data)
         self.tree.Expand(_id)

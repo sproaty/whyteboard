@@ -417,7 +417,6 @@ class GUI(wx.Frame):
 
 
     def shape_add(self, shape):
-        print 'ey'
         self.board.add_shape(shape)
         #self.update_shape_viewer()
 
@@ -741,6 +740,7 @@ class GUI(wx.Frame):
         self.on_done_load()
         wx.MilliSleep(100)  # try and stop user dragging too many tabs quickly
         wx.SafeYield()
+        self.update_shape_viewer()
 
 
     def update_panels(self, select):
