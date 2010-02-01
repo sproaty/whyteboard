@@ -38,23 +38,24 @@ _ = wx.GetTranslation
 
 # Creates a wxPython wildcard filter from a list of known/supported filetypes.
 all = [ (_('Image Files'), ["jpeg", "jpg", "png", "tiff", "bmp", "pcx"]),
-          (_('PDF/PS/SVG'), ['ps', 'pdf', 'svg']),
-          (_('Whyteboard files'), ['wtbd']) ]
+        (_('PDF/PS/SVG'), ['ps', 'pdf', 'svg']),
+        (_('Whyteboard files'), ['wtbd']) ]
 
-wc_list = []
-types = []
+wc_list, types, tmp = [], [], []
+
 for label, exts in all:
-
+    [types.append(x) for x in exts]
     exts = ['*.%s'%a for a in exts]
     visexts = ', '.join(exts)
 
     exts.extend([e.upper() for e in exts])
-    types.extend(exts)
+    tmp.extend(exts)
+    [types.append(x.replace("*.", "")) for x in exts]
     wc_list.append('%s (%s)|%s'%(label, visexts, ';'.join(exts)))
 
-wc_list.insert(0, '%s|%s'%(_('All files')+' (*.*)', '*.*'))
-wc_list.insert(0, '%s|%s'%(_("All suppported files"), ';'.join(types)))
 
+wc_list.insert(0, '%s|%s'%(_('All files')+' (*.*)', '*.*'))
+wc_list.insert(0, '%s|%s'%(_("All suppported files"), ';'.join(tmp)))
 
 dialog_wildcard = '|'.join(wc_list)
 transparent = True
