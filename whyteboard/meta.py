@@ -38,7 +38,7 @@ _ = wx.GetTranslation
 
 # Creates a wxPython wildcard filter from a list of known/supported filetypes.
 all = [ (_('PDF/PS/SVG'), ['ps', 'pdf', 'svg']),
-        (_('Image Files'), ["jpeg", "jpg", "png", "tiff", "bmp", "pcx"]),        
+        (_('Image Files'), ["jpeg", "jpg", "png", "tiff", "bmp", "pcx"]),
         (_('Whyteboard files'), ['wtbd']) ]
 
 wc_list, types, tmp = [], [], []
@@ -63,7 +63,7 @@ version = "0.39.4"
 languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
               (_("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
               (_("Japanese"), wx.LANGUAGE_JAPANESE),
-              (_("Portugese"), wx.LANGUAGE_PORTUGUESE),
+              (_("Portuguese"), wx.LANGUAGE_PORTUGUESE),
               (_("Dutch"), wx.LANGUAGE_DUTCH),
               (_("German"), wx.LANGUAGE_GERMAN),
               (_("Russian"), wx.LANGUAGE_RUSSIAN),

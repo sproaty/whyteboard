@@ -35,6 +35,7 @@ if not hasattr(sys, 'frozen'):
     else:
         import wx
         app = wx.App(False)
+        wx.FILT
         wx.MessageBox("The requested version of wxPython is not installed.\n"+
                      "Please install version "+ WXVER, "wxPython Version Error")
         app.MainLoop()
