@@ -20,7 +20,7 @@
 
 """
 This is the main module which fires up the program. It checks if the wxPython
-version that is installed is recent enough, as the program uses its newer 
+version that is installed is recent enough, as the program uses its newer
 functionality and features.
 """
 
@@ -35,7 +35,7 @@ if not hasattr(sys, 'frozen'):
     else:
         import wx
         app = wx.App(False)
-        wx.FILT
+
         wx.MessageBox("The requested version of wxPython is not installed.\n"+
                      "Please install version "+ WXVER, "wxPython Version Error")
         app.MainLoop()
