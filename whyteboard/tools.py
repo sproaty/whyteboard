@@ -1232,7 +1232,7 @@ class Text(OverlayShape):
 
     def find_extent(self):
         """Finds the width/height of the object's text"""
-        dc = wx.WindowDC(wx.Frame(None))
+        dc = wx.ClientDC(self.board)
         x = dc.GetMultiLineTextExtent(self.text, self.font)
         self.extent = x[0], x[1]
 
