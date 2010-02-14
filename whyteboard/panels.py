@@ -572,7 +572,7 @@ class Notes(wx.Panel):
     def __init__(self, parent, gui):
         wx.Panel.__init__(self, parent)
         self.gui = gui
-        self.tree = wx.TreeCtrl(self, style=wx.TR_HAS_BUTTONS)
+        self.tree = wx.TreeCtrl(self, style=wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT)
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
         self.add_tab()
