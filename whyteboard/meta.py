@@ -115,7 +115,9 @@ undo_sheets = integer(min=5, max=50, default=10)
 translators = [
      'A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
      'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
+     'Aljosha Papsch https://launchpad.net/~joschi-papsch (German)',
      '"Amy" https://launchpad.net/~anthropofobe (German)',
+     '"Auduf" https://launchpad.net/~5097-mail (Russian)',
      '"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
      'Cristian Asenjo https://launchpad.net/~apu2009 (Spanish)',
      'David Aller https://launchpad.net/~niclamus (Italian)',
