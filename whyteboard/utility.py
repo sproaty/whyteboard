@@ -207,6 +207,7 @@ class Utility(object):
                 os.rename('whyteboard_temp_new.wtbd', self.filename)
 
                 self.zip = zipfile.ZipFile(self.filename, "r")
+                self.is_zipped = True
 
                 # Fix bug in Windows where the current shapes get reset above
                 count = 0
