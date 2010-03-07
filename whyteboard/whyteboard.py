@@ -39,9 +39,10 @@ import wx.lib.dragscroller
 
 from lib.pubsub import pub
 
-from tools import (Image, Text, Line, Note, Select, OverlayShape, Media, Polygon,
-                   TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER_TOP,
-                   CENTER_RIGHT, CENTER_BOTTOM, CENTER_LEFT, HANDLE_ROTATE)
+from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
+                   Highlighter, Polygon, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT,
+                   BOTTOM_RIGHT, CENTER_TOP, CENTER_RIGHT, CENTER_BOTTOM,
+                   CENTER_LEFT, HANDLE_ROTATE)
 import utility
 
 #----------------------------------------------------------------------
@@ -293,9 +294,9 @@ class Whyteboard(wx.ScrolledWindow):
 
         self.buffer = wx.EmptyBitmap(*size)
         self.area = size
-        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
+        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)
         self.SetVirtualSize(size)
-        self.redraw_all()
+        self.redraw_all(resizing=True)
 
 #        self.buffer, self.oldbuffer = wx.EmptyBitmap(*size), self.buffer
 #        dc = wx.BufferedDC(None, self.buffer)
@@ -327,7 +328,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.RefreshRect(rect.Inflate(2, 2))
 
 
-    def redraw_all(self, update_thumb=False, dc=None):
+    def redraw_all(self, update_thumb=False, dc=None, resizing=False):
         """
         Redraws all shapes that have been drawn. self.text is used to show text
         characters as they're being typed, as new Text/Note objects have not
@@ -337,10 +338,14 @@ class Whyteboard(wx.ScrolledWindow):
         if not dc:
             dc = wx.BufferedDC(None, self.buffer)
             dc.Clear()
-            #dc.SetUserScale(self.scale[0], self.scale[1])
 
         for s in self.shapes:
-            s.draw(dc, True)
+            if not resizing:
+                s.draw(dc, True)
+            else:
+                if not isinstance(s, Highlighter):
+                    s.draw(dc, True)
+
         if self.text:
             self.text.draw(dc, True)
         if self.copy:
