@@ -186,11 +186,13 @@ class ErrorDialog(wx.Dialog):
         @return: string
 
         """
+        res = wx.Display().GetGeometry()
         info = list()
         info.append(self.GetProgramName())
         info.append("Operating System: %s" % wx.GetOsDescription())
         if sys.platform == 'darwin':
             info.append("Mac OSX: %s" % platform.mac_ver()[0])
+        info.append("Screen Resolution: %ix%i" % (res[2], res[3]))
         info.append("Python Version: %s" % sys.version)
         info.append("wxPython Version: %s" % wx.version())
         info.append("wxPython Info: (%s)" % ", ".join(wx.PlatformInfo))

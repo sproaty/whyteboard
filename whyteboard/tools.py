@@ -293,8 +293,7 @@ class Polygon(OverlayShape):
 
     def left_down(self, x, y):
         if not self.drawing:
-            if not self.board.HasCapture():
-                self.board.CaptureMouse()
+            pub.sendMessage('board.capture_mouse')
 
         self.drawing = True
         self.points.append((x, y))
@@ -327,13 +326,16 @@ class Polygon(OverlayShape):
             self.drawing = False
             pub.sendMessage('shape.add', shape=self)
             self.sort_handles()
+            pub.sendMessage('board.release_mouse')
             self.board.change_current_tool()
             self.board.update_thumb()
-            if self.board.HasCapture():
-                self.board.ReleaseMouse()
+
 
 
     def start_select_action(self, handle):
+        """
+        Reset the list of points, and determine if we're scaling/rotating
+        """
         self.points = list(self.points)
         if wx.GetKeyState(wx.WXK_CONTROL):
             self.operation = "rotate"

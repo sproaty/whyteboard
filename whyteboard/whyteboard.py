@@ -102,7 +102,6 @@ class Whyteboard(wx.ScrolledWindow):
         img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
                                     "cursors", "") + "rotate.png")
         self.rotate_cursor = wx.CursorFromImage(img)
-
         self.change_current_tool()
         self.redraw_all()
 
@@ -115,6 +114,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_MIDDLE_UP, self.middle_up)
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
+
 
 
     def left_down(self, event):
@@ -611,6 +611,14 @@ class Whyteboard(wx.ScrolledWindow):
     def get_tab(self):
         """ Returns the current tab number of this Whyteboard instance. """
         return self.tab.GetSelection()
+
+    def capture_mouse(self):
+        if not self.HasCapture():
+                self.CaptureMouse()
+
+    def release_mouse(self):
+        if self.HasCapture():
+            self.ReleaseMouse()
 
     def update_thumb(self):
         """ Updates this tab's thumb """
