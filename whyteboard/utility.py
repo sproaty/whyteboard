@@ -831,7 +831,7 @@ class WhyteboardDropTarget(wx.PyDropTarget):
                         self.gui.on_new_tab()
 
                     if name.endswith(".wtbd"):
-                        self.prompt_for_save(self.gui.do_open, args=[name])
+                        self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
                     else:
                         self.gui.do_open(name)
 

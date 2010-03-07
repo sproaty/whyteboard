@@ -5,6 +5,7 @@
 Whyteboard can load in PDF, PS and SVG files by using ImageMagick.
 <hr>
 
+<h3>Importing</h3>
 <h4>Windows</h4>
 <p>When you first try and load in a PDF/PS or SVG file, Whyteboard prompts for the location of the ImageMagick folder. This is usually in the C:/Program Files/ImageMagick-[version] directory; a directory selector dialog will allow you to choose its location.
 Until you specify a directory that contains convert.exe then you cannot import these file formats.</p>
@@ -15,6 +16,11 @@ Until you specify a directory that contains convert.exe then you cannot import t
 <h4>Linux / Mac</h4>
 <p>Whyteboard will perform the <code>which convert</code> shell command to see if the ImageMagick application, convert is installed. </p>
 <hr>
+
+<h3>Exporting</h3>
+<p>Be careful when exporting and overwriting a PDF. Whyteboard will save your tabs into the PDF as images, overwriting any meta content/links etc in the PDF.</p>
+
+<hr />
 
 <h4>Issues</h4>
 <p>When you load in a PDF, the file is passed off to the convert application in the background, and you must wait until the operation finishes.<br />

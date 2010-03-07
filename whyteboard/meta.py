@@ -45,7 +45,7 @@ wc_list, types, tmp = [], [], []
 
 for label, exts in all:
     [types.append(x) for x in exts]
-    exts = ['*.%s'%a for a in exts]
+    exts = ['*.%s' % a for a in exts]
     visexts = ', '.join(exts)
 
     exts.extend([e.upper() for e in exts])

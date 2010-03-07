@@ -586,6 +586,7 @@ class Highlighter(Pen):
 
     def motion(self, x, y):
         self.points.append( [self.x_tmp, self.y_tmp, x, y] )
+        self.time.append(time.time())
         self.current = (x, y)
         self.draw(None)
         self.x_tmp = x
@@ -598,7 +599,6 @@ class Highlighter(Pen):
 
         gc = wx.GraphicsContext.Create(dc)
         path = gc.CreatePath()
-        #col = self.colour.Get()
         colour = (self.colour[0], self.colour[1], self.colour[2], 50)
         gc.SetPen(wx.Pen(colour, self.thickness, wx.SOLID))
 

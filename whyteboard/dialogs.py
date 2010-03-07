@@ -26,7 +26,6 @@ from __future__ import with_statement
 
 import os
 import sys
-import cPickle
 import zipfile
 import wx
 import wx.lib.mixins.listctrl as listmix
@@ -135,12 +134,16 @@ class History(wx.Dialog):
 
         for pen in shapes:
             # draw pen outline
-            if isinstance(pen, tools.Pen) and not isinstance(pen, tools.Highlighter):
-                #pen.make_pen()
-                dc.SetPen(wx.Pen(pen.colour, pen.thickness))
+            if isinstance(pen, tools.Pen):
+                if isinstance(pen, tools.Highlighter):
+                    gc = wx.GraphicsContext.Create(dc)
+                    colour = (pen.colour[0], pen.colour[1], pen.colour[2], 50)
+                    gc.SetPen(wx.Pen(colour, pen.thickness))
+                    path = gc.CreatePath()
+                else:
+                    dc.SetPen(wx.Pen(pen.colour, pen.thickness))
 
                 for x, p in enumerate(pen.points):
-
                     if self.looping and not self.paused:
                         try:
                             wx.MilliSleep((pen.time[x + 1] - pen.time[x]) * 950)
@@ -148,7 +151,12 @@ class History(wx.Dialog):
                         except IndexError:
                             pass
 
-                        dc.DrawLine(p[0], p[1], p[2], p[3])
+                        if isinstance(pen, tools.Highlighter):
+                            path.MoveToPoint(p[0], p[1])
+                            path.AddLineToPoint(p[2], p[3])
+                            gc.DrawPath(path)
+                        else:
+                            dc.DrawLine(p[0], p[1], p[2], p[3])
                     else:  # loop is paused, wait for unpause/close/stop
                         while self.paused:
                             wx.MicroSleep(100)

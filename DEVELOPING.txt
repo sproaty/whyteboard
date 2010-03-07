@@ -10,7 +10,7 @@ Whyteboard is developed with these, using some advanced-ish concepts.
 
 
 The main class is GUI in gui.py. It consists of a wx.Frame - a "window" to the
-general end-user, containg the title and close/minimise button etc. It has
+general end-user, containing the title and close/minimise button etc. It has
 references to its contained panels - the control panel on the left, menu bar,
 tool bar, the canvas itself and the panel on the right.
 
@@ -29,7 +29,7 @@ is useful.
 The canvas is the Whyteboard class, defined in whyteboard.py. It is a basic
 window without a title bar, and has its own event bindings. So, when a user is
 drawing by clicking on the canvas, the Whyteboard (gui.board) is calling its own
-events. Mutiple Whyteboard canvases will exists at a given time, and the GUI
+events. Multiple Whyteboard canvases will exists at a given time, and the GUI
 presents these views to the user through its tab list, thumbnails panel and the
 Notes tree.
 
@@ -80,11 +80,16 @@ Many of the classes at the bottom of the list simply extend the base classes'
 behaviour - nested deeply in the hierarchy, they have many inherited methods.
 Most of these classes invoke their superclasses' methods. For example, draw() in
 OverlayShape will draw the shape overlayed on the canvas, meaning it is not
-permenantly drawn on the canvas as the user moves their mouse around. Note needs
+permanently drawn on the canvas as the user moves their mouse around. Note needs
 to extend this behaviour by also drawing a background to the shape -- so first
 calls draw() on its superclass, Text, which will draw the text, and invokes
 draw() on OverlayShape.
 
+So, to create your own tool you'd need to extend from an existing class (most
+likely OverlayShape) and override the appropriate methods, remembering to call
+super() on its parent. Also, add your class to the items list at the bottom of
+tools.py, making sure the filename defined in its "icon" attribute exists under
+/images/tools/[icon].png
 
 The source files are organised as follows:
 
@@ -97,4 +102,4 @@ utility.py - a utility class that the GUI keeps a reference to. Has functions
 for saving/loading files, getting file paths and misc. things
 
 dialogs.py - dialogs and their events, e.g. Progresss dialog / resize / history
-panels.py -  control, notes, thumnbails.
+panels.py - control, notes, thumnbails.

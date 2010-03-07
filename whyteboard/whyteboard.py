@@ -619,7 +619,7 @@ class Whyteboard(wx.ScrolledWindow):
 
     def capture_mouse(self):
         if not self.HasCapture():
-                self.CaptureMouse()
+            self.CaptureMouse()
 
     def release_mouse(self):
         if self.HasCapture():
