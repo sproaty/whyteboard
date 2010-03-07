@@ -1,7 +1,13 @@
 Whyteboard - Help for development
+---------------------------------
 
+This document serves to help a developer who wishes to contribute / understand
+Whyteboard's code.
 You'll probably need some knowledge of Python + the wxPython GUI toolkit, as
 Whyteboard is developed with these, using some advanced-ish concepts.
+
+----------------------------------
+
 
 The main class is GUI in gui.py. It consists of a wx.Frame - a "window" to the
 general end-user, containg the title and close/minimise button etc. It has
@@ -35,7 +41,8 @@ Whyteboard instances.
 Tools.py defines the shapes - different drawable tools that the program uses.
 At the bottom of the file is a list named "items" -- this is the list of tools
 the user can draw with. From this, buttons, icons, translated names, hotkeys
-are generated. There are a few interesting methods each shape provides:
+are generated. Here are some interesting methods/properties each shape provides:
+
  - name - translated name
  - hotkey - keyboard shortcut key
  - left_up() - called when drawing - left button pressed

@@ -301,7 +301,7 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_CHAR_HOOK, self.hotkey)
         self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
 
-        topics = {'shape.add': self.shape_add, 
+        topics = {'shape.add': self.shape_add,
                   'shape.selected': self.shape_selected,
                   'board.capture_mouse': self.capture_mouse,
                   'board.release_mouse': self.release_mouse,}
@@ -420,10 +420,10 @@ class GUI(wx.Frame):
 
     def release_mouse(self):
         self.board.release_mouse()
-        
+
     def capture_mouse(self):
         self.board.capture_mouse()
-        
+
     def shape_add(self, shape):
         self.board.add_shape(shape)
         #self.update_shape_viewer()

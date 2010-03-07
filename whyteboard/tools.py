@@ -324,8 +324,8 @@ class Polygon(OverlayShape):
     def right_up(self, x, y):
         if len(self.points) > 2:
             self.drawing = False
-            pub.sendMessage('shape.add', shape=self)
             self.sort_handles()
+            pub.sendMessage('shape.add', shape=self)
             pub.sendMessage('board.release_mouse')
             self.board.change_current_tool()
             self.board.update_thumb()
@@ -333,9 +333,6 @@ class Polygon(OverlayShape):
 
 
     def start_select_action(self, handle):
-        """
-        Reset the list of points, and determine if we're scaling/rotating
-        """
         self.points = list(self.points)
         if wx.GetKeyState(wx.WXK_CONTROL):
             self.operation = "rotate"
@@ -579,7 +576,6 @@ class Highlighter(Pen):
         Pen.__init__(self, board, colour, thickness + 6)
         self.current = (0, 0)
 
-
     def left_down(self, x, y):
         super(Highlighter, self).left_down(x, y)
         self.current = (x, y)
@@ -602,8 +598,8 @@ class Highlighter(Pen):
 
         gc = wx.GraphicsContext.Create(dc)
         path = gc.CreatePath()
-        col = self.colour.Get()
-        colour = (col[0], col[1], col[2], 50)
+        #col = self.colour.Get()
+        colour = (self.colour[0], self.colour[1], self.colour[2], 50)
         gc.SetPen(wx.Pen(colour, self.thickness, wx.SOLID))
 
         if not replay:
