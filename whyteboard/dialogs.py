@@ -605,7 +605,7 @@ class Feedback(wx.Dialog):
     Sends feedback to myself by POSTing to a PHP script
     """
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui)
+        wx.Dialog.__init__(self, gui, title=_("Send Feedback"))
 
         t_lbl = wx.StaticText(self, label=_("Your Feedback:"))
         email_label = wx.StaticText(self, label=_("E-mail Address"))
@@ -992,7 +992,7 @@ class ShapeViewer(wx.Dialog):
     def shape_add(self, shape):
         self.shapes.append(shape)
         self.populate()
-        
+
     def populate(self):
         """
         Creates all columns and populates with the current sheets' data

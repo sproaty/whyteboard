@@ -5,17 +5,17 @@
 #
 # GNU General Public Licence (GPL)
 #
-s = """Whyteboard is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 3 of the License, or (at your option) any
-later version.
-Whyteboard is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with
-Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA  02111-1307  USA"""
+# Whyteboard is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+# Whyteboard is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+# You should have received a copy of the GNU General Public License along with
+# Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA  02111-1307  USA
 
 
 """
@@ -30,6 +30,7 @@ the user to switch between viewing Thumbnails of each drawing's tab, or a Tree
 of Notes that the user has inputted.
 """
 
+from __future__ import with_statement
 
 import os
 import sys
@@ -1327,7 +1328,9 @@ class GUI(wx.Frame):
         inf.Translators = meta.translators
         x = "http://www.launchpad.net/whyteboard"
         inf.WebSite = (x, x)
-        inf.Licence = s
+        with open(os.path.join(self.util.get_path(), "LICENSE.txt")) as f:
+            inf.Licence = f.read()
+
         wx.AboutBox(inf)
 
 #----------------------------------------------------------------------

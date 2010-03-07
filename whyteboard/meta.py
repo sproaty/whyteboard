@@ -123,6 +123,7 @@ translators = [
      'David Aller https://launchpad.net/~niclamus (Italian)',
      '"Dennis" https://launchpad.net/~dlinn83 (German)',
      'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
+     '"Donkade" https://launchpad.net/~donkade (Dutch)',
      'Federico Vera https://launchpad.net/~fedevera (Spanish)',
      'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',
      'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
