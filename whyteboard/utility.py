@@ -260,7 +260,7 @@ class Utility(object):
                     #  the above iteration didn't find any common pastes
                     if not shape.filename:
                         name = make_filename() + ".jpg"
-                        shape.image.SaveFile(name, wx.BITMAP_TYPE_JPEG)
+                        img.SaveFile(name, wx.BITMAP_TYPE_JPEG)
                         shape.filename = name
                         data[shape.filename] = img_data
                         _zip.write(name, os.path.join("data", name))
