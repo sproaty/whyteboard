@@ -166,7 +166,7 @@ class Utility(object):
                         if isinstance(shape, tools.Note):
                             tree_ids.append(shape.tree_id)
                             shape.tree_id = None
-                        shape.save()  # need to unlink unpickleable items;
+                        shape.save()  # need to unlink unpickleable items
 
                 version = meta.version
                 if not self.update_version:

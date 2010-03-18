@@ -79,7 +79,6 @@ class GUI(wx.Frame):
     title = "Whyteboard " + meta.version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
     instances = 0
-
     def __init__(self, parent, config):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.

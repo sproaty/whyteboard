@@ -103,3 +103,18 @@ for saving/loading files, getting file paths and misc. things
 
 dialogs.py - dialogs and their events, e.g. Progresss dialog / resize / history
 panels.py - control, notes, thumnbails.
+
+
+CODING PRACTICES
+Try and follow Python's Pep 8 guidelines http://www.python.org/dev/peps/pep-0008
+80 characters per line can be hard to use at times and can be broken in some
+cases. 
+Name methods like_this, not AsSuch. As wxPython uses CamelCased method names,
+it easily allows you to differentiate between wx and whyteboard's methods. Very
+useful for dialogs and custom panels.
+
+Try and learn to use PubSub. It will help to decouple objects and even modules'
+dependencies on each other which is always a very good thing. 
+Be wary of performance issues when performing loops. 
+Python has a high overhead for functions calls so please be wary of that, too.
+
