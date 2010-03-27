@@ -1221,7 +1221,7 @@ class Text(OverlayShape):
 
     def restore_font(self):
         """Updates the text's font to the saved font data"""
-        self.font = wx.FFont(0, 0)
+        self.font = wx.FFont(1, 1)
         self.font.SetNativeFontInfoFromString(self.font_data)
         if not self.font.IsOk():
             f = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)

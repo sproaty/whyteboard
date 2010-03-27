@@ -109,7 +109,7 @@ class Preferences(wx.Dialog):
 
         if 'default_font' in self.config:
             if self.config['default_font'] and not self.gui.util.font:
-                self.gui.util.font = wx.FFont(0, 0)
+                self.gui.util.font = wx.FFont(1, 1)
                 self.gui.util.font.SetNativeFontInfoFromString(self.config['default_font'])
 
         # view toggles/menu. do the colour grid later
@@ -300,7 +300,7 @@ class FontAndColours(wx.Panel):
             transparency.SetValue(True)
 
         if 'default_font' in self.config:
-            f = wx.FFont(0, 0)
+            f = wx.FFont(1, 1)
             f.SetNativeFontInfoFromString(self.config['default_font'])
             self.font = f
             self.button.SetFont(f)
@@ -308,7 +308,7 @@ class FontAndColours(wx.Panel):
             if os.name == "nt":
                 self.font_label(f)
 
-            f = wx.FFont(0, 0)
+            f = wx.FFont(1, 1)
             f.SetNativeFontInfoFromString(self.config['default_font'])
             f.SetPointSize(self.size)
             self.button.SetFont(f)

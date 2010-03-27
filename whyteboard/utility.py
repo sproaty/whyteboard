@@ -122,7 +122,7 @@ class Utility(object):
         tools.HANDLE_SIZE = self.config['handle_size']
         whyteboard.CANVAS_BORDER = self.config['canvas_border']
         if 'default_font' in self.config:
-            self.font = wx.FFont(0, 0)
+            self.font = wx.FFont(1, 1)
             self.font.SetNativeFontInfoFromString(self.config['default_font'])
 
 
@@ -442,7 +442,7 @@ class Utility(object):
 
         try:
             if temp[0][5]:
-                font = wx.FFont(0, 0)
+                font = wx.FFont(1, 1)
                 font.SetNativeFontInfoFromString(temp[0][5])
             self.font = font
         except IndexError:
