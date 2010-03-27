@@ -453,7 +453,7 @@ class TextInput(wx.Dialog):
             self.note = note
             self.colour = note.colour
             text = note.text
-            font = wx.FFont(0, 0)
+            font = wx.FFont(1, 1)
             font.SetNativeFontInfoFromString(note.font_data)
         else:
             font = gui.util.font

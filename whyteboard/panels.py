@@ -572,7 +572,10 @@ class Notes(wx.Panel):
     def __init__(self, parent, gui):
         wx.Panel.__init__(self, parent)
         self.gui = gui
-        self.tree = wx.TreeCtrl(self, style=wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT)
+        flags = wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT
+        if os.name == "mac":
+            flags = wx.TR_HAS_BUTTONS
+        self.tree = wx.TreeCtrl(self, style=flags)
         self.root = self.tree.AddRoot("Whyteboard")
         self.tabs = []
         self.add_tab()
