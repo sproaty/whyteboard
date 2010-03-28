@@ -23,6 +23,7 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 from __future__ import division
 from __future__ import with_statement
+from pprint import pprint
 
 import os
 import sys
@@ -1154,14 +1155,22 @@ class ShapeViewer(wx.Dialog):
 class PDFCache(wx.Dialog):
     """
     Views a list of all cached PDFs - showing the amount of pages, location,
-    conversion quality. Has options to remove items to re-convert.
+    conversion quality and date saved. Has options to remove items to re-convert
     """
     def __init__(self, gui):
         wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"),
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
                            wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
         self.gui = gui
+        self.files = {}
+        self.original_files = {}
         self.list = WhyteboardList(self, style=wx.LC_REPORT)
+        self.SetSizeHints(450, 300)
+
+        if os.path.exists(self.gui.util.library):
+            with open(self.gui.util.library) as f:
+                self.files = pickle.load(f)
+                self.original_files = dict(self.files)
 
         label = wx.StaticText(self, label=_("Whyteboard will load these files from its cache instead of re-converting them"))
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1197,48 +1206,73 @@ class PDFCache(wx.Dialog):
         self.SetSizer(sizer)
         self.populate()
         self.check_buttons()
-        self.Layout()
+        self.Fit()
 
-        #cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
-        #okButton.Bind(wx.EVT_BUTTON, self.ok)
-        #self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
-        #self.Bind(wx.EVT_CLOSE, self.on_close)
-        #deleteBtn.Bind(wx.EVT_BUTTON, self.remove)
+        okButton.Bind(wx.EVT_BUTTON, self.ok)
+        self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_remove)
+        cancelButton.Bind(wx.EVT_BUTTON, lambda x: self.Close())
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda x: self.check_buttons())
+
 
     def populate(self):
         """
         Creates all columns and populates them with the PDF cache list
         """
         self.list.ClearAll()
-        self.list.InsertColumn(0, _("File Location"), wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(1, _("Quality"), wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(2, _("Pages"), wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(3, _("Date Converted"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(0, _("File Location"), width=200)
+        self.list.InsertColumn(1, _("Quality"), width=wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(2, _("Pages"), width=wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(3, _("Date Cached"), width=wx.LIST_AUTOSIZE)
 
-        with open(self.gui.util.library) as f:
-            files = pickle.load(f)
-
-        if not files:
+        if not self.files:
             index = self.list.InsertStringItem(sys.maxint, "")
-            self.list.SetStringItem(index, 1, _("There are no cached items to display"))
-        else:
-            for x, key in files.items():
-                index = self.list.InsertStringItem(sys.maxint, str(x + 1))
-                date = files[x].get('date', _("No Date Saved"))
+            self.list.SetStringItem(index, 0, _("There are no cached items to display"))
+            return
 
-                self.list.SetStringItem(index, 0, files[x]['file'])
-                self.list.SetStringItem(index, 1, files[x]['quality'].capitalize())
-                self.list.SetStringItem(index, 2, str(len(files[x]['images'])))
-                self.list.SetStringItem(index, 3, date)
-        self.list.Select(0)
+        for x, key in self.files.items():
+            f = self.files[x]
+            index = self.list.InsertStringItem(sys.maxint, str(x + 1))
+            date = f.get('date', _("No Date Saved"))
+
+            self.list.SetStringItem(index, 0, f['file'])
+            self.list.SetStringItem(index, 1, f['quality'].capitalize())
+            self.list.SetStringItem(index, 2, "%s" % len(f['images']))
+            self.list.SetStringItem(index, 3, date)
+
 
     def check_buttons(self):
         """ Enable / Disable the appropriate buttons """
-        if self.list.GetItemCount() == 0:
+        if not self.list.GetItemCount() or self.list.GetFirstSelected() == -1:
             self.deleteBtn.Disable()
-            return
-
-        self.Refresh()
+        else:
+            self.deleteBtn.Enable()
         self.SetFocus()
+
+
+    def ok(self, event):
+        for x, key in self.original_files.items():
+            if not self.files.has_key(x):
+                [os.remove(img) for img in self.original_files[x]['images']]
+
+
+        #with open(self.gui.util.library, "w") as f:
+        #    pickle.dump(self.files, f)
+        self.Close()
+
+    def on_remove(self, event):
+        """Remove the dictionary item that matches the selected item's path"""
+        item = self.list.GetFirstSelected()
+        if item == -1:
+            return
+        text = self.list.GetItemText(item)
+        files = dict(self.files)
+
+        for x, key in self.files.items():
+            if self.files[x]['file'] == text:
+                del files[x]
+
+        self.files = files
+        self.populate()
+
 
 #----------------------------------------------------------------------

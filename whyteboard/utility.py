@@ -187,18 +187,15 @@ class Utility(object):
                           4: canvas_sizes,
                           5: medias }
 
-                f = open("save.data", 'wb')
-                try:
-                    pickle.dump(_file, f)
-                    t = os.path.split(self.filename)[1] + ' - ' + self.gui.title
-
-                    self.gui.SetTitle(t)
-                except pickle.PickleError:
-                    wx.MessageBox(_("Error saving file data"))
-                    self.saved = False
-                    self.filename = None
-                finally:
-                    f.close()
+                with open("save.data", 'wb') as f:
+                    try:
+                        pickle.dump(_file, f)
+                        self.gui.SetTitle("%s - %s" %
+                                          (os.path.split(self.filename)[1], self.gui.title))
+                    except pickle.PickleError:
+                        wx.MessageBox(_("Error saving file data"))
+                        self.saved = False
+                        self.filename = None
 
                 _zip.write("save.data")
                 _zip.close()

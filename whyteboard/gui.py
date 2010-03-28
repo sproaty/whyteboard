@@ -228,7 +228,7 @@ class GUI(wx.Frame):
 
         view.Append(ID_SHAPE_VIEWER, _("&Shape Viewer...")+"\tF3", _("View and edit the shapes' drawing order"))
         view.Append(ID_HISTORY, _("&History Viewer...")+"\tCtrl+H", _("View and replay your drawing history"))
-        view.Append(ID_PDF_CACHE, _("&PDF Cache..."), _("View and modify Whyteboard's PDF Cache"))
+        view.Append(ID_PDF_CACHE, _("&PDF Cache...")+"\tF4", _("View and modify Whyteboard's PDF Cache"))
         view.AppendSeparator()
         self.showtool = view.Append(ID_TOOLBAR, " "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
         self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
@@ -1035,6 +1035,8 @@ class GUI(wx.Frame):
                 self.board.Scroll(-1, y - y2)
             else:
                 self.board.Scroll(-1, y + y2)
+        elif event.GetKeyCode() in [wx.WXK_DOWN, wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_UP]:
+            pass  # TODO
         else:
             event.Skip()   # propogate
 
@@ -1286,7 +1288,7 @@ class GUI(wx.Frame):
 
     def on_pdf_cache(self, event=None):
         self.show_dialog(PDFCache(self))
-        
+
     def on_feedback(self, event):
         self.show_dialog(Feedback(self), False)
 
