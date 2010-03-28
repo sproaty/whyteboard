@@ -57,10 +57,12 @@ Image Tools have the assosicated image removed from their class upon saving,
 but are restored with it upon loading the file.
 """
 
+from __future__ import with_statement
 
 import os
 import sys
 import webbrowser
+import time
 import urllib
 import tarfile
 import zipfile
@@ -259,6 +261,7 @@ class Utility(object):
 
                     #  the above iteration didn't find any common pastes
                     if not shape.filename:
+                        img.SetMaskColour(255, 255, 255)
                         name = make_filename() + ".jpg"
                         img.SaveFile(name, wx.BITMAP_TYPE_JPEG)
                         shape.filename = name
@@ -463,18 +466,17 @@ class Utility(object):
 
     def library_create(self):
         if not os.path.exists(self.library):
-            f = open(self.library, "w")
-            f.write("")
-            pickle.dump({}, f)
-            f.close()
+            with open(self.library, "w") as f:
+                f.write("")
+                pickle.dump({}, f)
 
 
     def library_lookup(self, _file, quality):
         """Check whether a file is inside our known file library"""
         self.library_create()
-        f = open(self.library)
-        files = pickle.load(f)
-        f.close()
+        with open(self.library) as f:
+            files = pickle.load(f)
+
         for x, key in files.items():
             if files[x]['file'] == _file and files[x]['quality'] == quality:
                 return files[x]['images']
@@ -484,15 +486,16 @@ class Utility(object):
     def library_write(self, location, images, quality):
         """Adds a newly converted file to the library"""
         self.library_create()
-        f = open(self.library)
-        files = pickle.load(f)
-        f.close()
-        files[len(files)] = {'file': location, 'images': images,
-                             'quality': quality}
+        now =  time.asctime(time.localtime(time.time()))
 
-        f = open(self.library, "w")
-        pickle.dump(files, f)
-        f.close()
+        with open(self.library) as f:
+            files = pickle.load(f)
+
+        files[len(files)] = {'file': location, 'images': images,
+                             'quality': quality, 'date': now}
+
+        with open(self.library, "w") as f:
+            pickle.dump(files, f)
 
 
     def convert(self, _file=None):

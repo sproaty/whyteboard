@@ -9,7 +9,7 @@ start menu. If you have the stand-alone exe, please run whyteboard.exe
 
 Otherwise, here are the requirements:
 
-* Python - 2.5.4 or 2.6.4 (untested on other major versions; should work on 2.4)
+* Python - 2.5.4 or 2.6.5 (untested on other major versions; should work on 2.4)
 * wxPython - latest version is -always- recommended (currently 2.8.10.1).
     ---- WXPYTHON 2.8.9.0 NEEDED AT MINIMUM
 * ImageMagick, possibly GhostScript for Windows users (optional)

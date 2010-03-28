@@ -59,7 +59,7 @@ from event_ids import *
 
 from functions import get_home_dir
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
-                     ExceptionHook, ShapeViewer, Feedback)
+                     ExceptionHook, ShapeViewer, Feedback, PDFCache)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
@@ -228,6 +228,7 @@ class GUI(wx.Frame):
 
         view.Append(ID_SHAPE_VIEWER, _("&Shape Viewer...")+"\tF3", _("View and edit the shapes' drawing order"))
         view.Append(ID_HISTORY, _("&History Viewer...")+"\tCtrl+H", _("View and replay your drawing history"))
+        view.Append(ID_PDF_CACHE, _("&PDF Cache..."), _("View and modify Whyteboard's PDF Cache"))
         view.AppendSeparator()
         self.showtool = view.Append(ID_TOOLBAR, " "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
         self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
@@ -340,13 +341,13 @@ class GUI(wx.Frame):
         functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
                   "copy", "paste", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
                   "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
-                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview", "colour_grid", "feedback", "transparent", "swap_colours"]
+                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview", "colour_grid", "feedback", "transparent", "swap_colours", "pdf_cache"]
 
         IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
                wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
                ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
                ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT, ID_RELOAD_PREF, ID_TOOL_PREVIEW, ID_COLOUR_GRID,
-               ID_FEEDBACK, ID_TRANSPARENT, ID_SWAP_COLOURS]
+               ID_FEEDBACK, ID_TRANSPARENT, ID_SWAP_COLOURS, ID_PDF_CACHE]
 
         for name, _id in zip(functs, IDs):
             method = getattr(self, "on_"+ name)  # self.on_*
@@ -1283,6 +1284,9 @@ class GUI(wx.Frame):
     def on_history(self, event=None):
         self.show_dialog(History(self))
 
+    def on_pdf_cache(self, event=None):
+        self.show_dialog(PDFCache(self))
+        
     def on_feedback(self, event):
         self.show_dialog(Feedback(self), False)
 

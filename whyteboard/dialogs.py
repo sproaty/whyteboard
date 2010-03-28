@@ -32,6 +32,10 @@ import wx.lib.mixins.listctrl as listmix
 from wx.lib.buttons import GenBitmapButton
 
 from urllib import urlopen, urlretrieve, urlencode
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 import lib.errdlg
 from lib.pubsub import pub
@@ -654,6 +658,9 @@ class Feedback(wx.Dialog):
         if not self.email.GetValue() or self.email.GetValue().find("@") == -1:
             wx.MessageBox(_("Please fill out your email address"), _("Error"))
             return
+        if len(self.feedback.GetValue()) < 10:
+            wx.MessageBox(_("Please provide some feedback"), _("Error"))
+            return
         params = urlencode({'submitted': 'fgdg',
                             'feedback': self.feedback.GetValue(),
                             'email': self.email.GetValue()})
@@ -661,9 +668,7 @@ class Feedback(wx.Dialog):
         wx.MessageBox(_("Thanks for your feedback!"), _("Feedback Sent"))
         self.Destroy()
 
-
 #----------------------------------------------------------------------
-
 
 class Resize(wx.Dialog):
     """
@@ -890,7 +895,7 @@ def ExceptionHook(exctype, value, trace):
 
 
 
-class ShapeList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin,
+class WhyteboardList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin,
                 listmix.ListRowHighlighter):
 
     def __init__(self, parent, style=0):
@@ -923,7 +928,7 @@ class ShapeViewer(wx.Dialog):
         self.SetSizeHints(450, 300)
         self.buttons = []  # move up/down/top/bottom buttons
 
-        self.list = ShapeList(self, style=wx.LC_REPORT)
+        self.list = WhyteboardList(self, style=wx.LC_REPORT)
         self.pages = wx.ComboBox(self, size=(125, 25), style=wx.CB_READONLY)
         label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1143,5 +1148,97 @@ class ShapeViewer(wx.Dialog):
     def on_close(self, event):
         self.gui.viewer = False
         event.Skip()
+
+#----------------------------------------------------------------------
+
+class PDFCache(wx.Dialog):
+    """
+    Views a list of all cached PDFs - showing the amount of pages, location,
+    conversion quality. Has options to remove items to re-convert.
+    """
+    def __init__(self, gui):
+        wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"),
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
+                           wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
+        self.gui = gui
+        self.list = WhyteboardList(self, style=wx.LC_REPORT)
+
+        label = wx.StaticText(self, label=_("Whyteboard will load these files from its cache instead of re-converting them"))
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        bsizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        if os.name == "nt":
+            font = label.GetClassDefaultAttributes().font
+            font.SetPointSize(font.GetPointSize() + 2)
+            self.list.SetFont(font)
+            self.list.RefreshRows()
+
+        path = os.path.join(self.gui.util.get_path(), "images", "icons", "delete.png")
+        self.deleteBtn = GenBitmapButton(self, bitmap=wx.Bitmap(path), style=wx.NO_BORDER)
+        self.deleteBtn.SetToolTipString(_("Remove cached item"))
+        bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
+
+        okButton = wx.Button(self, wx.ID_OK, _("&OK"))
+        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        okButton.SetDefault()
+        btnSizer = wx.StdDialogButtonSizer()
+        btnSizer.AddButton(okButton)
+        btnSizer.AddButton(cancelButton)
+        btnSizer.Realize()
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(label, 0, wx.ALL, 15)
+        sizer.Add((10, 5))
+        sizer.Add(bsizer, 0, wx.LEFT | wx.EXPAND, 10)
+        sizer.Add((10, 5))
+        sizer.Add(self.list, 1, wx.LEFT | wx.RIGHT |wx.EXPAND, 10)
+        sizer.Add((10, 5))
+        sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
+        self.SetSizer(sizer)
+        self.populate()
+        self.check_buttons()
+        self.Layout()
+
+        #cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
+        #okButton.Bind(wx.EVT_BUTTON, self.ok)
+        #self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
+        #self.Bind(wx.EVT_CLOSE, self.on_close)
+        #deleteBtn.Bind(wx.EVT_BUTTON, self.remove)
+
+    def populate(self):
+        """
+        Creates all columns and populates them with the PDF cache list
+        """
+        self.list.ClearAll()
+        self.list.InsertColumn(0, _("File Location"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(1, _("Quality"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(2, _("Pages"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(3, _("Date Converted"), wx.LIST_AUTOSIZE)
+
+        with open(self.gui.util.library) as f:
+            files = pickle.load(f)
+
+        if not files:
+            index = self.list.InsertStringItem(sys.maxint, "")
+            self.list.SetStringItem(index, 1, _("There are no cached items to display"))
+        else:
+            for x, key in files.items():
+                index = self.list.InsertStringItem(sys.maxint, str(x + 1))
+                date = files[x].get('date', _("No Date Saved"))
+
+                self.list.SetStringItem(index, 0, files[x]['file'])
+                self.list.SetStringItem(index, 1, files[x]['quality'].capitalize())
+                self.list.SetStringItem(index, 2, str(len(files[x]['images'])))
+                self.list.SetStringItem(index, 3, date)
+        self.list.Select(0)
+
+    def check_buttons(self):
+        """ Enable / Disable the appropriate buttons """
+        if self.list.GetItemCount() == 0:
+            self.deleteBtn.Disable()
+            return
+
+        self.Refresh()
+        self.SetFocus()
 
 #----------------------------------------------------------------------

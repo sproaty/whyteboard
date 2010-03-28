@@ -46,6 +46,7 @@ ID_MOVE_TO_BOTTOM = wx.NewId()    # move shape to the bottom
 ID_NEW = wx.NewId()               # new window
 ID_NEXT = wx.NewId()              # next sheet
 ID_PASTE_NEW = wx.NewId()         # paste as new selection
+ID_PDF_CACHE = wx.NewId()         # view->PDF Cache
 ID_PREV = wx.NewId()              # previous sheet
 ID_RELOAD_PREF = wx.NewId()       # reload preferences
 ID_RENAME = wx.NewId()            # rename sheet
