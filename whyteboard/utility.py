@@ -483,13 +483,11 @@ class Utility(object):
     def library_write(self, location, images, quality):
         """Adds a newly converted file to the library"""
         self.library_create()
-        now =  time.asctime(time.localtime(time.time()))
-
         with open(self.library) as f:
             files = pickle.load(f)
 
         files[len(files)] = {'file': location, 'images': images,
-                             'quality': quality, 'date': now}
+                             'quality': quality, 'date': time.asctime()}
 
         with open(self.library, "w") as f:
             pickle.dump(files, f)
