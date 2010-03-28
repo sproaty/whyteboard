@@ -19,6 +19,8 @@ xx Jan 2010 -- 0.39.4
 * Image re-scaling using its selection handles. Also draws a transparent rectangle
   to indicate its new size
 
+* PDF Cache Viewer - view the list of PDF files that Whyteboard is caching. From
+  here you can remove cache entries, meaning that the PDF will be re-converted.
 * Improvements to rotating an image with the mouse: now "follows" the mouse's
   position, and can be rotated both clockwise and counter-clockwise.
   Thanks to Zack Buhman and members of Stack Overflow for help with the coding
@@ -37,6 +39,7 @@ xx Jan 2010 -- 0.39.4
 * Foreground/background colour swap button added
 * "Swap Colours" menu item for when you select a shape that's not transparent
 * New toolbar items for Move Shape Up/Down/To Top/To Bottom
+
 
 * Thick rectangles now don't have a "roundness" to their edges
 * Help files updated and improved with more detail

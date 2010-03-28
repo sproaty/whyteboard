@@ -23,7 +23,6 @@ This module contains classes extended from wx.Dialog used by the GUI.
 
 from __future__ import division
 from __future__ import with_statement
-from pprint import pprint
 
 import os
 import sys
@@ -926,7 +925,7 @@ class ShapeViewer(wx.Dialog):
                            wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
         self.gui = gui
         self.shapes = list(self.gui.board.shapes)
-        self.SetSizeHints(450, 300)
+        self.SetSizeHints(550, 400)
         self.buttons = []  # move up/down/top/bottom buttons
 
         self.list = WhyteboardList(self, style=wx.LC_REPORT)
@@ -993,6 +992,7 @@ class ShapeViewer(wx.Dialog):
         self.SetSizer(sizer)
         self.populate()
         self.check_buttons()
+        self.Fit()
 
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
@@ -1131,9 +1131,7 @@ class ShapeViewer(wx.Dialog):
 
 
     def ok(self, event):
-        self.gui.board.add_undo()
-        self.gui.board.shapes = self.shapes
-        self.gui.board.redraw_all(True)
+        self.apply()
         self.Close()
 
 
@@ -1158,7 +1156,7 @@ class PDFCache(wx.Dialog):
     conversion quality and date saved. Has options to remove items to re-convert
     """
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"),
+        wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"), size=(450, 300),
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
                            wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
         self.gui = gui
@@ -1250,13 +1248,13 @@ class PDFCache(wx.Dialog):
 
 
     def ok(self, event):
-        for x, key in self.original_files.items():
-            if not self.files.has_key(x):
-                [os.remove(img) for img in self.original_files[x]['images']]
+        #for x, key in self.original_files.items():
+        #    if not self.files.has_key(x):
+        #        [os.remove(img) for img in self.original_files[x]['images']]
 
 
-        #with open(self.gui.util.library, "w") as f:
-        #    pickle.dump(self.files, f)
+        with open(self.gui.util.library, "w") as f:
+            pickle.dump(self.files, f)
         self.Close()
 
     def on_remove(self, event):
@@ -1264,11 +1262,14 @@ class PDFCache(wx.Dialog):
         item = self.list.GetFirstSelected()
         if item == -1:
             return
+
+        quality = self.list.GetItem(item, 1).GetText()
         text = self.list.GetItemText(item)
         files = dict(self.files)
 
         for x, key in self.files.items():
-            if self.files[x]['file'] == text:
+            if (self.files[x]['file'] == text and
+                self.files[x]['quality'].capitalize() == quality):
                 del files[x]
 
         self.files = files
