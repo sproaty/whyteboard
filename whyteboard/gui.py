@@ -997,8 +997,11 @@ class GUI(wx.Frame):
 
     def hotkey(self, event=None):
         """
-        Processes a hotkey (escape / home / end / page up / page down)
+        Processes a hotkey (escape / home / end / page up / page down/arrow key)
         """
+        SCROLL_AMOUNT = 3
+        code = event.GetKeyCode()
+
         if os.name == "posix":
             for x, key in enumerate(self.hotkeys):
 
@@ -1007,7 +1010,7 @@ class GUI(wx.Frame):
                     self.control.change_tool(_id=x + 1)
                     return
 
-        if event.GetKeyCode() == wx.WXK_ESCAPE:  # close fullscreen
+        if code == wx.WXK_ESCAPE:  # close fullscreen
             if self.board.selected:
                 self.board.deselect()
                 return
@@ -1017,26 +1020,51 @@ class GUI(wx.Frame):
                 self.ShowFullScreen(False, flag)
                 menu = self.menu.FindItemById(ID_FULLSCREEN)
                 menu.Check(False)
-        elif event.GetKeyCode() == wx.WXK_HOME:
+        elif code == wx.WXK_HOME:
             if event.ControlDown():
                 self.board.Scroll(-1, 0)
             else:
                 self.board.Scroll(0, -1)
-        elif event.GetKeyCode() == wx.WXK_END:
+        elif code == wx.WXK_END:
             if event.ControlDown():
                 self.board.Scroll(-1, self.board.area[1])
             else:
                 self.board.Scroll(self.board.area[0], -1)
 
-        elif event.GetKeyCode() in [wx.WXK_PAGEUP, wx.WXK_PAGEDOWN]:
+        elif code in [wx.WXK_PAGEUP, wx.WXK_PAGEDOWN]:
             x, y = self.board.GetViewStart()
             x2, y2 = self.board.GetClientSizeTuple()
-            if event.GetKeyCode() == wx.WXK_PAGEUP:
+            if code == wx.WXK_PAGEUP:
                 self.board.Scroll(-1, y - y2)
             else:
                 self.board.Scroll(-1, y + y2)
-        elif event.GetKeyCode() in [wx.WXK_DOWN, wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_UP]:
-            pass  # TODO
+        elif code in [wx.WXK_DOWN, wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_UP]:
+            if self.board.selected:
+                shape = self.board.selected
+                if code == wx.WXK_UP:
+                    params = (shape.x, shape.y - SCROLL_AMOUNT)
+                elif code == wx.WXK_DOWN:
+                    params = (shape.x, shape.y + SCROLL_AMOUNT)
+                elif code == wx.WXK_LEFT:
+                    params = (shape.x - SCROLL_AMOUNT, shape.y)
+                elif code == wx.WXK_RIGHT:
+                    params = (shape.x + SCROLL_AMOUNT, shape.y)
+                                    
+                shape.x, shape.y = params[0], params[1]
+                self.board.draw_shape(shape)
+            else:                
+                x, y = self.board.GetViewStart()
+                x2, y2 = self.board.GetClientSizeTuple()
+                if code == wx.WXK_UP:
+                    params = (-1, y - SCROLL_AMOUNT)
+                elif code == wx.WXK_DOWN:
+                    params = (-1, y + SCROLL_AMOUNT)
+                elif code == wx.WXK_LEFT:
+                    params = (x - SCROLL_AMOUNT, -1)
+                elif code == wx.WXK_RIGHT:
+                    params = (x + SCROLL_AMOUNT, -1)
+    
+                self.board.Scroll(*params)
         else:
             event.Skip()   # propogate
 

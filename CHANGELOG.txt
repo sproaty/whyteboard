@@ -45,6 +45,8 @@ xx Jan 2010 -- 0.39.4
 * Help files updated and improved with more detail
 * Improved a few icons (circle/ellipse/polygon/rounded rectangle, move up/down
 * Little "close" button drawn on the current tab
+* Up/down/left/right arrow keys can pan around the canvas.
+* The selected shape may be moved around the canvas using the arrow keys too
 * Escape key will de-select the currently selected shape (as well as Ctrl-D)
 * Cancelling PDF Conversion on Linux takes a few seconds, so the progress bar no
   longer "pumps", and the dialog title changes from "Converting" to "Cancelling"
