@@ -1252,7 +1252,6 @@ class PDFCache(wx.Dialog):
         #    if not self.files.has_key(x):
         #        [os.remove(img) for img in self.original_files[x]['images']]
 
-
         with open(self.gui.util.library, "w") as f:
             pickle.dump(self.files, f)
         self.Close()
