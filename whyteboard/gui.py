@@ -127,6 +127,7 @@ class GUI(wx.Frame):
         self.tab_total = 1
         self.current_tab = 0
         self.closed_tabs = []  # [shapes - undo - redo - canvas_size] per tab
+        self.closed_tabs_id = {}  # wx.Menu IDs for undo closed tab list
         self.hotkeys = []
 
         self.control = ControlPanel(self)
@@ -178,15 +179,17 @@ class GUI(wx.Frame):
         sheets = wx.Menu()
         _help = wx.Menu()
         _import = wx.Menu()
+        _export = wx.Menu()
         recent = wx.Menu()
+        self.closed_tabs_menu = wx.Menu()
         self.filehistory.UseMenu(recent)
         self.filehistory.AddFilesToMenu()
+        self.make_closed_tabs_menu()
 
         _import.Append(ID_IMPORT_IMAGE, _('&Image...'))
         _import.Append(ID_IMPORT_PDF, '&PDF...')
         _import.Append(ID_IMPORT_PS, 'Post&Script...')
         _import.Append(ID_IMPORT_PREF, _('P&references...'), _("Load in a Whyteboard preferences file"))
-        _export = wx.Menu()
         _export.Append(ID_EXPORT, _("&Export Sheet...")+"\tCtrl+E", _("Export the current sheet to an image file"))
         _export.Append(ID_EXPORT_ALL, _("Export &All Sheets...")+"\tCtrl+Shift+E", _("Export every sheet to a series of image files"))
         _export.Append(ID_EXPORT_PDF, _('As &PDF...'), _("Export every sheet into a PDF file"))
@@ -256,6 +259,7 @@ class GUI(wx.Frame):
         self.next = sheets.Append(ID_NEXT, _("&Next Sheet")+"\tCtrl+Tab", _("Go to the next sheet"))
         self.prev = sheets.Append(ID_PREV, _("&Previous Sheet")+"\tCtrl+Shift+Tab", _("Go to the previous sheet"))
         sheets.AppendItem(undo_sheet)
+        sheets.AppendMenu(ID_RECENTLY_CLOSED, _("Recently &Closed Sheets"), self.closed_tabs_menu, _("View all recently closed sheets"))
         sheets.AppendSeparator()
         sheets.Append(wx.ID_CLEAR, _("&Clear Sheets' Drawings"), _("Clear drawings on the current sheet (keep images)"))
         sheets.Append(ID_CLEAR_ALL, _("Clear &Sheet"), _("Clear the current sheet"))
@@ -314,7 +318,7 @@ class GUI(wx.Frame):
         ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_MOVE_UP, ID_DESELECT,
                ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, wx.ID_COPY,
                wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE, ID_TRANSPARENT,
-               ID_SWAP_COLOURS]
+               ID_SWAP_COLOURS, ID_RECENTLY_CLOSED]
         [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
 
         # hotkeys
@@ -401,6 +405,19 @@ class GUI(wx.Frame):
         self.toolbar.EnableTool(wx.ID_PASTE, self.can_paste)
         self.toolbar.Realize()
 
+
+    def make_closed_tabs_menu(self):
+        for key, value in self.closed_tabs_id.items():
+            self.closed_tabs_menu.Remove(key)
+            self.Unbind(wx.EVT_MENU, id=key)
+
+        self.closed_tabs_id = dict()
+
+        for x in self.closed_tabs:
+            _id = wx.NewId()
+            self.closed_tabs_id[_id] = x
+            self.closed_tabs_menu.Append(_id, x[4], _("Restore") +' "%s"' % x[4])
+            self.Bind(wx.EVT_MENU, lambda evt, tab=x: self.on_undo_tab(event=None, tab=tab), id=_id)
 
     def shape_selected(self, shape):
         """
@@ -791,17 +808,20 @@ class GUI(wx.Frame):
             self.tabs.DeletePage(self.current_tab)
 
         self.on_change_tab()  # updates self.board
+        self.make_closed_tabs_menu()
 
 
-
-    def on_undo_tab(self, event=None):
+    def on_undo_tab(self, event=None, tab=None):
         """
         Undoes the last closed tab from the list.
         Re-creates the board from the saved shapes/undo/redo lists
         """
         if not self.closed_tabs:
             return
-        board = self.closed_tabs.pop()
+        if not tab:
+            board = self.closed_tabs.pop()
+        else:
+            board = self.closed_tabs.pop(self.closed_tabs.index(tab))
 
         self.on_new_tab(name=board[4], wb=True)
         self.board.shapes = board[0]
@@ -822,6 +842,7 @@ class GUI(wx.Frame):
         self.board.resize_canvas(board[3])
         self.board.redraw_all(True)
         self.update_shape_viewer()
+        self.make_closed_tabs_menu()
 
 
     def on_rename(self, event=None, sheet=None):
@@ -892,7 +913,7 @@ class GUI(wx.Frame):
             elif (_id == ID_NEXT and self.tab_count > 1 and
                   self.current_tab + 1 < self.tab_count):
                 do = True
-            elif _id == ID_UNDO_SHEET and self.closed_tabs:
+            elif _id in [ID_UNDO_SHEET, ID_RECENTLY_CLOSED] and self.closed_tabs:
                 do = True
             elif _id in [wx.ID_DELETE, ID_DESELECT] and board.selected:
                 do = True

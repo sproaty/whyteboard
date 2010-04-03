@@ -48,6 +48,7 @@ ID_NEXT = wx.NewId()              # next sheet
 ID_PASTE_NEW = wx.NewId()         # paste as new selection
 ID_PDF_CACHE = wx.NewId()         # view->PDF Cache
 ID_PREV = wx.NewId()              # previous sheet
+ID_RECENTLY_CLOSED = wx.NewId()   # list of recently closed sheets
 ID_RELOAD_PREF = wx.NewId()       # reload preferences
 ID_RENAME = wx.NewId()            # rename sheet
 ID_REPORT_BUG = wx.NewId()        # report a problem

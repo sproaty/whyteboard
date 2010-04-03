@@ -1,12 +1,12 @@
 Whyteboard 0.39.4 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-xx xx February 2010
+xx xx April
 
 ---- VERSION HISTORY ----
 
 ----------------------------------------------------------------------
 
-xx Jan 2010 -- 0.39.4
+xx Apr 2010 -- 0.39.4
 
 -- New features/changes:
 
@@ -39,7 +39,7 @@ xx Jan 2010 -- 0.39.4
 * Foreground/background colour swap button added
 * "Swap Colours" menu item for when you select a shape that's not transparent
 * New toolbar items for Move Shape Up/Down/To Top/To Bottom
-
+* Recently Closed Sheets as a sub-menu to allow you to choose a sheet to re-open
 
 * Thick rectangles now don't have a "roundness" to their edges
 * Help files updated and improved with more detail

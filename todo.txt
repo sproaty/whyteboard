@@ -1,6 +1,6 @@
 Whyteboard 0.39.4 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-xx xx February 2010
+xx xx April 2010
 
 ---- NEW FEATURES ----
 
@@ -32,4 +32,3 @@ Eventually, long term:
     ongoing into Poppler + Windows
 * Improved drawing with anti-aliased graphics, including transparency
   -> Performance will be much worse, guaranteed
-
