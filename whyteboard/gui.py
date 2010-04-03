@@ -413,11 +413,14 @@ class GUI(wx.Frame):
 
         self.closed_tabs_id = dict()
 
-        for x in self.closed_tabs:
+        for x, tab in enumerate(reversed(self.closed_tabs)):
             _id = wx.NewId()
-            self.closed_tabs_id[_id] = x
-            self.closed_tabs_menu.Append(_id, x[4], _("Restore") +' "%s"' % x[4])
-            self.Bind(wx.EVT_MENU, lambda evt, tab=x: self.on_undo_tab(event=None, tab=tab), id=_id)
+            name = tab[4]
+            self.closed_tabs_id[_id] = tab
+            self.closed_tabs_menu.Append(_id, "&%i: %s" % (x + 1, name), 
+                                         _("Restore") +' "%s"' % name)
+            self.Bind(wx.EVT_MENU, lambda evt, tab=tab: self.on_undo_tab(tab=tab), 
+                      id=_id)
 
     def shape_selected(self, shape):
         """
