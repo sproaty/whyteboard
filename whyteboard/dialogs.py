@@ -1017,10 +1017,10 @@ class ShapeViewer(wx.Dialog):
 
         self.list.ClearAll()
         self.list.InsertColumn(0, _("Position"), width=65)
-        self.list.InsertColumn(1, _("Type"), wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(2, _("Thickness"), wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(3, _("Color"), wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(4, _("Properties"), wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(1, _("Type"), width=wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(2, _("Thickness"), width=wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(3, _("Color"), width=wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(4, _("Properties"), width=wx.LIST_AUTOSIZE)
 
         if not self.shapes:
             index = self.list.InsertStringItem(sys.maxint, "")
@@ -1033,6 +1033,7 @@ class ShapeViewer(wx.Dialog):
                 self.list.SetStringItem(index, 3, str(shape.colour))
                 self.list.SetStringItem(index, 4, shape.properties())
         self.list.Select(0)
+        self.Layout()
 
 
     def check_buttons(self):
@@ -1134,19 +1135,18 @@ class ShapeViewer(wx.Dialog):
         self.apply()
         self.Close()
 
-
-    def apply(self, event):
-        self.gui.board.add_undo()
-        self.gui.board.shapes = self.shapes
-        self.gui.board.redraw_all(True)
-
-
     def cancel(self, event=None):
         self.Close()
 
     def on_close(self, event):
         self.gui.viewer = False
         event.Skip()
+
+    def apply(self, event=None):
+        self.gui.board.add_undo()
+        self.gui.board.shapes = self.shapes
+        self.gui.board.redraw_all(True)
+
 
 #----------------------------------------------------------------------
 

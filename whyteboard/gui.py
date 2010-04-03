@@ -310,7 +310,8 @@ class GUI(wx.Frame):
         topics = {'shape.add': self.shape_add,
                   'shape.selected': self.shape_selected,
                   'board.capture_mouse': self.capture_mouse,
-                  'board.release_mouse': self.release_mouse,}
+                  'board.release_mouse': self.release_mouse,
+                  'shape_viewer_update': self.update_shape_viewer}
         [pub.subscribe(value, key) for key, value in topics.items()]
 
 
@@ -340,7 +341,7 @@ class GUI(wx.Frame):
 
         # import sub-menu bindings
         ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
-        [self.Bind(wx.EVT_MENU, lambda evt, text = key: self.on_open(evt, text),
+        [self.Bind(wx.EVT_MENU, lambda evt, text=key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
         # other menu bindings
@@ -448,8 +449,6 @@ class GUI(wx.Frame):
 
     def shape_add(self, shape):
         self.board.add_shape(shape)
-        #self.update_shape_viewer()
-
 
     def update_shape_viewer(self):
         if self.viewer:

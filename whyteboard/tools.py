@@ -531,6 +531,9 @@ class Pen(Polygon):
         self.x_tmp = x
         self.y_tmp = y  # swap for the next call to this function
 
+    def double_click(self, x, y):
+        pass 
+            
     def right_up(self, x, y):
         pass
 
@@ -1704,6 +1707,7 @@ class Select(Tool):
 
         self.board.update_thumb()
         self.board.change_current_tool()
+        pub.sendMessage('shape_viewer_update')
 
     def preview(self, dc, width, height):
         dc.DrawBitmap(wx.Bitmap(os.path.join(self.board.gui.util.get_path(), "images",

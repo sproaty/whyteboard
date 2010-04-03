@@ -52,8 +52,8 @@ xx Apr 2010 -- 0.39.4
   longer "pumps", and the dialog title changes from "Converting" to "Cancelling"
 
 * The "Shape Viewer" is now in sync with the canvas: adding, deleting, undoing,
-  redoing and changing shapes' order is now reflected when the Shape Viewer is
-  open
+  redoing, editing and changing shapes' order is now reflected when the Shape 
+  Viewer is open
 * Minimise button added to the Shape Viewer
 * Removed the "Rotate Image" dialog
 * Restructured source code directories -- now just run whyteboard.py from the
@@ -63,8 +63,8 @@ xx Apr 2010 -- 0.39.4
 
 -- New Preferences / Options:
 
-* Under "View", number of toolbox columns, can be set to 2 or 3
-  to decrease the vertical space taken by the toolbox
+* Under "View", number of toolbox columns, can be set to 2 or 3 to decrease the 
+  vertical space used by the toolbox
 * Toggle tool preview on/off (to gain more vertical space)
 * Toggle colour grid on/off
 * "Send Feedback" added to the Help menu
