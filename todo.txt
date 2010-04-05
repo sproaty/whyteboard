@@ -22,6 +22,8 @@ see: https://blueprints.launchpad.net/whyteboard
 * Hyperlinks to web resources
 * Slider bar to "move" back/forwards through a drawing's timeline in a replay,
   as well as being able to jump to the start/end
+* Select tool: group items together to move all items together
+* Select tool: copy/paste shapes
 
 
 Eventually, long term:

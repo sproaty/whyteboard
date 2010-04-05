@@ -126,6 +126,12 @@ class Preferences(wx.Dialog):
         self.config.write()
         self.gui.util.config = self.config
         ctrl = self.gui.control
+        x = self.config['undo_sheets']
+
+        if x < old['undo_sheets']:
+            del self.gui.closed_tabs[0:x]
+        if x != old['undo_sheets']:
+            self.gui.make_closed_tabs_menu()
 
         if self.config['bmp_select_transparent'] != old['bmp_select_transparent']:
             self.gui.board.copy = None
@@ -142,19 +148,20 @@ class Preferences(wx.Dialog):
             ctrl.preview.Show()
             ctrl.preview.Refresh()
 
-        if self.config['toolbox'] != old['toolbox']:
-            ctrl.toolsizer.Clear(True)
-            if self.config['toolbox'] == 'text':
-                ctrl.toolsizer.SetCols(1)
-            else:
-                ctrl.toolsizer.SetCols(int(self.config['toolbox_columns']))
+        if self.config['toolbox'] != old['toolbox']:            
+            cols = 1
+            if self.config['toolbox'] != 'text':
+                cols = int(self.config['toolbox_columns'])
+                
+            ctrl.toolsizer.Clear(True) 
+            ctrl.toolsizer.SetCols(cols)
             ctrl.make_toolbox(self.config['toolbox'])
             ctrl.toolsizer.Layout()
 
-        if self.config['colour_grid']:
-            wx.CallAfter(self.gui.on_colour_grid, None, True)  # just has to be
-        else:
-            wx.CallAfter(self.gui.on_colour_grid, None, False) # done
+        do = True
+        if not self.config['colour_grid']:
+            do = False                
+        wx.CallAfter(self.gui.on_colour_grid, None, do)
 
         #  too lazy to check if each colour has changed - just remake it all
         self.gui.board.redraw_all()

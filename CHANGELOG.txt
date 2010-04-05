@@ -52,7 +52,7 @@ xx Apr 2010 -- 0.39.4
   longer "pumps", and the dialog title changes from "Converting" to "Cancelling"
 
 * The "Shape Viewer" is now in sync with the canvas: adding, deleting, undoing,
-  redoing, editing and changing shapes' order is now reflected when the Shape 
+  redoing, editing and changing shapes' order is now reflected when the Shape
   Viewer is open
 * Minimise button added to the Shape Viewer
 * Removed the "Rotate Image" dialog
@@ -63,12 +63,11 @@ xx Apr 2010 -- 0.39.4
 
 -- New Preferences / Options:
 
-* Under "View", number of toolbox columns, can be set to 2 or 3 to decrease the 
+* Under "View", number of toolbox columns, can be set to 2 or 3 to decrease the
   vertical space used by the toolbox
 * Toggle tool preview on/off (to gain more vertical space)
 * Toggle colour grid on/off
 * "Send Feedback" added to the Help menu
-
 
 -- Bugfixes:
 
@@ -76,6 +75,8 @@ xx Apr 2010 -- 0.39.4
   objects; which was taking up unneeded resources. This bug has been present
   since version 0.25 (3rd release) - released back in January 2009!
 
+* Recently closed tab list was deleting incorrect entries when it had more items
+  than the "number of closed tabs" preference
 * Bitmap Select could cause some visual anomalies
 * Possible crash when loading/saving .wtbd files containing text
 * After selecting a shape (and being brought to the front), any shapes that
