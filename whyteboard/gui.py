@@ -121,6 +121,8 @@ class GUI(wx.Frame):
         self.directory = None  # last opened directory
         self.make_toolbar()
         self.bar_shown = True  # slight ? performance optimisation
+        self.hotkey_pressed = False  # for hotkey timer
+        self.hotkey_timer = None
         self.find_help()
         self.__class__.instances += 1
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
@@ -344,19 +346,62 @@ class GUI(wx.Frame):
         [self.Bind(wx.EVT_MENU, lambda evt, text=key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
-        # other menu bindings
-        functs = ["new_win", "new_tab", "open",  "close_tab", "save", "save_as", "export", "export_all", "page_setup", "print_preview", "print", "exit", "undo", "redo", "undo_tab",
-                  "copy", "paste", "delete_shape", "preferences", "paste_new", "history", "resize", "fullscreen", "toolbar", "statusbar", "prev", "next", "clear", "clear_all",
-                  "clear_sheets", "clear_all_sheets", "rename", "help", "update", "translate", "report_bug", "about", "export_pdf", "import_pref", "export_pref", "shape_viewer", "move_up",
-                  "move_down", "move_top", "move_bottom", "deselect", "reload_preferences", "tool_preview", "colour_grid", "feedback", "transparent", "swap_colours", "pdf_cache"]
+        # menu bindings
+        bindings = { ID_NEW: "new_win",
+                     wx.ID_NEW : "new_tab",
+                     wx.ID_OPEN: "open",
+                     wx.ID_CLOSE: "close_tab",
+                     wx.ID_SAVE: "save",
+                     wx.ID_SAVEAS: "save_as",
+                     ID_EXPORT: "export",
+                     ID_EXPORT_ALL: "export_all",
+                     wx.ID_PRINT_SETUP: "page_setup",
+                     wx.ID_PREVIEW_PRINT: "print_preview",
+                     wx.ID_PRINT: "print",
+                     wx.ID_EXIT: "exit",
+                     wx.ID_UNDO: "undo",
+                     wx.ID_REDO: "redo",
+                     ID_UNDO_SHEET: "undo_tab",
+                     wx.ID_COPY: "copy",
+                     wx.ID_PASTE: "paste",
+                     wx.ID_DELETE: "delete_shape",
+                     wx.ID_PREFERENCES: "preferences",
+                     ID_PASTE_NEW: "paste_new",
+                     ID_HISTORY: "history",
+                     ID_RESIZE: "resize",
+                     ID_FULLSCREEN: "fullscreen",
+                     ID_TOOLBAR: "toolbar",
+                     ID_STATUSBAR: "statusbar",
+                     ID_PREV: "prev",
+                     ID_NEXT: "next",
+                     wx.ID_CLEAR: "clear",
+                     ID_CLEAR_ALL: "clear_all",
+                     ID_CLEAR_SHEETS: "clear_sheets",
+                     ID_CLEAR_ALL_SHEETS: "clear_all_sheets",
+                     ID_RENAME: "rename",
+                     wx.ID_HELP: "help",
+                     ID_UPDATE: "update",
+                     ID_TRANSLATE: "translate",
+                     ID_REPORT_BUG: "report_bug",
+                     wx.ID_ABOUT: "about",
+                     ID_EXPORT_PDF: "export_pdf",
+                     ID_IMPORT_PREF: "import_pref",
+                     ID_EXPORT_PREF: "export_pref",
+                     ID_SHAPE_VIEWER: "shape_viewer",
+                     ID_MOVE_UP: "move_up",
+                     ID_MOVE_DOWN: "move_down",
+                     ID_MOVE_TO_TOP: "move_top",
+                     ID_MOVE_TO_BOTTOM: "move_bottom",
+                     ID_DESELECT: "deselect",
+                     ID_RELOAD_PREF: "reload_preferences",
+                     ID_TOOL_PREVIEW: "tool_preview",
+                     ID_COLOUR_GRID: "colour_grid",
+                     ID_FEEDBACK: "feedback",
+                     ID_TRANSPARENT: "transparent",
+                     ID_SWAP_COLOURS: "swap_colours",
+                     ID_PDF_CACHE: "pdf_cache", }
 
-        IDs = [ID_NEW, wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE, wx.ID_SAVE, wx.ID_SAVEAS, ID_EXPORT, ID_EXPORT_ALL, wx.ID_PRINT_SETUP, wx.ID_PREVIEW_PRINT, wx.ID_PRINT, wx.ID_EXIT, wx.ID_UNDO,
-               wx.ID_REDO, ID_UNDO_SHEET, wx.ID_COPY, wx.ID_PASTE, wx.ID_DELETE, wx.ID_PREFERENCES, ID_PASTE_NEW, ID_HISTORY, ID_RESIZE, ID_FULLSCREEN, ID_TOOLBAR, ID_STATUSBAR,
-               ID_PREV, ID_NEXT, wx.ID_CLEAR, ID_CLEAR_ALL, ID_CLEAR_SHEETS, ID_CLEAR_ALL_SHEETS, ID_RENAME, wx.ID_HELP, ID_UPDATE, ID_TRANSLATE, ID_REPORT_BUG, wx.ID_ABOUT, ID_EXPORT_PDF,
-               ID_IMPORT_PREF, ID_EXPORT_PREF, ID_SHAPE_VIEWER, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_DESELECT, ID_RELOAD_PREF, ID_TOOL_PREVIEW, ID_COLOUR_GRID,
-               ID_FEEDBACK, ID_TRANSPARENT, ID_SWAP_COLOURS, ID_PDF_CACHE]
-
-        for name, _id in zip(functs, IDs):
+        for _id, name in bindings.items():
             method = getattr(self, "on_"+ name)  # self.on_*
             self.Bind(wx.EVT_MENU, method, id=_id )
 
@@ -418,9 +463,9 @@ class GUI(wx.Frame):
             _id = wx.NewId()
             name = tab[4]
             self.closed_tabs_id[_id] = tab
-            self.closed_tabs_menu.Append(_id, "&%i: %s" % (x + 1, name), 
+            self.closed_tabs_menu.Append(_id, "&%i: %s" % (x + 1, name),
                                          _("Restore") +' "%s"' % name)
-            self.Bind(wx.EVT_MENU, lambda evt, tab=tab: self.on_undo_tab(tab=tab), 
+            self.Bind(wx.EVT_MENU, lambda evt, tab=tab: self.on_undo_tab(tab=tab),
                       id=_id)
 
     def shape_selected(self, shape):
@@ -789,7 +834,7 @@ class GUI(wx.Frame):
         if not self.tab_count - 1:  # must have at least one sheet open
             return
         if len(self.closed_tabs) == self.util.config['undo_sheets']:
-            del self.closed_tabs[self.util.config['undo_sheets'] - 1]
+            del self.closed_tabs[0]
 
         self.notes.remove_tab(self.current_tab)
         self.thumbs.remove(self.current_tab)
@@ -1047,7 +1092,15 @@ class GUI(wx.Frame):
                         wx.WXK_LEFT: (shape.x - SCROLL_AMOUNT, shape.y),
                         wx.WXK_RIGHT: (shape.x + SCROLL_AMOUNT, shape.y) }
 
-                shape.x, shape.y = map.get(code)[0], map.get(code)[1]
+                if not self.hotkey_pressed:
+                    self.hotkey_pressed = True
+                    self.board.add_undo()
+                    shape.start_select_action(0)
+                    self.hotkey_timer = wx.CallLater(300, self.reset_hotkey)
+                else:
+                    self.hotkey_timer.Restart(300)
+
+                shape.move(map.get(code)[0], map.get(code)[1], offset=(0, 0))
                 self.board.draw_shape(shape)
                 return
         self.hotkey_scroll(code)
@@ -1082,6 +1135,14 @@ class GUI(wx.Frame):
 
         if x != None and y != None:
             self.board.Scroll(x, y)
+
+    def reset_hotkey(self):
+        """Reset the system for the next stream of hotkey up/down events"""
+        self.hotkey_pressed = False
+        if not self.board.selected:
+            return
+        self.board.selected.sort_handles()
+        self.board.selected.end_select_action(0)
 
 
     def toggle_view(self, menu, view, force=None):
