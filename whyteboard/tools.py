@@ -1488,11 +1488,6 @@ class Image(OverlayShape):
     def end_select_action(self, handle):
         """Performs the rescale/rotation, resets attributes"""
         if self.outline and self.dragging:
-            #if handle == HANDLE_ROTATE:
-            #    img = self.img.Rotate(-self.angle, self.center)
-            #if handle == HANDLE_ROTATE:
-            #    self.scale_size = (self.img.GetWidth(), self.img.GetHeight())
-            #else:
             img = wx.BitmapFromImage(self.img)
             img = wx.ImageFromBitmap(img)
             img.Rescale(self.scale_size[0], self.scale_size[1], wx.IMAGE_QUALITY_HIGH)

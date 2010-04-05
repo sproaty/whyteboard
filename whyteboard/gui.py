@@ -1493,6 +1493,7 @@ class WhyteboardApp(wx.App):
             self.locale.AddCatalogLookupPathPrefix(langdir)
             self.locale.AddCatalog("whyteboard")
 
+        reload(meta)  # fix for some translated strings not being applied
 
         self.frame = GUI(None, config)
         self.frame.Show(True)

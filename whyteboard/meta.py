@@ -51,7 +51,7 @@ for label, exts in all:
     exts.extend([e.upper() for e in exts])
     tmp.extend(exts)
     [types.append(x.replace("*.", "")) for x in exts]
-    wc_list.append('%s (%s)|%s'%(label, visexts, ';'.join(exts)))
+    wc_list.append('%s (%s)|%s' % (label, visexts, ';'.join(exts)))
 
 
 wc_list.insert(0, '%s|%s'%(_('All files')+' (*.*)', '*.*'))
