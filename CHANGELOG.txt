@@ -84,6 +84,7 @@ xx Apr 2010 -- 0.39.4
   the selected shape.
 * "Recent Files" menu wasn't working on Linux
 * Rotated images weren't being saved as rotated
+* Shape Viewer's column widths would not take up the full space
 
 * Using next/previous sheet buttons in the Shape Viewer wouldn't set the
   drop-down control to the changed-to sheet

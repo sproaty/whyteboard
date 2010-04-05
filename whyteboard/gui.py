@@ -1136,13 +1136,14 @@ class GUI(wx.Frame):
         if x != None and y != None:
             self.board.Scroll(x, y)
 
+
     def reset_hotkey(self):
         """Reset the system for the next stream of hotkey up/down events"""
         self.hotkey_pressed = False
         if not self.board.selected:
             return
-        self.board.selected.sort_handles()
         self.board.selected.end_select_action(0)
+        self.update_shape_viewer()
 
 
     def toggle_view(self, menu, view, force=None):

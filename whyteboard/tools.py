@@ -244,6 +244,8 @@ class OverlayShape(Tool):
         """
         pass
 
+    def end_select_action(self, handle):
+        self.sort_handles()
 
     def draw_selected(self, dc):
         """Draws each handle that an object has"""
@@ -341,6 +343,7 @@ class Polygon(OverlayShape):
 
 
     def end_select_action(self, handle):
+        super(Polygon, self).end_select_action(handle)
         self.operation = None
 
 
@@ -532,8 +535,8 @@ class Pen(Polygon):
         self.y_tmp = y  # swap for the next call to this function
 
     def double_click(self, x, y):
-        pass 
-            
+        pass
+
     def right_up(self, x, y):
         pass
 
@@ -1484,20 +1487,18 @@ class Image(OverlayShape):
             self.outline.sort_handles()
 
 
-
     def end_select_action(self, handle):
         """Performs the rescale/rotation, resets attributes"""
         if self.outline and self.dragging:
             img = wx.BitmapFromImage(self.img)
             img = wx.ImageFromBitmap(img)
             img.Rescale(self.scale_size[0], self.scale_size[1], wx.IMAGE_QUALITY_HIGH)
-            img = img.Rotate(-self.angle, self.center)
 
+            img = img.Rotate(-self.angle, self.center)
             self.image = wx.BitmapFromImage(img)
 
         self.dragging = False
         self.orig_click = None
-        #self.angle = 0
         self.outline = None
         self.sort_handles()
         self.board.redraw_all()
@@ -1698,12 +1699,12 @@ class Select(Tool):
 
     def left_up(self, x, y):
         if self.dragging:
-            self.shape.sort_handles()
             self.shape.end_select_action(self.handle)
 
+        pub.sendMessage('shape_viewer_update')
         self.board.update_thumb()
         self.board.change_current_tool()
-        pub.sendMessage('shape_viewer_update')
+
 
     def preview(self, dc, width, height):
         dc.DrawBitmap(wx.Bitmap(os.path.join(self.board.gui.util.get_path(), "images",

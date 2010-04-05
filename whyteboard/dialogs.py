@@ -1017,9 +1017,9 @@ class ShapeViewer(wx.Dialog):
 
         self.list.ClearAll()
         self.list.InsertColumn(0, _("Position"), width=65)
-        self.list.InsertColumn(1, _("Type"), width=wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(2, _("Thickness"), width=wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(3, _("Color"), width=wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(1, _("Type"))
+        self.list.InsertColumn(2, _("Thickness"))
+        self.list.InsertColumn(3, _("Color"))
         self.list.InsertColumn(4, _("Properties"), width=wx.LIST_AUTOSIZE)
 
         if not self.shapes:
