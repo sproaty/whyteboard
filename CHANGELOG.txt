@@ -55,6 +55,7 @@ xx Apr 2010 -- 0.39.4
   redoing, editing and changing shapes' order is now reflected when the Shape
   Viewer is open
 * Minimise button added to the Shape Viewer
+* Undo closed tabs remembers the "viewport" of the canvas when closed
 * Removed the "Rotate Image" dialog
 * Restructured source code directories -- now just run whyteboard.py from the
   main directory to start the program

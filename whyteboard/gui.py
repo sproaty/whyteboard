@@ -128,7 +128,7 @@ class GUI(wx.Frame):
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.tab_total = 1
         self.current_tab = 0
-        self.closed_tabs = []  # [shapes - undo - redo - canvas_size] per tab
+        self.closed_tabs = []  # [shapes: undo, redo, canvas_size, view_x, view_y] per tab
         self.closed_tabs_id = {}  # wx.Menu IDs for undo closed tab list
         self.hotkeys = []
 
@@ -844,7 +844,8 @@ class GUI(wx.Frame):
 
         board = self.board
         item = [board.shapes, board.undo_list, board.redo_list, board.area,
-                self.tabs.GetPageText(self.current_tab), board.medias]
+                self.tabs.GetPageText(self.current_tab), board.medias, 
+                board.GetViewStart()[0], board.GetViewStart()[1]]
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
@@ -887,6 +888,7 @@ class GUI(wx.Frame):
 
         wx.Yield()  # doesn't draw thumbnail otherwise...
         self.board.resize_canvas(board[3])
+        self.board.Scroll(board[6], board[7])
         self.board.redraw_all(True)
         self.update_shape_viewer()
         self.make_closed_tabs_menu()

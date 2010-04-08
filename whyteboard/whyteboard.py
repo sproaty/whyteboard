@@ -113,7 +113,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.Bind(wx.EVT_LEFT_DCLICK, self.left_double)
         self.Bind(wx.EVT_MIDDLE_DOWN, self.middle_down)
         self.Bind(wx.EVT_MIDDLE_UP, self.middle_up)
-        self.Bind(wx.EVT_MOTION, self.left_motion)
+        self.Bind(wx.EVT_MOTION, self.motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
 
 
@@ -136,7 +136,7 @@ class Whyteboard(wx.ScrolledWindow):
             self.drawing = True
 
 
-    def left_motion(self, event):
+    def motion(self, event):
         """
         Checks if the canvas can be updated, changes the cursor to show it can
         Updates the shape if the user is drawing. Indicate shape may be changed
