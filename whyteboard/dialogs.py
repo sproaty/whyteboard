@@ -718,16 +718,17 @@ class PromptForSave(wx.Dialog):
         iconSizer.Add(bmp, 0)
 
         vsizer = wx.BoxSizer(wx.VERTICAL)
-        vsizer.Add(top_message, wx.RIGHT, 30)
+        vsizer.Add(top_message)
         vsizer.Add((10, 10))
-        vsizer.Add(bottom_message, 0, wx.RIGHT, 30)
+        vsizer.Add(bottom_message)
 
         container = wx.BoxSizer(wx.HORIZONTAL)
-        container.Add(iconSizer, 0, wx.RIGHT, 10)
-        container.Add(vsizer, 1, wx.LEFT, 10)
+        container.Add(iconSizer, 0, wx.LEFT, 15)
+        container.Add((15, -1))
+        container.Add(vsizer, 1, wx.RIGHT, 15)
         container.Layout()
 
-        mainSizer.Add((10, 10))
+        mainSizer.Add((10, 15))
         mainSizer.Add(container, wx.ALL, 30)
         mainSizer.Add((10, 10))
         mainSizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
