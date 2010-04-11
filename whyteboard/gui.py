@@ -316,12 +316,11 @@ class GUI(wx.Frame):
                   'shape_viewer_update': self.update_shape_viewer}
         [pub.subscribe(value, key) for key, value in topics.items()]
 
-
         # idle event handlers
         ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_MOVE_UP, ID_DESELECT,
                ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, wx.ID_COPY,
                wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE, ID_TRANSPARENT,
-               ID_SWAP_COLOURS, ID_RECENTLY_CLOSED]
+               ID_SWAP_COLOURS, ID_RECENTLY_CLOSED, wx.ID_CLOSE]
         [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
 
         # hotkeys
@@ -844,7 +843,7 @@ class GUI(wx.Frame):
 
         board = self.board
         item = [board.shapes, board.undo_list, board.redo_list, board.area,
-                self.tabs.GetPageText(self.current_tab), board.medias, 
+                self.tabs.GetPageText(self.current_tab), board.medias,
                 board.GetViewStart()[0], board.GetViewStart()[1]]
 
         self.closed_tabs.append(item)
@@ -961,6 +960,8 @@ class GUI(wx.Frame):
                 do = True
             elif (_id == ID_NEXT and self.tab_count > 1 and
                   self.current_tab + 1 < self.tab_count):
+                do = True
+            elif _id == wx.ID_CLOSE and self.tab_count > 1:
                 do = True
             elif _id in [ID_UNDO_SHEET, ID_RECENTLY_CLOSED] and self.closed_tabs:
                 do = True

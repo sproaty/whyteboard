@@ -74,7 +74,7 @@ try:
 except ImportError:
     import pickle
 
-from dialogs import ProgressDialog, FindIM
+from dialogs import ProgressDialog, FindIM, PromptForSave
 from functions import (get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type)
 
@@ -106,6 +106,7 @@ class Utility(object):
         self.is_zipped = False
         self.zip = None  # zip archive to read images from
         self.saved = True
+        self.save_time = time.time()
         self.colour = wx.BLACK
         self.background = "White"
         self.transparent = True  # overwrites background
@@ -207,6 +208,7 @@ class Utility(object):
 
                 self.zip = zipfile.ZipFile(self.filename, "r")
                 self.is_zipped = True
+                self.save_time = time.time()
 
                 # Fix bug in Windows where the current shapes get reset above
                 count = 0
@@ -617,27 +619,11 @@ class Utility(object):
             name = _("Untitled")
             if self.filename:
                 name = os.path.basename(self.filename)
-            msg = (_('"%s" has been modified.\nDo you want to save your changes?') % name)
-            dialog = wx.MessageDialog(self.gui, msg, _("Save File?"), style |
-                                      wx.ICON_EXCLAMATION)
-            val = dialog.ShowModal()
 
-            if val == wx.ID_YES:
-                self.gui.on_save()
-                if self.saved or method == os.execvp:
-                    method(*args)  # force restart, otherwise 'cancel'
-                                   # returns to application
+            dialog = PromptForSave(self.gui, name, method, style, args)
+            dialog.ShowModal()
 
-            if val == wx.ID_NO:
-                method(*args)
-                if method == self.gui.Destroy:
-                    self.gui.__class__.instances -= 1
-                    if not self.gui.__class__.instances:
-                        sys.exit()
-            if val == wx.ID_CANCEL:
-                dialog.Close()
         else:
-
             method(*args)
             if method == self.gui.Destroy:
                 self.gui.__class__.instances -= 1

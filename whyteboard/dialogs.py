@@ -27,6 +27,7 @@ from __future__ import with_statement
 import os
 import sys
 import zipfile
+import time
 import wx
 import wx.lib.mixins.listctrl as listmix
 from wx.lib.buttons import GenBitmapButton
@@ -667,6 +668,117 @@ class Feedback(wx.Dialog):
         f = urlopen("http://www.basicrpg.com/feedback_submit.php", params)
         wx.MessageBox(_("Thanks for your feedback!"), _("Feedback Sent"))
         self.Destroy()
+
+#----------------------------------------------------------------------
+
+
+class PromptForSave(wx.Dialog):
+    """
+    Prompts the user to confirm quitting without saving. Style can be
+    wx.YES_NO | wx.CANCEL or just wx.YES_NO. 2nd is used when prompting the user
+    after updating the program.
+    """
+    def __init__(self, gui, name, method, style, args):
+
+        wx.Dialog.__init__(self, gui, title=_("Save File?"))
+        self.gui = gui
+        self.method = method
+        self.args = args
+
+        bitmap = wx.ArtProvider.GetBitmap(wx.ART_WARNING, wx.ART_CMN_DIALOG)
+        bmp = wx.StaticBitmap(self, bitmap=bitmap)
+
+        top_message = wx.StaticText(self, label=_('Save changes to "%s" before closing?') % name)
+        bottom_message = wx.StaticText(self, label=self.get_time())
+        btnSizer = wx.StdDialogButtonSizer()
+
+        font = top_message.GetClassDefaultAttributes().font
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font.SetPointSize(font.GetPointSize() + 1)
+        top_message.SetFont(font)
+
+        if not self.gui.util.filename:
+            saveButton = wx.Button(self, wx.ID_SAVE, _("Save &As..."))
+        else:
+            saveButton = wx.Button(self, wx.ID_SAVE, _("&Save"))
+
+        if style == wx.YES_NO | wx.CANCEL:
+            cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+            btnSizer.AddButton(cancelButton)
+
+        noButton = wx.Button(self, wx.ID_NO, _("Close &without saving"))
+        saveButton.SetDefault()
+        btnSizer.AddButton(noButton)
+        btnSizer.AddButton(saveButton)
+        btnSizer.Realize()
+
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+
+        iconSizer = wx.BoxSizer(wx.HORIZONTAL)
+        iconSizer.Add(bmp, 0)
+
+        vsizer = wx.BoxSizer(wx.VERTICAL)
+        vsizer.Add(top_message, wx.RIGHT, 30)
+        vsizer.Add((10, 10))
+        vsizer.Add(bottom_message, 0, wx.RIGHT, 30)
+
+        container = wx.BoxSizer(wx.HORIZONTAL)
+        container.Add(iconSizer, 0, wx.RIGHT, 10)
+        container.Add(vsizer, 1, wx.LEFT, 10)
+        container.Layout()
+
+        mainSizer.Add((10, 10))
+        mainSizer.Add(container, wx.ALL, 30)
+        mainSizer.Add((10, 10))
+        mainSizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
+
+        self.SetSizerAndFit(mainSizer)
+        self.SetFocus()
+        self.SetAutoLayout(True)
+        self.Bind(wx.EVT_BUTTON, self.okay, saveButton)
+        self.Bind(wx.EVT_BUTTON, self.no, noButton)
+
+
+    def get_time(self):
+        m, s = divmod(time.time() - self.gui.util.save_time, 60)
+        h, m = divmod(m, 60)
+        hours, mins, seconds = "", "", ""
+
+        # ugly....
+        if m > 0:
+            mins = ("%i " % m) + _("minutes and") + " "
+        if m == 1:
+            mins = "1 " + _("minute and") + " "
+        if h > 0:
+            hours = ("%i " % h) + _("hours") + ", "
+        if h == 1:
+            hours = _("hour") + ", "
+        if s == 1:
+            seconds = "1" + _("second")
+        else:
+            seconds = ("%i " % s) + _("seconds")
+
+        ms = "%s%s%s" % (hours, mins, seconds)
+
+        return _("If you don't save, changes from the last\n%s will be permanently lost.") % ms
+
+
+    def okay(self, event):
+        self.gui.on_save()
+        if self.gui.util.saved or self.method == os.execvp:
+            self.method(*self.args)  # force restart, otherwise 'cancel'
+                           # returns to application
+
+    def no(self, event):
+        self.method(*self.args)
+        if self.method == self.gui.Destroy:
+            self.gui.__class__.instances -= 1
+            if not self.gui.__class__.instances:
+                sys.exit()
+
+    def cancel(self, event):
+        self.Close()
+
 
 #----------------------------------------------------------------------
 

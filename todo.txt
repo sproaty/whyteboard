@@ -28,9 +28,23 @@ see: https://blueprints.launchpad.net/whyteboard
 
 Eventually, long term:
 
-* Network support w/ Twisted (a Python library)
+* Network support with Twisted (a Python network library)
 * Poppler support for better PDF rendering - no need to use ImageMagick.
   -> Problems with Windows here though, Linux is more compatible. Research is
     ongoing into Poppler + Windows
 * Improved drawing with anti-aliased graphics, including transparency
   -> Performance will be much worse, guaranteed
+* Improved user interface with the possibility of docking/floating panels
+
+
+------------
+
+At this point, I'm happy with the direction Whyteboard is taking. It is well
+translated and slowly becoming feature rich, full of small, hidden functionality
+that makes using the program easier. Despite slow development over the past few
+months, Whyteboard will continue to expand and will grow a whole new bunch of
+features. Contributions via the means of feedback, translations, code additions,
+patches, bug reports, feature ideas are always welcome - they help improve the
+program's quality, usability and usefulness.
+
+- Steven Sproat, April 8 2010

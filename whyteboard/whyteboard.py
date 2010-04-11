@@ -409,7 +409,7 @@ class Whyteboard(wx.ScrolledWindow):
 
         if self.redo_list:
             self.redo_list = []
-        if self.gui.util.saved:
+        if self.gui.util.saved:            
             self.gui.util.saved = False
 
 
