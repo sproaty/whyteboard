@@ -687,10 +687,14 @@ class PromptForSave(wx.Dialog):
 
         bitmap = wx.ArtProvider.GetBitmap(wx.ART_WARNING, wx.ART_CMN_DIALOG)
         bmp = wx.StaticBitmap(self, bitmap=bitmap)
+        btnSizer = wx.StdDialogButtonSizer()
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        iconSizer = wx.BoxSizer(wx.HORIZONTAL)
+        textSizer = wx.BoxSizer(wx.VERTICAL)
+        container = wx.BoxSizer(wx.HORIZONTAL)
 
         top_message = wx.StaticText(self, label=_('Save changes to "%s" before closing?') % name)
         bottom_message = wx.StaticText(self, label=self.get_time())
-        btnSizer = wx.StdDialogButtonSizer()
 
         font = top_message.GetClassDefaultAttributes().font
         font.SetWeight(wx.FONTWEIGHT_BOLD)
@@ -708,24 +712,19 @@ class PromptForSave(wx.Dialog):
 
         noButton = wx.Button(self, wx.ID_NO, _("Close &without saving"))
         saveButton.SetDefault()
+
         btnSizer.AddButton(noButton)
         btnSizer.AddButton(saveButton)
         btnSizer.Realize()
-
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-
-        iconSizer = wx.BoxSizer(wx.HORIZONTAL)
         iconSizer.Add(bmp, 0)
+        
+        textSizer.Add(top_message)
+        textSizer.Add((10, 10))
+        textSizer.Add(bottom_message)
 
-        vsizer = wx.BoxSizer(wx.VERTICAL)
-        vsizer.Add(top_message)
-        vsizer.Add((10, 10))
-        vsizer.Add(bottom_message)
-
-        container = wx.BoxSizer(wx.HORIZONTAL)
         container.Add(iconSizer, 0, wx.LEFT, 15)
         container.Add((15, -1))
-        container.Add(vsizer, 1, wx.RIGHT, 15)
+        container.Add(textSizer, 1, wx.RIGHT, 15)
         container.Layout()
 
         mainSizer.Add((10, 15))
@@ -768,7 +767,7 @@ class PromptForSave(wx.Dialog):
         self.gui.on_save()
         if self.gui.util.saved or self.method == os.execvp:
             self.method(*self.args)  # force restart, otherwise 'cancel'
-                           # returns to application
+                                     # returns to application
 
     def no(self, event):
         self.method(*self.args)

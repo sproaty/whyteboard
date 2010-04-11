@@ -105,7 +105,10 @@ class GUI(wx.Frame):
         sys.excepthook = ExceptionHook
         meta.find_transparent()  # important
         if meta.transparent:
-            self.util.items.insert(1, Highlighter)
+            try:
+                x = self.util.items.index(Highlighter)
+            except ValueError:
+                self.util.items.insert(1, Highlighter)
 
         self.can_paste = False
         if self.util.get_clipboard():
