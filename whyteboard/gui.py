@@ -135,7 +135,6 @@ class GUI(wx.Frame):
         self.closed_tabs_id = {}  # wx.Menu IDs for undo closed tab list
         self.hotkeys = []
 
-
         self.showcolour, self.showtool, self.next = None, None, None
         self.showstat, self.showprevious, self.prev  = None, None, None
         self.closed_tabs_menu = wx.Menu()
@@ -189,7 +188,7 @@ class GUI(wx.Frame):
         _help = wx.Menu()
         _import = wx.Menu()
         _export = wx.Menu()
-        recent = wx.Menu()        
+        recent = wx.Menu()
         self.filehistory.UseMenu(recent)
         self.filehistory.AddFilesToMenu()
         self.make_closed_tabs_menu()

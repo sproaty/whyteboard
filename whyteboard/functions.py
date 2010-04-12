@@ -20,6 +20,7 @@
 import os
 import random
 import wx
+from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 
 _ = wx.GetTranslation
 
@@ -79,6 +80,23 @@ def make_bitmap(colour):
     dc.Clear()
     dc.SelectObject(wx.NullBitmap)
     return bmp
+
+
+def bitmap_button(parent, path, border=True, toggle=False):
+    """
+    Creates a bitmap button that's toggleable or not.
+    """
+    _type = GenBitmapToggleButton
+    if not toggle:
+        _type = GenBitmapButton
+        if os.name == "posix":
+            _type = wx.BitmapButton
+    
+    style = 0   
+    if not border:
+        style = wx.NO_BORDER
+        
+    return _type(parent, bitmap=wx.Bitmap(path), style=style)
 
 
 def get_wx_image_type(filename):

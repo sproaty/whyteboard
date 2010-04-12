@@ -44,7 +44,7 @@ from lib.BeautifulSoup import BeautifulSoup
 
 import meta
 import tools
-from functions import get_home_dir
+from functions import get_home_dir, bitmap_button
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -1057,27 +1057,23 @@ class ShapeViewer(wx.Dialog):
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
         icons = ["top", "up", "down", "bottom"]
         tips = [_("To Top"), ("Up"), ("Down"), ("To Bottom")]
-
+            
         for icon, tip in zip(icons, tips):
-            btn = GenBitmapButton(self, bitmap=wx.Bitmap(path + "move-" + icon + ".png"),
-                                  style=wx.NO_BORDER)
+            btn = bitmap_button(self, path + "move-" + icon + ".png", False)
             btn.SetToolTipString(_("Move Shape")+" "+tip)
             btn.Bind(wx.EVT_BUTTON, getattr(self, "on_"+icon))
             bsizer.Add(btn, 0, wx.RIGHT, 5)
             self.buttons.append(btn)
 
-        self.prev = GenBitmapButton(self, bitmap=wx.Bitmap(path + "prev_sheet.png"),
-                                    style=wx.NO_BORDER)
+        self.prev = bitmap_button(self, path + "prev_sheet.png", False)
         self.prev.SetToolTipString(_("Previous Sheet"))
         self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
         nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
 
-        self.next = GenBitmapButton(self, bitmap=wx.Bitmap(path + "next_sheet.png"),
-                                    style=wx.NO_BORDER)
+        self.next = bitmap_button(self, path + "next_sheet.png", False)
         self.next.SetToolTipString(_("Next Sheet"))
         self.next.Bind(wx.EVT_BUTTON, self.on_next)
         nextprevsizer.Add(self.next)
-
 
         bsizer.Add((1, 1), 1, wx.EXPAND)  # align to the right
         bsizer.Add(nextprevsizer, 0, wx.RIGHT, 10)
@@ -1293,7 +1289,8 @@ class PDFCache(wx.Dialog):
             self.list.RefreshRows()
 
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "delete.png")
-        self.deleteBtn = GenBitmapButton(self, bitmap=wx.Bitmap(path), style=wx.NO_BORDER)
+
+        self.deleteBtn = bitmap_button(self, path, False)
         self.deleteBtn.SetToolTipString(_("Remove cached item"))
         bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
 
