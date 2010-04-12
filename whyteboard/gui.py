@@ -135,6 +135,10 @@ class GUI(wx.Frame):
         self.closed_tabs_id = {}  # wx.Menu IDs for undo closed tab list
         self.hotkeys = []
 
+
+        self.showcolour, self.showtool, self.next = None, None, None
+        self.showstat, self.showprevious, self.prev  = None, None, None
+        self.closed_tabs_menu = wx.Menu()
         self.control = ControlPanel(self)
         self.tabs = fnb.FlatNotebook(self, style=fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON |
                                      fnb.FNB_VC8 | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS)
@@ -185,8 +189,7 @@ class GUI(wx.Frame):
         _help = wx.Menu()
         _import = wx.Menu()
         _export = wx.Menu()
-        recent = wx.Menu()
-        self.closed_tabs_menu = wx.Menu()
+        recent = wx.Menu()        
         self.filehistory.UseMenu(recent)
         self.filehistory.AddFilesToMenu()
         self.make_closed_tabs_menu()
@@ -242,7 +245,7 @@ class GUI(wx.Frame):
         view.AppendSeparator()
         self.showtool = view.Append(ID_TOOLBAR, " "+ _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
         self.showstat = view.Append(ID_STATUSBAR, " "+_("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
-        self.showprev = view.Append(ID_TOOL_PREVIEW, " "+_("Tool &Preview"), _("Show and hide the tool preview"), kind=wx.ITEM_CHECK)
+        self.showprevious = view.Append(ID_TOOL_PREVIEW, " "+_("Tool &Preview"), _("Show and hide the tool preview"), kind=wx.ITEM_CHECK)
         self.showcolour = view.Append(ID_COLOUR_GRID, " "+_("&Color Grid"), _("Show and hide the color grid"), kind=wx.ITEM_CHECK)
         view.AppendSeparator()
         view.Append(ID_FULLSCREEN, " "+_("&Full Screen")+"\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
@@ -1109,10 +1112,10 @@ class GUI(wx.Frame):
                 shape.move(map.get(code)[0], map.get(code)[1], offset=(0, 0))
                 self.board.draw_shape(shape)
                 return
-        self.hotkey_scroll(code)
+        self.hotkey_scroll(code, event)
 
 
-    def hotkey_scroll(self, code):
+    def hotkey_scroll(self, code, event):
         """Scrolls the viewport depending on the key pressed"""
         x, y = None, None
         if code == wx.WXK_HOME:
@@ -1131,7 +1134,7 @@ class GUI(wx.Frame):
             x2, y2 = self.board.GetClientSizeTuple()
 
             map = { wx.WXK_PAGEUP: (-1, y - y2),
-                    wx.WXK_PAGEDOWN: (y + y2),
+                    wx.WXK_PAGEDOWN: (-1, y + y2),
                     wx.WXK_UP: (-1, y - SCROLL_AMOUNT),
                     wx.WXK_DOWN: (-1, y + SCROLL_AMOUNT),
                     wx.WXK_LEFT: (x - SCROLL_AMOUNT, -1),
@@ -1170,7 +1173,7 @@ class GUI(wx.Frame):
         self.toggle_view(self.showtool, self.toolbar, force)
 
     def on_tool_preview(self, event=None, force=None):
-        self.toggle_view(self.showprev, self.control.preview, force)
+        self.toggle_view(self.showprevious, self.control.preview, force)
 
 
     def on_statusbar(self, event=None, force=None):
