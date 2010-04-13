@@ -36,7 +36,7 @@ from lib.pubsub import pub
 import meta
 from utility import MediaDropTarget
 from event_ids import *
-from functions import make_bitmap, get_time
+from functions import create_colour_bitmap, get_time
 
 _ = wx.GetTranslation
 
@@ -195,14 +195,14 @@ class ControlPanel(wx.Panel):
             method = lambda evt, col = colour: self.change_colour(evt, col)
             method2 = lambda evt, col = colour: self.change_background(evt, col)
 
-            b = wx.BitmapButton(self.pane, bitmap=make_bitmap(colour))
+            b = wx.BitmapButton(self.pane, bitmap=create_colour_bitmap(colour))
             self.grid.Add(b, 0)
             b.Bind(wx.EVT_BUTTON, method)
             b.Bind(wx.EVT_RIGHT_UP, method2)
 
 
     def toggle(self, evt):
-        """Toggles the pane and its widgets"""
+        """Toggles the collapsible pane and its widgets"""
         self.gui.Layout()
         self.gui.board.redraw_all()  # fixes a windows redraw bug
 
@@ -308,7 +308,7 @@ class ControlPanel(wx.Panel):
 class DrawingPreview(wx.Window):
     """
     Shows a sample of what the current tool's drawing will look like.
-    Pane is the collapsible pane, its new parent.
+    Pane is the collapsible pane, its parent.
     """
     def __init__(self, pane, gui):
         """
@@ -349,6 +349,7 @@ class MediaPanel(wx.Window):
     """
     A panel that contains a MediaCtrl for playing videos/audio, and buttons for
     controlling it: open (file)/pause/stop/play, and a slider bar.
+    Used by the Media tool.
     """
     def __init__(self, parent, pos, tool):
         wx.Window.__init__(self, parent, pos=pos, style=wx.CLIP_CHILDREN)
@@ -415,6 +416,7 @@ class MediaPanel(wx.Window):
 
 
     def left_down(self, event):
+        """Grab the mouse offset of the window relative the the top-left"""
         self.gui.board.selected = self.tool
         self.tool.selected = True
         self.CaptureMouse()
@@ -422,10 +424,12 @@ class MediaPanel(wx.Window):
 
         self.offset = (pos[0] - self.tool.x, pos[1] - self.tool.y)
 
+
     def left_up(self, event):
         if self.HasCapture():
             self.ReleaseMouse()
         self.Layout()
+
 
     def left_motion(self, event):
         """Reposition the window with an offset"""
@@ -438,6 +442,9 @@ class MediaPanel(wx.Window):
 
 
     def load_file(self, evt):
+        """
+        Display a file chooser window and try to load the file
+        """
         vids = "*.avi; *.mkv; *.mov; *.mpg; *ogg; *.wmv"
         audio = "*.mp3; *.oga; *.ogg; *.wav"
         wc = _("Media Files")+" |%s;%s|" % (vids, audio)
@@ -456,7 +463,10 @@ class MediaPanel(wx.Window):
 
 
     def do_load_file(self, path):
-
+        """
+        Loads a file from a given path, sets up instance variables and enables
+        and disabled buttons
+        """
         if not self.mc.Load(path):
             wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
                          _("Error"), wx.ICON_ERROR | wx.OK)
@@ -471,6 +481,10 @@ class MediaPanel(wx.Window):
 
 
     def media_loaded(self, evt):
+        """
+        Called when a media file has finished loading. Calculates the total time
+        of the file and updates the filename label
+        """
         self.play.Enable()
         self.total = get_time(self.mc.Length() / 1000)
         wordwrap(os.path.basename(self.tool.filename), 350, wx.ClientDC(self.gui))
@@ -486,6 +500,7 @@ class MediaPanel(wx.Window):
         self.on_stop(None, True)
 
     def on_timer(self, evt):
+        """Keep updating the timer label/scrollbar..."""
         if self.mc.GetState() == wx.media.MEDIASTATE_PLAYING:
             offset = self.mc.Tell()
             self.slider.SetValue(offset)
@@ -654,12 +669,18 @@ class Notes(wx.Panel):
         else:
             item.edit()
 
+
     def pop_up(self, event):
         """Brings up the context menu on right click (except on root node)"""
         if self.tree.GetPyData(event.GetItem()) is not None:
             self.PopupMenu(NotesPopup(self, self.gui, event))
 
+
     def select(self, event, draw=True):
+        """
+        Selects a Note if unselected, otherwise it de-selects the note.
+        draw forces a canvas redraw
+        """
         item = self.tree.GetPyData(event.GetItem())
 
         if not item.selected:
@@ -684,7 +705,9 @@ class Notes(wx.Panel):
 
 
     def sheet_moved(self, event, tab_count):
-        """Drag/drop sheet: move a tree item and its associated notes"""
+        """
+        Drag/drop sheet: move a tree item and its associated notes
+        """
         tree = self.tree
 
         old_item = self.tabs[event.GetOldSelection()]
@@ -742,7 +765,7 @@ class Popup(wx.Menu):
     A general pop-up menum providing default menu items. Easy to subclass to add
     new functionality. The "extra" (of type wx.Event*) variable must be passed
     around a lot as different subclasses access different functions of different
-    events
+    events e.g. a TreeCtrl event to get its item, or a notebook tab change event
     """
     def __init__(self, parent, gui, extra):
         wx.Menu.__init__(self)
@@ -755,7 +778,7 @@ class Popup(wx.Menu):
     def make_menu(self, extra):
         ID, ID2, ID3 = wx.NewId(), wx.NewId(), wx.NewId()
 
-        self.Append(ID, _("&Select"), help="blah")
+        self.Append(ID, _("&Select"))
         self.AppendSeparator()
         self.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T")
         self.Append(wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl-W")
@@ -765,9 +788,16 @@ class Popup(wx.Menu):
 
         self.Bind(wx.EVT_MENU, self.select_tab_method(extra), id=ID)
         self.Bind(wx.EVT_MENU, self.rename, id=ID2)
-        self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
         self.Bind(wx.EVT_MENU, self.export, id=ID3)
+        self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
 
+
+    def select_tab_method(self, extra):
+        """Guess this is the class' interface..."""
+        pass
+
+    def set_item(self, extra):
+        self.item = extra
 
     def close(self, event):
         self.gui.current_tab = self.item
@@ -775,19 +805,17 @@ class Popup(wx.Menu):
         self.gui.on_close_tab()
 
     def export(self, event):
-        board = self.gui.board
+        """
+        Change board temporarily to 'trick' the gui into exporting the selected
+        tab. Then, restore the GUI to the correct one
+        """
+        board = self.gui.board  # reference to restore
         self.gui.board = self.gui.tabs.GetPage(self.item)
         self.gui.on_export()
         self.gui.board = board
 
     def rename(self, event):
         self.gui.on_rename(sheet=self.item)
-
-    def select_tab_method(self, extra):
-        pass
-
-    def set_item(self, extra):
-        self.item = extra
 
 
 #----------------------------------------------------------------------

@@ -40,7 +40,7 @@ from wx.lib import scrolledpanel as scrolled
 import tools
 import whyteboard
 import meta
-from functions import make_bitmap
+from functions import create_colour_bitmap
 from dialogs import FindIM
 
 _ = wx.GetTranslation
@@ -282,7 +282,7 @@ class FontAndColours(wx.Panel):
 
         for x, colour in enumerate(colours):
             method = lambda evt, _id=x: self.on_colour(evt, _id)
-            b = wx.BitmapButton(self, bitmap=make_bitmap(colour))
+            b = wx.BitmapButton(self, bitmap=create_colour_bitmap(colour))
             self.buttons.append(b)
             self.grid.Add(b, 0)
             b.Bind(wx.EVT_BUTTON, method)
@@ -397,7 +397,7 @@ class FontAndColours(wx.Panel):
         if dlg.ShowModal() == wx.ID_OK:
             self.config[pref] = list(dlg.GetColourData().Colour.Get())
 
-            col = make_bitmap(dlg.GetColourData().Colour)
+            col = create_colour_bitmap(dlg.GetColourData().Colour)
             self.buttons[_id].SetBitmapLabel(col)
             self.grid.Layout()
 

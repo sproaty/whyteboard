@@ -30,7 +30,7 @@ _ = wx.GetTranslation
 
 def get_home_dir(extra_path=None):
     """
-    Returns the home directory for Whyteboard cross-platformally
+    Returns the home directory for Whyteboard in a cross-platform way
     If the extra path is supplied, it is appended to the home directory.
     The directory is verified to see if it exists: if doesn't, it is created.
     """
@@ -68,7 +68,7 @@ def load_image(path, board, image_class):
     board.update_thumb()
 
 
-def make_bitmap(colour):
+def create_colour_bitmap(colour):
     """
     Draws a small coloured bitmap for a colour grid button. Can take a name,
     RGB tupple or RGB-packed int.
@@ -84,18 +84,18 @@ def make_bitmap(colour):
 
 def bitmap_button(parent, path, border=True, toggle=False):
     """
-    Creates a bitmap button that's toggleable or not.
+    Creates a platform-dependent bitmap button that's toggleable or not.
     """
     _type = GenBitmapToggleButton
     if not toggle:
         _type = GenBitmapButton
         if os.name == "posix":
             _type = wx.BitmapButton
-    
-    style = 0   
+
+    style = 0
     if not border:
         style = wx.NO_BORDER
-        
+
     return _type(parent, bitmap=wx.Bitmap(path), style=style)
 
 
@@ -105,9 +105,9 @@ def get_wx_image_type(filename):
     """
     _name = os.path.splitext(filename)[1].replace(".", "").lower()
 
-    types = {"png": wx.BITMAP_TYPE_PNG, "jpg": wx.BITMAP_TYPE_JPEG, "jpeg":
-             wx.BITMAP_TYPE_JPEG, "bmp": wx.BITMAP_TYPE_BMP, "tiff":
-             wx.BITMAP_TYPE_TIF, "pcx": wx.BITMAP_TYPE_PCX }
+    types = {"png": wx.BITMAP_TYPE_PNG, "jpg": wx.BITMAP_TYPE_JPEG,
+             "jpeg": wx.BITMAP_TYPE_JPEG, "bmp": wx.BITMAP_TYPE_BMP,
+             "tiff": wx.BITMAP_TYPE_TIF, "pcx": wx.BITMAP_TYPE_PCX }
 
     return types[_name]  # grab the right image type from dict. above
 
@@ -140,8 +140,6 @@ def make_filename():
 
     string = "".join(_list)
     return string +"-temp-%s" % (random.randrange(0, 999999))
-
-
 
 
 def transparent_supported():

@@ -899,7 +899,7 @@ class GUI(wx.Frame):
 
 
     def on_rename(self, event=None, sheet=None):
-        if not sheet:
+        if sheet is None:
             sheet = self.current_tab
         dlg = wx.TextEntryDialog(self, _("Rename this sheet to:"), _("Rename sheet"))
         dlg.SetValue(self.tabs.GetPageText(sheet))

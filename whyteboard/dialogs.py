@@ -59,10 +59,15 @@ class History(wx.Dialog):
         self.gui = gui
         self.looping = False
         self.paused = False
-        #_max = len(gui.board.shapes)+50
-        #self.slider = wx.Slider(self, minValue=1, maxValue=_max,
-        #                        style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL )
-        #self.slider.SetTickFreq(5, 1)
+        #count = 0
+        #for x in gui.board.shapes:
+        #    if isinstance(x, tools.Pen):
+        #        count += len(x.points)
+        #_max = len(gui.board.shapes) + count
+
+        self.slider = wx.Slider(self, minValue=1, maxValue=_max,
+                                style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        self.slider.SetTickFreq(5, 1)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -70,8 +75,7 @@ class History(wx.Dialog):
         icons = ["play", "pause", "stop"]
 
         for icon in icons:
-            btn = GenBitmapButton(self, bitmap=wx.Bitmap(path + icon + ".png"),
-                                  style=wx.NO_BORDER)
+            btn = bitmap_button(self, path + icon + ".png", False)
             btn.SetToolTipString(icon.capitalize())
             btn.Bind(wx.EVT_BUTTON, getattr(self, icon))
             historySizer.Add(btn, 0,  wx.ALL, 2)
@@ -717,7 +721,7 @@ class PromptForSave(wx.Dialog):
         btnSizer.AddButton(saveButton)
         btnSizer.Realize()
         iconSizer.Add(bmp, 0)
-        
+
         textSizer.Add(top_message)
         textSizer.Add((10, 10))
         textSizer.Add(bottom_message)
@@ -1057,7 +1061,7 @@ class ShapeViewer(wx.Dialog):
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
         icons = ["top", "up", "down", "bottom"]
         tips = [_("To Top"), ("Up"), ("Down"), ("To Bottom")]
-            
+
         for icon, tip in zip(icons, tips):
             btn = bitmap_button(self, path + "move-" + icon + ".png", False)
             btn.SetToolTipString(_("Move Shape")+" "+tip)
