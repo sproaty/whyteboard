@@ -689,8 +689,8 @@ class PromptForSave(wx.Dialog):
         self.method = method
         self.args = args
 
-        bitmap = wx.ArtProvider.GetBitmap(wx.ART_WARNING, wx.ART_CMN_DIALOG)
-        bmp = wx.StaticBitmap(self, bitmap=bitmap)
+        warning = wx.ArtProvider.GetBitmap(wx.ART_WARNING, wx.ART_CMN_DIALOG)
+        bmp = wx.StaticBitmap(self, bitmap=warning)
         btnSizer = wx.StdDialogButtonSizer()
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         iconSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -714,7 +714,7 @@ class PromptForSave(wx.Dialog):
             cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
             btnSizer.AddButton(cancelButton)
 
-        noButton = wx.Button(self, wx.ID_NO, _("Close &without saving"))
+        noButton = wx.Button(self, wx.ID_NO, _("&Don't Save"))
         saveButton.SetDefault()
 
         btnSizer.AddButton(noButton)

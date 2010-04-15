@@ -968,7 +968,7 @@ class Thumbs(scrolled.ScrolledPanel):
         scrolled.ScrolledPanel.__init__(self, parent, style=wx.VSCROLL)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
-        self.SetScrollRate(0, 175)
+        self.SetScrollRate(0, 120)
 
         self.gui = gui
         self.thumbs  = []  # ThumbButtons
@@ -1143,6 +1143,10 @@ class ThumbButton(wx.BitmapButton):
 
 
     def update(self):
+        """
+        Iterates over each thumb and unhighlights the previously selected thumb
+        Then, sets this thumb as the currently highlighted one and redraws
+        """
         for thumb in self.parent.thumbs:
             if thumb.thumb_id != self.thumb_id:
                 if thumb.current:
