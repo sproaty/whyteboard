@@ -148,19 +148,19 @@ class Preferences(wx.Dialog):
             ctrl.preview.Show()
             ctrl.preview.Refresh()
 
-        if self.config['toolbox'] != old['toolbox']:            
+        if self.config['toolbox'] != old['toolbox']:
             cols = 1
             if self.config['toolbox'] != 'text':
                 cols = int(self.config['toolbox_columns'])
-                
-            ctrl.toolsizer.Clear(True) 
+
+            ctrl.toolsizer.Clear(True)
             ctrl.toolsizer.SetCols(cols)
             ctrl.make_toolbox(self.config['toolbox'])
             ctrl.toolsizer.Layout()
 
         do = True
         if not self.config['colour_grid']:
-            do = False                
+            do = False
         wx.CallAfter(self.gui.on_colour_grid, None, do)
 
         #  too lazy to check if each colour has changed - just remake it all
@@ -595,6 +595,7 @@ class PDF(wx.Panel):
 
 
     def set_im_button(self):
+        """Sets the label to IM's path"""
         s = _("Find...")
         if "imagemagick_path" in self.config:
             s = self.config["imagemagick_path"]
