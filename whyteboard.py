@@ -37,7 +37,8 @@ if not hasattr(sys, 'frozen'):
         app = wx.App(False)
 
         wx.MessageBox("The requested version of wxPython is not installed.\n"+
-                     "Please install version "+ WXVER, "wxPython Version Error")
+                     "Please install version "+ WXVER, "wxPython Version Error",
+                     "Whyteboard")
         app.MainLoop()
         webbrowser.open("http://www.wxpython.org/download.php")
         sys.exit()

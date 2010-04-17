@@ -65,9 +65,9 @@ class History(wx.Dialog):
         #        count += len(x.points)
         #_max = len(gui.board.shapes) + count
 
-        self.slider = wx.Slider(self, minValue=1, maxValue=_max,
-                                style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
-        self.slider.SetTickFreq(5, 1)
+        #self.slider = wx.Slider(self, minValue=1, maxValue=_max,
+        #                        style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        #self.slider.SetTickFreq(5, 1)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -80,22 +80,18 @@ class History(wx.Dialog):
             btn.Bind(wx.EVT_BUTTON, getattr(self, icon))
             historySizer.Add(btn, 0,  wx.ALL, 2)
 
-        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        cancelButton.SetDefault()
-        btnSizer = wx.StdDialogButtonSizer()
-        btnSizer.AddButton(cancelButton)
-        btnSizer.Realize()
+        closeButton = wx.Button(self, wx.ID_CANCEL, _("&Close"))
 
         #sizer.Add(self.slider, 0, wx.EXPAND | wx.ALL, 10)
         sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 13)
         sizer.Add((10, 5))
-        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 13)
+        sizer.Add(closeButton, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 13)
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
-        cancelButton.Bind(wx.EVT_BUTTON, self.on_close)
+        closeButton.Bind(wx.EVT_BUTTON, self.on_close)
         #self.slider.Bind(wx.EVT_SCROLL, self.scroll)
 
 
@@ -118,8 +114,6 @@ class History(wx.Dialog):
         if shapes:
             self.looping = True
             self.draw(shapes)
-        else:
-            wx.MessageBox(_("There was nothing to draw."), _("Nothing to draw"))
 
 
     def draw(self, shapes):
@@ -293,7 +287,7 @@ class UpdateDialog(wx.Dialog):
         self.btn = wx.Button(self, wx.ID_OK, _("Update"))
         cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         self.btn.Enable(False)
-        cancel.SetDefault()
+        self.btn.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(cancel)
         btnSizer.AddButton(self.btn)
@@ -661,10 +655,10 @@ class Feedback(wx.Dialog):
     def submit(self, event):
         """Submit feedback."""
         if not self.email.GetValue() or self.email.GetValue().find("@") == -1:
-            wx.MessageBox(_("Please fill out your email address"), _("Error"))
+            wx.MessageBox(_("Please fill out your email address"), "Whyteboard")
             return
         if len(self.feedback.GetValue()) < 10:
-            wx.MessageBox(_("Please provide some feedback"), _("Error"))
+            wx.MessageBox(_("Please provide some feedback"), "Whyteboard")
             return
         params = urlencode({'submitted': 'fgdg',
                             'feedback': self.feedback.GetValue(),
@@ -801,32 +795,25 @@ class Resize(wx.Dialog):
         gap = wx.LEFT | wx.TOP | wx.RIGHT
         width, height = self.gui.board.buffer.GetSize()
         self.size = (width, height)
-
-        csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
+        
         self.hctrl = wx.SpinCtrl(self, min=1, max=12000)
         self.wctrl = wx.SpinCtrl(self, min=1, max=12000)
-        self.sizelabel = wx.StaticText(self, label="")
 
-        csizer.Add(self.sizelabel, 0, wx.ALIGN_RIGHT)
-        csizer.Add((10, 10))
-
+        csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
         csizer.Add(wx.StaticText(self, label=_("Width:")), 0, wx.TOP |
                                                             wx.ALIGN_RIGHT, 10)
         csizer.Add(self.wctrl, 1, gap, 7)
         csizer.Add(wx.StaticText(self, label=_("Height:")), 0, wx.TOP |
                                                              wx.ALIGN_RIGHT, 7)
         csizer.Add(self.hctrl, 1, gap, 7)
-
-        self.hctrl.SetValue(height)
+        
         self.wctrl.SetValue(width)
+        self.hctrl.SetValue(height)
+
         okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         okButton.SetDefault()
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         applyButton = wx.Button(self, wx.ID_APPLY, _("&Apply"))
-
-        order = (self.wctrl, self.hctrl)  # sort out tab order
-        for i in xrange(len(order) - 1):
-            order[i+1].MoveAfterInTabOrder(order[i])
 
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okButton)
@@ -846,15 +833,6 @@ class Resize(wx.Dialog):
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
         self.hctrl.Bind(wx.EVT_SPINCTRL, self.resize)
         self.wctrl.Bind(wx.EVT_SPINCTRL, self.resize)
-        self.update_label()
-
-
-    def update_label(self):
-        b = self.gui.board.buffer
-        x = (b.GetWidth() * b.GetHeight() * b.GetDepth()) / 8 / (1024 ** 2)
-
-        val = _("Size")+": %.2f MB" % x
-        self.sizelabel.SetLabel(val)
 
 
     def apply(self, event):
@@ -867,8 +845,6 @@ class Resize(wx.Dialog):
     def resize(self, event=None):
         value = (self.wctrl.GetValue(), self.hctrl.GetValue())
         self.gui.board.resize_canvas(value)
-        self.update_label()
-
 
     def cancel(self, event):
         self.gui.board.resize_canvas(self.size)

@@ -97,7 +97,7 @@ class Preferences(wx.Dialog):
         old = self.gui.util.config
         if self.config['language'] != old['language']:
             wx.MessageBox(_("Whyteboard will be translated into %s when restarted")
-                          % _(self.config['language']))
+                          % _(self.config['language']), "Whyteboard")
 
         if self.config['handle_size'] != old['handle_size']:
             tools.HANDLE_SIZE = self.config['handle_size']
@@ -420,22 +420,23 @@ class View(scrolled.ScrolledPanel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
         self.SetupScrolling(False, True)
-
+        
+        radio1 = wx.RadioButton(self, label=" " + _("Icons"))
+        radio2 = wx.RadioButton(self, label=" " + _("Text"))
+        cols = wx.ComboBox(self, choices=('2', '3'), size=(60, -1), style=wx.CB_READONLY)
+        self.width = wx.SpinCtrl(self, min=1, max=12000)
+        self.height = wx.SpinCtrl(self, min=1, max=12000)
+                
         statusbar = wx.CheckBox(self, label=_("View the status bar"))
         toolbar = wx.CheckBox(self, label=_("View the toolbar"))
         title = wx.CheckBox(self, label=_("Show the title when printing"))
         preview = wx.CheckBox(self, label=_("Show the tool preview"))
         colour = wx.CheckBox(self, label=_("Show the color grid"))
-        radio1 = wx.RadioButton(self, label=" " + _("Icons"))
-        radio2 = wx.RadioButton(self, label=" " + _("Text"))
-        cols = wx.ComboBox(self, choices=('2', '3'), size=(60, -1), style=wx.CB_READONLY)
-
+       
         label = wx.StaticText(self, label=_("Toolbox View:"))
         cols_label = wx.StaticText(self, label=_("Number of Toolbox Columns:"))
         width = wx.StaticText(self, label=_("Default Canvas Width"))
-        self.width = wx.SpinCtrl(self, min=1, max=12000)
-        height = wx.StaticText(self, label=_("Default Canvas Height"))
-        self.height = wx.SpinCtrl(self, min=1, max=12000)
+        height = wx.StaticText(self, label=_("Default Canvas Height"))        
 
         font = label.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
@@ -614,7 +615,7 @@ class PDF(wx.Panel):
     def check_im_path(self, path):
         _file = os.path.join(path, "convert.exe")
         if not os.path.exists(_file):
-            wx.MessageBox(path + " does not contain convert.exe")
+            wx.MessageBox(path + " does not contain convert.exe", _("Whyteboard"))
             self.im_result = None
             return False
 

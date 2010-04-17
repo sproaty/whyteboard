@@ -614,7 +614,7 @@ class GUI(wx.Frame):
                 filename += '.pdf'
             elif ext != ".pdf":
                 wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % ext,
-                              _("Invalid filetype"))
+                              "Whyteboard")
                 return
 
         dlg.Destroy()
@@ -667,7 +667,7 @@ class GUI(wx.Frame):
     def on_export_pref(self, event=None):
         """Exports the user's preferences."""
         if not os.path.exists(self.util.config.filename):
-            wx.MessageBox(_("Export Error"), _("You have not set any preferences"))
+            wx.MessageBox(_("You have not set any preferences"), _("Export Error"))
             return
         filename = ""
         wc = _("Whyteboard Preference Files")+" (*.pref)|*.pref"
@@ -727,8 +727,6 @@ class GUI(wx.Frame):
             pref.config = config
             pref.config.filename = home
             pref.on_okay()
-        else:
-            wx.MessageBox(_("No preferences file to reload"))
 
 
     def export_prompt(self):
@@ -750,7 +748,7 @@ class GUI(wx.Frame):
                 val = filename
             if not _name in meta.types[2:]:
                 wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % _name,
-                              _("Invalid filetype"))
+                              "Whyteboard")
             else:
                 val = filename
 
@@ -1236,7 +1234,7 @@ class GUI(wx.Frame):
         num = evt.GetId() - wx.ID_FILE1
         path = self.filehistory.GetHistoryFile(num)
         if not os.path.exists(path):
-            wx.MessageBox(_("File not found"))
+            wx.MessageBox(_("File %s not found") % path, "Whyteboard")
             self.filehistory.RemoveFileFromHistory(num)
             return
         self.filehistory.AddFileToHistory(path)  # move up the list
@@ -1493,7 +1491,8 @@ class WhyteboardApp(wx.App):
 
         if hasattr(self, "locale"):
             if not wx.Locale.IsOk(self.locale):
-                wx.MessageBox("Error setting language to %s - reverting to English" % config['language'])
+                wx.MessageBox("Error setting language to %s - reverting to English" % config['language'],
+                              "Whyteboard")
                 config['language'] = 'English'
                 config.write()
                 self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)

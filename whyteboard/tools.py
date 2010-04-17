@@ -1552,7 +1552,8 @@ class Image(OverlayShape):
                 self.image = wx.Bitmap(self.path)
             else:
                 self.image = wx.EmptyBitmap(0, 0)
-                wx.MessageBox(_("Path for the image %s not found.") % self.path)
+                wx.MessageBox(_("Path for the image %s not found.") % self.path,
+                              "Whyteboard")
         else:
             try:
                 data = self.board.gui.util.zip.read("data/" + self.filename)
@@ -1561,7 +1562,8 @@ class Image(OverlayShape):
 
             except KeyError:
                 self.image = wx.EmptyBitmap(0, 0)
-                wx.MessageBox(_("File %s not found in the save") % self.filename)
+                wx.MessageBox(_("File %s not found in the save") % self.filename,
+                              "Whyteboard")
 
         self.img = wx.ImageFromBitmap(self.image)
         self.colour = wx.BLACK

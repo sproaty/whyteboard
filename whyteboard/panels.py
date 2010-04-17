@@ -469,7 +469,7 @@ class MediaPanel(wx.Window):
         """
         if not self.mc.Load(path):
             wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
-                         _("Error"), wx.ICON_ERROR | wx.OK)
+                         "Whyteboard", wx.ICON_ERROR | wx.OK)
             self.play.Disable()
             self.pause.Disable()
             self.stop.Disable()
@@ -510,7 +510,7 @@ class MediaPanel(wx.Window):
     def on_play(self, evt):
         if not self.mc.Play():
             wx.MessageBox(_("Unable to Play media : Unsupported format?"),
-                          _("Error"), wx.ICON_ERROR | wx.OK)
+                          "Whyteboard", wx.ICON_ERROR | wx.OK)
         else:
             self.play.Disable()
             self.pause.Enable()

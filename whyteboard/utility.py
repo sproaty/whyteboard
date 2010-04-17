@@ -194,7 +194,7 @@ class Utility(object):
                         self.gui.SetTitle("%s - %s" %
                                           (os.path.split(self.filename)[1], self.gui.title))
                     except pickle.PickleError:
-                        wx.MessageBox(_("Error saving file data"))
+                        wx.MessageBox(_("Error saving file data"), "Whyteboard")
                         self.saved = False
                         self.filename = None
 
@@ -227,10 +227,6 @@ class Utility(object):
                         m.load()
 
                 self.zip.close()
-            else:
-                wx.MessageBox(_("Error saving file data - no data to save"))
-                self.saved = False
-                self.filename = None
 
             self.gui.dialog.Destroy()  # remove progress bar
 
@@ -299,7 +295,8 @@ class Utility(object):
             load_image(self.temp_file, self.gui.board, tools.Image)
             self.gui.board.redraw_all()
         else:
-            wx.MessageBox(_("Whyteboard doesn't support the filetype")+" .%s" % _type)
+            wx.MessageBox(_("Whyteboard doesn't support the filetype")+" .%s" % _type,
+                          "Whyteboard")
 
 
     def load_wtbd(self, filename):
@@ -349,7 +346,8 @@ class Utility(object):
         try:
             temp = method(f)
         except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):
-            wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.')
+            wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.',
+                            "Whyteboard")
                         % os.path.basename(filename))
             return
         except ImportError:  # older windows/linux incompatible type
@@ -361,7 +359,8 @@ class Utility(object):
             try:
                 temp = method(f)
             except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):
-                wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.')
+                wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.',
+                                "Whyteboard")
                             % os.path.basename(filename))
                 return
             finally:
@@ -639,7 +638,8 @@ class Utility(object):
         if os.name == "posix":
             value = os.system("which convert")
             if value == 256:
-                wx.MessageBox(_("ImageMagick was not found. You will be unable to load PDF and PS files until it is installed."))
+                wx.MessageBox(_("ImageMagick was not found. You will be unable to load PDF and PS files until it is installed."),
+                              "Whyteboard")
             else:
                 self.im_location = "convert"
         elif os.name == "nt":
@@ -661,7 +661,7 @@ class Utility(object):
         """
         _file = os.path.join(path, "convert.exe")
         if not os.path.exists(_file):
-            wx.MessageBox(path + " does not contain convert.exe")
+            wx.MessageBox(path + " does not contain convert.exe", "Whyteboard")
             return False
 
         self.im_location = _file
@@ -678,7 +678,7 @@ class Utility(object):
         try:
             tmp = urllib.urlretrieve(url, _file)
         except IOError:
-            wx.MessageBox(_("Could not connect to server."), _("Error"))
+            wx.MessageBox(_("Could not connect to server."), "Whyteboard")
             raise IOError
 
         if os.name == "posix":
