@@ -139,10 +139,10 @@ class GUI(wx.Frame):
         self.showstat, self.showprevious, self.prev  = None, None, None
         self.closed_tabs_menu = wx.Menu()
         self.control = ControlPanel(self)
-        
-        style = (fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8 | 
+
+        style = (fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8 |
                  fnb.FNB_DROPDOWN_TABS_LIST | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS |
-                 fnb.FNB_NO_NAV_BUTTONS)        
+                 fnb.FNB_NO_NAV_BUTTONS)
         self.tabs = fnb.FlatNotebook(self, style=style
                                       )
         self.board = Whyteboard(self.tabs, self)  # the active whyteboard tab

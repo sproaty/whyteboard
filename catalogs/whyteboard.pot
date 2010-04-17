@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-04-17 15:26+0100\n"
+"POT-Creation-Date: 2010-04-17 17:35+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -363,7 +363,7 @@ msgstr ""
 msgid "Conversion Failed"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:547
+#: whyteboard/whyteboard/preferences.py:548
 msgid "Conversion Quality:"
 msgstr ""
 
@@ -396,11 +396,11 @@ msgstr ""
 msgid "De&select"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:439
+#: whyteboard/whyteboard/preferences.py:440
 msgid "Default Canvas Height"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:438
+#: whyteboard/whyteboard/preferences.py:439
 msgid "Default Canvas Width"
 msgstr ""
 
@@ -578,7 +578,7 @@ msgstr ""
 msgid "Find location..."
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:600
+#: whyteboard/whyteboard/preferences.py:601
 msgid "Find..."
 msgstr ""
 
@@ -627,11 +627,11 @@ msgstr ""
 msgid "Help files not found, do you want to download them?"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:551
+#: whyteboard/whyteboard/preferences.py:552
 msgid "High"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:550
+#: whyteboard/whyteboard/preferences.py:551
 msgid "Highest"
 msgstr ""
 
@@ -674,7 +674,7 @@ msgstr ""
 msgid "Image Files"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:569
+#: whyteboard/whyteboard/preferences.py:570
 msgid "ImageMagick Location"
 msgstr ""
 
@@ -819,7 +819,7 @@ msgstr ""
 msgid "No shapes drawn"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:552
+#: whyteboard/whyteboard/preferences.py:553
 msgid "Normal"
 msgstr ""
 
@@ -827,7 +827,7 @@ msgstr ""
 msgid "Note"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:548
+#: whyteboard/whyteboard/preferences.py:549
 msgid "Note: Higher quality takes longer to convert"
 msgstr ""
 
@@ -839,7 +839,7 @@ msgstr ""
 msgid "Number of Recently Closed Sheets"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:437
+#: whyteboard/whyteboard/preferences.py:438
 msgid "Number of Toolbox Columns:"
 msgstr ""
 
@@ -1271,7 +1271,7 @@ msgstr ""
 msgid "Tool &Preview"
 msgstr ""
 
-#: whyteboard/whyteboard/preferences.py:436
+#: whyteboard/whyteboard/preferences.py:437
 msgid "Toolbox View:"
 msgstr ""
 
