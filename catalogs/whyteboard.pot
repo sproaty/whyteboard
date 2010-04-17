@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-04-17 03:46+0100\n"
+"POT-Creation-Date: 2010-04-17 15:26+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1387,10 +1387,6 @@ msgstr ""
 
 #: whyteboard/whyteboard/meta.py:74
 msgid "Welsh"
-msgstr ""
-
-#: whyteboard/whyteboard/preferences.py:618
-msgid "Whyteboard"
 msgstr ""
 
 #: whyteboard/whyteboard/gui.py:673 whyteboard/whyteboard/gui.py:691
