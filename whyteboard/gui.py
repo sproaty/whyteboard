@@ -1110,7 +1110,7 @@ class GUI(wx.Frame):
                 else:
                     self.hotkey_timer.Restart(300)
 
-                shape.move(map.get(code)[0], map.get(code)[1], offset=(0, 0))
+                shape.move(map.get(code)[0], map.get(code)[1], offset=shape.offset(shape.x, shape.y))
                 self.board.draw_shape(shape)
                 return
         self.hotkey_scroll(code, event)

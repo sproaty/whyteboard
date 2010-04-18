@@ -832,6 +832,11 @@ class Circle(OverlayShape):
     def motion(self, x, y):
         self.radius = ((self.x - x) ** 2 + (self.y  - y) ** 2) ** 0.5
 
+    def find_edges(self):
+        x, y, r = self.get_args()
+        self.edges = {EDGE_TOP: y - r, EDGE_RIGHT: x + r,
+                      EDGE_BOTTOM: y + r, EDGE_LEFT: x - r}
+
     def draw(self, dc, replay=False):
         super(Circle, self).draw(dc, replay, "Circle")
 
@@ -916,7 +921,9 @@ class Line(OverlayShape):
         return ((x - self.x, y - self.y), (x - self.x2, y - self.y2))
 
     def find_edges(self):
-        self.edges = {EDGE_TOP: self.y, EDGE_RIGHT: self.x2, EDGE_BOTTOM: self.y2, EDGE_LEFT: self.x}
+        self.edges = {EDGE_TOP: min(self.y, self.y2), EDGE_RIGHT: max(self.x, self.x2),
+                      EDGE_BOTTOM: max(self.y, self.y2), EDGE_LEFT: min(self. x, self.x2)}
+
 
     def draw(self, dc, replay=False):
         super(Line, self).draw(dc, replay, "Line")
