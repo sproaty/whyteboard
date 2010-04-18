@@ -37,6 +37,7 @@ import sys
 import time
 import locale
 import webbrowser
+import subprocess
 import shutil
 
 import wx
@@ -78,8 +79,6 @@ class GUI(wx.Frame):
     """
     title = "Whyteboard " + meta.version
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
-    instances = 0
-
 
     def __init__(self, parent, config):
         """
@@ -126,7 +125,6 @@ class GUI(wx.Frame):
         self.hotkey_pressed = False  # for hotkey timer
         self.hotkey_timer = None
         self.find_help()
-        self.__class__.instances += 1
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.tab_total = 1
         self.current_tab = 0
@@ -758,8 +756,12 @@ class GUI(wx.Frame):
 
     def on_new_win(self, event=None):
         """Fires up a new Whyteboard window"""
-        frame = GUI(None, self.util.config)
-        frame.Show(True)
+        if self.util.is_exe():
+            program = os.path.abspath(sys.argv[0])
+        else:
+            program = (sys.argv[0])
+
+        subprocess.Popen('', executable=program)
 
 
     def on_new_tab(self, event=None, name=None, wb=None):

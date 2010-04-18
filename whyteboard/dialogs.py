@@ -787,9 +787,7 @@ class PromptForSave(wx.Dialog):
     def no(self, event):
         self.method(*self.args)
         if self.method == self.gui.Destroy:
-            self.gui.__class__.instances -= 1
-            if not self.gui.__class__.instances:
-                sys.exit()
+            sys.exit()
 
     def cancel(self, event):
         self.Close()

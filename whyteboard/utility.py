@@ -623,9 +623,7 @@ class Utility(object):
         else:
             method(*args)
             if method == self.gui.Destroy:
-                self.gui.__class__.instances -= 1
-                if not self.gui.__class__.instances:
-                    sys.exit()
+                sys.exit()
 
 
     def prompt_for_im(self):
