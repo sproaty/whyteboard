@@ -1104,10 +1104,14 @@ class ShapeViewer(wx.Dialog):
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
         pub.subscribe(self.shape_add, 'shape.add')
+        pub.subscribe(self.sheet_rename, 'sheet.rename')
 
 
     def shape_add(self, shape):
         self.shapes.append(shape)
+        self.populate()
+        
+    def sheet_rename(self, _id, text):
         self.populate()
 
     def populate(self):

@@ -756,12 +756,11 @@ class GUI(wx.Frame):
 
     def on_new_win(self, event=None):
         """Fires up a new Whyteboard window"""
+        program = ('python', os.path.abspath(sys.argv[0]))
         if self.util.is_exe():
             program = os.path.abspath(sys.argv[0])
-        else:
-            program = (sys.argv[0])
 
-        subprocess.Popen('', executable=program)
+        subprocess.Popen(program)
 
 
     def on_new_tab(self, event=None, name=None, wb=None):

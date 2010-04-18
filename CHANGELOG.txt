@@ -47,7 +47,7 @@ xx Apr 2010 -- 0.39.4
 * New toolbar items for Move Shape Up/Down/To Top/To Bottom
 * Recently Closed Sheets as a sub-menu to allow you to choose a sheet to re-open
 * Improved "save changes?" dialog when you are exiting the program. Now tells
-  you how long it was since you last saved, and the buttons have better text t
+  you how long it was since you last saved, and the buttons have better text
   than "yes/no/cancel"
 
 * Thick rectangles now don't have a "roundness" to their edges
