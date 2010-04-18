@@ -69,18 +69,18 @@ class History(wx.Dialog):
         #                        style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
         #self.slider.SetTickFreq(5, 1)
 
+        path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
+
+        self.playButton = bitmap_button(self, path + "play.png", True, toggle=True)
+        self.pauseButton = bitmap_button(self, path + "pause.png", True, toggle=True)
+        self.stopButton = bitmap_button(self, path + "stop.png", True, toggle=True)
+        closeButton = wx.Button(self, wx.ID_CANCEL, _("&Close"))
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
-        path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
-        icons = ["play", "pause", "stop"]
-
-        for icon in icons:
-            btn = bitmap_button(self, path + icon + ".png", False)
-            btn.SetToolTipString(icon.capitalize())
-            btn.Bind(wx.EVT_BUTTON, getattr(self, icon))
-            historySizer.Add(btn, 0,  wx.ALL, 2)
-
-        closeButton = wx.Button(self, wx.ID_CANCEL, _("&Close"))
+        historySizer.Add(self.playButton, 0,  wx.ALL, 2)
+        historySizer.Add(self.pauseButton, 0,  wx.ALL, 2)
+        historySizer.Add(self.stopButton, 0,  wx.ALL, 2)
 
         #sizer.Add(self.slider, 0, wx.EXPAND | wx.ALL, 10)
         sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 13)
@@ -89,7 +89,11 @@ class History(wx.Dialog):
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
+        self.toggle_buttons()
 
+        self.playButton.Bind(wx.EVT_BUTTON, self.play)
+        self.pauseButton.Bind(wx.EVT_BUTTON, self.pause)
+        self.stopButton.Bind(wx.EVT_BUTTON, self.stop)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         closeButton.Bind(wx.EVT_BUTTON, self.on_close)
         #self.slider.Bind(wx.EVT_SCROLL, self.scroll)
@@ -101,6 +105,7 @@ class History(wx.Dialog):
         """
         if self.looping:
             self.paused = False
+            self.toggle_buttons(True, False, False)
             return
         if self.paused:
             self.paused = False
@@ -112,6 +117,7 @@ class History(wx.Dialog):
                 shapes.append(shape)
 
         if shapes:
+            self.toggle_buttons(True, False, False)
             self.looping = True
             self.draw(shapes)
 
@@ -182,11 +188,13 @@ class History(wx.Dialog):
         """Pauses/unpauses the replay."""
         if self.looping:
             self.paused = not self.paused
+            self.toggle_buttons(not self.paused, self.paused, False)
 
 
     def stop(self, event=None):
         """Stops the replay."""
         if self.looping or self.paused:
+            self.toggle_buttons(False, False, True)
             self.looping = False
             self.paused = False
             self.gui.board.Refresh()  # restore
@@ -202,6 +210,15 @@ class History(wx.Dialog):
 
     def scroll(self, event):
         self.pause()
+
+
+    def toggle_buttons(self, play=False, pause=False, stop=True):
+        """
+        Toggles the buttons on/off as indicated by the bool params
+        """
+        self.playButton.SetValue(play)
+        self.pauseButton.SetValue(pause)
+        self.stopButton.SetValue(stop)
 
 
 #----------------------------------------------------------------------
@@ -664,7 +681,7 @@ class Feedback(wx.Dialog):
                             'feedback': self.feedback.GetValue(),
                             'email': self.email.GetValue()})
         f = urlopen("http://www.basicrpg.com/feedback_submit.php", params)
-        wx.MessageBox(_("Thanks for your feedback!"), _("Feedback Sent"))
+        wx.MessageBox(_("Your feedback has been sent, thank you."), _("Feedback Sent"))
         self.Destroy()
 
 #----------------------------------------------------------------------
@@ -795,7 +812,7 @@ class Resize(wx.Dialog):
         gap = wx.LEFT | wx.TOP | wx.RIGHT
         width, height = self.gui.board.buffer.GetSize()
         self.size = (width, height)
-        
+
         self.hctrl = wx.SpinCtrl(self, min=1, max=12000)
         self.wctrl = wx.SpinCtrl(self, min=1, max=12000)
 
@@ -806,7 +823,7 @@ class Resize(wx.Dialog):
         csizer.Add(wx.StaticText(self, label=_("Height:")), 0, wx.TOP |
                                                              wx.ALIGN_RIGHT, 7)
         csizer.Add(self.hctrl, 1, gap, 7)
-        
+
         self.wctrl.SetValue(width)
         self.hctrl.SetValue(height)
 

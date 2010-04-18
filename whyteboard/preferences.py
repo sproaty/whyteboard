@@ -615,7 +615,7 @@ class PDF(wx.Panel):
     def check_im_path(self, path):
         _file = os.path.join(path, "convert.exe")
         if not os.path.exists(_file):
-            wx.MessageBox(path + " does not contain convert.exe", "Whyteboard")
+            wx.MessageBox(_('Folder "%s" does not contain convert.exe') % path, "Whyteboard")
             self.im_result = None
             return False
 

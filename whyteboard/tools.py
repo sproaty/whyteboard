@@ -1687,12 +1687,25 @@ class Select(Tool):
                 self.shape.start_select_action(self.handle)
             if not self.handle:  # moving
                 self.shape.move(x, y, self.offset)
+                self.check_canvas_scroll(x, y)
             else:
                 if not self.anchored:  # don't want to keep anchoring
                     self.shape.anchor(self.handle)
                     self.anchored = True
                 self.shape.resize(x, y, self.handle)
 
+
+    def check_canvas_scroll(self, x, y):
+        size = self.board.GetClientSizeTuple()
+        if not self.board.area > size:
+            return
+
+        start = self.board.GetViewStart()
+
+        if (self.shape.x + self.shape.width) > (start[0] + size[0] - 50):
+            self.board.Scroll(start[0] + 5, -1)
+        elif (self.shape.x) < (start[0] + 50):
+            self.board.Scroll(start[0] - 5, -1)
 
     def draw(self, dc, replay=False):
         if self.dragging:

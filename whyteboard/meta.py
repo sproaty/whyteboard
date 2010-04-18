@@ -37,8 +37,8 @@ _ = wx.GetTranslation
 
 
 # Creates a wxPython wildcard filter from a list of known/supported filetypes.
-all = [ (_('Image Files'), ["jpeg", "jpg", "png", "tiff", "bmp", "pcx"]),
-        (_('PDF/PS/SVG'), ['ps', 'pdf', 'svg']),
+all = [ (_('PDF/PS/SVG'), ['ps', 'pdf', 'svg']),
+        (_('Image Files'), ["jpeg", "jpg", "png", "tiff", "bmp", "pcx"]),
         (_('Whyteboard files'), ['wtbd']) ]
 
 wc_list, types, tmp = [], [], []
@@ -52,7 +52,6 @@ for label, exts in all:
     tmp.extend(exts)
     [types.append(x.replace("*.", "")) for x in exts]
     wc_list.append('%s (%s)|%s' % (label, visexts, ';'.join(exts)))
-
 
 wc_list.insert(0, '%s|%s'%(_('All files')+' (*.*)', '*.*'))
 wc_list.insert(0, '%s|%s'%(_("All suppported files"), ';'.join(tmp)))
@@ -102,6 +101,7 @@ language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', \
                   'Portugese', 'Japanese', 'French', 'Traditional Chinese',  \
                   'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', \
                   'Galician', default='English')
+last_opened_dir = string
 print_title = boolean(default=True)
 statusbar = boolean(default=True)
 tool_preview = boolean(default=True)

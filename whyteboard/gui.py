@@ -121,7 +121,6 @@ class GUI(wx.Frame):
         self.convert_cancelled = False
         self.viewer = False  # Shape Viewer dialog open?
         self.help = None
-        self.directory = None  # last opened directory
         self.make_toolbar()
         self.bar_shown = True  # slight ? performance optimisation
         self.hotkey_pressed = False  # for hotkey timer
@@ -553,13 +552,13 @@ class GUI(wx.Frame):
         """
         wc = meta.dialog_wildcard
         if text == "img":
-            wc = wc[ wc.find(_("Image Files")) : wc.find("|PDF") ]  # image to page
+            wc = wc[ wc.find(_("Image Files")) : wc.find(_('Whyteboard files')) ]  # image to page
         elif text:
-            wc = wc[ wc.find("PDF") :]  # page descriptions
+            wc = wc[ wc.find("PDF/PS/SVG") : wc.find("*.SVG|")]  # page descriptions
 
         _dir = ""
-        if self.directory:
-            _dir = self.directory
+        if self.util.config.get('last_opened_dir'):
+            _dir = self.util.config['last_opened_dir']
 
         dlg = wx.FileDialog(self, _("Open file..."), style=wx.OPEN, wildcard=wc,
                              defaultDir=_dir)
@@ -581,10 +580,11 @@ class GUI(wx.Frame):
         Updates the appropriate variables in the utility file class and loads
         the selected file.
         """
-        self.directory = os.path.dirname(path)
         self.filehistory.AddFileToHistory(path)
         self.filehistory.Save(self.config)
         self.config.Flush()
+        self.util.config['last_opened_dir'] = os.path.dirname(path)
+        self.util.config.write()
 
         if path.endswith(".wtbd"):
             self.util.load_wtbd(path)
@@ -612,7 +612,7 @@ class GUI(wx.Frame):
             ext = os.path.splitext(filename)[1]
             if not ext:  # no file extension
                 filename += '.pdf'
-            elif ext != ".pdf":
+            elif ext.lower() != ".pdf":
                 wx.MessageBox(_("Invalid filetype to export as:")+" .%s" % ext,
                               "Whyteboard")
                 return
@@ -665,7 +665,9 @@ class GUI(wx.Frame):
 
 
     def on_export_pref(self, event=None):
-        """Exports the user's preferences."""
+        """
+        Copies the user's preferences file to another file.
+        """
         if not os.path.exists(self.util.config.filename):
             wx.MessageBox(_("You have not set any preferences"), _("Export Error"))
             return
@@ -676,9 +678,8 @@ class GUI(wx.Frame):
                              wx.OVERWRITE_PROMPT, wildcard=wc)
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
-            ext = os.path.splitext(filename)[1]
 
-            if not ext:
+            if not os.path.splitext(filename)[1]:
                 filename += ".pref"
             shutil.copy(os.path.join(get_home_dir(), "user.pref"), filename)
 
@@ -700,7 +701,6 @@ class GUI(wx.Frame):
             validator = Validator()
             config.validate(validator)
             _dir = os.path.join(get_home_dir(), "pref-bkup")
-
 
             if not os.path.isdir(_dir):
                 os.makedirs(_dir)

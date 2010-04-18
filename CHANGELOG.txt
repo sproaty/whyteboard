@@ -16,8 +16,8 @@ xx Apr 2010 -- 0.39.4
 * Image rotation is now performed from a special "handle" for rotating. Rotating
   draws a transparent rectangle "over" the image to show where its rotation will
   end up, instead of drawing the image as it rotates (which was slow)
-* Image re-scaling using its selection handles. Also draws a transparent rectangle
-  to indicate its new size
+* Image re-scaling using its selection handles. Also draws a transparent
+  rectangle to indicate its new size
 
 * PDF Cache Viewer - view the list of PDF files that Whyteboard is caching. From
   here you can remove cache entries, meaning that the PDF will be re-converted.
@@ -36,8 +36,13 @@ xx Apr 2010 -- 0.39.4
 * Changing sheets scrolls the new sheet's thumbnail into view
 * Few UI changes, program now looks neater with less borders, also takes up less
   vertical space (takes up ~700 pixels vertically at a minimum)
+* Removed many Message Boxes, tried to present more helpful error text to the
+  user when an error occurs
+* Programs remembers last opened file's directory for the next time the program
+  is launched
 * Foreground/background colour swap button added
 * "Swap Colours" menu item for when you select a shape that's not transparent
+
 * New toolbar items for Move Shape Up/Down/To Top/To Bottom
 * Recently Closed Sheets as a sub-menu to allow you to choose a sheet to re-open
 * Improved "save changes?" dialog when you are exiting the program. Now tells

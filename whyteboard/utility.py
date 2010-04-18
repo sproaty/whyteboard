@@ -295,7 +295,7 @@ class Utility(object):
             load_image(self.temp_file, self.gui.board, tools.Image)
             self.gui.board.redraw_all()
         else:
-            wx.MessageBox(_("Whyteboard doesn't support the filetype")+" .%s" % _type,
+            wx.MessageBox(_("Whyteboard doesn't support the filetype") + " .%s" % _type,
                           "Whyteboard")
 
 
@@ -346,9 +346,8 @@ class Utility(object):
         try:
             temp = method(f)
         except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):
-            wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.',
+            wx.MessageBox(_('"%s" has corrupt data.\nThis file cannot be loaded.') % os.path.basename(filename),
                             "Whyteboard")
-                        % os.path.basename(filename))
             return
         except ImportError:  # older windows/linux incompatible type
 
@@ -358,10 +357,9 @@ class Utility(object):
 
             try:
                 temp = method(f)
-            except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):
-                wx.MessageBox(_('"%s" has corrupt Whyteboard data. No action taken.',
-                                "Whyteboard")
-                            % os.path.basename(filename))
+            except (pickle.UnpicklingError, AttributeError, ImportError, ValueError, TypeError, EOFError):
+                wx.MessageBox(_('"%s" has corrupt data.\nThis file cannot be loaded..') % os.path.basename(filename),
+                              "Whyteboard")
                 return
             finally:
                 if not pickle_data:
@@ -539,7 +537,7 @@ class Utility(object):
                 self.gui.board.redraw_all()
             else:
                 if not count:
-                    wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed; http://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
+                    wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
                     wx.BeginBusyCursor()
                     webbrowser.open_new_tab("http://pages.cs.wisc.edu/~ghost/")
                     wx.CallAfter(wx.EndBusyCursor)
@@ -661,7 +659,7 @@ class Utility(object):
         """
         _file = os.path.join(path, "convert.exe")
         if not os.path.exists(_file):
-            wx.MessageBox(path + " does not contain convert.exe", "Whyteboard")
+            wx.MessageBox(_('Folder "%s" does not contain convert.exe') % path, "Whyteboard")
             return False
 
         self.im_location = _file
@@ -678,7 +676,7 @@ class Utility(object):
         try:
             tmp = urllib.urlretrieve(url, _file)
         except IOError:
-            wx.MessageBox(_("Could not connect to server."), "Whyteboard")
+            wx.MessageBox(_("Could not connect to server.\n Check your Internet connection and firewall settings"), "Whyteboard")
             raise IOError
 
         if os.name == "posix":
