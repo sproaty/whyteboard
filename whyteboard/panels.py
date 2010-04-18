@@ -27,9 +27,10 @@ import os
 import wx
 import wx.media
 import wx.lib.colourselect as csel
-from wx.lib.wordwrap import wordwrap as wordwrap
+
 from wx.lib import scrolledpanel as scrolled
 from wx.lib.buttons import GenBitmapToggleButton
+from wx.lib.wordwrap import wordwrap as wordwrap
 
 from lib.pubsub import pub
 
@@ -345,14 +346,15 @@ class DrawingPreview(wx.Window):
 
 #----------------------------------------------------------------------
 
-class MediaPanel(wx.Window):
+class MediaPanel(wx.Panel):
     """
     A panel that contains a MediaCtrl for playing videos/audio, and buttons for
     controlling it: open (file)/pause/stop/play, and a slider bar.
     Used by the Media tool.
     """
     def __init__(self, parent, pos, tool):
-        wx.Window.__init__(self, parent, pos=pos, style=wx.CLIP_CHILDREN)
+        wx.Panel.__init__(self, parent, pos=pos, style=wx.CLIP_CHILDREN)
+
         self.gui = parent.gui
         self.tool = tool
         self.offset = (0, 0)
