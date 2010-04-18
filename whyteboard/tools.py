@@ -1722,55 +1722,14 @@ class Select(Tool):
             if not self.handle:  # moving
                 self.shape.move(x, y, self.offset)
                 self.shape.find_edges()
-                self.check_canvas_scroll(self.shape.edges[EDGE_LEFT],
+                self.board.shape_near_canvas_edge(self.shape.edges[EDGE_LEFT],
                                          self.shape.edges[EDGE_TOP], True)
             else:
                 if not self.anchored:  # don't want to keep anchoring
                     self.shape.anchor(self.handle)
                     self.anchored = True
                 self.shape.resize(x, y, self.handle)
-                self.check_canvas_scroll(x, y)
-
-
-
-    def check_canvas_scroll(self, x, y, moving=False):
-        """
-        We check that the x/y coords are within 50px from the edge of the canvas
-        and scroll the canvas accordingly. If the shape is being moved, we need
-        to check specific edges of the shape (e.g. left/right side of rectangle)
-        Presents some difficulty with a polygon/image. Need to refactor shapes
-        to report their edges
-        """
-        size = self.board.GetClientSizeTuple()
-        if not self.board.area > size:  # canvas is too small to need to scroll
-            return
-
-        start = self.board.GetViewStart()
-        scroll = (-1, -1)
-
-        if moving:
-            if self.shape.edges[EDGE_RIGHT] > start[0] + size[0] - 50:
-                scroll = (start[0] + 5, -1)
-            if self.shape.edges[EDGE_BOTTOM] > start[1] + size[1] - 50:
-                scroll = (-1, start[1] + 5)
-
-            if self.shape.edges[EDGE_LEFT] < start[0] + 50:
-                scroll = (start[0] - 5, -1)
-            if self.shape.edges[EDGE_TOP] < start[1] - 50:
-                scroll = (-1, start[1] - 5)
-
-        else:
-            if x > start[0] + size[0] - 50:
-                scroll = (start[0] + 5, -1)
-            if y > start[1] + size[1] - 50:
-                scroll = (-1, start[1] + 5)
-
-            if x < start[0] + 50:  # x left
-                scroll = start[0] - 5, -1
-            if y < (start[1] - 50):  # y top
-                scroll = (-1, start[1] - 5)
-
-        self.board.Scroll(*scroll)
+                self.board.shape_near_canvas_edge(x, y)
 
 
     def draw(self, dc, replay=False):

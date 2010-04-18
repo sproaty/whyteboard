@@ -128,6 +128,7 @@ translators = [
      'Federico Vera https://launchpad.net/~fedevera (Spanish)',
      'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',
      'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
+     'Hiroshi Tagawa https://launchpad.net/~kuponuga (Japanese)',
      'Javier Acuña Ditzel https://launchpad.net/~santoposmoderno (Spanish)',
      'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
      'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',

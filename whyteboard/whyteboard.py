@@ -42,7 +42,8 @@ from lib.pubsub import pub
 from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
                    Highlighter, Polygon, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT,
                    BOTTOM_RIGHT, CENTER_TOP, CENTER_RIGHT, CENTER_BOTTOM,
-                   CENTER_LEFT, HANDLE_ROTATE)
+                   CENTER_LEFT, HANDLE_ROTATE, EDGE_TOP, EDGE_RIGHT, EDGE_LEFT,
+                   EDGE_BOTTOM)
 import utility
 
 #----------------------------------------------------------------------
@@ -409,7 +410,7 @@ class Whyteboard(wx.ScrolledWindow):
 
         if self.redo_list:
             self.redo_list = []
-        if self.gui.util.saved:            
+        if self.gui.util.saved:
             self.gui.util.saved = False
 
 
@@ -493,6 +494,46 @@ class Whyteboard(wx.ScrolledWindow):
         self.gui.util.saved = False
         self.shapes = images
         self.redraw_all(update_thumb=True)
+
+
+    def shape_near_canvas_edge(self, x, y, moving=False):
+        """
+        We check that the x/y coords are within 50px from the edge of the canvas
+        and scroll the canvas accordingly. If the shape is being moved, we need
+        to check specific edges of the shape (e.g. left/right side of rectangle)
+        Presents some difficulty with a polygon/image. Need to refactor shapes
+        to report their edges
+        """
+        size = self.GetClientSizeTuple()
+        if not self.area > size:  # canvas is too small to need to scroll
+            return
+
+        start = self.GetViewStart()
+        scroll = (-1, -1)
+
+        if moving:
+            if self.selected.edges[EDGE_RIGHT] > start[0] + size[0] - 50:
+                scroll = (start[0] + 5, -1)
+            if self.selected.edges[EDGE_BOTTOM] > start[1] + size[1] - 50:
+                scroll = (-1, start[1] + 5)
+
+            if self.selected.edges[EDGE_LEFT] < start[0] + 50:
+                scroll = (start[0] - 5, -1)
+            if self.selected.edges[EDGE_TOP] < start[1] - 50:
+                scroll = (-1, start[1] - 5)
+
+        else:
+            if x > start[0] + size[0] - 50:
+                scroll = (start[0] + 5, -1)
+            if y > start[1] + size[1] - 50:
+                scroll = (-1, start[1] + 5)
+
+            if x < start[0] + 50:  # x left
+                scroll = start[0] - 5, -1
+            if y < (start[1] - 50):  # y top
+                scroll = (-1, start[1] - 5)
+
+        self.Scroll(*scroll)
 
 
     def check_move(self, pos):

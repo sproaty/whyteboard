@@ -52,7 +52,7 @@ from lib.validate import Validator
 import lib.icon
 import meta
 from whyteboard import Whyteboard
-from tools import Image, Note, Text, Media, Highlighter
+from tools import Image, Note, Text, Media, Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility, WhyteboardDropTarget
 
 import event_ids as event_ids
@@ -1113,6 +1113,9 @@ class GUI(wx.Frame):
 
                 shape.move(map.get(code)[0], map.get(code)[1], offset=shape.offset(shape.x, shape.y))
                 self.board.draw_shape(shape)
+                shape.find_edges()
+                self.board.shape_near_canvas_edge(shape.edges[EDGE_LEFT],
+                                         shape.edges[EDGE_TOP], True)
                 return
         self.hotkey_scroll(code, event)
 
