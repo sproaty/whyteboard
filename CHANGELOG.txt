@@ -30,6 +30,7 @@ xx Apr 2010 -- 0.39.4
   the *center* of the shape
 * 8-way selection handle on rectangle, rounded rectangle and ellipse, allowing
   vertical-only / horizontal-only resizing
+* Resizing / moving a shape will scroll the canvas when it gets near an edge
 * Right clicking a shape with the select tool pops up a menu with select/delete/
   edit/move operations. Also, from here, new points may be added to a polygon
 

@@ -57,6 +57,11 @@ CENTER_RIGHT  = 6
 CENTER_BOTTOM = 7
 CENTER_LEFT   = 8
 
+EDGE_TOP    = 9
+EDGE_RIGHT  = 10
+EDGE_BOTTOM = 11
+EDGE_LEFT   = 12
+
 
 class Tool(object):
     """ Abstract class representing a tool: Drawing board/colour/thickness """
@@ -76,6 +81,7 @@ class Tool(object):
         self.brush = None
         self.selected = False
         self.drawing = False
+        self.edges = {}
         self.x = 0
         self.y = 0
         self.make_pen()
@@ -202,6 +208,10 @@ class OverlayShape(Tool):
         """Returns the handle positions: top-lef, top-rig, btm-lef, btm-rig"""
         pass
 
+    def find_edges(self):
+        """Finds the x/y/width/height edges of a shape"""
+        pass
+
     def resize(self, x, y, handle=None):
         """When the shape is being resized with Select tool"""
         self.motion(x, y)
@@ -284,7 +294,6 @@ class Polygon(OverlayShape):
         self.points = []
         self.drawing = False  # class keeps track of its drawing, not whyteboard
         self.center = None
-        self.bbox = None  # bounding box
         self.scale_factor = 0
         self.operation = None  # scaling/rotating
         self.original_points = []  # when scaling, we scale vs these
@@ -347,22 +356,25 @@ class Polygon(OverlayShape):
         self.operation = None
 
 
-    def center_and_bbox(self):
-        """Get the bounding rectangle for the polygon"""
-        xmin = min(x for x, y in self.points)
-        ymin = min(y for x, y in self.points)
-        xmax = max(x for x, y in self.points)
-        ymax = max(y for x, y in self.points)
-        self.bbox = (xmin, ymin, xmax,  ymax)
-
+    def find_center(self):
         a = sum([x for x, y in self.points]) / len(self.points)
         b = sum([y for x, y in self.points]) / len(self.points)
         self.center = (a, b)
 
 
+    def find_edges(self):
+        """Get the bounding rectangle for the polygon"""
+        xmin = min(x for x, y in self.points)
+        ymin = min(y for x, y in self.points)
+        xmax = max(x for x, y in self.points)
+        ymax = max(y for x, y in self.points)
+        self.edges = {EDGE_TOP: ymin, EDGE_RIGHT: xmax, EDGE_BOTTOM: ymax, EDGE_LEFT: xmin}
+
+
     def hit_test(self, x, y):
         """http://ariel.com.au/a/python-point-int-poly.html"""
-        if x < self.bbox[0] or x > self.bbox[2] or y < self.bbox[1] or y > self.bbox[3]:
+        if (x < self.edges[EDGE_LEFT] or x > self.edges[EDGE_RIGHT] or
+            y < self.edges[EDGE_TOP] or y > self.edges[EDGE_BOTTOM]):
             return False
         n = len(self.points)
         inside = False
@@ -420,13 +432,12 @@ class Polygon(OverlayShape):
 
         orig_click = self.orig_click
         original_distance = math.sqrt((orig_click[0] - self.center[0]) ** 2 + (orig_click[1] - self.center[1]) ** 2)
-        current_distance = math.sqrt((x - self.center[0])**2 + (y - self.center[1])**2)
+        current_distance = math.sqrt((x - self.center[0]) ** 2 + (y - self.center[1]) ** 2)
         self.scale_factor = current_distance / original_distance
 
         for count, point in enumerate(self.original_points):
             dist = (point[0] - self.center[0], point[1] - self.center[1])
             self.points[count] = (self.scale_factor * dist[0] + self.center[0], self.scale_factor * dist[1] + self.center[1])
-
 
 
     def rotate(self, position):
@@ -466,7 +477,8 @@ class Polygon(OverlayShape):
     def sort_handles(self):
         super(Polygon, self).sort_handles()
         self.points = [(float(x), float(y)) for x, y in self.points]
-        self.center_and_bbox()
+        self.find_edges()
+        self.find_center()
         self.original_points = list(self.points)
         self.orig_click = None
 
@@ -745,6 +757,10 @@ class Rectangle(OverlayShape):
         super(Rectangle, self).sort_handles()
         self.update_rect()
 
+    def find_edges(self):
+        x, y, w, h = self.get_args()[:4]
+        self.edges = {EDGE_TOP: y, EDGE_RIGHT: x + abs(w), EDGE_BOTTOM: y + abs(h), EDGE_LEFT: x}
+
 
     def update_rect(self):
         """Need to pad out the rectangle with the line thickness"""
@@ -899,6 +915,8 @@ class Line(OverlayShape):
         """Returns two tupples (unlike the others) - one for each point"""
         return ((x - self.x, y - self.y), (x - self.x2, y - self.y2))
 
+    def find_edges(self):
+        self.edges = {EDGE_TOP: self.y, EDGE_RIGHT: self.x2, EDGE_BOTTOM: self.y2, EDGE_LEFT: self.x}
 
     def draw(self, dc, replay=False):
         super(Line, self).draw(dc, replay, "Line")
@@ -1026,6 +1044,7 @@ class Media(Tool):
 
     def properties(self):
         return _("Loaded file")+ ": " + str(self.filename)
+
 
     def save(self):
         super(Media, self).save()
@@ -1240,6 +1259,9 @@ class Text(OverlayShape):
         x = dc.GetMultiLineTextExtent(self.text, self.font)
         self.extent = x[0], x[1]
 
+    def find_edges(self):
+        self.edges = {EDGE_TOP: self.y, EDGE_RIGHT: self.x + self.extent[0],
+                      EDGE_BOTTOM: self.y + self.extent[1], EDGE_LEFT: self.x}
 
     def get_handles(self):
         x, y, w, h = self.x, self.y, self.extent[0], self.extent[1]
@@ -1376,10 +1398,12 @@ class Image(OverlayShape):
         self.img = wx.ImageFromBitmap(image)  # original wx.Image to rotate/scale
         self.angle = 0
         self.scale_size = (image.GetWidth(), image.GetHeight())
+        self.center = None
         self.outline = None  # Rectangle/Polygon, used to rotate/resize
         self.dragging = False  # controls whether to draw the outline
         self.orig_click = None
         self.rotate_handle = None  # wx.Rect
+
 
 
     def left_down(self, x, y):
@@ -1413,6 +1437,9 @@ class Image(OverlayShape):
         self.center = (self.x + self.image.GetWidth() / 2,
                        self.y + self.image.GetHeight() / 2)
 
+    def find_edges(self):
+        self.edges = {EDGE_TOP: self.y, EDGE_RIGHT: self.x + self.image.GetWidth(),
+                      EDGE_BOTTOM: self.y + self.image.GetWidth(), EDGE_LEFT: self.x}
 
     def handle_hit_test(self, x, y):
         """Returns which handle has been clicked on"""
@@ -1687,7 +1714,9 @@ class Select(Tool):
                 self.shape.start_select_action(self.handle)
             if not self.handle:  # moving
                 self.shape.move(x, y, self.offset)
-                self.check_canvas_scroll(self.shape.x, self.shape.y, True)
+                self.shape.find_edges()
+                self.check_canvas_scroll(self.shape.edges[EDGE_LEFT],
+                                         self.shape.edges[EDGE_TOP], True)
             else:
                 if not self.anchored:  # don't want to keep anchoring
                     self.shape.anchor(self.handle)
@@ -1713,20 +1742,26 @@ class Select(Tool):
         scroll = (-1, -1)
 
         if moving:
-            if x + self.shape.width + x > start[0] + size[0] - 50:
+            if self.shape.edges[EDGE_RIGHT] > start[0] + size[0] - 50:
                 scroll = (start[0] + 5, -1)
-            if y + self.shape.height > start[1] + size[1] - 50:
+            if self.shape.edges[EDGE_BOTTOM] > start[1] + size[1] - 50:
                 scroll = (-1, start[1] + 5)
+
+            if self.shape.edges[EDGE_LEFT] < start[0] + 50:
+                scroll = (start[0] - 5, -1)
+            if self.shape.edges[EDGE_TOP] < start[1] - 50:
+                scroll = (-1, start[1] - 5)
+
         else:
             if x > start[0] + size[0] - 50:
                 scroll = (start[0] + 5, -1)
             if y > start[1] + size[1] - 50:
                 scroll = (-1, start[1] + 5)
 
-        if x < start[0] + 50:  # x left
-            scroll = (start[0] - 5, -1)
-        if y < (start[1] - 50):  # y top
-            scroll = (-1, start[1] - 5)
+            if x < start[0] + 50:  # x left
+                scroll = start[0] - 5, -1
+            if y < (start[1] - 50):  # y top
+                scroll = (-1, start[1] - 5)
 
         self.board.Scroll(*scroll)
 
