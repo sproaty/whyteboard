@@ -95,6 +95,7 @@ xx Apr 2010 -- 0.39.4
 * Rotated images weren't being saved as rotated
 * Shape Viewer's column widths would not take up the full space
 
+* Fixed shape viewer crashing when an item isn't selected
 * Using next/previous sheet buttons in the Shape Viewer wouldn't set the
   drop-down control to the changed-to sheet
 * "End" key would not jump to the end of the document correctly

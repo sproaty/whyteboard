@@ -522,7 +522,7 @@ class Whyteboard(wx.ScrolledWindow):
 
             if self.selected.edges[EDGE_LEFT] < start[0] + EDGE:
                 scroll = (start[0] - TO_MOVE, -1)
-            if self.selected.edges[EDGE_TOP] < start[1] - EDGE:
+            if self.selected.edges[EDGE_TOP] < start[1] + EDGE:
                 scroll = (-1, start[1] - TO_MOVE)
 
         else:
@@ -533,7 +533,7 @@ class Whyteboard(wx.ScrolledWindow):
 
             if x < start[0] + EDGE:  # x left
                 scroll = start[0] - TO_MOVE, -1
-            if y < (start[1] - EDGE):  # y top
+            if y < start[1] + EDGE:  # y top
                 scroll = (-1, start[1] - TO_MOVE)
 
         self.Scroll(*scroll)

@@ -1043,7 +1043,7 @@ class ShapeViewer(wx.Dialog):
         self.list.RefreshRows()
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
- 
+
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
         icons = ["top", "up", "down", "bottom"]
         tips = [_("To Top"), ("Up"), ("Down"), ("To Bottom")]
@@ -1055,7 +1055,7 @@ class ShapeViewer(wx.Dialog):
             btn.Bind(wx.EVT_BUTTON, getattr(self, "on_"+icon))
             bsizer.Add(btn, 0, wx.RIGHT, 5)
             self.buttons.append(btn)
-                
+
         self.prev = bitmap_button(self, path + "prev_sheet.png", False)
         self.prev.SetToolTipString(_("Previous Sheet"))
         self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
@@ -1101,14 +1101,14 @@ class ShapeViewer(wx.Dialog):
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.on_deselect)
         pub.subscribe(self.shape_add, 'shape.add')
         pub.subscribe(self.sheet_rename, 'sheet.rename')
-
 
     def shape_add(self, shape):
         self.shapes.append(shape)
         self.populate()
-        
+
     def sheet_rename(self, _id, text):
         self.populate()
 
@@ -1153,19 +1153,20 @@ class ShapeViewer(wx.Dialog):
         else:
             self.prev.Disable()
 
-        if self.list.GetFirstSelected() == -1:
+        if not self.shapes or self.list.GetFirstSelected() == -1:
             self.deleteBtn.Disable()
         else:
             self.deleteBtn.Enable()
-            
-        if self.list.GetFirstSelected() == 0:
+
+        if self.list.GetFirstSelected() == 0 or self.list.GetFirstSelected() == -1:
             self.buttons[0].Disable()
             self.buttons[1].Disable()
         else:
             self.buttons[0].Enable()
             self.buttons[1].Enable()
 
-        if self.list.GetFirstSelected() == len(self.shapes) - 1  or not self.shapes:
+        if (self.list.GetFirstSelected() == len(self.shapes) - 1  or not self.shapes
+            or self.list.GetFirstSelected() == -1):
             self.buttons[2].Disable()
             self.buttons[3].Disable()
         else:
@@ -1227,6 +1228,7 @@ class ShapeViewer(wx.Dialog):
         self.populate()
         self.check_buttons()
 
+
     def on_delete(self, event):
         index, item = self.find_shape()
         self.gui.board.selected = item
@@ -1247,6 +1249,10 @@ class ShapeViewer(wx.Dialog):
     def on_select(self, event):
         self.check_buttons()
 
+
+    def on_deselect(self, e):
+        if self.list.GetFirstSelected() == -1:
+            self.check_buttons()
 
     def ok(self, event):
         self.apply()
