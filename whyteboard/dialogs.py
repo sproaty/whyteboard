@@ -1007,7 +1007,7 @@ class WhyteboardList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin,
 
     def __init__(self, parent, style=0):
         wx.ListCtrl.__init__(self, parent, style=style | wx.DEFAULT_CONTROL_BORDER
-                             | wx.LC_SINGLE_SEL)
+                             | wx.LC_SINGLE_SEL | wx.LC_HRULES)
         listmix.ListCtrlAutoWidthMixin.__init__(self)
         listmix.ListRowHighlighter.__init__(self, (206, 218, 255))
 
@@ -1040,18 +1040,14 @@ class ShapeViewer(wx.Dialog):
         label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        if os.name == "nt":
-            font = label.GetClassDefaultAttributes().font
-            font.SetPointSize(font.GetPointSize() + 2)
-            self.list.SetFont(font)
-
         self.list.RefreshRows()
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
-
+ 
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
         icons = ["top", "up", "down", "bottom"]
         tips = [_("To Top"), ("Up"), ("Down"), ("To Bottom")]
+        self.deleteBtn = bitmap_button(self, path + "delete.png", False)
 
         for icon, tip in zip(icons, tips):
             btn = bitmap_button(self, path + "move-" + icon + ".png", False)
@@ -1059,7 +1055,7 @@ class ShapeViewer(wx.Dialog):
             btn.Bind(wx.EVT_BUTTON, getattr(self, "on_"+icon))
             bsizer.Add(btn, 0, wx.RIGHT, 5)
             self.buttons.append(btn)
-
+                
         self.prev = bitmap_button(self, path + "prev_sheet.png", False)
         self.prev.SetToolTipString(_("Previous Sheet"))
         self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
@@ -1070,6 +1066,7 @@ class ShapeViewer(wx.Dialog):
         self.next.Bind(wx.EVT_BUTTON, self.on_next)
         nextprevsizer.Add(self.next)
 
+        bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
         bsizer.Add((1, 1), 1, wx.EXPAND)  # align to the right
         bsizer.Add(nextprevsizer, 0, wx.RIGHT, 10)
         bsizer.Add(self.pages, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
@@ -1088,7 +1085,7 @@ class ShapeViewer(wx.Dialog):
         sizer.Add(label, 0, wx.ALL, 15)
         sizer.Add((10, 5))
         sizer.Add(bsizer, 0, wx.LEFT | wx.EXPAND, 10)
-        sizer.Add((10, 5))
+        sizer.Add((10, 15))
         sizer.Add(self.list, 1, wx.LEFT | wx.RIGHT |wx.EXPAND, 10)
         sizer.Add((10, 5))
         sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
@@ -1100,6 +1097,7 @@ class ShapeViewer(wx.Dialog):
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
+        self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_delete)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
@@ -1155,6 +1153,11 @@ class ShapeViewer(wx.Dialog):
         else:
             self.prev.Disable()
 
+        if self.list.GetFirstSelected() == -1:
+            self.deleteBtn.Disable()
+        else:
+            self.deleteBtn.Enable()
+            
         if self.list.GetFirstSelected() == 0:
             self.buttons[0].Disable()
             self.buttons[1].Disable()
@@ -1224,6 +1227,13 @@ class ShapeViewer(wx.Dialog):
         self.populate()
         self.check_buttons()
 
+    def on_delete(self, event):
+        index, item = self.find_shape()
+        self.gui.board.selected = item
+        self.gui.board.delete_selected()
+        self.shapes.pop(index)
+        self.populate()
+        self.list.Select(0)
 
     def on_change_sheet(self, event):
         self.change(self.pages.GetSelection())
@@ -1280,12 +1290,6 @@ class PDFCache(wx.Dialog):
         label = wx.StaticText(self, label=_("Whyteboard will load these files from its cache instead of re-converting them"))
         sizer = wx.BoxSizer(wx.VERTICAL)
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
-
-        if os.name == "nt":
-            font = label.GetClassDefaultAttributes().font
-            font.SetPointSize(font.GetPointSize() + 2)
-            self.list.SetFont(font)
-            self.list.RefreshRows()
 
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "delete.png")
 

@@ -759,15 +759,15 @@ class Rectangle(OverlayShape):
 
     def find_edges(self):
         x, y, w, h = self.get_args()[:4]
-        self.edges = {EDGE_TOP: y, EDGE_RIGHT: x + abs(w), EDGE_BOTTOM: y + abs(h), EDGE_LEFT: x}
+        self.edges = {EDGE_TOP: y, EDGE_RIGHT: x + w, EDGE_BOTTOM: y + h, EDGE_LEFT: x}
 
 
     def update_rect(self):
         """Need to pad out the rectangle with the line thickness"""
         x, y, w, h = self.get_args()[:4]
         t = math.ceil(self.thickness / 2)
-        w =  abs(w) + self.thickness
-        h =  abs(h) + self.thickness
+        w =  w + self.thickness
+        h =  h + self.thickness
         self.rect = wx.Rect(x - t, y - t, w, h)
 
 
@@ -778,8 +778,8 @@ class Rectangle(OverlayShape):
 
 
     def properties(self):
-        return "X: %i, Y: %i, %s %i, %s %i" % (self.x, self.y, _("Width:"),
-                                               self.width, _("Height:"), self.height)
+        x, y, w, h = self.get_args()[:4]
+        return "X: %i, Y: %i, %s %i, %s %i" % (x, y, _("Width:"), w, _("Height:"), h)
 
     def load(self):
         super(Rectangle, self).load()

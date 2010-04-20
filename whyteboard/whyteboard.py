@@ -48,10 +48,13 @@ import utility
 
 #----------------------------------------------------------------------
 
-CANVAS_BORDER = 15  # pixels in size
+EDGE = 10    # distance from canvas edge before shape will scroll canvas
+TO_MOVE = 5  # pixels shape will cause canvas to scroll
+CANVAS_BORDER = 15  # border pixels in size (overridable by user)
 RIGHT = 1
 DIAGONAL = 2
 BOTTOM = 3
+
 
 class Whyteboard(wx.ScrolledWindow):
     """
@@ -509,29 +512,29 @@ class Whyteboard(wx.ScrolledWindow):
             return
 
         start = self.GetViewStart()
-        scroll = (-1, -1)
+        scroll = (-1, -1)        
 
         if moving:
-            if self.selected.edges[EDGE_RIGHT] > start[0] + size[0] - 50:
-                scroll = (start[0] + 5, -1)
-            if self.selected.edges[EDGE_BOTTOM] > start[1] + size[1] - 50:
-                scroll = (-1, start[1] + 5)
+            if self.selected.edges[EDGE_RIGHT] > start[0] + size[0] - EDGE:
+                scroll = (start[0] + TO_MOVE, -1)
+            if self.selected.edges[EDGE_BOTTOM] > start[1] + size[1] - EDGE:
+                scroll = (-1, start[1] + TO_MOVE)
 
-            if self.selected.edges[EDGE_LEFT] < start[0] + 50:
-                scroll = (start[0] - 5, -1)
-            if self.selected.edges[EDGE_TOP] < start[1] - 50:
-                scroll = (-1, start[1] - 5)
+            if self.selected.edges[EDGE_LEFT] < start[0] + EDGE:
+                scroll = (start[0] - TO_MOVE, -1)
+            if self.selected.edges[EDGE_TOP] < start[1] - EDGE:
+                scroll = (-1, start[1] - TO_MOVE)
 
         else:
-            if x > start[0] + size[0] - 50:
-                scroll = (start[0] + 5, -1)
-            if y > start[1] + size[1] - 50:
-                scroll = (-1, start[1] + 5)
+            if x > start[0] + size[0] - EDGE:
+                scroll = (start[0] + TO_MOVE, -1)
+            if y > start[1] + size[1] - EDGE:
+                scroll = (-1, start[1] + TO_MOVE)
 
-            if x < start[0] + 50:  # x left
-                scroll = start[0] - 5, -1
-            if y < (start[1] - 50):  # y top
-                scroll = (-1, start[1] - 5)
+            if x < start[0] + EDGE:  # x left
+                scroll = start[0] - TO_MOVE, -1
+            if y < (start[1] - EDGE):  # y top
+                scroll = (-1, start[1] - TO_MOVE)
 
         self.Scroll(*scroll)
 

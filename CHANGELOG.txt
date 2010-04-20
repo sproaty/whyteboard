@@ -39,8 +39,7 @@ xx Apr 2010 -- 0.39.4
   vertical space (takes up ~700 pixels vertically at a minimum)
 * Removed many Message Boxes, tried to present more helpful error text to the
   user when an error occurs
-* Programs remembers last opened file's directory for the next time the program
-  is launched
+* Programs remembers last opened file's directory the next time the program runs
 * Foreground/background colour swap button added
 * "Swap Colours" menu item for when you select a shape that's not transparent
 
