@@ -1430,14 +1430,13 @@ class Image(OverlayShape):
         super(Image, self).sort_handles()
         if not self.img:
             self.img = wx.ImageFromBitmap(self.image)
+        if not self.img.HasAlpha():  # black background otherwise
+            self.img.InitAlpha()
+            
         self.find_center()
-
         self.rotate_handle = wx.Rect(self.x + self.image.GetWidth() / 2 - 6,
                                      self.y + self.image.GetHeight() / 2 - 6,
                                      HANDLE_SIZE, HANDLE_SIZE)
-
-        if not self.img.HasAlpha():  # black background otherwise
-            self.img.InitAlpha()
 
 
     def find_center(self):
@@ -1801,7 +1800,7 @@ class BitmapSelect(Rectangle):
         if not (x != self.x and y != self.y):
             self.board.copy = None
             wx.CallAfter(self.board.change_current_tool)
-            self = BitmapSelect.__init__(self.board)
+            self = BitmapSelect.__init__(self, self.board, self.colour, self.thickness)
 
 
     def preview(self, dc, width, height):

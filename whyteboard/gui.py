@@ -505,6 +505,9 @@ class GUI(wx.Frame):
             self.viewer.shapes = list(self.board.shapes)
             self.viewer.populate()
 
+    def save_last_path(self, path):
+        self.util.config['last_opened_dir'] = os.path.dirname(path)
+        self.util.config.write()        
 
     def on_save(self, event=None):
         """
@@ -515,6 +518,7 @@ class GUI(wx.Frame):
         else:
             self.util.save_file()
             self.util.saved = True
+            self.save_last_path(os.path.dirname(self.util.filename))
 
 
     def on_save_as(self, event=None):
@@ -581,8 +585,7 @@ class GUI(wx.Frame):
         self.filehistory.AddFileToHistory(path)
         self.filehistory.Save(self.config)
         self.config.Flush()
-        self.util.config['last_opened_dir'] = os.path.dirname(path)
-        self.util.config.write()
+        self.save_last_path(path)
 
         if path.endswith(".wtbd"):
             self.util.load_wtbd(path)

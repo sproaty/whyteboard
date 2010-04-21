@@ -246,6 +246,7 @@ class Utility(object):
                     img = shape.image.ConvertToImage()
                     if not img.HasAlpha():
                         img.InitAlpha()
+                    img.ConvertAlphaToMask()
                     img_data = img.GetData()
 
                     for k, v in data.items():
@@ -256,7 +257,6 @@ class Utility(object):
 
                     #  the above iteration didn't find any common pastes
                     if not shape.filename:
-                        img.SetMaskColour(255, 255, 255)
                         name = make_filename() + ".jpg"
                         img.SaveFile(name, wx.BITMAP_TYPE_JPEG)
                         shape.filename = name
