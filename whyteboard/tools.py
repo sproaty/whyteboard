@@ -1574,6 +1574,8 @@ class Image(OverlayShape):
             self.outline = None
         if not hasattr(self, "dragging"):
             self.dragging = False
+        if not hasattr(self, "scale_size"):
+            self.scale_size = (0, 0)            
 
         if not hasattr(self, "filename") or not self.filename:
             self.filename = os.path.basename(self.path)

@@ -760,17 +760,17 @@ class PromptForSave(wx.Dialog):
         hours, mins, seconds = "", "", ""
 
         # ugly....
-        if m > 0:
-            mins = ("%i " % m) + _("minutes and") + " "
-        if m == 1:
-            mins = "1 " + _("minute and") + " "
+        if m > 0 and h < 1:
+            mins = ("%i " % m) + _("minutes")
+        if m == 1 and h < 1:
+            mins = _("minute")
         if h > 0:
-            hours = ("%i " % h) + _("hours") + ", "
+            hours = ("%i " % h) + _("hours")
         if h == 1:
-            hours = _("hour") + ", "
-        if s == 1:
-            seconds = "1" + _("second")
-        else:
+            hours = _("hour")
+        if s == 1 and m < 1:
+            seconds = _("second")
+        elif s > 1 and m < 1:
             seconds = ("%i " % s) + _("seconds")
 
         ms = "%s%s%s" % (hours, mins, seconds)
@@ -1099,9 +1099,9 @@ class ShapeViewer(wx.Dialog):
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_delete)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.on_deselect)        
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
-        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.on_deselect)
         pub.subscribe(self.shape_add, 'shape.add')
         pub.subscribe(self.sheet_rename, 'sheet.rename')
 
@@ -1172,8 +1172,8 @@ class ShapeViewer(wx.Dialog):
         else:
             self.buttons[2].Enable()
             self.buttons[3].Enable()
-        self.Refresh()
-        self.SetFocus()
+        #self.Refresh()
+        #self.SetFocus()
 
 
     def find_shape(self):
@@ -1248,7 +1248,6 @@ class ShapeViewer(wx.Dialog):
 
     def on_select(self, event):
         self.check_buttons()
-
 
     def on_deselect(self, e):
         if self.list.GetFirstSelected() == -1:
@@ -1328,7 +1327,7 @@ class PDFCache(wx.Dialog):
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_remove)
         cancelButton.Bind(wx.EVT_BUTTON, lambda x: self.Close())
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda x: self.check_buttons())
-
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda x: self.check_buttons())
 
     def populate(self):
         """

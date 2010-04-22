@@ -1065,7 +1065,8 @@ class GUI(wx.Frame):
         self.on_paste(ignore=True)
 
     def on_change_tool(self, event, _id):
-        self.control.change_tool(_id=_id)
+        if not self.board.shape.drawing and not self.board.drawing:
+            self.control.change_tool(_id=_id)
 
 
     def on_fullscreen(self, event=None, val=None):
@@ -1088,7 +1089,7 @@ class GUI(wx.Frame):
             for x, key in enumerate(self.hotkeys):
 
                 if code in [ord(key), ord(key.upper())]:
-                    self.control.change_tool(_id=x + 1)
+                    self.on_change_tool(None, _id=x + 1)
                     return
 
         if code == wx.WXK_ESCAPE:  # close fullscreen/deselect shape

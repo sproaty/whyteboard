@@ -169,7 +169,10 @@ class Utility(object):
                         if isinstance(shape, tools.Note):
                             tree_ids.append(shape.tree_id)
                             shape.tree_id = None
-                        shape.save()  # need to unlink unpickleable items
+                        try:
+                            shape.save()  # need to unlink unpickleable items
+                        except Exception:
+                            break
 
                 version = meta.version
                 if not self.update_version:
@@ -183,7 +186,7 @@ class Utility(object):
                 _file = { 0: [self.colour, self.thickness, self.tool, tab,
                               version, font],
                           1: temp,
-                          2: None,  # was self.to_convert, but wasn't used.
+                          2: None, # was self.to_convert, but wasn't used.
                           3: names,
                           4: canvas_sizes,
                           5: medias }
@@ -385,7 +388,7 @@ class Utility(object):
         self.colour = temp[0][0]
         self.thickness = temp[0][1]
         self.tool = temp[0][2]
-        self.gui.control.change_tool(_id = self.tool)  # toggle button
+        self.gui.control.change_tool(_id=self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
         self.gui.SetTitle(os.path.split(filename)[1] + ' - ' + self.gui.title)
@@ -416,9 +419,12 @@ class Utility(object):
                 pass
 
             for shape in temp[1][x]:
-                shape.board = self.gui.board  # restore board
-                shape.load()  # restore unpickleable settings
-                self.gui.board.add_shape(shape)
+                try:
+                    shape.board = self.gui.board  # restore board
+                    shape.load()  # restore unpickleable settings
+                    self.gui.board.add_shape(shape)
+                except Exception:
+                    break
             self.gui.board.redraw_all(True)
 
         # close progress bar, handle older file versions gracefully
@@ -437,7 +443,7 @@ class Utility(object):
         except IndexError:
             version = "0.33"
         self.saved_version = version
-        font =  None
+        font = None
 
         try:
             if temp[0][5]:
@@ -481,7 +487,7 @@ class Utility(object):
 
     def library_write(self, location, images, quality):
         """Adds a newly converted file to the library"""
-        self.library_create()
+        self.library_create()    
         with open(self.library) as f:
             files = pickle.load(f)
 
@@ -530,26 +536,26 @@ class Utility(object):
                 return
             after = os.walk(path).next()[2]
             count = len(after) - len(before)
-
-            if count == 1:
-                temp_path = path + tmp_file + ".png"
-                load_image(temp_path, self.gui.board, tools.Image)
-                self.gui.board.redraw_all()
+            images = []
+            ignore = False
+            
+            if not count:
+                wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
+                wx.BeginBusyCursor()
+                webbrowser.open_new_tab("http://pages.cs.wisc.edu/~ghost/")
+                wx.CallAfter(wx.EndBusyCursor)
+                return
+                        
+            if count == 1:   
+                images.append(path + tmp_file + ".png")
+                ignore = True
             else:
-                if not count:
-                    wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
-                    wx.BeginBusyCursor()
-                    webbrowser.open_new_tab("http://pages.cs.wisc.edu/~ghost/")
-                    wx.CallAfter(wx.EndBusyCursor)
-                    return
-                images = []
                 for x in range(count):
                     # store the temp file path for this file in the dictionary
-                    temp_file = path + tmp_file + "-%s" % x + ".png"
-                    images.append(temp_file)
+                    images.append(path + tmp_file + "-%s" % x + ".png") 
 
-                self.display_converted(_file, images)
-                self.library_write(_file, images, quality)
+            self.display_converted(_file, images, ignore)
+            self.library_write(_file, images, quality)
 
         # Just in case it's a file with many pages
         self.gui.dialog = ProgressDialog(self.gui, _("Loading..."), 30)
@@ -557,11 +563,12 @@ class Utility(object):
         self.gui.on_done_load()
 
 
-    def display_converted(self, _file, images):
+    def display_converted(self, _file, images, ignore_close=False):
         """
         Display converted items. _file: PDF/PS name. Images: list of files
         """
-        if self.gui.tab_count == 1 and not self.gui.board.shapes:
+        if (not ignore_close and self.gui.tab_count == 1 
+            and not self.gui.board.shapes):
             self.remove_all_sheets()
 
         for x in range(len(images)):
@@ -678,7 +685,7 @@ class Utility(object):
             raise IOError
 
         if os.name == "posix":
-            os.system("tar -xf "+ tmp[0])
+            os.system("tar -xf " + tmp[0])
         else:
             tar = tarfile.open(tmp[0])
             tar.extractall(self.path[0])
@@ -696,7 +703,7 @@ class Utility(object):
         tar.extractall(path)
         tar.close()
         # remove 2 folders that will be updated, may not exist
-        src = os.path.join(path, "whyteboard-"+ version)
+        src = os.path.join(path, "whyteboard-" + version)
 
         widgs = os.path.join(path, "fakewidgets")
         helps = os.path.join(path, "helpfiles")
