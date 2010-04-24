@@ -77,6 +77,8 @@ xx Apr 2010 -- 0.39.4
 * Toggle tool preview on/off (to gain more vertical space)
 * Toggle colour grid on/off
 * "Send Feedback" added to the Help menu
+* Command-line extras added (inc. help). Call whyteboard -f FILE to load a file; 
+  whyteboard -l LANG to set a language e.g. es, spanish, nl, dutch, de, german   
 
 -- Bugfixes:
 

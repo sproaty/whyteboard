@@ -39,6 +39,7 @@ import locale
 import webbrowser
 import subprocess
 import shutil
+from optparse import OptionParser
 
 import wx
 import wx.lib.newevent
@@ -1482,27 +1483,47 @@ class WhyteboardApp(wx.App):
         """
         wx.SetDefaultPyEncoding("utf-8")
         self.SetAppName("whyteboard")  # used to identify app in $HOME/
-
+        
+        parser = OptionParser(version="Whyteboard %s" % meta.version)
+        parser.add_option("-f", "--file", help="load FILE on load")
+        parser.add_option("-l", "--lang", help="set language. can be a country code or language (fr/french, nl/dutch)")
+        
         path = os.path.join(get_home_dir(), "user.pref")
         config = ConfigObj(path, configspec=meta.config_scheme.split("\n"))
         validator = Validator()
         config.validate(validator)
+                
+        set_lang = False
+        lang_name = config['language']                
+        (options, args) = parser.parse_args()
+        
+        if options.lang:
+            nolog = wx.LogNull()
+            country = wx.Locale.FindLanguageInfo(options.lang)
+            if country:
+                set_lang = True
+                lang_name = country.Description
+                self.locale = wx.Locale(country.Language, wx.LOCALE_LOAD_DEFAULT)
+                
 
-        for x in meta.languages:
-            if config['language'].capitalize() == 'Welsh':
-                self.locale = wx.Locale()
-                self.locale.Init("Cymraeg", "cy", "cy_GB.utf8")
-                break
-            elif config['language'].capitalize() == x[0]:
-                nolog = wx.LogNull()
-                self.locale = wx.Locale(x[1], wx.LOCALE_LOAD_DEFAULT)
+        if not set_lang:
+            for x in meta.languages:
+                if config['language'].capitalize() == 'Welsh':
+                    self.locale = wx.Locale()
+                    self.locale.Init("Cymraeg", "cy", "cy_GB.utf8")
+                    break
+                elif config['language'].capitalize() == x[0]:
+                    nolog = wx.LogNull()
+                    self.locale = wx.Locale(x[1], wx.LOCALE_LOAD_DEFAULT)
 
         if hasattr(self, "locale"):
             if not wx.Locale.IsOk(self.locale):
-                wx.MessageBox("Error setting language to %s - reverting to English" % config['language'],
+ 
+                wx.MessageBox("Error setting language to %s - reverting to English" % lang_name,
                               "Whyteboard")
-                config['language'] = 'English'
-                config.write()
+                if not set_lang:
+                    config['language'] = 'English'
+                    config.write()
                 self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
 
             path = os.path.dirname(sys.argv[0])
@@ -1517,15 +1538,18 @@ class WhyteboardApp(wx.App):
 
         self.frame = GUI(None, config)
         self.frame.Show(True)
-        self.parse_args()
+        
+        if options.file:
+            self.load_file(options.file)
+
         self.delete_temp_files()
         return True
 
 
-    def parse_args(self):
+    def load_file(self, _file):
         """Forward the first command-line arg to gui.do_open()"""
         try:
-            _file = os.path.abspath(sys.argv[1])
+            _file = os.path.abspath(_file)
             if os.path.exists(_file):
                 self.frame.do_open(_file)
         except IndexError:

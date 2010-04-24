@@ -27,7 +27,6 @@ import os
 import wx
 import wx.media
 import wx.lib.colourselect as csel
-import wx.lib.resizewidget as rw
 
 from wx.lib import scrolledpanel as scrolled
 from wx.lib.buttons import GenBitmapToggleButton
@@ -356,18 +355,11 @@ class MediaPanel(wx.Panel):
     def __init__(self, parent, pos, tool):
         wx.Panel.__init__(self, parent, pos=pos, style=wx.CLIP_CHILDREN)
 
-        rw1 = rw.ResizeWidget(self)
-
-        # This one we will reparent to the ResizeWidget...
-        panel = wx.Panel(self)
-        panel.SetMinSize((100, 150))
-        rw1.SetManagedChild(panel)
-
         self.gui = parent.gui
         self.tool = tool
         self.offset = (0, 0)
         self.directory = None
-        self.mc = wx.media.MediaCtrl(panel, style=wx.SIMPLE_BORDER)
+        self.mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
         self.timer = wx.Timer(self)  # updates the slider as the file plays
         self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
         self.total = ""  # total time
@@ -376,23 +368,23 @@ class MediaPanel(wx.Panel):
         self.SetDropTarget(self.file_drop)
 
         path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
-        self.open = wx.BitmapButton(panel, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR))
-        self.play = wx.BitmapButton(panel, bitmap=wx.Bitmap(path + "play.png"))
-        self.pause = wx.BitmapButton(panel, bitmap=wx.Bitmap(path +  "pause.png"))
-        self.stop = wx.BitmapButton(panel, bitmap=wx.Bitmap(path + "stop.png"))
+        self.open = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR))
+        self.play = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "play.png"))
+        self.pause = wx.BitmapButton(self, bitmap=wx.Bitmap(path +  "pause.png"))
+        self.stop = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "stop.png"))
         self.play.Disable()
         self.pause.Disable()
         self.stop.Disable()
 
-        self.file = wx.StaticText(panel)
-        self.elapsed = wx.StaticText(panel)
+        self.file = wx.StaticText(self)
+        self.elapsed = wx.StaticText(self)
         timesizer = wx.BoxSizer(wx.HORIZONTAL)
         timesizer.Add(self.file, 1, wx.LEFT | wx.RIGHT, 5)
         timesizer.Add(self.elapsed, 0, wx.ALIGN_RIGHT | wx.RIGHT, 5)
 
-        self.slider = wx.Slider(panel)
+        self.slider = wx.Slider(self)
         self.slider.SetToolTipString(_("Skip to a position"))
-        self.volume = wx.Slider(panel, value=100, style=wx.SL_VERTICAL | wx.SL_INVERSE)
+        self.volume = wx.Slider(self, value=100, style=wx.SL_VERTICAL | wx.SL_INVERSE)
         self.volume.SetToolTipString(_("Set the volume"))
         self.slider.SetMinSize((150, -1))
         self.volume.SetMinSize((-1, 75))
@@ -406,13 +398,7 @@ class MediaPanel(wx.Panel):
         sizer.Add(self.volume, (5, 3), flag=wx.RIGHT, border=10)
         sizer.Add(self.slider, (6, 1), flag=wx.EXPAND)
         sizer.Add(timesizer, (7, 1), flag=wx.EXPAND | wx.BOTTOM, border=10)
-        panel.SetSizer(sizer)
-        panel.Layout()
-        
-        self.sizer = wx.BoxSizer()
-        self.sizer.Add(panel)
-        self.sizer.Add(rw1)
-        self.SetSizer(self.sizer)
+        self.SetSizer(sizer)
         self.Layout()
         self.Fit()
 
@@ -430,11 +416,6 @@ class MediaPanel(wx.Panel):
         self.Bind(wx.EVT_TIMER, self.on_timer)
         self.timer.Start(650)
 
-        self.Bind(rw.EVT_RW_LAYOUT_NEEDED, self.OnLayoutNeeded)
-
-
-    def OnLayoutNeeded(self, evt):
-        self.Layout()
 
     def left_down(self, event):
         """Grab the mouse offset of the window relative the the top-left"""

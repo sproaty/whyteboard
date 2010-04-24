@@ -1002,14 +1002,13 @@ def ExceptionHook(exctype, value, trace):
 
 
 
-class WhyteboardList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin,
-                listmix.ListRowHighlighter):
+class WhyteboardList(wx.ListCtrl, listmix.ListRowHighlighter):
 
-    def __init__(self, parent, style=0):
-        wx.ListCtrl.__init__(self, parent, style=style | wx.DEFAULT_CONTROL_BORDER
-                             | wx.LC_SINGLE_SEL | wx.LC_HRULES)
-        listmix.ListCtrlAutoWidthMixin.__init__(self)
+    def __init__(self, parent):
+        wx.ListCtrl.__init__(self, parent, style=wx.DEFAULT_CONTROL_BORDER | 
+                             wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES)
         listmix.ListRowHighlighter.__init__(self, (206, 218, 255))
+
 
 
 
@@ -1035,7 +1034,7 @@ class ShapeViewer(wx.Dialog):
         self.SetSizeHints(550, 400)
         self.buttons = []  # move up/down/top/bottom buttons
 
-        self.list = WhyteboardList(self, style=wx.LC_REPORT)
+        self.list = WhyteboardList(self)
         self.pages = wx.ComboBox(self, size=(125, 25), style=wx.CB_READONLY)
         label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1121,24 +1120,31 @@ class ShapeViewer(wx.Dialog):
         self.pages.SetSelection(self.gui.current_tab)
 
         self.list.ClearAll()
-        self.list.InsertColumn(0, _("Position"), width=65)
+        self.list.InsertColumn(0, _("Position"))
         self.list.InsertColumn(1, _("Type"))
         self.list.InsertColumn(2, _("Thickness"))
         self.list.InsertColumn(3, _("Color"))
-        self.list.InsertColumn(4, _("Properties"), width=wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(4, _("Properties"))
 
         if not self.shapes:
             index = self.list.InsertStringItem(sys.maxint, "")
-            self.list.SetStringItem(index, 1, _("No shapes drawn"))
+            self.list.SetStringItem(index, 3, _("No shapes drawn"))
+            self.list.SetColumnWidth(4, 70)
         else:
             for x, shape in enumerate(reversed(self.shapes)):
                 index = self.list.InsertStringItem(sys.maxint, str(x + 1))
+                self.list.SetStringItem(index, 0,  str(x + 1))
                 self.list.SetStringItem(index, 1, _(shape.name))
                 self.list.SetStringItem(index, 2, str(shape.thickness))
                 self.list.SetStringItem(index, 3, str(shape.colour))
                 self.list.SetStringItem(index, 4, shape.properties())
-        self.list.Select(0)
-        self.Layout()
+            self.list.SetColumnWidth(4, wx.LIST_AUTOSIZE)
+
+        self.list.SetColumnWidth(0, 60)
+        self.list.SetColumnWidth(1, 70)                
+        self.list.SetColumnWidth(2, 70)
+        self.list.SetColumnWidth(3, wx.LIST_AUTOSIZE)
+
 
 
     def check_buttons(self):
@@ -1284,7 +1290,7 @@ class PDFCache(wx.Dialog):
         self.gui = gui
         self.files = {}
         self.original_files = {}
-        self.list = WhyteboardList(self, style=wx.LC_REPORT)
+        self.list = WhyteboardList(self)
         self.SetSizeHints(450, 300)
 
         if os.path.exists(self.gui.util.library):
@@ -1334,25 +1340,30 @@ class PDFCache(wx.Dialog):
         Creates all columns and populates them with the PDF cache list
         """
         self.list.ClearAll()
-        self.list.InsertColumn(0, _("File Location"), width=200)
-        self.list.InsertColumn(1, _("Quality"), width=wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(2, _("Pages"), width=wx.LIST_AUTOSIZE)
-        self.list.InsertColumn(3, _("Date Cached"), width=wx.LIST_AUTOSIZE)
+        self.list.InsertColumn(0, _("File Location"))
+        self.list.InsertColumn(1, _("Quality"))
+        self.list.InsertColumn(2, _("Pages"))
+        self.list.InsertColumn(3, _("Date Cached"))
 
         if not self.files:
             index = self.list.InsertStringItem(sys.maxint, "")
             self.list.SetStringItem(index, 0, _("There are no cached items to display"))
-            return
+        else:
+    
+            for x, key in self.files.items():
+                f = self.files[x]
+                index = self.list.InsertStringItem(sys.maxint, str(x + 1))
+                date = f.get('date', _("No Date Saved"))
+    
+                self.list.SetStringItem(index, 0, f['file'])
+                self.list.SetStringItem(index, 1, f['quality'].capitalize())
+                self.list.SetStringItem(index, 2, "%s" % len(f['images']))
+                self.list.SetStringItem(index, 3, date)            
 
-        for x, key in self.files.items():
-            f = self.files[x]
-            index = self.list.InsertStringItem(sys.maxint, str(x + 1))
-            date = f.get('date', _("No Date Saved"))
-
-            self.list.SetStringItem(index, 0, f['file'])
-            self.list.SetStringItem(index, 1, f['quality'].capitalize())
-            self.list.SetStringItem(index, 2, "%s" % len(f['images']))
-            self.list.SetStringItem(index, 3, date)
+        self.list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        self.list.SetColumnWidth(1, 70)                
+        self.list.SetColumnWidth(2, 60)
+        self.list.SetColumnWidth(3, wx.LIST_AUTOSIZE)
 
 
     def check_buttons(self):
@@ -1365,10 +1376,6 @@ class PDFCache(wx.Dialog):
 
 
     def ok(self, event):
-        #for x, key in self.original_files.items():
-        #    if not self.files.has_key(x):
-        #        [os.remove(img) for img in self.original_files[x]['images']]
-
         with open(self.gui.util.library, "w") as f:
             pickle.dump(self.files, f)
         self.Close()
