@@ -18,7 +18,10 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 import os
+import sys
 import random
+import tarfile
+import distutils.dir_util
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 
@@ -142,6 +145,25 @@ def make_filename():
     return string +"-temp-%s" % (random.randrange(0, 999999))
 
 
+def get_clipboard():
+    """
+    Checks the clipboard for any valid image or text data to paste
+    """
+    bmp = wx.BitmapDataObject()
+    wx.TheClipboard.Open()
+    success = wx.TheClipboard.GetData(bmp)
+    wx.TheClipboard.Close()
+    if success:
+        return bmp
+    text = wx.TextDataObject()
+    wx.TheClipboard.Open()
+    success = wx.TheClipboard.GetData(text)
+    wx.TheClipboard.Close()
+    if success:
+        return text
+    return False
+    
+
 def transparent_supported():
     """
     Does this wxPython build support transparency?
@@ -153,3 +175,63 @@ def transparent_supported():
         return True
     except NotImplementedError:
         return False
+    
+
+def is_exe():
+    """
+    Determine if Whyteboard is being run as an exe
+    """
+    try:
+        x = sys.frozen
+        return True
+    except AttributeError:
+        return False    
+    
+    
+
+def download_help_files(path):
+    """
+    Downloads the help files to the user's directory and shows them
+    """
+    _file = os.path.join(path, "whyteboard-help.tar.gz")
+    url = "http://whyteboard.googlecode.com/files/help-files.tar.gz"
+    tmp = None
+    try:
+        tmp = urllib.urlretrieve(url, _file)
+    except IOError:
+        wx.MessageBox(_("Could not connect to server.\n Check your Internet connection and firewall settings"), "Whyteboard")
+        raise IOError
+
+    if os.name == "posix":
+        os.system("tar -xf " + tmp[0])
+    else:
+        tar = tarfile.open(tmp[0])
+        tar.extractall(path)
+        tar.close()
+    os.remove(tmp[0])
+
+
+def extract_tar(path, _file, version):
+    """
+    Extract a .tar.gz source file on Windows, without needing to use the
+    'tar' command, and with no other downloads!
+    """
+    tar = tarfile.open(_file)
+    tar.extractall(path)
+    tar.close()
+    # remove 2 folders that will be updated, may not exist
+    src = os.path.join(path, "whyteboard-" + version)
+
+    # rename all relevant files - ignore any dirs
+    for f in os.listdir(path):
+        location = os.path.join(path, f)
+        if not os.path.isdir(location):
+            _type = os.path.splitext(f)
+
+            if _type[1] in [".py", ".txt"]:
+                new_file = os.path.join(path, _type[0]) + self.backup_ext
+                os.rename(location, new_file)
+
+    # move extracted file to current dir, remove tar, remove extracted dir
+    distutils.dir_util.copy_tree(src, path)
+    distutils.dir_util.remove_tree(src)    

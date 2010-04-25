@@ -59,7 +59,7 @@ from utility import Utility, WhyteboardDropTarget
 import event_ids as event_ids
 from event_ids import *
 
-from functions import get_home_dir
+from functions import get_home_dir, is_exe, get_clipboard, download_help_files
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
                      ExceptionHook, ShapeViewer, Feedback, PDFCache)
 from panels import ControlPanel, SidePanel, SheetsPopup
@@ -111,7 +111,7 @@ class GUI(wx.Frame):
                 self.util.items.insert(1, Highlighter)
 
         self.can_paste = False
-        if self.util.get_clipboard():
+        if get_clipboard():
             self.can_paste = True
         self.toolbar = None
         self.menu = None
@@ -760,7 +760,7 @@ class GUI(wx.Frame):
     def on_new_win(self, event=None):
         """Fires up a new Whyteboard window"""
         program = ('python', os.path.abspath(sys.argv[0]))
-        if self.util.is_exe():
+        if is_exe():
             program = os.path.abspath(sys.argv[0])
 
         subprocess.Popen(program)
@@ -1027,7 +1027,7 @@ class GUI(wx.Frame):
         Grabs the image from the clipboard and places it on the panel
         Ignore is used when pasting into a new sheet
         """
-        data = self.util.get_clipboard()
+        data = get_clipboard()
         if not data:
             return
 
@@ -1448,7 +1448,7 @@ class GUI(wx.Frame):
         d = wx.MessageDialog(self, msg, style=wx.YES_NO | wx.ICON_QUESTION)
         if d.ShowModal() == wx.ID_YES:
             try:
-                self.util.download_help_files()
+                download_help_files(self.util.path[0])
                 self.find_help()
                 return True
             except IOError:
@@ -1571,7 +1571,7 @@ class WhyteboardApp(wx.App):
         iterate over the current directory (where the backup files will be) and
         remove any that matches the random file extension
         """
-        if self.frame.util.is_exe() and os.path.exists("wtbd-bckup.exe"):
+        if is_exe() and os.path.exists("wtbd-bckup.exe"):
             os.remove("wtbd-bckup.exe")
         else:
             path = self.frame.util.get_path()

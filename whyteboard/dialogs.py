@@ -44,7 +44,7 @@ from lib.BeautifulSoup import BeautifulSoup
 
 import meta
 import tools
-from functions import get_home_dir, bitmap_button
+from functions import get_home_dir, bitmap_button, is_exe, extract_tar
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -340,7 +340,7 @@ class UpdateDialog(wx.Dialog):
         found = False
         _type = ".tar.gz"
         if os.name == "nt":
-            if self.gui.util.is_exe():
+            if is_exe():
                 _type = ".zip"
 
         for i, td in enumerate(soup.findAll("td", {"class": "vt id col_0"})):
@@ -389,7 +389,7 @@ class UpdateDialog(wx.Dialog):
             self.btn.SetLabel(_("Retry"))
             return
 
-        if self.gui.util.is_exe():
+        if is_exe():
             # rename current exe, extract zip which contains whyteboard.exe
             if os.name == "nt":
                 os.rename(path[1], "wtbd-bckup.exe")
@@ -403,7 +403,7 @@ class UpdateDialog(wx.Dialog):
             if os.name == "posix":
                 os.system("tar -xf "+ tmp[0] +" --strip-components=1")
             else:
-                self.gui.util.extract_tar(os.path.abspath(tmp[0]), self.version)
+                extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]), self.version)
             os.remove(tmp[0])
             args = ['python', ['python', sys.argv[0]]]  # for os.execvp
 

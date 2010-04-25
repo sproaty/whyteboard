@@ -64,9 +64,7 @@ import sys
 import webbrowser
 import time
 import urllib
-import tarfile
 import zipfile
-import distutils.dir_util
 import wx
 
 try:
@@ -361,7 +359,7 @@ class Utility(object):
             try:
                 temp = method(f)
             except (pickle.UnpicklingError, AttributeError, ImportError, ValueError, TypeError, EOFError):
-                wx.MessageBox(_('"%s" has corrupt data.\nThis file cannot be loaded..') % os.path.basename(filename),
+                wx.MessageBox(_('"%s" has corrupt data.\nThis file cannot be loaded.') % os.path.basename(filename),
                               "Whyteboard")
                 return
             finally:
@@ -671,93 +669,11 @@ class Utility(object):
         return True
 
 
-    def download_help_files(self):
-        """
-        Downloads the help files to the user's directory and shows them
-        """
-        _file = os.path.join(self.path[0], "whyteboard-help.tar.gz")
-        url = "http://whyteboard.googlecode.com/files/help-files.tar.gz"
-        tmp = None
-        try:
-            tmp = urllib.urlretrieve(url, _file)
-        except IOError:
-            wx.MessageBox(_("Could not connect to server.\n Check your Internet connection and firewall settings"), "Whyteboard")
-            raise IOError
-
-        if os.name == "posix":
-            os.system("tar -xf " + tmp[0])
-        else:
-            tar = tarfile.open(tmp[0])
-            tar.extractall(self.path[0])
-            tar.close()
-        os.remove(tmp[0])
-
-
-    def extract_tar(self, _file, version):
-        """
-        Extract a .tar.gz source file on Windows, without needing to use the
-        'tar' command, and with no other downloads!
-        """
-        path = self.path[0]
-        tar = tarfile.open(_file)
-        tar.extractall(path)
-        tar.close()
-        # remove 2 folders that will be updated, may not exist
-        src = os.path.join(path, "whyteboard-" + version)
-
-        widgs = os.path.join(path, "fakewidgets")
-        helps = os.path.join(path, "helpfiles")
-        if os.path.exists(widgs):
-            distutils.dir_util.remove_tree(widgs)
-        if os.path.exists(helps):
-            distutils.dir_util.remove_tree(helps)
-
-        # rename all relevant files - ignore any dirs
-        for f in os.listdir(path):
-            location = os.path.join(path, f)
-            if not os.path.isdir(location):
-                _type = os.path.splitext(f)
-
-                if _type[1] in [".py", ".txt"]:
-                    new_file = os.path.join(path, _type[0]) + self.backup_ext
-                    os.rename(location, new_file)
-
-        # move extracted file to current dir, remove tar, remove extracted dir
-        distutils.dir_util.copy_tree(src, path)
-        distutils.dir_util.remove_tree(src)
-
-
-    def is_exe(self):
-        """Determine if Whyteboard's being run from an exe"""
-        try:
-            x = sys.frozen
-            return True
-        except AttributeError:
-            return False
-
-
     def get_path(self):
         """Fetch the correct resource"""
         if self.path[0] == "/usr/bin":
             return "/usr/lib/whyteboard"
         return self.path[0]
-
-
-    def get_clipboard(self):
-        """Checks the clipboard for any valid image or text data to paste"""
-        bmp = wx.BitmapDataObject()
-        wx.TheClipboard.Open()
-        success = wx.TheClipboard.GetData(bmp)
-        wx.TheClipboard.Close()
-        if success:
-            return bmp
-        text = wx.TextDataObject()
-        wx.TheClipboard.Open()
-        success = wx.TheClipboard.GetData(text)
-        wx.TheClipboard.Close()
-        if success:
-            return text
-        return False
 
 
     def set_clipboard(self, rect):
