@@ -117,6 +117,7 @@ translators = [
      'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
      'Aljosha Papsch https://launchpad.net/~joschi-papsch (German)',
      '"Amy" https://launchpad.net/~anthropofobe (German)',
+     'Antoine Jouve https://launchpad.net/~aj94tj (French)',
      '"Auduf" https://launchpad.net/~5097-mail (Russian)',
      '"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
      'Cristian Asenjo https://launchpad.net/~apu2009 (Spanish)',

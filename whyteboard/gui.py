@@ -141,8 +141,7 @@ class GUI(wx.Frame):
         style = (fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8 |
                  fnb.FNB_DROPDOWN_TABS_LIST | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS |
                  fnb.FNB_NO_NAV_BUTTONS)
-        self.tabs = fnb.FlatNotebook(self, style=style
-                                      )
+        self.tabs = fnb.FlatNotebook(self, style=style)
         self.board = Whyteboard(self.tabs, self)  # the active whyteboard tab
         self.panel = SidePanel(self)
 
@@ -1486,19 +1485,25 @@ class WhyteboardApp(wx.App):
         
         parser = OptionParser(version="Whyteboard %s" % meta.version)
         parser.add_option("-f", "--file", help="load FILE on load")
-        parser.add_option("-l", "--lang", help="set language. can be a country code or language (fr/french, nl/dutch)")
+        parser.add_option("-c", "--conf", help="load configurations from CONF file")
+        parser.add_option("--width", type="int", help="set canvas to WIDTH")
+        parser.add_option( "--height", type="int", help="set canvas to HEIGHT")        
+        parser.add_option("-l", "--lang", help="set language. can be a country code or language (e.g. fr, french, nl, dutch)")               
+              
+        (options, args) = parser.parse_args()
         
         path = os.path.join(get_home_dir(), "user.pref")
+        if options.conf:
+            path = options.conf
+            
         config = ConfigObj(path, configspec=meta.config_scheme.split("\n"))
         validator = Validator()
         config.validate(validator)
                 
         set_lang = False
-        lang_name = config['language']                
-        (options, args) = parser.parse_args()
-        
+        lang_name = config['language']  
+                
         if options.lang:
-            nolog = wx.LogNull()
             country = wx.Locale.FindLanguageInfo(options.lang)
             if country:
                 set_lang = True
@@ -1541,7 +1546,11 @@ class WhyteboardApp(wx.App):
         
         if options.file:
             self.load_file(options.file)
-
+        if options.width:
+            self.frame.board.resize_canvas((options.width, self.frame.board.area[1]))
+        if options.height:
+            self.frame.board.resize_canvas((self.frame.board.area[0], options.height))
+            
         self.delete_temp_files()
         return True
 
