@@ -63,7 +63,6 @@ import os
 import sys
 import webbrowser
 import time
-import urllib
 import zipfile
 import wx
 
@@ -259,6 +258,8 @@ class Utility(object):
                     #  the above iteration didn't find any common pastes
                     if not shape.filename:
                         name = make_filename() + ".jpg"
+                        img.SaveFile(name, wx.BITMAP_TYPE_PNG)
+                        img = wx.Image(name)
                         img.SaveFile(name, wx.BITMAP_TYPE_JPEG)
                         shape.filename = name
                         data[shape.filename] = img_data

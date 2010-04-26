@@ -21,6 +21,8 @@ import os
 import sys
 import random
 import tarfile
+import urllib
+
 import distutils.dir_util
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
@@ -211,7 +213,7 @@ def download_help_files(path):
     os.remove(tmp[0])
 
 
-def extract_tar(path, _file, version):
+def extract_tar(path, _file, version, backup_ext):
     """
     Extract a .tar.gz source file on Windows, without needing to use the
     'tar' command, and with no other downloads!
@@ -229,7 +231,7 @@ def extract_tar(path, _file, version):
             _type = os.path.splitext(f)
 
             if _type[1] in [".py", ".txt"]:
-                new_file = os.path.join(path, _type[0]) + self.backup_ext
+                new_file = os.path.join(path, _type[0]) + backup_ext
                 os.rename(location, new_file)
 
     # move extracted file to current dir, remove tar, remove extracted dir

@@ -103,6 +103,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.undo_list = []
         self.redo_list = []
         self.drawing = False
+        self.prev_drag = (0, 0)
 
         img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
                                     "cursors", "") + "rotate.png")
@@ -499,9 +500,31 @@ class Whyteboard(wx.ScrolledWindow):
         self.redraw_all(update_thumb=True)
 
 
-    def shape_near_canvas_edge(self, x, y, moving=False):
+    def drag_direction(self, x, y):
         """
-        We check that the x/y coords are within 50px from the edge of the canvas
+        Work out the direction a shape's being moved in so that we don't scroll
+        the canvas as a shape is being dragged away from a canvas edge.
+        """
+        direction = None
+        
+        # left
+        if self.prev_drag[0] > x:
+            direction = 'left' 
+        if self.prev_drag[0] < x:
+            direction = 'right'
+        if self.prev_drag[1] > y:
+            direction = 'up'
+        if self.prev_drag[1] < y:
+            direction = 'down'
+            
+        self.prev_drag = (x, y)
+        print direction
+        return direction
+    
+
+    def shape_near_canvas_edge(self, x, y, direction, moving=False):
+        """
+        Check that the x/y coords is within X pixels from the edge of the canvas
         and scroll the canvas accordingly. If the shape is being moved, we need
         to check specific edges of the shape (e.g. left/right side of rectangle)
         """
@@ -513,14 +536,14 @@ class Whyteboard(wx.ScrolledWindow):
         scroll = (-1, -1)        
 
         if moving:
-            if self.selected.edges[EDGE_RIGHT] > start[0] + size[0] - EDGE:
+            if self.selected.edges[EDGE_RIGHT] > start[0] + size[0] - EDGE and direction == "right":
                 scroll = (start[0] + TO_MOVE, -1)
-            if self.selected.edges[EDGE_BOTTOM] > start[1] + size[1] - EDGE:
+            if self.selected.edges[EDGE_BOTTOM] > start[1] + size[1] - EDGE and direction == "down":
                 scroll = (-1, start[1] + TO_MOVE)
 
-            if self.selected.edges[EDGE_LEFT] < start[0] + EDGE:
+            if self.selected.edges[EDGE_LEFT] < start[0] + EDGE and direction == "left":
                 scroll = (start[0] - TO_MOVE, -1)
-            if self.selected.edges[EDGE_TOP] < start[1] + EDGE:
+            if self.selected.edges[EDGE_TOP] < start[1] + EDGE and direction == "up":
                 scroll = (-1, start[1] - TO_MOVE)
 
         else:
@@ -577,13 +600,13 @@ class Whyteboard(wx.ScrolledWindow):
 
     def move_top(self, shape):
         """ Move a shape to the top in the to-draw list. """
-        x, item = self.do_move(shape)
+        item = self.do_move(shape)[1]
         self.shapes.append(item)
         self.redraw_all(True)
 
     def move_bottom(self, shape):
         """ Move a shape up in the to-draw list. """
-        x, item = self.do_move(shape)
+        item = self.do_move(shape)[1]
         self.shapes.insert(0, item)
         self.redraw_all(True)
 

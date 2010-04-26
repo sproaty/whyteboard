@@ -403,7 +403,8 @@ class UpdateDialog(wx.Dialog):
             if os.name == "posix":
                 os.system("tar -xf "+ tmp[0] +" --strip-components=1")
             else:
-                extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]), self.version)
+                extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]), 
+                            self.version, self.gui.util.backup_ext)
             os.remove(tmp[0])
             args = ['python', ['python', sys.argv[0]]]  # for os.execvp
 
