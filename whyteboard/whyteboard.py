@@ -504,8 +504,6 @@ class Whyteboard(wx.ScrolledWindow):
         We check that the x/y coords are within 50px from the edge of the canvas
         and scroll the canvas accordingly. If the shape is being moved, we need
         to check specific edges of the shape (e.g. left/right side of rectangle)
-        Presents some difficulty with a polygon/image. Need to refactor shapes
-        to report their edges
         """
         size = self.GetClientSizeTuple()
         if not self.area > size:  # canvas is too small to need to scroll

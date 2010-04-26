@@ -1487,12 +1487,12 @@ class WhyteboardApp(wx.App):
         parser.add_option("-f", "--file", help="load FILE on load")
         parser.add_option("-c", "--conf", help="load configurations from CONF file")
         parser.add_option("--width", type="int", help="set canvas to WIDTH")
-        parser.add_option( "--height", type="int", help="set canvas to HEIGHT")        
-        parser.add_option("-l", "--lang", help="set language. can be a country code or language (e.g. fr, french, nl, dutch)")               
-              
-        (options, args) = parser.parse_args()
+        parser.add_option( "--height", type="int", help="set canvas to HEIGHT")
+        parser.add_option("-u", "--update", action="store_true", help="check for a newer version of whyteboard")
+        parser.add_option("-l", "--lang", help="set language. can be a country code or language (e.g. fr, french, nl, dutch)")
         
         path = os.path.join(get_home_dir(), "user.pref")
+        (options, args) = parser.parse_args()
         if options.conf:
             path = options.conf
             
@@ -1550,6 +1550,9 @@ class WhyteboardApp(wx.App):
             self.frame.board.resize_canvas((options.width, self.frame.board.area[1]))
         if options.height:
             self.frame.board.resize_canvas((self.frame.board.area[0], options.height))
+            
+        if options.update:
+            self.frame.on_update()           
             
         self.delete_temp_files()
         return True
