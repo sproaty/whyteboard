@@ -35,7 +35,6 @@ from wx.lib.wordwrap import wordwrap as wordwrap
 from lib.pubsub import pub
 
 import meta
-from utility import MediaDropTarget
 from event_ids import *
 from functions import create_colour_bitmap, get_time
 
@@ -540,7 +539,19 @@ class MediaPanel(wx.Panel):
 
     def on_volume(self, evt):
         self.mc.SetVolume(float(self.volume.GetValue() / 100))
+        
+        
+#---------------------------------------------------------------------
 
+class MediaDropTarget(wx.FileDropTarget):
+    """Implements drop target functionality to receive files"""
+    def __init__(self, panel):
+        wx.FileDropTarget.__init__(self)
+        self.panel = panel
+
+    def OnDropFiles(self, x, y, filenames):
+        self.panel.do_load_file(filenames[0])
+        
 #---------------------------------------------------------------------
 
 

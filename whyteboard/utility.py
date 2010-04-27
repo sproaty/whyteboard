@@ -692,71 +692,8 @@ class Utility(object):
         wx.TheClipboard.Close()
 
 
-
 #----------------------------------------------------------------------
 
-class WhyteboardDropTarget(wx.PyDropTarget):
-    """Implements drop target functionality to receive files and text"""
-    def __init__(self, gui):
-        wx.PyDropTarget.__init__(self)
-        self.gui = gui
-        self.do = wx.DataObjectComposite()
-        self.filedo = wx.FileDataObject()
-        self.textdo = wx.TextDataObject()
-        self.bmpdo = wx.BitmapDataObject()
-        self.do.Add(self.filedo)
-        self.do.Add(self.bmpdo)
-        self.do.Add(self.textdo)
-        self.SetDataObject(self.do)
 
-
-    def OnData(self, x, y, d):
-        """
-        Handles drag/dropping files/text or a bitmap
-        """
-        if self.GetData():
-            df = self.do.GetReceivedFormat().GetType()
-
-            if df in [wx.DF_UNICODETEXT, wx.DF_TEXT]:
-
-                shape = tools.Text(self.gui.board, self.gui.util.colour, 1)
-                shape.text = self.textdo.GetText()
-
-                self.gui.board.shape = shape
-                shape.left_down(x, y)
-                shape.left_up(x, y)
-                self.gui.board.text = None
-                self.gui.board.change_current_tool()
-                self.gui.board.redraw_all(True)
-
-            elif df == wx.DF_FILENAME:
-                for x, name in enumerate(self.filedo.GetFilenames()):
-                    if x or self.gui.board.shapes:
-                        self.gui.on_new_tab()
-
-                    if name.endswith(".wtbd"):
-                        self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
-                    else:
-                        self.gui.do_open(name)
-
-            elif df == wx.DF_BITMAP:
-                bmp = self.bmpdo.GetBitmap()
-                shape = tools.Image(self.gui.board, bmp, None)
-                shape.left_down(x, y)
-                wx.Yield()
-                self.gui.board.redraw_all(True)
-
-        return d
-
-#----------------------------------------------------------------------
-
-class MediaDropTarget(wx.FileDropTarget):
-    """Implements drop target functionality to receive files"""
-    def __init__(self, panel):
-        wx.FileDropTarget.__init__(self)
-        self.panel = panel
-
-    def OnDropFiles(self, x, y, filenames):
-        self.panel.do_load_file(filenames[0])
 
 #----------------------------------------------------------------------

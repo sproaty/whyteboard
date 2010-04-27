@@ -52,9 +52,9 @@ from lib.validate import Validator
 
 import lib.icon
 import meta
-from whyteboard import Whyteboard
+from whyteboard import Whyteboard, WhyteboardDropTarget
 from tools import Image, Note, Text, Media, Highlighter, EDGE_LEFT, EDGE_TOP
-from utility import Utility, WhyteboardDropTarget
+from utility import Utility
 
 import event_ids as event_ids
 from event_ids import *

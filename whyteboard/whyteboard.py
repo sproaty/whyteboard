@@ -44,11 +44,10 @@ from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
                    BOTTOM_RIGHT, CENTER_TOP, CENTER_RIGHT, CENTER_BOTTOM,
                    CENTER_LEFT, HANDLE_ROTATE, EDGE_TOP, EDGE_RIGHT, EDGE_LEFT,
                    EDGE_BOTTOM)
-import utility
 
 #----------------------------------------------------------------------
 
-EDGE = 10    # distance from canvas edge before shape will scroll canvas
+EDGE = 15    # distance from canvas edge before shape will scroll canvas
 TO_MOVE = 5  # pixels shape will cause canvas to scroll
 CANVAS_BORDER = 15  # border pixels in size (overridable by user)
 RIGHT = 1
@@ -72,7 +71,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
-        self.file_drop = utility.WhyteboardDropTarget(gui)
+        self.file_drop = WhyteboardDropTarget(gui)
         self.SetDropTarget(self.file_drop)
 
         if os.name == "nt":
@@ -518,7 +517,6 @@ class Whyteboard(wx.ScrolledWindow):
             direction = 'down'
             
         self.prev_drag = (x, y)
-        print direction
         return direction
     
 
@@ -544,6 +542,7 @@ class Whyteboard(wx.ScrolledWindow):
             if self.selected.edges[EDGE_LEFT] < start[0] + EDGE and direction == "left":
                 scroll = (start[0] - TO_MOVE, -1)
             if self.selected.edges[EDGE_TOP] < start[1] + EDGE and direction == "up":
+                print 'up'
                 scroll = (-1, start[1] - TO_MOVE)
 
         else:
@@ -707,3 +706,59 @@ class Whyteboard(wx.ScrolledWindow):
 
         if size[0] < self.area[0] or size[1] < self.area[1]:
             self.SetVirtualSize((self.area[0] + 20, self.area[1] + 20))
+            
+            
+#----------------------------------------------------------------------
+
+class WhyteboardDropTarget(wx.PyDropTarget):
+    """Implements drop target functionality to receive files and text"""
+    def __init__(self, gui):
+        wx.PyDropTarget.__init__(self)
+        self.gui = gui
+        self.do = wx.DataObjectComposite()
+        self.filedo = wx.FileDataObject()
+        self.textdo = wx.TextDataObject()
+        self.bmpdo = wx.BitmapDataObject()
+        self.do.Add(self.filedo)
+        self.do.Add(self.bmpdo)
+        self.do.Add(self.textdo)
+        self.SetDataObject(self.do)
+
+
+    def OnData(self, x, y, d):
+        """
+        Handles drag/dropping files/text or a bitmap
+        """
+        if self.GetData():
+            df = self.do.GetReceivedFormat().GetType()
+
+            if df in [wx.DF_UNICODETEXT, wx.DF_TEXT]:
+
+                shape = tools.Text(self.gui.board, self.gui.util.colour, 1)
+                shape.text = self.textdo.GetText()
+
+                self.gui.board.shape = shape
+                shape.left_down(x, y)
+                shape.left_up(x, y)
+                self.gui.board.text = None
+                self.gui.board.change_current_tool()
+                self.gui.board.redraw_all(True)
+
+            elif df == wx.DF_FILENAME:
+                for x, name in enumerate(self.filedo.GetFilenames()):
+                    if x or self.gui.board.shapes:
+                        self.gui.on_new_tab()
+
+                    if name.endswith(".wtbd"):
+                        self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
+                    else:
+                        self.gui.do_open(name)
+
+            elif df == wx.DF_BITMAP:
+                bmp = self.bmpdo.GetBitmap()
+                shape = tools.Image(self.gui.board, bmp, None)
+                shape.left_down(x, y)
+                wx.Yield()
+                self.gui.board.redraw_all(True)
+
+        return d            
