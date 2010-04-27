@@ -56,14 +56,25 @@ from whyteboard import Whyteboard, WhyteboardDropTarget
 from tools import Image, Note, Text, Media, Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
 
-import event_ids as event_ids
-from event_ids import *
+
 
 from functions import get_home_dir, is_exe, get_clipboard, download_help_files
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
                      ExceptionHook, ShapeViewer, Feedback, PDFCache)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
+
+# phew!
+from event_ids import (ID_CLEAR_ALL, ID_CLEAR_ALL_SHEETS, ID_CLEAR_SHEETS, 
+                       ID_COLOUR_GRID, ID_DESELECT, ID_EXPORT, ID_EXPORT_ALL, 
+                       ID_EXPORT_PDF, ID_FEEDBACK, ID_EXPORT_PREF, ID_FULLSCREEN,
+                       ID_HISTORY, ID_IMPORT_IMAGE, ID_IMPORT_PDF, ID_IMPORT_PREF, 
+                       ID_IMPORT_PS, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP,
+                       ID_MOVE_TO_BOTTOM, ID_NEW, ID_NEXT, ID_PASTE_NEW, ID_PDF_CACHE,
+                       ID_PREV, ID_RECENTLY_CLOSED, ID_RELOAD_PREF, ID_RENAME, 
+                       ID_REPORT_BUG, ID_RESIZE, ID_SHAPE_VIEWER, ID_STATUSBAR, 
+                       ID_SWAP_COLOURS, ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT, 
+                       ID_TRANSLATE, ID_UNDO_SHEET, ID_UPDATE)
 
 
 _ = wx.GetTranslation  # Define a translation string
@@ -293,11 +304,11 @@ class GUI(wx.Frame):
         self.menu.Enable(wx.ID_PASTE, self.can_paste)
         self.menu.Enable(ID_PASTE_NEW, self.can_paste)
 
-        # Note: using the import "functions" module here to get the ID
         keys = ['toolbar', 'statusbar', 'tool_preview', 'colour_grid']
-        for x in keys:
+        ids = [ID_TOOLBAR, ID_STATUSBAR, ID_TOOL_PREVIEW, ID_COLOUR_GRID]
+        for x, _id in zip(keys, ids):
             if self.util.config[x]:
-                view.Check(getattr(event_ids, "ID_" + x.upper()), True)
+                view.Check(_id, True)
             else:
                 getattr(self, "on_" + x)(None, False)
 

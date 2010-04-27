@@ -50,9 +50,12 @@ from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
 EDGE = 15    # distance from canvas edge before shape will scroll canvas
 TO_MOVE = 5  # pixels shape will cause canvas to scroll
 CANVAS_BORDER = 15  # border pixels in size (overridable by user)
-RIGHT = 1
+
+# area user clicked on canvas to resize
+RIGHT = 1 
 DIAGONAL = 2
 BOTTOM = 3
+
 
 
 class Whyteboard(wx.ScrolledWindow):

@@ -35,11 +35,9 @@ import wx
 
 from lib.pubsub import pub
 
-
 import meta
 from dialogs import TextInput
 from panels import MediaPanel, ShapePopup
-from event_ids import *
 
 _ = wx.GetTranslation
 
