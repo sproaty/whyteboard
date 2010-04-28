@@ -56,8 +56,6 @@ from whyteboard import Whyteboard, WhyteboardDropTarget
 from tools import Image, Note, Text, Media, Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
 
-
-
 from functions import get_home_dir, is_exe, get_clipboard, download_help_files
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
                      ExceptionHook, ShapeViewer, Feedback, PDFCache)
@@ -175,10 +173,10 @@ class GUI(wx.Frame):
         wx.UpdateUIEvent.SetUpdateInterval(50)
         wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         self.board.update_thumb()
+        self.make_menu()
         self.do_bindings()
         self.update_panels(True)  # bold first items
 
-        wx.CallAfter(self.make_menu)
         wx.CallAfter(self.UpdateWindowUI)
 
 
@@ -321,7 +319,7 @@ class GUI(wx.Frame):
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.on_change_tab)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_DROPPED, self.on_drop_tab)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CONTEXT_MENU, self.tab_popup)
-        self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # end conversion
+        self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # end pdf conversion
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
         self.Bind(wx.EVT_CHAR_HOOK, self.hotkey)
         self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
@@ -343,7 +341,6 @@ class GUI(wx.Frame):
         # hotkeys
         self.hotkeys = [x.hotkey for x in self.util.items]
         ac = []
-
         # Need to bind each item's hotkey to trigger change tool, passing its ID
         # (position + 1 in the list, basically)
         if os.name == "nt":
@@ -352,7 +349,10 @@ class GUI(wx.Frame):
                 _id = wx.NewId()
                 ac.append((wx.ACCEL_NORMAL, ord(item.hotkey.upper()), _id))
                 self.Bind(wx.EVT_MENU, blah, id=_id)
-
+        else:
+            ac = [(wx.ACCEL_CTRL, ord('\t'), self.next.GetId()), 
+                  (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId()) ]
+            
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
 
