@@ -19,9 +19,9 @@
 
 
 """
-This module contains the Whyteboard class, a window that can be drawn upon. Each
-Whyteboard panel gets added to a tab in the GUI, and each Whyteboard maintains
-a list of undo/redo actions for itself; thus each Whyteboard tab on the GUI has
+This module contains the Canvas class, a window that can be drawn upon. Each
+Canvas panel gets added to a tab in the GUI, and each Canvas maintains
+a list of undo/redo actions for itself; thus each Canvas tab on the GUI has
 its own undo/redo.
 
 The canvas to be drawn on is managed by a buffer bitmap, and the rest of the
@@ -58,7 +58,7 @@ BOTTOM = 3
 
 
 
-class Whyteboard(wx.ScrolledWindow):
+class Canvas(wx.ScrolledWindow):
     """
     The drawing frame of the application. References to self.shape.drawing are
     for the Polygon tool, mainly avoiding isinstance() checks
@@ -681,7 +681,7 @@ class Whyteboard(wx.ScrolledWindow):
         self.redraw_all()
 
     def get_tab(self):
-        """ Returns the current tab number of this Whyteboard instance. """
+        """ Returns the current tab number of this Canvas instance. """
         return self.tab.GetSelection()
 
     def capture_mouse(self):

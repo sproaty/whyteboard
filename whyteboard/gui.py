@@ -19,7 +19,7 @@
 
 
 """
-This module implements the Whyteboard application.  It takes a Whyteboard class
+This module implements the Whyteboard application.  It takes a Canvas class
 and wraps it in a GUI with a menu/toolbar/statusbar; can save and load drawings,
 clear the workspace, undo, redo, a simple history "replayer", allowing you to
 have a replay of what you have drawn played back to you.
@@ -52,7 +52,7 @@ from lib.validate import Validator
 
 import lib.icon
 import meta
-from whyteboard import Whyteboard, WhyteboardDropTarget
+from whyteboard import Canvas, WhyteboardDropTarget
 from tools import Image, Note, Text, Media, Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
 
@@ -83,7 +83,7 @@ SCROLL_AMOUNT = 3
 
 class GUI(wx.Frame):
     """
-    This class contains a ControlPanel, a Whyteboard frame and a SidePanel
+    This class contains a ControlPanel, a Canvas frame and a SidePanel
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
@@ -151,7 +151,7 @@ class GUI(wx.Frame):
                  fnb.FNB_DROPDOWN_TABS_LIST | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS |
                  fnb.FNB_NO_NAV_BUTTONS)
         self.tabs = fnb.FlatNotebook(self, style=style)
-        self.board = Whyteboard(self.tabs, self)  # the active whyteboard tab
+        self.board = Canvas(self.tabs, self)  # the active whyteboard tab
         self.panel = SidePanel(self)
 
         self.thumbs = self.panel.thumbs
@@ -791,7 +791,7 @@ class GUI(wx.Frame):
         self.tab_count += 1
         self.thumbs.new_thumb(name=name)
         self.notes.add_tab(name)
-        self.tabs.AddPage(Whyteboard(self.tabs, self), name)
+        self.tabs.AddPage(Canvas(self.tabs, self), name)
 
         self.update_panels(False)  # unhighlight current
         self.thumbs.thumbs[self.current_tab].current = True
@@ -1301,16 +1301,20 @@ class GUI(wx.Frame):
 
     def on_prev(self, event=None):
         """ Changes to the previous sheet """
+        if not self.current_tab:
+            return
         self.tabs.SetSelection(self.current_tab - 1)
         self.on_change_tab()
 
     def on_next(self, event=None):
         """ Changes to the next sheet """
+        if self.tab_count < 1 and self.current_tab + 1 > self.tab_count:
+            return
         self.tabs.SetSelection(self.current_tab + 1)
         self.on_change_tab()
 
     def on_clear(self, event=None):
-        """ Clears current sheet's drawings, except images. """
+        """ Clears current sheet's drawings, except images. """      
         self.board.clear(keep_images=True)
         self.update_shape_viewer()
 

@@ -183,11 +183,7 @@ def is_exe():
     """
     Determine if Whyteboard is being run as an exe
     """
-    try:
-        x = sys.frozen
-        return True
-    except AttributeError:
-        return False    
+    return hasattr(sys, "frozen") 
     
     
 
