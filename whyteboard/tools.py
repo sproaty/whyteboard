@@ -1731,7 +1731,7 @@ class Select(Tool):
                     self.shape.anchor(self.handle)
                     self.anchored = True
                 self.shape.resize(x, y, self.handle)
-                self.board.shape_near_canvas_edge(x, y)
+                self.board.shape_near_canvas_edge(x, y, self.board.drag_direction(x, y))
 
 
     def draw(self, dc, replay=False):
