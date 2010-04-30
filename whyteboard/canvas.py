@@ -52,7 +52,7 @@ TO_MOVE = 5  # pixels shape will cause canvas to scroll
 CANVAS_BORDER = 15  # border pixels in size (overridable by user)
 
 # area user clicked on canvas to resize
-RIGHT = 1 
+RIGHT = 1
 DIAGONAL = 2
 BOTTOM = 3
 
@@ -74,7 +74,7 @@ class Canvas(wx.ScrolledWindow):
         self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
-        self.file_drop = WhyteboardDropTarget(gui)
+        self.file_drop = CanvasDropTarget(gui)
         self.SetDropTarget(self.file_drop)
 
         if os.name == "nt":
@@ -97,7 +97,7 @@ class Canvas(wx.ScrolledWindow):
         self.shape = None  # currently selected shape *to draw with*
         self.medias = []  # list of Media panels
         self.selected = None  # selected shape *with Select tool*
-        self.text  = None  # current Text object for redraw all
+        self.text = None  # current Text object for redraw all
         self.copy = None  # BitmapSelect instance
         self.resizing = False
         self.cursor_control = False  # toggle resize canvas cursor on/off
@@ -254,7 +254,7 @@ class Canvas(wx.ScrolledWindow):
             if not self.shape.drawing:
                 if not self.resize_direction:
                     self.resize_direction = direction
-                if( not self.cursor_control or direction != self.resize_direction):
+                if(not self.cursor_control or direction != self.resize_direction):
                     self.resize_direction = direction
                     self.cursor_control = True
                     self.resize_cursor(direction) # change cursor
@@ -391,7 +391,7 @@ class Canvas(wx.ScrolledWindow):
         if isinstance(self.shape.cursor, wx.Cursor):
             self.SetCursor(self.shape.cursor)
         else:
-            self.SetCursor(wx.StockCursor(self.shape.cursor) )
+            self.SetCursor(wx.StockCursor(self.shape.cursor))
 
 
     def add_shape(self, shape):
@@ -508,20 +508,20 @@ class Canvas(wx.ScrolledWindow):
         the canvas as a shape is being dragged away from a canvas edge.
         """
         direction = None
-        
+
         # left
         if self.prev_drag[0] > x:
-            direction = 'left' 
+            direction = 'left'
         if self.prev_drag[0] < x:
             direction = 'right'
         if self.prev_drag[1] > y:
             direction = 'up'
         if self.prev_drag[1] < y:
             direction = 'down'
-            
+
         self.prev_drag = (x, y)
         return direction
-    
+
 
     def shape_near_canvas_edge(self, x, y, direction, moving=False):
         """
@@ -534,7 +534,7 @@ class Canvas(wx.ScrolledWindow):
             return
 
         start = self.GetViewStart()
-        scroll = (-1, -1)        
+        scroll = (-1, -1)
 
         if moving:
             if self.selected.edges[EDGE_RIGHT] > start[0] + size[0] - EDGE and direction == "right":
@@ -709,11 +709,11 @@ class Canvas(wx.ScrolledWindow):
 
         if size[0] < self.area[0] or size[1] < self.area[1]:
             self.SetVirtualSize((self.area[0] + 20, self.area[1] + 20))
-            
-            
+
+
 #----------------------------------------------------------------------
 
-class WhyteboardDropTarget(wx.PyDropTarget):
+class CanvasDropTarget(wx.PyDropTarget):
     """Implements drop target functionality to receive files and text"""
     def __init__(self, gui):
         wx.PyDropTarget.__init__(self)
@@ -764,4 +764,4 @@ class WhyteboardDropTarget(wx.PyDropTarget):
                 wx.Yield()
                 self.gui.board.redraw_all(True)
 
-        return d            
+        return d

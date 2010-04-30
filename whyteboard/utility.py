@@ -120,7 +120,7 @@ class Utility(object):
         self.config = config
 
         tools.HANDLE_SIZE = self.config['handle_size']
-        whyteboard.CANVAS_BORDER = self.config['canvas_border']
+        canvasCANVAS_BORDER = self.config['canvas_border']
         if 'default_font' in self.config:
             self.font = wx.FFont(1, 1)
             self.font.SetNativeFontInfoFromString(self.config['default_font'])
@@ -486,7 +486,7 @@ class Utility(object):
 
     def library_write(self, location, images, quality):
         """Adds a newly converted file to the library"""
-        self.library_create()    
+        self.library_create()
         with open(self.library) as f:
             files = pickle.load(f)
 
@@ -537,21 +537,21 @@ class Utility(object):
             count = len(after) - len(before)
             images = []
             ignore = False
-            
+
             if not count:
                 wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
                 wx.BeginBusyCursor()
                 webbrowser.open_new_tab("http://pages.cs.wisc.edu/~ghost/")
                 wx.CallAfter(wx.EndBusyCursor)
                 return
-                        
-            if count == 1:   
+
+            if count == 1:
                 images.append(path + tmp_file + ".png")
                 ignore = True
             else:
                 for x in range(count):
                     # store the temp file path for this file in the dictionary
-                    images.append(path + tmp_file + "-%s" % x + ".png") 
+                    images.append(path + tmp_file + "-%s" % x + ".png")
 
             self.display_converted(_file, images, ignore)
             self.library_write(_file, images, quality)
@@ -566,7 +566,7 @@ class Utility(object):
         """
         Display converted items. _file: PDF/PS name. Images: list of files
         """
-        if (not ignore_close and self.gui.tab_count == 1 
+        if (not ignore_close and self.gui.tab_count == 1
             and not self.gui.board.shapes):
             self.remove_all_sheets()
 

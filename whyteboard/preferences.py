@@ -103,7 +103,7 @@ class Preferences(wx.Dialog):
             tools.HANDLE_SIZE = self.config['handle_size']
 
         if self.config['canvas_border'] != old['canvas_border']:
-            whyteboard.CANVAS_BORDER = self.config['canvas_border']
+            canvas.CANVAS_BORDER = self.config['canvas_border']
             self.gui.board.resize_canvas(self.gui.board.area)
 
 
@@ -281,7 +281,7 @@ class FontAndColours(wx.Panel):
             colours.append([int(c) for c in col])
 
         for x, colour in enumerate(colours):
-            method = lambda evt, _id=x: self.on_colour(evt, _id)
+            method = lambda evt, _id = x: self.on_colour(evt, _id)
             b = wx.BitmapButton(self, bitmap=create_colour_bitmap(colour))
             self.buttons.append(b)
             self.grid.Add(b, 0)
@@ -468,7 +468,7 @@ class View(scrolled.ScrolledPanel):
         for x, btn in enumerate([radio1, radio2]):
             sizer.Add(btn, 0, wx.LEFT, 30)
             sizer.Add((10, 5))
-            method = lambda evt, _id=x: self.on_view(evt, _id)
+            method = lambda evt, _id = x: self.on_view(evt, _id)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
 
         sizer.Add(cols_label, 0, wx.ALL, 15)
@@ -559,11 +559,11 @@ class PDF(wx.Panel):
         for x, btn in enumerate([radio1, radio2, radio3]):
             sizer.Add(btn, 0, wx.LEFT, 30)
             sizer.Add((10, 5))
-            method = lambda evt, _id=x: self.on_quality(evt, _id)
+            method = lambda evt, _id = x: self.on_quality(evt, _id)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
 
         sizer.Add((10, 10))
-        sizer.Add(note, 0,  wx.LEFT | wx.BOTTOM, 30)
+        sizer.Add(note, 0, wx.LEFT | wx.BOTTOM, 30)
 
         if os.name == "nt":
             label_im = wx.StaticText(self, label=_("ImageMagick Location"))
