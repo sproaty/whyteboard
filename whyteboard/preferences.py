@@ -37,8 +37,9 @@ from copy import copy
 from wx.lib.wordwrap import wordwrap as wordwrap
 from wx.lib import scrolledpanel as scrolled
 
+from lib.pubsub import pub
+
 import tools
-import whyteboard
 import meta
 from functions import create_colour_bitmap
 from dialogs import FindIM
@@ -103,7 +104,7 @@ class Preferences(wx.Dialog):
             tools.HANDLE_SIZE = self.config['handle_size']
 
         if self.config['canvas_border'] != old['canvas_border']:
-            canvas.CANVAS_BORDER = self.config['canvas_border']
+            pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
             self.gui.canvas.resize(self.gui.canvas.area)
 
 

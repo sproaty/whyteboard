@@ -40,16 +40,16 @@ validator = Validator()
 config.validate(validator)
 
 
-def make_shapes(board):
+def make_shapes(canvas):
     """
     Generates shapes. Needs a Whyteboard instance to add the shapes to
     """
-    params = [board, Colour(0, 0, 0), 1]
+    params = [canvas, Colour(0, 0, 0), 1]
 
-    for tool in board.gui.util.items:
+    for tool in canvas.gui.util.items:
         #if not isinstance(item, (tools.Media, tools.Select)):
         #print item
-        #pub.sendMessage('shape.add', shape=item)#board.add_shape(item(*params))
+        #pub.sendMessage('shape.add', shape=item)#canvas.add_shape(item(*params))
         item = tool(*params)
         item.left_down(5, 6)
 

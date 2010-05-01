@@ -326,8 +326,8 @@ class GUI(wx.Frame):
 
         topics = {'shape.add': self.shape_add,
                   'shape.selected': self.shape_selected,
-                  'board.capture_mouse': self.capture_mouse,
-                  'board.release_mouse': self.release_mouse,
+                  'canvas.capture_mouse': self.capture_mouse,
+                  'canvas.release_mouse': self.release_mouse,
                   'shape_viewer_update': self.update_shape_viewer}
         [pub.subscribe(value, key) for key, value in topics.items()]
 
@@ -632,13 +632,13 @@ class GUI(wx.Frame):
         dlg.Destroy()
         if filename:
             names = []
-            board = self.canvas
+            canvas = self.canvas
             for x in range(self.tab_count):
                 self.canvas = self.tabs.GetPage(x)
                 name = "%s-tempblahhahh-%s-.jpg" % (filename, x)
                 names.append(name)
                 self.util.export(name)
-            self.canvas = board
+            self.canvas = canvas
 
             self.process = wx.Process(self)
             files = ""
@@ -669,11 +669,11 @@ class GUI(wx.Frame):
         filename = self.export_prompt()
         if filename:
             name = os.path.splitext(filename)
-            board = self.canvas
+            canvas = self.canvas
             for x in range(self.tab_count):
                 self.canvas = self.tabs.GetPage(x)
                 self.util.export("%s-%s%s" % (name[0], x + 1, name[1]))
-            self.canvas = board
+            self.canvas = canvas
 
 
     def on_export_pref(self, event=None):
@@ -863,10 +863,10 @@ class GUI(wx.Frame):
         for x in self.canvas.medias:
             x.remove_panel()
 
-        board = self.canvas
-        item = [board.shapes, board.undo_list, board.redo_list, board.area,
-                self.tabs.GetPageText(self.current_tab), board.medias,
-                board.GetViewStart()[0], board.GetViewStart()[1]]
+        canvas = self.canvas
+        item = [canvas.shapes, canvas.undo_list, canvas.redo_list, canvas.area,
+                self.tabs.GetPageText(self.current_tab), canvas.medias,
+                canvas.GetViewStart()[0], canvas.GetViewStart()[1]]
 
         self.closed_tabs.append(item)
         self.tab_count -= 1
@@ -883,20 +883,20 @@ class GUI(wx.Frame):
     def on_undo_tab(self, event=None, tab=None):
         """
         Undoes the last closed tab from the list.
-        Re-creates the board from the saved shapes/undo/redo lists
+        Re-creates the canvas from the saved shapes/undo/redo lists
         """
         if not self.closed_tabs:
             return
         if not tab:
-            board = self.closed_tabs.pop()
+            canvas = self.closed_tabs.pop()
         else:
-            board = self.closed_tabs.pop(self.closed_tabs.index(tab))
+            canvas = self.closed_tabs.pop(self.closed_tabs.index(tab))
 
-        self.on_new_tab(name=board[4], wb=True)
-        self.canvas.shapes = board[0]
-        self.canvas.undo_list = board[1]
-        self.canvas.redo_list = board[2]
-        self.canvas.medias = board[5]
+        self.on_new_tab(name=canvas[4], wb=True)
+        self.canvas.shapes = canvas[0]
+        self.canvas.undo_list = canvas[1]
+        self.canvas.redo_list = canvas[2]
+        self.canvas.medias = canvas[5]
 
         for x in self.canvas.medias:
             x.canvas = self.canvas
@@ -908,8 +908,8 @@ class GUI(wx.Frame):
                 pub.sendMessage('note.add', note=shape)
 
         wx.Yield()  # doesn't draw thumbnail otherwise...
-        self.canvas.resize(board[3])
-        self.canvas.Scroll(board[6], board[7])
+        self.canvas.resize(canvas[3])
+        self.canvas.Scroll(canvas[6], canvas[7])
         self.canvas.redraw_all(True)
         self.update_shape_viewer()
         self.make_closed_tabs_menu()
@@ -973,10 +973,10 @@ class GUI(wx.Frame):
         if not _id == wx.ID_COPY:
             # update the GUI to the inverse of the bool value if the button
             # should be enabled
-            board = self.canvas
-            if _id == wx.ID_REDO and board.redo_list:
+            canvas = self.canvas
+            if _id == wx.ID_REDO and canvas.redo_list:
                 do = True
-            elif _id == wx.ID_UNDO and board.undo_list:
+            elif _id == wx.ID_UNDO and canvas.undo_list:
                 do = True
             elif _id == ID_PREV and self.current_tab:
                 do = True
@@ -987,22 +987,22 @@ class GUI(wx.Frame):
                 do = True
             elif _id in [ID_UNDO_SHEET, ID_RECENTLY_CLOSED] and self.closed_tabs:
                 do = True
-            elif _id in [wx.ID_DELETE, ID_DESELECT] and board.selected:
+            elif _id in [wx.ID_DELETE, ID_DESELECT] and canvas.selected:
                 do = True
-            elif _id == ID_MOVE_UP and board.check_move("up"):
+            elif _id == ID_MOVE_UP and canvas.check_move("up"):
                 do = True
-            elif _id == ID_MOVE_DOWN and board.check_move("down"):
+            elif _id == ID_MOVE_DOWN and canvas.check_move("down"):
                 do = True
-            elif _id == ID_MOVE_TO_TOP and board.check_move("top"):
+            elif _id == ID_MOVE_TO_TOP and canvas.check_move("top"):
                 do = True
-            elif _id == ID_MOVE_TO_BOTTOM and board.check_move("bottom"):
+            elif _id == ID_MOVE_TO_BOTTOM and canvas.check_move("bottom"):
                 do = True
-            elif (_id == ID_TRANSPARENT and board.selected
-                  and not isinstance(board.selected, (Media, Image, Text))):
+            elif (_id == ID_TRANSPARENT and canvas.selected
+                  and not isinstance(canvas.selected, (Media, Image, Text))):
                 do = True
-            elif (_id == ID_SWAP_COLOURS and board.selected
+            elif (_id == ID_SWAP_COLOURS and canvas.selected
                   and not self.canvas.selected.background == wx.TRANSPARENT
-                  and not isinstance(board.selected, (Media, Image, Text))):
+                  and not isinstance(canvas.selected, (Media, Image, Text))):
                 do = True
         elif self.canvas:
             if self.canvas.copy:

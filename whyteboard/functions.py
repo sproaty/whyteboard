@@ -61,16 +61,16 @@ def get_time(seconds):
     return h + "%02d:%02d" % (m, s)
 
 
-def load_image(path, board, image_class):
+def load_image(path, canvas, image_class):
     """
     Loads an image into the given Whyteboard tab. bitmap is the path to an
     image file to create a bitmap from.
     image_class = tools.Image *CLASS ITSELF*
     """
     image = wx.Bitmap(path)
-    shape = image_class(board, image, path)
+    shape = image_class(canvas, image, path)
     shape.left_down(0, 0)  # renders, updates scrollbars
-    board.update_thumb()
+    canvas.update_thumb()
 
 
 def create_colour_bitmap(colour):

@@ -122,7 +122,13 @@ class Canvas(wx.ScrolledWindow):
         self.Bind(wx.EVT_MIDDLE_UP, self.middle_up)
         self.Bind(wx.EVT_MOTION, self.motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
-
+        
+        pub.subscribe(self.set_border, 'canvas.set_border')
+        
+        
+    def set_border(self, border_size):
+        global CANVAS_BORDER
+        CANVAS_BORDER = border_size
 
 
     def left_down(self, event):

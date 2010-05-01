@@ -820,13 +820,13 @@ class Popup(wx.Menu):
 
     def export(self, event):
         """
-        Change board temporarily to 'trick' the gui into exporting the selected
+        Change canvas temporarily to 'trick' the gui into exporting the selected
         tab. Then, restore the GUI to the correct one
         """
-        board = self.gui.canvas  # reference to restore
+        canvas = self.gui.canvas  # reference to restore
         self.gui.canvas = self.gui.tabs.GetPage(self.item)
         self.gui.on_export()
-        self.gui.canvas = board
+        self.gui.canvas = canvas
 
     def rename(self, event):
         self.gui.on_rename(sheet=self.item)
@@ -1085,8 +1085,8 @@ class Thumbs(scrolled.ScrolledPanel):
         to an image to rescale it, and converted back to a bitmap to be
         displayed on the button as the thumbnail.
         """
-        board = self.gui.tabs.GetPage(_id)
-        img = wx.ImageFromBitmap(board.buffer)
+        canvas = self.gui.tabs.GetPage(_id)
+        img = wx.ImageFromBitmap(canvas.buffer)
         img.Rescale(150, 150)
         bitmap = wx.BitmapFromImage(img)
 

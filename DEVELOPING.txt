@@ -21,7 +21,7 @@ the user for the location to save the file to, and then call a function in the
 utility class to actually save the data.
 
 Since the program is tabbed, the gui keeps a reference to its active "board".
-The gui updates its board reference when opening/closing/changing tabs. Often we
+The gui updates its canvas reference when opening/closing/changing tabs. Often we
 want to perform operations only on the current tab, e.g. paste an image into a
 tab, export the current tab as an image and so on. Thus knowing the current tab
 is useful.

@@ -62,15 +62,15 @@ EDGE_LEFT   = 12
 
 
 class Tool(object):
-    """ Abstract class representing a tool: Drawing board/colour/thickness """
+    """ Abstract class representing a tool: Drawing canvas/colour/thickness """
     tooltip = ""
     name = ""
     icon = ""
     hotkey = ""
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL, join=wx.JOIN_ROUND):
-        self.canvas = board
+        self.canvas = canvas
         self.colour = colour
         self.background = background
         self.thickness = thickness
@@ -157,9 +157,9 @@ class OverlayShape(Tool):
     Contains methods for drawing an overlayed shape. Has some general method
     implementations for drawing handles and drawing the shape.
     """
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_CROSS, join=wx.JOIN_ROUND):
-        Tool.__init__(self, board, colour, thickness, background, cursor, join)
+        Tool.__init__(self, canvas, colour, thickness, background, cursor, join)
         self.handles = []
         self.canvas.overlay = wx.Overlay()
 
@@ -285,9 +285,9 @@ class Polygon(OverlayShape):
     icon = "polygon"
     hotkey = "y"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_CROSS, join=wx.JOIN_ROUND):
-        OverlayShape.__init__(self, board, colour, thickness, background,
+        OverlayShape.__init__(self, canvas, colour, thickness, background,
                               cursor, join)
         self.points = []
         self.drawing = False  # class keeps track of its drawing, not whyteboard
@@ -302,7 +302,7 @@ class Polygon(OverlayShape):
 
     def left_down(self, x, y):
         if not self.drawing:
-            pub.sendMessage('board.capture_mouse')
+            pub.sendMessage('canvas.capture_mouse')
 
         self.drawing = True
         self.points.append((x, y))
@@ -335,7 +335,7 @@ class Polygon(OverlayShape):
             self.drawing = False
             self.sort_handles()
             pub.sendMessage('shape.add', shape=self)
-            pub.sendMessage('board.release_mouse')
+            pub.sendMessage('canvas.release_mouse')
             self.canvas.change_current_tool()
             self.canvas.update_thumb()
 
@@ -513,9 +513,9 @@ class Pen(Polygon):
     icon = "pen"
     hotkey = "p"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL, join=wx.JOIN_ROUND):
-        Polygon.__init__(self, board, colour, thickness, background, cursor,
+        Polygon.__init__(self, canvas, colour, thickness, background, cursor,
                          join)
         self.time = []  # list of times for each point, for redrawing
         self.background = None
@@ -587,9 +587,9 @@ class Highlighter(Pen):
     name = _("Highlighter")
     icon = "highlighter"
     hotkey = "h"
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL, join=wx.JOIN_ROUND):
-        Pen.__init__(self, board, colour, thickness + 6)
+        Pen.__init__(self, canvas, colour, thickness + 6)
         self.current = (0, 0)
 
     def left_down(self, x, y):
@@ -653,8 +653,8 @@ class Rectangle(OverlayShape):
     icon = "rectangle"
     hotkey = "r"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        OverlayShape.__init__(self, board, colour, thickness, background,
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
+        OverlayShape.__init__(self, canvas, colour, thickness, background,
                               join=wx.JOIN_MITER)
         self.width = 0
         self.height = 0
@@ -823,8 +823,8 @@ class Circle(OverlayShape):
     icon = "circle"
     hotkey = "c"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        OverlayShape.__init__(self, board, colour, thickness, background)
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
+        OverlayShape.__init__(self, canvas, colour, thickness, background)
         self.radius = 1
 
     def motion(self, x, y):
@@ -894,8 +894,8 @@ class Line(OverlayShape):
     icon = "line"
     hotkey = "l"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        OverlayShape.__init__(self, board, colour, thickness, background)
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
+        OverlayShape.__init__(self, canvas, colour, thickness, background)
         self.x2 = 0
         self.y2 = 0
 
@@ -1029,9 +1029,9 @@ class Media(Tool):
     hotkey = "m"
     icon = "media"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_ARROW):
-        Tool.__init__(self, board, colour, thickness, background, cursor)
+        Tool.__init__(self, canvas, colour, thickness, background, cursor)
         self.filename = None
         self.mc = None  # media panel
 
@@ -1078,9 +1078,9 @@ class Eraser(Pen):
     icon = "eraser"
     hotkey = "e"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         cursor = self.make_cursor(thickness)
-        Pen.__init__(self, board, (255, 255, 255), thickness + 6, background,
+        Pen.__init__(self, canvas, (255, 255, 255), thickness + 6, background,
                      cursor)
 
 
@@ -1127,8 +1127,8 @@ class Eyedrop(Tool):
     icon = "eyedrop"
     hotkey = "d"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        Tool.__init__(self, board, colour, thickness, background, wx.CURSOR_CROSS)
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
+        Tool.__init__(self, canvas, colour, thickness, background, wx.CURSOR_CROSS)
 
     def left_down(self, x, y):
         dc = wx.BufferedDC(None, self.canvas.buffer)  # create tmp DC
@@ -1165,8 +1165,8 @@ class Text(OverlayShape):
     icon = "text"
     hotkey = "t"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        OverlayShape.__init__(self, board, colour, thickness, background,
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
+        OverlayShape.__init__(self, canvas, colour, thickness, background,
                               wx.CURSOR_IBEAM)
         self.font = None
         self.text = ""
@@ -1323,8 +1323,8 @@ class Note(Text):
     icon = "note"
     hotkey = "n"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        Text.__init__(self, board, colour, thickness, background)
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
+        Text.__init__(self, canvas, colour, thickness, background)
         self.tree_id = None
 
     def left_up(self, x, y,):
@@ -1393,8 +1393,8 @@ class Image(OverlayShape):
     When being pickled, the image reference will be removed.
     """
     name = _("Image")
-    def __init__(self, board, image, path):
-        OverlayShape.__init__(self, board, wx.BLACK, 1)
+    def __init__(self, canvas, image, path):
+        OverlayShape.__init__(self, canvas, wx.BLACK, 1)
         self.image = image  # of type wx.Bitmap
         self.path = path  # not really needed anymore
         self.filename = None  # used to restore image on load
@@ -1625,8 +1625,8 @@ class Select(Tool):
     icon = "select"
     hotkey = "s"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        Tool.__init__(self, board, (0, 0, 0), 1, background, cursor=wx.CURSOR_ARROW)
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
+        Tool.__init__(self, canvas, (0, 0, 0), 1, background, cursor=wx.CURSOR_ARROW)
         self.shape = None
         self.dragging = False
         self.undone = False  # Adds an undo point once per class
@@ -1767,8 +1767,8 @@ class BitmapSelect(Rectangle):
     icon = "select-rectangular"
     hotkey = "b"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        Rectangle.__init__(self, board, (0, 0, 0), 1)
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
+        Rectangle.__init__(self, canvas, (0, 0, 0), 1)
 
     def left_down(self, x, y):
         self.canvas.overlay = wx.Overlay()
@@ -1825,8 +1825,8 @@ class Zoom(Tool):
     icon = "zoom"
     hotkey = "z"
 
-    def __init__(self, board, colour, thickness, background=wx.TRANSPARENT):
-        Tool.__init__(self, board, (0, 0, 0), 1, background, wx.CURSOR_MAGNIFIER)
+    def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
+        Tool.__init__(self, canvas, (0, 0, 0), 1, background, wx.CURSOR_MAGNIFIER)
 
 
     def left_up(self, x, y):
@@ -1853,8 +1853,8 @@ class Flood(Tool):
     icon = "flood"
     hotkey = "f"
 
-    def __init__(self, board, colour, thickness):
-        Tool.__init__(self, board, colour, 1)
+    def __init__(self, canvas, colour, thickness):
+        Tool.__init__(self, canvas, colour, 1)
 
 
     def left_down(self, x, y):

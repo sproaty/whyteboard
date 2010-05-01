@@ -71,13 +71,14 @@ try:
 except ImportError:
     import pickle
 
+from lib.pubsub import pub
+
 from dialogs import ProgressDialog, FindIM, PromptForSave
 from functions import (get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type)
 
 import meta
 import tools
-import whyteboard
 
 _ = wx.GetTranslation
 
@@ -120,7 +121,7 @@ class Utility(object):
         self.config = config
 
         tools.HANDLE_SIZE = self.config['handle_size']
-        canvasCANVAS_BORDER = self.config['canvas_border']
+        pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
         if 'default_font' in self.config:
             self.font = wx.FFont(1, 1)
             self.font.SetNativeFontInfoFromString(self.config['default_font'])
@@ -149,14 +150,14 @@ class Utility(object):
 
             # load in every shape from every tab
             for x in range(self.gui.tab_count):
-                board = self.gui.tabs.GetPage(x)
+                canvas = self.gui.tabs.GetPage(x)
 
-                for m in board.medias:
+                for m in canvas.medias:
                     m.save()
 
-                temp[x] = list(board.shapes)
-                canvas_sizes.append(board.area)
-                medias.append(board.medias)
+                temp[x] = list(canvas.shapes)
+                canvas_sizes.append(canvas.area)
+                medias.append(canvas.medias)
                 names.append(self.gui.tabs.GetPageText(x))
 
 
@@ -213,17 +214,17 @@ class Utility(object):
                 # Fix bug in Windows where the current shapes get reset above
                 count = 0
                 for x in temp:
-                    board = self.gui.tabs.GetPage(x)
+                    canvas = self.gui.tabs.GetPage(x)
                     for shape in temp[x]:
-                        shape.canvas = board
+                        shape.canvas = canvas
                         if isinstance(shape, tools.Note):
                             shape.load(False)
                             shape.tree_id = tree_ids[count]
                             count += 1
                         else:
                             shape.load()
-                    for m in board.medias:
-                        m.canvas = board
+                    for m in canvas.medias:
+                        m.canvas = canvas
                         m.load()
 
                 self.zip.close()
@@ -240,8 +241,8 @@ class Utility(object):
         data = {}  # list of bitmap data, check if image has been pasted
         to_remove = []
         for x in range(self.gui.tab_count):
-            board = self.gui.tabs.GetPage(x)
-            for shape in board.shapes:
+            canvas = self.gui.tabs.GetPage(x)
+            for shape in canvas.shapes:
                 if isinstance(shape, tools.Image):
                     img = shape.image.ConvertToImage()
                     if not img.HasAlpha():
@@ -419,7 +420,7 @@ class Utility(object):
 
             for shape in temp[1][x]:
                 try:
-                    shape.canvas = self.gui.canvas  # restore board
+                    shape.canvas = self.gui.canvas  # restore canvas
                     shape.load()  # restore unpickleable settings
                     self.gui.canvas.add_shape(shape)
                 except Exception:

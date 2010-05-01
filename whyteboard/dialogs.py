@@ -553,14 +553,14 @@ class TextInput(wx.Dialog):
         """Updates the canvas with the inputted text"""
         if self.note:
             shape = self.note
-            board = shape.canvas
+            canvas = shape.canvas
         else:
-            board = self.gui.canvas
-            shape = board.shape
+            canvas = self.gui.canvas
+            shape = canvas.shape
         self.transfer_data(shape)
 
         shape.find_extent()
-        board.redraw_all()  # stops overlapping text
+        canvas.redraw_all()  # stops overlapping text
 
     def transfer_data(self, text_obj):
         """Transfers the dialog's data to an object."""
@@ -900,11 +900,11 @@ class MyPrintout(wx.Printout):
 
     def OnPrintPage(self, page):
         dc = self.GetDC()
-        board = self.gui.tabs.GetPage(page - 1)
-        board.deselect()
+        canvas = self.gui.tabs.GetPage(page - 1)
+        canvas.deselect()
 
-        maxX = board.buffer.GetWidth()
-        maxY = board.buffer.GetHeight()
+        maxX = canvas.buffer.GetWidth()
+        maxY = canvas.buffer.GetHeight()
 
         marginX = 50
         marginY = 50
@@ -915,8 +915,8 @@ class MyPrintout(wx.Printout):
         scaleX = float(w) / maxX
         scaleY = float(h) / maxY
         actualScale = min(scaleX, scaleY)
-        posX = (w - (board.buffer.GetWidth() * actualScale)) / 2.0
-        posY = (h - (board.buffer.GetHeight() * actualScale)) / 2.0
+        posX = (w - (canvas.buffer.GetWidth() * actualScale)) / 2.0
+        posY = (h - (canvas.buffer.GetHeight() * actualScale)) / 2.0
 
         dc.SetUserScale(actualScale, actualScale)
         dc.SetDeviceOrigin(int(posX), int(posY))
@@ -935,7 +935,7 @@ class MyPrintout(wx.Printout):
             dc.DrawText(_(filename), marginX / 2, -120)
 
         dc.SetDeviceOrigin(int(posX), int(posY))
-        board.redraw_all(dc=dc)
+        canvas.redraw_all(dc=dc)
         return True
 
 
