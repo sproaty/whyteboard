@@ -681,7 +681,7 @@ class Feedback(wx.Dialog):
         params = urlencode({'submitted': 'fgdg',
                             'feedback': self.feedback.GetValue(),
                             'email': self.email.GetValue()})
-        f = urlopen("http://www.basicrpg.com/feedback_submit.php", params)
+        f = urlopen("http://www.whyteboard.org/feedback_submit.php", params)
         wx.MessageBox(_("Your feedback has been sent, thank you."), _("Feedback Sent"))
         self.Destroy()
 
@@ -978,7 +978,7 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
                             'message': self._panel.err_msg,
                             'desc': self._panel.action.GetValue(),
                             'email': self._panel.email.GetValue()})
-        f = urlopen("http://www.basicrpg.com/bug_submit.php", params)
+        f = urlopen("http://www.whyteboard.org/bug_submit.php", params)
 
         self.gui.util.prompt_for_save(self.gui.Destroy)
 
