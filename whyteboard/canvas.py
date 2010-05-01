@@ -130,7 +130,7 @@ class Canvas(wx.ScrolledWindow):
         x, y = self.convert_coords(event)
         if os.name == "nt" and not isinstance(self.shape, Media) and not self.shape.drawing:
             self.CaptureMouse()
-        if not self.shape.drawing and self.check_canvas_resize(x, y):  # don't draw outside canvas
+        if not self.shape.drawing and self.check_resize_direction(x, y):  # don't draw outside canvas
             self.resizing = True
             return
 
@@ -151,7 +151,7 @@ class Canvas(wx.ScrolledWindow):
         """
         x, y = self.convert_coords(event)
         if self.resizing:
-            self.resize_canvas((x, y), self.resize_direction)
+            self.resize((x, y), self.resize_direction)
             return
         else:
             if not self.check_mouse_for_resize(x, y):
@@ -226,7 +226,6 @@ class Canvas(wx.ScrolledWindow):
             else:
                 self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
         elif res == HANDLE_ROTATE:
-
             self.SetCursor(self.rotate_cursor)
         elif res in [TOP_LEFT, BOTTOM_RIGHT]:
             self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
@@ -249,7 +248,7 @@ class Canvas(wx.ScrolledWindow):
         cursor if it's in a different resizable area than it previously was
         Returns the cursor to its normal state if it's moved back in
         """
-        direction = self.check_canvas_resize(x, y)
+        direction = self.check_resize_direction(x, y)
         if not self.drawing and direction:
             if not self.shape.drawing:
                 if not self.resize_direction:
@@ -257,7 +256,7 @@ class Canvas(wx.ScrolledWindow):
                 if(not self.cursor_control or direction != self.resize_direction):
                     self.resize_direction = direction
                     self.cursor_control = True
-                    self.resize_cursor(direction) # change cursor
+                    self.set_resize_cursor(direction) # change cursor
                 return False
         else:
             if self.cursor_control:
@@ -267,7 +266,7 @@ class Canvas(wx.ScrolledWindow):
         return True
 
 
-    def check_canvas_resize(self, x, y):
+    def check_resize_direction(self, x, y):
         """Which direction the canvas can be resized in, if any"""
         if x > self.area[0] and y > self.area[1]:
             return DIAGONAL
@@ -278,14 +277,14 @@ class Canvas(wx.ScrolledWindow):
         return False
 
 
-    def resize_cursor(self, direction):
+    def set_resize_cursor(self, direction):
         cursors = {DIAGONAL: wx.CURSOR_SIZENWSE, RIGHT: wx.CURSOR_SIZEWE,
                    BOTTOM: wx.CURSOR_SIZENS}
         self.SetCursor(wx.StockCursor(cursors.get(direction)))
 
 
 
-    def resize_canvas(self, size, direction=None):
+    def resize(self, size, direction=None):
         """ Performs the canvas resizing. Size = (w, h) tuple """
         if size[0] < 1 or size[1] < 1:
             return
@@ -697,10 +696,10 @@ class Canvas(wx.ScrolledWindow):
         self.gui.thumbs.update(self.get_tab())
 
 
-    def check_resize(self, size):
+    def resize_if_large_image(self, size):
         """ Check whether the canvas should be resized (for large images) """
         if size[0] > self.area[0] or size[1] > self.area[1]:
-            self.resize_canvas(size)
+            self.resize(size)
 
 
     def on_size(self, event):

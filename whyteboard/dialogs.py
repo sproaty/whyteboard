@@ -860,10 +860,10 @@ class Resize(wx.Dialog):
 
     def resize(self, event=None):
         value = (self.wctrl.GetValue(), self.hctrl.GetValue())
-        self.gui.board.resize_canvas(value)
+        self.gui.board.resize(value)
 
     def cancel(self, event):
-        self.gui.board.resize_canvas(self.size)
+        self.gui.board.resize(self.size)
         self.Close()
 
 #----------------------------------------------------------------------

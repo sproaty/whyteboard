@@ -1415,7 +1415,7 @@ class Image(OverlayShape):
         self.x = x
         self.y = y
         pub.sendMessage('shape.add', shape=self)
-        self.board.check_resize((self.image.GetWidth(), self.image.GetHeight()))
+        self.board.resize_if_large_image((self.image.GetWidth(), self.image.GetHeight()))
         self.sort_handles()
 
         dc = wx.BufferedDC(None, self.board.buffer)

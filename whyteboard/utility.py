@@ -403,7 +403,7 @@ class Utility(object):
             self.gui.on_new_tab(name=name)
 
             try:
-                self.gui.board.resize_canvas(temp[4][x])
+                self.gui.board.resize(temp[4][x])
             except KeyError:
                 pass
 

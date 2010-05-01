@@ -908,7 +908,7 @@ class GUI(wx.Frame):
                 pub.sendMessage('note.add', note=shape)
 
         wx.Yield()  # doesn't draw thumbnail otherwise...
-        self.board.resize_canvas(board[3])
+        self.board.resize(board[3])
         self.board.Scroll(board[6], board[7])
         self.board.redraw_all(True)
         self.update_shape_viewer()
@@ -1067,7 +1067,7 @@ class GUI(wx.Frame):
             wx.Yield()
             self.board.redraw_all(True)
             if ignore:
-                self.board.resize_canvas((bmp.GetWidth(), bmp.GetHeight()))
+                self.board.resize((bmp.GetWidth(), bmp.GetHeight()))
 
 
     def on_paste_new(self, event):
@@ -1562,9 +1562,9 @@ class WhyteboardApp(wx.App):
         if options.file:
             self.load_file(options.file)
         if options.width:
-            self.frame.board.resize_canvas((options.width, self.frame.board.area[1]))
+            self.frame.board.resize((options.width, self.frame.board.area[1]))
         if options.height:
-            self.frame.board.resize_canvas((self.frame.board.area[0], options.height))
+            self.frame.board.resize((self.frame.board.area[0], options.height))
 
         if options.update:
             self.frame.on_update()

@@ -104,7 +104,7 @@ class Preferences(wx.Dialog):
 
         if self.config['canvas_border'] != old['canvas_border']:
             canvas.CANVAS_BORDER = self.config['canvas_border']
-            self.gui.board.resize_canvas(self.gui.board.area)
+            self.gui.board.resize(self.gui.board.area)
 
 
         if 'default_font' in self.config:
