@@ -215,7 +215,7 @@ class Utility(object):
                 for x in temp:
                     board = self.gui.tabs.GetPage(x)
                     for shape in temp[x]:
-                        shape.board = board
+                        shape.canvas = board
                         if isinstance(shape, tools.Note):
                             shape.load(False)
                             shape.tree_id = tree_ids[count]
@@ -223,7 +223,7 @@ class Utility(object):
                         else:
                             shape.load()
                     for m in board.medias:
-                        m.board = board
+                        m.canvas = board
                         m.load()
 
                 self.zip.close()
@@ -294,8 +294,8 @@ class Utility(object):
             self.convert()
 
         elif _type in meta.types:
-            load_image(self.temp_file, self.gui.board, tools.Image)
-            self.gui.board.redraw_all()
+            load_image(self.temp_file, self.gui.canvas, tools.Image)
+            self.gui.canvas.redraw_all()
         else:
             wx.MessageBox(_("Whyteboard doesn't support the filetype") + " .%s" % _type,
                           "Whyteboard")
@@ -403,7 +403,7 @@ class Utility(object):
             self.gui.on_new_tab(name=name)
 
             try:
-                self.gui.board.resize(temp[4][x])
+                self.gui.canvas.resize(temp[4][x])
             except KeyError:
                 pass
 
@@ -411,25 +411,25 @@ class Utility(object):
             try:
                 media = temp[5][x]
                 for m in media:
-                    m.board = self.gui.board
+                    m.canvas = self.gui.canvas
                     m.load()
-                    self.gui.board.medias.append(m)
+                    self.gui.canvas.medias.append(m)
             except KeyError:
                 pass
 
             for shape in temp[1][x]:
                 try:
-                    shape.board = self.gui.board  # restore board
+                    shape.canvas = self.gui.canvas  # restore board
                     shape.load()  # restore unpickleable settings
-                    self.gui.board.add_shape(shape)
+                    self.gui.canvas.add_shape(shape)
                 except Exception:
                     break
-            self.gui.board.redraw_all(True)
+            self.gui.canvas.redraw_all(True)
 
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
         self.saved = True
-        self.gui.board.change_current_tool()
+        self.gui.canvas.change_current_tool()
 
         try:
             self.gui.tabs.SetSelection(temp[0][3])
@@ -567,15 +567,15 @@ class Utility(object):
         Display converted items. _file: PDF/PS name. Images: list of files
         """
         if (not ignore_close and self.gui.tab_count == 1
-            and not self.gui.board.shapes):
+            and not self.gui.canvas.shapes):
             self.remove_all_sheets()
 
         for x in range(len(images)):
             name = os.path.split(_file)[1][:15] + " - %s" % (x + 1)
             self.gui.on_new_tab(name=name)
-            load_image(images[x], self.gui.board, tools.Image)
+            load_image(images[x], self.gui.canvas, tools.Image)
 
-        self.gui.board.redraw_all()
+        self.gui.canvas.redraw_all()
 
 
     def export(self, filename):
@@ -584,11 +584,11 @@ class Utility(object):
         depending on the filetype. gif is buggered for some reason :-/
         """
         const = get_wx_image_type(filename)
-        self.gui.board.deselect()
+        self.gui.canvas.deselect()
 
-        context = wx.MemoryDC(self.gui.board.buffer)
+        context = wx.MemoryDC(self.gui.canvas.buffer)
         memory = wx.MemoryDC()
-        x, y = self.gui.board.buffer.GetSize()
+        x, y = self.gui.canvas.buffer.GetSize()
         bitmap = wx.EmptyBitmap(x, y, -1)
         memory.SelectObject(bitmap)
         memory.Blit(0, 0, x, y, context, 0, 0)
@@ -598,8 +598,8 @@ class Utility(object):
 
     def remove_all_sheets(self):
         """  Remove all tabs, thumbnails and tree note items """
-        self.gui.board.shapes = []
-        self.gui.board.redraw_all()
+        self.gui.canvas.shapes = []
+        self.gui.canvas.redraw_all()
         self.gui.tabs.DeleteAllPages()
         self.gui.thumbs.remove_all()
         self.gui.notes.remove_all()
@@ -683,7 +683,7 @@ class Utility(object):
             rect.SetX(0)
         if rect.y < 0:
             rect.SetY(0)
-        temp = self.gui.board.buffer.GetSubBitmap(rect)
+        temp = self.gui.canvas.buffer.GetSubBitmap(rect)
         bmp = wx.BitmapDataObject()
         bmp.SetBitmap(temp)
 

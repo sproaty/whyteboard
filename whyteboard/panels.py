@@ -205,7 +205,7 @@ class ControlPanel(wx.Panel):
     def toggle(self, evt):
         """Toggles the collapsible pane and its widgets"""
         self.gui.Layout()
-        self.gui.board.redraw_all()  # fixes a windows redraw bug
+        self.gui.canvas.redraw_all()  # fixes a windows redraw bug
 
 
     def scroll(self, event):
@@ -239,20 +239,20 @@ class ControlPanel(wx.Panel):
             self.tools[new].SetValue(True)
 
         self.toggled = new
-        if self.gui.board:
-            self.gui.board.change_current_tool(new)
+        if self.gui.canvas:
+            self.gui.canvas.change_current_tool(new)
 
 
     def on_transparency(self, event):
         """Toggles transparency in the shapes' background"""
-        if event.Checked() and not self.gui.board.selected:
+        if event.Checked() and not self.gui.canvas.selected:
             self.gui.util.transparent = True
         else:
             self.gui.util.transparent = False
 
-        if self.gui.board.selected:
-            self.gui.board.toggle_transparent()
-        self.gui.board.change_current_tool()
+        if self.gui.canvas.selected:
+            self.gui.canvas.toggle_transparent()
+        self.gui.canvas.change_current_tool()
 
 
     def on_swap(self, event):
@@ -264,7 +264,7 @@ class ControlPanel(wx.Panel):
         self.gui.util.colour = a
         if not self.transparent.IsChecked():
             self.gui.util.background = a
-        self.gui.board.change_current_tool()
+        self.gui.canvas.change_current_tool()
 
 
     def change_colour(self, event=None, colour=None):
@@ -291,15 +291,15 @@ class ControlPanel(wx.Panel):
         """Updates the given utility variable and the selected shape"""
         setattr(self.gui.util, var_name, value)
 
-        if self.gui.board.selected:
-            self.gui.board.add_undo()
+        if self.gui.canvas.selected:
+            self.gui.canvas.add_undo()
             if var_name == "background" and not self.transparent.IsChecked():
-                setattr(self.gui.board.selected, var_name, value)
+                setattr(self.gui.canvas.selected, var_name, value)
             elif var_name != "background":
-                setattr(self.gui.board.selected, var_name, value)
-            self.gui.board.redraw_all(True)
+                setattr(self.gui.canvas.selected, var_name, value)
+            self.gui.canvas.redraw_all(True)
 
-        self.gui.board.change_current_tool()
+        self.gui.canvas.change_current_tool()
         self.preview.Refresh()
 
 
@@ -327,16 +327,16 @@ class DrawingPreview(wx.Window):
         Draws the tool inside the box when tool/colour/thickness
         is changed
         """
-        if self.gui.board:
+        if self.gui.canvas:
             dc = wx.PaintDC(self)
-            dc.SetPen(wx.Pen(self.gui.board.shape.colour, self.gui.board.shape.thickness, wx.SOLID))
+            dc.SetPen(wx.Pen(self.gui.canvas.shape.colour, self.gui.canvas.shape.thickness, wx.SOLID))
             if self.gui.util.transparent:
                 dc.SetBrush(wx.TRANSPARENT_BRUSH)
             else:
-                dc.SetBrush(self.gui.board.shape.brush)
+                dc.SetBrush(self.gui.canvas.shape.brush)
 
             width, height = self.GetClientSize()
-            self.gui.board.shape.preview(dc, width, height)
+            self.gui.canvas.shape.preview(dc, width, height)
 
             dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
@@ -419,7 +419,7 @@ class MediaPanel(wx.Panel):
 
     def left_down(self, event):
         """Grab the mouse offset of the window relative the the top-left"""
-        self.gui.board.selected = self.tool
+        self.gui.canvas.selected = self.tool
         self.tool.selected = True
         self.CaptureMouse()
         pos = self.Parent.ScreenToClient(self.ClientToScreen(event.Position))
@@ -698,19 +698,19 @@ class Notes(wx.Panel):
         item = self.tree.GetPyData(event.GetItem())
 
         if not item.selected:
-            self.gui.board.deselect()
+            self.gui.canvas.deselect()
             item.selected = True
-            self.gui.board.selected = item
+            self.gui.canvas.selected = item
         else:
-            self.gui.board.deselect()
+            self.gui.canvas.deselect()
 
         if draw:
-            self.gui.board.redraw_all()
+            self.gui.canvas.redraw_all()
 
 
     def delete(self, event):
         self.select(event, False)
-        self.gui.board.delete_selected()
+        self.gui.canvas.delete_selected()
 
     def edit_note(self, tree_id, text):
         """Edit a non-blank Note by changing its tree item's text"""
@@ -815,7 +815,7 @@ class Popup(wx.Menu):
 
     def close(self, event):
         self.gui.current_tab = self.item
-        self.gui.board = self.gui.tabs.GetPage(self.item)
+        self.gui.canvas = self.gui.tabs.GetPage(self.item)
         self.gui.on_close_tab()
 
     def export(self, event):
@@ -823,10 +823,10 @@ class Popup(wx.Menu):
         Change board temporarily to 'trick' the gui into exporting the selected
         tab. Then, restore the GUI to the correct one
         """
-        board = self.gui.board  # reference to restore
-        self.gui.board = self.gui.tabs.GetPage(self.item)
+        board = self.gui.canvas  # reference to restore
+        self.gui.canvas = self.gui.tabs.GetPage(self.item)
         self.gui.on_export()
-        self.gui.board = board
+        self.gui.canvas = board
 
     def rename(self, event):
         self.gui.on_rename(sheet=self.item)
@@ -935,7 +935,7 @@ class ShapePopup(Popup):
 
     def delete(self):
         self.select(False)
-        self.gui.board.delete_selected()
+        self.gui.canvas.delete_selected()
 
     def swap(self):
         self.gui.on_swap_colour()
@@ -943,23 +943,23 @@ class ShapePopup(Popup):
 
     def select(self, draw=True):
         if not self.item.selected:
-            self.gui.board.deselect()
+            self.gui.canvas.deselect()
             self.item.selected = True
-            self.gui.board.selected = self.item
+            self.gui.canvas.selected = self.item
         else:
-            self.gui.board.deselect()
+            self.gui.canvas.deselect()
 
         if draw:
-            self.gui.board.redraw_all()
+            self.gui.canvas.redraw_all()
 
 
     def add_point(self):
-        self.gui.board.add_undo()
+        self.gui.canvas.add_undo()
         self.item.points = list(self.item.points)
-        x, y = self.gui.board.ScreenToClient(wx.GetMousePosition())
-        x, y = self.gui.board.CalcUnscrolledPosition(x, y)
+        x, y = self.gui.canvas.ScreenToClient(wx.GetMousePosition())
+        x, y = self.gui.canvas.CalcUnscrolledPosition(x, y)
         self.item.points.append((float(x), float(y)))
-        self.gui.board.redraw_all()
+        self.gui.canvas.redraw_all()
 
 #----------------------------------------------------------------------
 

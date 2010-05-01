@@ -26,14 +26,12 @@ want to perform operations only on the current tab, e.g. paste an image into a
 tab, export the current tab as an image and so on. Thus knowing the current tab
 is useful.
 
-The canvas is the Whyteboard class, defined in whyteboard.py. It is a basic
-window without a title bar, and has its own event bindings. So, when a user is
-drawing by clicking on the canvas, the Whyteboard (gui.board) is calling its own
-events. Multiple Whyteboard canvases will exists at a given time, and the GUI
-presents these views to the user through its tab list, thumbnails panel and the
-Notes tree.
+The Canvas contains the drawable canvas - a scrollable window. It has its own 
+event bindings and no title bar. Multiple Canvases will exists at a given time, 
+and the GUI presents these views to the user through its tab list, thumbnails 
+panel and the Notes tree.
 
-The Whyteboard class contains a list of shapes that has been drawn upon it. Each
+The Canvas class contains a list of shapes that has been drawn upon it. Each
 instance of this class will have its own unique shapes list. This is how each
 Whyteboard tab can perform its own undo and redo without affecting any other
 Whyteboard instances.
@@ -91,18 +89,30 @@ super() on its parent. Also, add your class to the items list at the bottom of
 tools.py, making sure the filename defined in its "icon" attribute exists under
 /images/tools/[icon].png
 
+
+----------------------------------
+
+
 The source files are organised as follows:
 
-lib/ - third party modules
-fakewidgets - mock GUI classes for unit testing
-meta.py - meta data for the program, meant to be dependent on wxPython only
-functions.py - stand-alone functions that can be used anywhere
+lib/           - third party modules
+fakewidgets/   - mock GUI classes for unit testing
 
-utility.py - a utility class that the GUI keeps a reference to. Has functions
-for saving/loading files, getting file paths and misc. things
+canvas.py      - canvas class
+dialogs.py     - dialogs and their events, e.g. Progresss bar / resize / history
+event_ids.py   - custom wxPython IDs for events
+functions.py   - misc. stand-alone functions that can be used anywhere
+gui.py         - main program frame, wx.App
+meta.py        - meta data, meant to be dependent on wxPython only
+panels.py      - control panel, notes, thumnbails
+preferences.py - preferences dialog
+tools.py       - class definitions for the drawing tool.s
+unitests.py    - unit tests
+utility.py     - a class the GUI references that performs saving/loading files, 
+                 getting file paths and misc. things
 
-dialogs.py - dialogs and their events, e.g. Progresss dialog / resize / history
-panels.py - control, notes, thumnbails.
+
+------------------------------------------
 
 
 CODING PRACTICES
@@ -114,7 +124,8 @@ it easily allows you to differentiate between wx and whyteboard's methods. Very
 useful for dialogs and custom panels.
 
 Try and learn to use PubSub. It will help to decouple objects and even modules'
-dependencies on each other which is always a very good thing. 
+dependencies on each other which is always a very good thing, and allows for
+easier testing
 Be wary of performance issues when performing loops. 
+Try and write a unit test for your functionality to assert it works correctly
 Python has a high overhead for functions calls so please be wary of that, too.
-

@@ -3968,7 +3968,7 @@ class PageContainer(wx.Panel):
             #self.DeletePage(tabIdx)
             # hack specific to Whyteboard, here.
             self.Parent.Parent.current_tab = tabIdx
-            self.Parent.Parent.board = self.Parent.GetPage(tabIdx)
+            self.Parent.Parent.canvas = self.Parent.GetPage(tabIdx)
             self.Parent.Parent.on_close_tab()
 
         event.Skip()
@@ -4135,7 +4135,7 @@ class PageContainer(wx.Panel):
             #self.DeletePage(self._iActivePage)
             # hack specific to Whyteboard, here.
             self.Parent.Parent.current_tab = tabIdx
-            self.Parent.Parent.board = self.Parent.GetPage(tabIdx)
+            self.Parent.Parent.canvas = self.Parent.GetPage(tabIdx)
             self.Parent.Parent.on_close_tab()
 
         elif where == FNB_DROP_DOWN_ARROW:

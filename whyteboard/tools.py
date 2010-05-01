@@ -70,7 +70,7 @@ class Tool(object):
 
     def __init__(self, board, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL, join=wx.JOIN_ROUND):
-        self.board = board
+        self.canvas = board
         self.colour = colour
         self.background = background
         self.thickness = thickness
@@ -138,7 +138,7 @@ class Tool(object):
 
     def save(self):
         """ Defines how this class will pickle itself """
-        self.board = None
+        self.canvas = None
         self.brush = None
 
     def load(self):
@@ -161,7 +161,7 @@ class OverlayShape(Tool):
                  cursor=wx.CURSOR_CROSS, join=wx.JOIN_ROUND):
         Tool.__init__(self, board, colour, thickness, background, cursor, join)
         self.handles = []
-        self.board.overlay = wx.Overlay()
+        self.canvas.overlay = wx.Overlay()
 
     def left_down(self, x, y):
         self.x = x
@@ -182,7 +182,7 @@ class OverlayShape(Tool):
         Avoids excess calls to make_pen - better performance
         """
         if not replay:
-            odc = wx.DCOverlay(self.board.overlay, dc)
+            odc = wx.DCOverlay(self.canvas.overlay, dc)
             odc.Clear()
 
         self.make_pen(dc)  # Note object needs a DC to draw its outline here
@@ -310,7 +310,7 @@ class Polygon(OverlayShape):
             self.x = x
             self.y = y
             self.points.append((x, y))
-            self.board.draw_shape(self)
+            self.canvas.draw_shape(self)
 
 
     def motion(self, x, y):
@@ -320,7 +320,7 @@ class Polygon(OverlayShape):
                 if pos < 0:
                     pos = 0
                 self.points[pos] = (x, y)
-            self.board.draw_shape(self)
+            self.canvas.draw_shape(self)
 
 
     def double_click(self, x, y):
@@ -336,8 +336,8 @@ class Polygon(OverlayShape):
             self.sort_handles()
             pub.sendMessage('shape.add', shape=self)
             pub.sendMessage('board.release_mouse')
-            self.board.change_current_tool()
-            self.board.update_thumb()
+            self.canvas.change_current_tool()
+            self.canvas.update_thumb()
 
 
 
@@ -535,7 +535,7 @@ class Pen(Polygon):
             pub.sendMessage('shape.add', shape=self)
             self.sort_handles()
             if len(self.points) == 1:  # a single click
-                self.board.redraw_all()
+                self.canvas.redraw_all()
 
 
     def motion(self, x, y):
@@ -598,7 +598,7 @@ class Highlighter(Pen):
 
     def left_up(self, x, y):
         super(Highlighter, self).left_up(x, y)
-        self.board.redraw_all()
+        self.canvas.redraw_all()
 
     def motion(self, x, y):
         self.points.append( [self.x_tmp, self.y_tmp, x, y] )
@@ -611,7 +611,7 @@ class Highlighter(Pen):
 
     def draw(self, dc, replay=False, _type="LineList"):
         if not dc:
-            dc = self.board.get_dc()
+            dc = self.canvas.get_dc()
 
         gc = wx.GraphicsContext.Create(dc)
         path = gc.CreatePath()
@@ -993,9 +993,10 @@ class Arrow(Line):
         From http://lifshitz.ucdavis.edu/~dmartin/teach_java/slope/arrows.html
         """
         if not replay:
-            odc = wx.DCOverlay(self.board.overlay, dc)
+            odc = wx.DCOverlay(self.canvas.overlay, dc)
             odc.Clear()
-        dc.SetPen(wx.Pen(self.colour, self.thickness))
+        self.make_pen(dc)
+        dc.SetPen(wx.Pen(self.colour, self.thickness))        
         dc.SetBrush(self.brush)
 
         x0, x1, y0, y1 = self.x, self.x2, self.y, self.y2
@@ -1037,13 +1038,13 @@ class Media(Tool):
     def left_down(self, x, y):
         self.x = x
         self.y = y
-        self.board.medias.append(self)
+        self.canvas.medias.append(self)
         self.make_panel()
-        self.board.change_current_tool()
+        self.canvas.change_current_tool()
 
     def make_panel(self):
         if not self.mc:
-            self.mc = MediaPanel(self.board, (self.x, self.y), self)
+            self.mc = MediaPanel(self.canvas, (self.x, self.y), self)
             if self.filename:
                 self.mc.do_load_file(self.filename)
 
@@ -1130,23 +1131,23 @@ class Eyedrop(Tool):
         Tool.__init__(self, board, colour, thickness, background, wx.CURSOR_CROSS)
 
     def left_down(self, x, y):
-        dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
+        dc = wx.BufferedDC(None, self.canvas.buffer)  # create tmp DC
         colour = dc.GetPixel(x, y)  # get colour
-        gui = self.board.gui
+        gui = self.canvas.gui
         gui.control.colour.SetColour(colour)
         gui.util.colour = colour
         gui.control.preview.Refresh()
 
     def right_up(self, x, y):
-        dc = wx.BufferedDC(None, self.board.buffer)  # create tmp DC
+        dc = wx.BufferedDC(None, self.canvas.buffer)  # create tmp DC
         colour = dc.GetPixel(x, y)  # get colour
-        gui = self.board.gui
+        gui = self.canvas.gui
         gui.control.background.SetColour(colour)
         gui.util.background = colour
         gui.control.preview.Refresh()
 
     def preview(self, dc, width, height):
-        dc.SetBrush(wx.Brush(self.board.gui.util.colour))
+        dc.SetBrush(wx.Brush(self.canvas.gui.util.colour))
         dc.DrawRectangle(20, 20, 5, 5)
 
 
@@ -1180,7 +1181,7 @@ class Text(OverlayShape):
 
     def left_down(self, x, y):
         super(Text, self).left_down(x, y)
-        self.board.text = self
+        self.canvas.text = self
 
 
     def left_up(self, x, y):
@@ -1191,13 +1192,13 @@ class Text(OverlayShape):
         """
         self.x = x
         self.y = y
-        dlg = TextInput(self.board.gui, text=self.text)
+        dlg = TextInput(self.canvas.gui, text=self.text)
 
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
-            self.board.text = None
-            self.board.redraw_all()
-            self.board.change_current_tool()
+            self.canvas.text = None
+            self.canvas.redraw_all()
+            self.canvas.change_current_tool()
             return False
 
         dlg.transfer_data(self)  # grab font and text data
@@ -1206,7 +1207,7 @@ class Text(OverlayShape):
         if self.text:
             pub.sendMessage('shape.add', shape=self)
             return True
-        self.board.text = None
+        self.canvas.text = None
         return False
 
 
@@ -1216,9 +1217,9 @@ class Text(OverlayShape):
         font = self.font
         font_data = self.font_data
         colour = self.colour
-        self.board.add_undo()
+        self.canvas.add_undo()
 
-        dlg = TextInput(self.board.gui, self)
+        dlg = TextInput(self.canvas.gui, self)
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
             self.text = text  # restore attributes
@@ -1226,8 +1227,8 @@ class Text(OverlayShape):
             self.colour = colour
             self.font_data = font_data
             self.find_extent()
-            self.board.undo_list.pop()  # undo "undo point" :)
-            self.board.redraw_all()  # get rid of any text
+            self.canvas.undo_list.pop()  # undo "undo point" :)
+            self.canvas.redraw_all()  # get rid of any text
         else:
 
             dlg.transfer_data(self)  # grab font and text data
@@ -1260,7 +1261,7 @@ class Text(OverlayShape):
 
     def find_extent(self):
         """Finds the width/height of the object's text"""
-        dc = wx.ClientDC(self.board)
+        dc = wx.ClientDC(self.canvas)
         x = dc.GetMultiLineTextExtent(self.text, self.font)
         self.extent = x[0], x[1]
 
@@ -1415,12 +1416,12 @@ class Image(OverlayShape):
         self.x = x
         self.y = y
         pub.sendMessage('shape.add', shape=self)
-        self.board.resize_if_large_image((self.image.GetWidth(), self.image.GetHeight()))
+        self.canvas.resize_if_large_image((self.image.GetWidth(), self.image.GetHeight()))
         self.sort_handles()
 
-        dc = wx.BufferedDC(None, self.board.buffer)
+        dc = wx.BufferedDC(None, self.canvas.buffer)
         self.draw(dc)
-        self.board.redraw_dirty(dc)
+        self.canvas.redraw_dirty(dc)
 
 
     def sort_handles(self):
@@ -1495,10 +1496,10 @@ class Image(OverlayShape):
         if handle:
             self.dragging = True
         if not handle:
-            overlay = self.board.overlay  # init.ing the rect resets the overlay
+            overlay = self.canvas.overlay  # init.ing the rect resets the overlay
 
         if handle == HANDLE_ROTATE:
-            self.outline = Polygon(self.board, wx.BLACK, 2)
+            self.outline = Polygon(self.canvas, wx.BLACK, 2)
             self.outline.x = self.x
             self.outline.y = self.y
             self.outline.points.append((self.x, self.y))
@@ -1506,14 +1507,14 @@ class Image(OverlayShape):
             self.outline.points.append((self.x + self.image.GetWidth(), self.y + + self.image.GetHeight()))
             self.outline.points.append((self.x, self.y + self.image.GetHeight()))
         elif handle in [TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT]:
-            self.outline = Rectangle(self.board, wx.BLACK, 2)
+            self.outline = Rectangle(self.canvas, wx.BLACK, 2)
             self.outline.x = self.x
             self.outline.y = self.y
             self.outline.width = self.image.GetWidth()
             self.outline.height = self.image.GetHeight()
 
         if not handle:
-            self.board.overlay = overlay  # so restore it
+            self.canvas.overlay = overlay  # so restore it
         else:
             self.outline.sort_handles()
 
@@ -1532,7 +1533,7 @@ class Image(OverlayShape):
         self.orig_click = None
         self.outline = None
         self.sort_handles()
-        self.board.redraw_all()
+        self.canvas.redraw_all()
 
 
     def draw(self, dc, replay=False):
@@ -1580,7 +1581,7 @@ class Image(OverlayShape):
             if self.filename.find("\\"):  # loading windows file on linux
                 self.filename = ntpath.basename(self.path)
 
-        if not self.board.gui.util.is_zipped:
+        if not self.canvas.gui.util.is_zipped:
             if self.path and os.path.exists(self.path):
                 self.image = wx.Bitmap(self.path)
             else:
@@ -1589,7 +1590,7 @@ class Image(OverlayShape):
                               "Whyteboard")
         else:
             try:
-                data = self.board.gui.util.zip.read("data/" + self.filename)
+                data = self.canvas.gui.util.zip.read("data/" + self.filename)
                 stream = cStringIO.StringIO(data)
                 self.image = wx.BitmapFromImage(wx.ImageFromStream(stream))
 
@@ -1639,16 +1640,16 @@ class Select(Tool):
         First, check the selected shape (which will be drawn on top of the
         others) so that's selected first.
         """
-        self.board.redraw_all()
-        if self.board.selected:
-            if self.check_for_hit(self.board.selected, x, y):
+        self.canvas.redraw_all()
+        if self.canvas.selected:
+            if self.check_for_hit(self.canvas.selected, x, y):
                 return
 
-        for shape in reversed(self.board.shapes):
+        for shape in reversed(self.canvas.shapes):
             if self.check_for_hit(shape, x, y):
                 break  # breaking is vital to selecting the correct shape
         else:
-            self.board.deselect()
+            self.canvas.deselect()
 
 
     def check_for_hit(self, shape, x, y):
@@ -1666,14 +1667,14 @@ class Select(Tool):
             found = True
 
         if found:
-            self.board.overlay = wx.Overlay()
+            self.canvas.overlay = wx.Overlay()
             self.shape = shape
             self.dragging = True
             self.offset = self.shape.offset(x, y)
 
-            if self.board.selected:
-                self.board.deselect()
-            self.board.selected = shape
+            if self.canvas.selected:
+                self.canvas.deselect()
+            self.canvas.selected = shape
             shape.selected = True
 
             pub.sendMessage('shape.selected', shape=shape)
@@ -1683,7 +1684,7 @@ class Select(Tool):
     def right_up(self, x, y):
         """Pops up a shape menu if a shape was clicked on"""
         found = None
-        for shape in reversed(self.board.shapes):
+        for shape in reversed(self.canvas.shapes):
             if shape.handle_hit_test(x, y):
                 found = shape
             elif shape.hit_test(x, y):
@@ -1695,35 +1696,35 @@ class Select(Tool):
             return
 
         selected = None
-        if self.board.selected:
-            selected = self.board.selected
-        self.board.selected = found
-        self.board.gui.PopupMenu(ShapePopup(self.board, self.board.gui, found))
+        if self.canvas.selected:
+            selected = self.canvas.selected
+        self.canvas.selected = found
+        self.canvas.gui.PopupMenu(ShapePopup(self.canvas, self.canvas.gui, found))
 
         if selected:
-            self.board.selected = selected
+            self.canvas.selected = selected
         if not found.selected:
-            self.board.selected = None
+            self.canvas.selected = None
 
 
     def double_click(self, x, y):
-        if isinstance(self.board.selected, Text):
+        if isinstance(self.canvas.selected, Text):
             self.dragging = False
-            self.board.selected.edit()
+            self.canvas.selected.edit()
 
 
     def motion(self, x, y):
         if self.dragging:
             if not self.undone:  # add a single undo point, not one per call
-                self.board.add_undo()
+                self.canvas.add_undo()
                 self.undone = True
                 self.shape.start_select_action(self.handle)
             if not self.handle:  # moving
                 self.shape.move(x, y, self.offset)
                 self.shape.find_edges()
-                direction = self.board.drag_direction(self.shape.edges[EDGE_LEFT], self.shape.edges[EDGE_TOP])
+                direction = self.canvas.drag_direction(self.shape.edges[EDGE_LEFT], self.shape.edges[EDGE_TOP])
                 
-                self.board.shape_near_canvas_edge(self.shape.edges[EDGE_LEFT],
+                self.canvas.shape_near_canvas_edge(self.shape.edges[EDGE_LEFT],
                                          self.shape.edges[EDGE_TOP], direction, True)
                                 
             else:
@@ -1731,7 +1732,7 @@ class Select(Tool):
                     self.shape.anchor(self.handle)
                     self.anchored = True
                 self.shape.resize(x, y, self.handle)
-                self.board.shape_near_canvas_edge(x, y, self.board.drag_direction(x, y))
+                self.canvas.shape_near_canvas_edge(x, y, self.canvas.drag_direction(x, y))
 
 
     def draw(self, dc, replay=False):
@@ -1744,12 +1745,12 @@ class Select(Tool):
             self.shape.end_select_action(self.handle)
 
         pub.sendMessage('shape_viewer_update')
-        self.board.update_thumb()
-        self.board.change_current_tool()
+        self.canvas.update_thumb()
+        self.canvas.change_current_tool()
 
 
     def preview(self, dc, width, height):
-        dc.DrawBitmap(wx.Bitmap(os.path.join(self.board.gui.util.get_path(), "images",
+        dc.DrawBitmap(wx.Bitmap(os.path.join(self.canvas.gui.util.get_path(), "images",
                                    "icons", "cursor.png")), width / 2 - 5, 12)
 
 
@@ -1770,21 +1771,21 @@ class BitmapSelect(Rectangle):
         Rectangle.__init__(self, board, (0, 0, 0), 1)
 
     def left_down(self, x, y):
-        self.board.overlay = wx.Overlay()
+        self.canvas.overlay = wx.Overlay()
         super(BitmapSelect, self).left_down(x, y)
-        self.board.deselect()
-        self.board.copy = None
-        self.board.redraw_all()
-        self.board.copy = self
+        self.canvas.deselect()
+        self.canvas.copy = None
+        self.canvas.redraw_all()
+        self.canvas.copy = self
 
 
 
     def draw(self, dc, replay=False):
         if not replay:
-            odc = wx.DCOverlay(self.board.overlay, dc)
+            odc = wx.DCOverlay(self.canvas.overlay, dc)
             odc.Clear()
 
-        if (not replay and self.board.gui.util.config['bmp_select_transparent']
+        if (not replay and self.canvas.gui.util.config['bmp_select_transparent']
             and meta.transparent):
             dc = wx.GCDC(dc)
             dc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 50)))  # light blue
@@ -1801,9 +1802,9 @@ class BitmapSelect(Rectangle):
     def left_up(self, x, y):
         """ Doesn't affect the shape list """
         if not (x != self.x and y != self.y):
-            self.board.copy = None
-            wx.CallAfter(self.board.change_current_tool)
-            self = BitmapSelect.__init__(self, self.board, self.colour, self.thickness)
+            self.canvas.copy = None
+            wx.CallAfter(self.canvas.change_current_tool)
+            self = BitmapSelect.__init__(self, self.canvas, self.colour, self.thickness)
 
 
     def preview(self, dc, width, height):
@@ -1829,16 +1830,16 @@ class Zoom(Tool):
 
 
     def left_up(self, x, y):
-        x = self.board.scale
+        x = self.canvas.scale
         new = (x[0] - 0.1, x[1] - 0.1)
-        self.board.scale = new
-        self.board.redraw_all()
+        self.canvas.scale = new
+        self.canvas.redraw_all()
 
     def right_up(self, x, y):
-        x = self.board.scale
+        x = self.canvas.scale
         new = (x[0] + 0.1, x[1] + 0.1)
-        self.board.scale = new
-        self.board.redraw_all()
+        self.canvas.scale = new
+        self.canvas.redraw_all()
 
 #---------------------------------------------------------------------
 
@@ -1859,7 +1860,7 @@ class Flood(Tool):
     def left_down(self, x, y):
         self.x = x
         self.y = y
-        self.board.draw_shape(self)
+        self.canvas.draw_shape(self)
         pub.sendMessage('shape.add', shape=self)
 
     def draw(self, dc, replay=False):

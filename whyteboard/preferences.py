@@ -104,7 +104,7 @@ class Preferences(wx.Dialog):
 
         if self.config['canvas_border'] != old['canvas_border']:
             canvas.CANVAS_BORDER = self.config['canvas_border']
-            self.gui.board.resize(self.gui.board.area)
+            self.gui.canvas.resize(self.gui.canvas.area)
 
 
         if 'default_font' in self.config:
@@ -134,7 +134,7 @@ class Preferences(wx.Dialog):
             self.gui.make_closed_tabs_menu()
 
         if self.config['bmp_select_transparent'] != old['bmp_select_transparent']:
-            self.gui.board.copy = None
+            self.gui.canvas.copy = None
 
         if self.config['toolbox_columns'] != old['toolbox_columns']:
             ctrl.toolsizer.SetCols(self.config['toolbox_columns'])
@@ -164,7 +164,7 @@ class Preferences(wx.Dialog):
         wx.CallAfter(self.gui.on_colour_grid, None, do)
 
         #  too lazy to check if each colour has changed - just remake it all
-        self.gui.board.redraw_all()
+        self.gui.canvas.redraw_all()
         ctrl.grid.Clear(True)
         ctrl.make_colour_grid()
         ctrl.grid.Layout()

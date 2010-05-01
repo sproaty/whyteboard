@@ -736,19 +736,19 @@ class CanvasDropTarget(wx.PyDropTarget):
 
             if df in [wx.DF_UNICODETEXT, wx.DF_TEXT]:
 
-                shape = tools.Text(self.gui.board, self.gui.util.colour, 1)
+                shape = tools.Text(self.gui.canvas, self.gui.util.colour, 1)
                 shape.text = self.textdo.GetText()
 
-                self.gui.board.shape = shape
+                self.gui.canvas.shape = shape
                 shape.left_down(x, y)
                 shape.left_up(x, y)
-                self.gui.board.text = None
-                self.gui.board.change_current_tool()
-                self.gui.board.redraw_all(True)
+                self.gui.canvas.text = None
+                self.gui.canvas.change_current_tool()
+                self.gui.canvas.redraw_all(True)
 
             elif df == wx.DF_FILENAME:
                 for x, name in enumerate(self.filedo.GetFilenames()):
-                    if x or self.gui.board.shapes:
+                    if x or self.gui.canvas.shapes:
                         self.gui.on_new_tab()
 
                     if name.endswith(".wtbd"):
@@ -758,9 +758,9 @@ class CanvasDropTarget(wx.PyDropTarget):
 
             elif df == wx.DF_BITMAP:
                 bmp = self.bmpdo.GetBitmap()
-                shape = tools.Image(self.gui.board, bmp, None)
+                shape = tools.Image(self.gui.canvas, bmp, None)
                 shape.left_down(x, y)
                 wx.Yield()
-                self.gui.board.redraw_all(True)
+                self.gui.canvas.redraw_all(True)
 
         return d

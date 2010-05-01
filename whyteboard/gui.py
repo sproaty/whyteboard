@@ -151,12 +151,12 @@ class GUI(wx.Frame):
                  fnb.FNB_DROPDOWN_TABS_LIST | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS |
                  fnb.FNB_NO_NAV_BUTTONS)
         self.tabs = fnb.FlatNotebook(self, style=style)
-        self.board = Canvas(self.tabs, self)  # the active whyteboard tab
+        self.canvas = Canvas(self.tabs, self)  # the active whyteboard tab
         self.panel = SidePanel(self)
 
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
-        self.tabs.AddPage(self.board, _("Sheet") + " 1")
+        self.tabs.AddPage(self.canvas, _("Sheet") + " 1")
         box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         box.Add(self.control, 0, wx.EXPAND)
         box.Add(self.tabs, 1, wx.EXPAND)
@@ -165,14 +165,14 @@ class GUI(wx.Frame):
         self.SetSizeWH(800, 600)
 
         if os.name == "posix":
-            self.board.SetFocus()  # makes EVT_CHAR_HOOK trigger
+            self.canvas.SetFocus()  # makes EVT_CHAR_HOOK trigger
         if 'mac' != os.name:
             self.Maximize(True)
 
         self.count = 5  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(50)
         wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
-        self.board.update_thumb()
+        self.canvas.update_thumb()
         self.make_menu()
         self.do_bindings()
         self.update_panels(True)  # bold first items
@@ -488,11 +488,11 @@ class GUI(wx.Frame):
         """
         Shape getting selected (by Select tool)
         """
-        x = self.board.shapes.index(shape)
-        self.board.shapes.pop(x)
-        self.board.redraw_all()  # hide 'original'
-        self.board.shapes.insert(x, shape)
-        shape.draw(self.board.get_dc(), False)  # draw 'new'
+        x = self.canvas.shapes.index(shape)
+        self.canvas.shapes.pop(x)
+        self.canvas.redraw_all()  # hide 'original'
+        self.canvas.shapes.insert(x, shape)
+        shape.draw(self.canvas.get_dc(), False)  # draw 'new'
 
         ctrl, menu = True, True
         if not shape.background == wx.TRANSPARENT:
@@ -503,17 +503,17 @@ class GUI(wx.Frame):
 
 
     def release_mouse(self):
-        self.board.release_mouse()
+        self.canvas.release_mouse()
 
     def capture_mouse(self):
-        self.board.capture_mouse()
+        self.canvas.capture_mouse()
 
     def shape_add(self, shape):
-        self.board.add_shape(shape)
+        self.canvas.add_shape(shape)
 
     def update_shape_viewer(self):
         if self.viewer:
-            self.viewer.shapes = list(self.board.shapes)
+            self.viewer.shapes = list(self.canvas.shapes)
             self.viewer.populate()
 
     def save_last_path(self, path):
@@ -632,13 +632,13 @@ class GUI(wx.Frame):
         dlg.Destroy()
         if filename:
             names = []
-            board = self.board
+            board = self.canvas
             for x in range(self.tab_count):
-                self.board = self.tabs.GetPage(x)
+                self.canvas = self.tabs.GetPage(x)
                 name = "%s-tempblahhahh-%s-.jpg" % (filename, x)
                 names.append(name)
                 self.util.export(name)
-            self.board = board
+            self.canvas = board
 
             self.process = wx.Process(self)
             files = ""
@@ -669,11 +669,11 @@ class GUI(wx.Frame):
         filename = self.export_prompt()
         if filename:
             name = os.path.splitext(filename)
-            board = self.board
+            board = self.canvas
             for x in range(self.tab_count):
-                self.board = self.tabs.GetPage(x)
+                self.canvas = self.tabs.GetPage(x)
                 self.util.export("%s-%s%s" % (name[0], x + 1, name[1]))
-            self.board = board
+            self.canvas = board
 
 
     def on_export_pref(self, event=None):
@@ -803,7 +803,7 @@ class GUI(wx.Frame):
 
     def on_change_tab(self, event=None):
         """Updates tab vars, scrolls thumbnails and selects tree node"""
-        self.board = self.tabs.GetCurrentPage()
+        self.canvas = self.tabs.GetCurrentPage()
         self.update_panels(False)
         self.current_tab = self.tabs.GetSelection()
 
@@ -860,10 +860,10 @@ class GUI(wx.Frame):
         self.notes.remove_tab(self.current_tab)
         self.thumbs.remove(self.current_tab)
 
-        for x in self.board.medias:
+        for x in self.canvas.medias:
             x.remove_panel()
 
-        board = self.board
+        board = self.canvas
         item = [board.shapes, board.undo_list, board.redo_list, board.area,
                 self.tabs.GetPageText(self.current_tab), board.medias,
                 board.GetViewStart()[0], board.GetViewStart()[1]]
@@ -876,7 +876,7 @@ class GUI(wx.Frame):
         else:
             self.tabs.DeletePage(self.current_tab)
 
-        self.on_change_tab()  # updates self.board
+        self.on_change_tab()  # updates self.canvas
         self.make_closed_tabs_menu()
 
 
@@ -893,24 +893,24 @@ class GUI(wx.Frame):
             board = self.closed_tabs.pop(self.closed_tabs.index(tab))
 
         self.on_new_tab(name=board[4], wb=True)
-        self.board.shapes = board[0]
-        self.board.undo_list = board[1]
-        self.board.redo_list = board[2]
-        self.board.medias = board[5]
+        self.canvas.shapes = board[0]
+        self.canvas.undo_list = board[1]
+        self.canvas.redo_list = board[2]
+        self.canvas.medias = board[5]
 
-        for x in self.board.medias:
-            x.board = self.board
+        for x in self.canvas.medias:
+            x.canvas = self.canvas
             x.make_panel()
 
-        for shape in self.board.shapes:
-            shape.board = self.board
+        for shape in self.canvas.shapes:
+            shape.canvas = self.canvas
             if isinstance(shape, Note):
                 pub.sendMessage('note.add', note=shape)
 
         wx.Yield()  # doesn't draw thumbnail otherwise...
-        self.board.resize(board[3])
-        self.board.Scroll(board[6], board[7])
-        self.board.redraw_all(True)
+        self.canvas.resize(board[3])
+        self.canvas.Scroll(board[6], board[7])
+        self.canvas.redraw_all(True)
         self.update_shape_viewer()
         self.make_closed_tabs_menu()
 
@@ -931,11 +931,11 @@ class GUI(wx.Frame):
 
 
     def on_delete_shape(self, event=None):
-        self.board.delete_selected()
+        self.canvas.delete_selected()
         self.update_shape_viewer()
 
     def on_deselect(self, event=None):
-        self.board.deselect()
+        self.canvas.deselect()
 
 
     def update_menus(self, event):
@@ -944,7 +944,7 @@ class GUI(wx.Frame):
         It is called every 65ms and uses a counter to update the clipboard check
         less often than the 65ms, as it's too performance intense
         """
-        if not self.board:
+        if not self.canvas:
             return
         _id = event.GetId()
 
@@ -973,7 +973,7 @@ class GUI(wx.Frame):
         if not _id == wx.ID_COPY:
             # update the GUI to the inverse of the bool value if the button
             # should be enabled
-            board = self.board
+            board = self.canvas
             if _id == wx.ID_REDO and board.redo_list:
                 do = True
             elif _id == wx.ID_UNDO and board.undo_list:
@@ -1001,11 +1001,11 @@ class GUI(wx.Frame):
                   and not isinstance(board.selected, (Media, Image, Text))):
                 do = True
             elif (_id == ID_SWAP_COLOURS and board.selected
-                  and not self.board.selected.background == wx.TRANSPARENT
+                  and not self.canvas.selected.background == wx.TRANSPARENT
                   and not isinstance(board.selected, (Media, Image, Text))):
                 do = True
-        elif self.board:
-            if self.board.copy:
+        elif self.canvas:
+            if self.canvas.copy:
                 do = True
         event.Enable(do)
 
@@ -1017,17 +1017,17 @@ class GUI(wx.Frame):
         so we must only selection the region of the selection that is on the
         canvas
         """
-        self.board.copy.update_rect()  # ensure w, h are correct
-        bmp = self.board.copy
+        self.canvas.copy.update_rect()  # ensure w, h are correct
+        bmp = self.canvas.copy
 
-        if bmp.x + bmp.width > self.board.area[0]:
-            bmp.rect.SetWidth(self.board.area[0] - bmp.x)
+        if bmp.x + bmp.width > self.canvas.area[0]:
+            bmp.rect.SetWidth(self.canvas.area[0] - bmp.x)
 
-        if bmp.y + bmp.height > self.board.area[1]:
-            bmp.rect.SetHeight(self.board.area[1] - bmp.y)
+        if bmp.y + bmp.height > self.canvas.area[1]:
+            bmp.rect.SetHeight(self.canvas.area[1] - bmp.y)
 
-        self.board.copy = None
-        self.board.redraw_all()
+        self.canvas.copy = None
+        self.canvas.redraw_all()
         self.util.set_clipboard(bmp.rect)
         self.count = 4
         self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)
@@ -1044,30 +1044,30 @@ class GUI(wx.Frame):
 
         x, y = 0, 0
         if not ignore:
-            x, y = self.board.ScreenToClient(wx.GetMousePosition())
-            if x < 0 or y < 0 or x > self.board.area[0] or y > self.board.area[1]:
+            x, y = self.canvas.ScreenToClient(wx.GetMousePosition())
+            if x < 0 or y < 0 or x > self.canvas.area[0] or y > self.canvas.area[1]:
                 x, y = 0, 0
 
-            x, y = self.board.CalcUnscrolledPosition(x, y)
+            x, y = self.canvas.CalcUnscrolledPosition(x, y)
 
         if isinstance(data, wx.TextDataObject):
-            shape = Text(self.board, self.util.colour, 1)
+            shape = Text(self.canvas, self.util.colour, 1)
             shape.text = data.GetText()
 
-            self.board.shape = shape
+            self.canvas.shape = shape
             shape.left_down(x, y)
             shape.left_up(x, y)
-            self.board.text = None
-            self.board.change_current_tool()
-            self.board.redraw_all(True)
+            self.canvas.text = None
+            self.canvas.change_current_tool()
+            self.canvas.redraw_all(True)
         else:
             bmp = data.GetBitmap()
-            shape = Image(self.board, bmp, None)
+            shape = Image(self.canvas, bmp, None)
             shape.left_down(x, y)
             wx.Yield()
-            self.board.redraw_all(True)
+            self.canvas.redraw_all(True)
             if ignore:
-                self.board.resize((bmp.GetWidth(), bmp.GetHeight()))
+                self.canvas.resize((bmp.GetWidth(), bmp.GetHeight()))
 
 
     def on_paste_new(self, event):
@@ -1076,7 +1076,7 @@ class GUI(wx.Frame):
         self.on_paste(ignore=True)
 
     def on_change_tool(self, event, _id):
-        if not self.board.shape.drawing and not self.board.drawing:
+        if not self.canvas.shape.drawing and not self.canvas.drawing:
             self.control.change_tool(_id=_id)
 
 
@@ -1104,14 +1104,14 @@ class GUI(wx.Frame):
                     return
 
         if code == wx.WXK_ESCAPE:  # close fullscreen/deselect shape
-            if self.board.selected:
-                self.board.deselect()  # check this before fullscreen
+            if self.canvas.selected:
+                self.canvas.deselect()  # check this before fullscreen
                 return
             if self.IsFullScreen():
                 self.on_fullscreen(None, False)
         elif code in [wx.WXK_DOWN, wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_UP]:
-            if self.board.selected:
-                shape = self.board.selected
+            if self.canvas.selected:
+                shape = self.canvas.selected
 
                 map = { wx.WXK_UP: (shape.x, shape.y - SCROLL_AMOUNT),
                         wx.WXK_DOWN: (shape.x, shape.y + SCROLL_AMOUNT),
@@ -1120,16 +1120,16 @@ class GUI(wx.Frame):
 
                 if not self.hotkey_pressed:
                     self.hotkey_pressed = True
-                    self.board.add_undo()
+                    self.canvas.add_undo()
                     shape.start_select_action(0)
                     self.hotkey_timer = wx.CallLater(300, self.reset_hotkey)
                 else:
                     self.hotkey_timer.Restart(300)
 
                 shape.move(map.get(code)[0], map.get(code)[1], offset=shape.offset(shape.x, shape.y))
-                self.board.draw_shape(shape)
+                self.canvas.draw_shape(shape)
                 shape.find_edges()
-                self.board.shape_near_canvas_edge(shape.edges[EDGE_LEFT],
+                self.canvas.shape_near_canvas_edge(shape.edges[EDGE_LEFT],
                                          shape.edges[EDGE_TOP], True)
                 return
         self.hotkey_scroll(code, event)
@@ -1144,14 +1144,14 @@ class GUI(wx.Frame):
                 x, y = -1, 0  # top of document
 
         elif code == wx.WXK_END:
-            x, y = self.board.area[0], -1  # end of viewport
+            x, y = self.canvas.area[0], -1  # end of viewport
             if event.ControlDown():
-                x, y = -1, self.board.area[1]  # end of page
+                x, y = -1, self.canvas.area[1]  # end of page
 
         elif code in [wx.WXK_PAGEUP, wx.WXK_PAGEDOWN, wx.WXK_DOWN, wx.WXK_LEFT,
                       wx.WXK_RIGHT, wx.WXK_UP]:
-            x, y = self.board.GetViewStart()
-            x2, y2 = self.board.GetClientSizeTuple()
+            x, y = self.canvas.GetViewStart()
+            x2, y2 = self.canvas.GetClientSizeTuple()
 
             map = { wx.WXK_PAGEUP: (-1, y - y2),
                     wx.WXK_PAGEDOWN: (-1, y + y2),
@@ -1163,15 +1163,15 @@ class GUI(wx.Frame):
             x, y = map.get(code)[0], map.get(code)[1]
 
         if x != None and y != None:
-            self.board.Scroll(x, y)
+            self.canvas.Scroll(x, y)
 
 
     def reset_hotkey(self):
         """Reset the system for the next stream of hotkey up/down events"""
         self.hotkey_pressed = False
-        if not self.board.selected:
+        if not self.canvas.selected:
             return
-        self.board.selected.end_select_action(0)
+        self.canvas.selected.end_select_action(0)
         self.update_shape_viewer()
 
 
@@ -1275,28 +1275,28 @@ class GUI(wx.Frame):
 
     def on_undo(self, event=None):
         """ Calls undo on the active tab and updates the menus """
-        self.board.undo()
+        self.canvas.undo()
         self.update_shape_viewer()
 
     def on_redo(self, event=None):
         """ Calls redo on the active tab and updates the menus """
-        self.board.redo()
+        self.canvas.redo()
         self.update_shape_viewer()
 
     def on_move_top(self, event=None):
-        self.board.move_top(self.board.selected)
+        self.canvas.move_top(self.canvas.selected)
         self.update_shape_viewer()
 
     def on_move_bottom(self, event=None):
-        self.board.move_bottom(self.board.selected)
+        self.canvas.move_bottom(self.canvas.selected)
         self.update_shape_viewer()
 
     def on_move_up(self, event=None):
-        self.board.move_up(self.board.selected)
+        self.canvas.move_up(self.canvas.selected)
         self.update_shape_viewer()
 
     def on_move_down(self, event=None):
-        self.board.move_down(self.board.selected)
+        self.canvas.move_down(self.canvas.selected)
         self.update_shape_viewer()
 
     def on_prev(self, event=None):
@@ -1315,12 +1315,12 @@ class GUI(wx.Frame):
 
     def on_clear(self, event=None):
         """ Clears current sheet's drawings, except images. """
-        self.board.clear(keep_images=True)
+        self.canvas.clear(keep_images=True)
         self.update_shape_viewer()
 
     def on_clear_all(self, event=None):
         """ Clears current sheet """
-        self.board.clear()
+        self.canvas.clear()
         self.update_shape_viewer()
 
     def on_clear_sheets(self, event=None):
@@ -1341,10 +1341,10 @@ class GUI(wx.Frame):
         self.thumbs.update_all()
 
     def on_transparent(self, event=None):
-        self.board.toggle_transparent()
+        self.canvas.toggle_transparent()
 
     def on_swap_colours(self, event=None):
-        self.board.swap_colours()
+        self.canvas.swap_colours()
 
 
     def on_page_setup(self, evt):
@@ -1380,7 +1380,7 @@ class GUI(wx.Frame):
         printer = wx.Printer(pdd)
         printout = MyPrintout(self)
 
-        if not printer.Print(self.board, printout, True):
+        if not printer.Print(self.canvas, printout, True):
             if printer.GetLastError() is not wx.PRINTER_CANCELLED:
                 wx.MessageBox(_("There was a problem printing.\nPerhaps your current printer is not set correctly?"),
                               _("Printing Error"), wx.OK)
@@ -1562,9 +1562,9 @@ class WhyteboardApp(wx.App):
         if options.file:
             self.load_file(options.file)
         if options.width:
-            self.frame.board.resize((options.width, self.frame.board.area[1]))
+            self.frame.canvas.resize((options.width, self.frame.canvas.area[1]))
         if options.height:
-            self.frame.board.resize((self.frame.board.area[0], options.height))
+            self.frame.canvas.resize((self.frame.canvas.area[0], options.height))
 
         if options.update:
             self.frame.on_update()

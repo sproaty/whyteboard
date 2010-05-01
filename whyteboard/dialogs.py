@@ -60,10 +60,10 @@ class History(wx.Dialog):
         self.looping = False
         self.paused = False
         #count = 0
-        #for x in gui.board.shapes:
+        #for x in gui.canvas.shapes:
         #    if isinstance(x, tools.Pen):
         #        count += len(x.points)
-        #_max = len(gui.board.shapes) + count
+        #_max = len(gui.canvas.shapes) + count
 
         #self.slider = wx.Slider(self, minValue=1, maxValue=_max,
         #                        style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
@@ -110,7 +110,7 @@ class History(wx.Dialog):
         if self.paused:
             self.paused = False
 
-        tmp_shapes = list(self.gui.board.shapes)
+        tmp_shapes = list(self.gui.canvas.shapes)
         shapes = []
         for shape in tmp_shapes:
             if not isinstance(shape, tools.Image):
@@ -127,17 +127,17 @@ class History(wx.Dialog):
         Replays the users' last-drawn pen strokes.
         The loop can be paused/unpaused by the user.
         """
-        dc = wx.ClientDC(self.gui.board)
+        dc = wx.ClientDC(self.gui.canvas)
         dc.SetBackground(wx.WHITE_BRUSH)
-        buff = self.gui.board.buffer
+        buff = self.gui.canvas.buffer
         bkgregion = wx.Region(0, 0, buff.GetWidth(), buff.GetHeight())
 
         dc.SetClippingRegionAsRegion(bkgregion)
         dc.Clear()
-        self.gui.board.PrepareDC(dc)
+        self.gui.canvas.PrepareDC(dc)
 
         #  paint any images first
-        for s in self.gui.board.shapes:
+        for s in self.gui.canvas.shapes:
             if isinstance(s, tools.Image):
                 s.draw(dc)
 
@@ -197,7 +197,7 @@ class History(wx.Dialog):
             self.toggle_buttons(False, False, True)
             self.looping = False
             self.paused = False
-            self.gui.board.Refresh()  # restore
+            self.gui.canvas.Refresh()  # restore
 
 
     def on_close(self, event=None):
@@ -507,7 +507,7 @@ class TextInput(wx.Dialog):
 
         if text:
             self.update_canvas()
-            self.gui.board.redraw_all(True)
+            self.gui.canvas.redraw_all(True)
 
 
     def on_font(self, evt):
@@ -553,9 +553,9 @@ class TextInput(wx.Dialog):
         """Updates the canvas with the inputted text"""
         if self.note:
             shape = self.note
-            board = shape.board
+            board = shape.canvas
         else:
-            board = self.gui.board
+            board = self.gui.canvas
             shape = board.shape
         self.transfer_data(shape)
 
@@ -809,7 +809,7 @@ class Resize(wx.Dialog):
 
         self.gui = gui
         gap = wx.LEFT | wx.TOP | wx.RIGHT
-        width, height = self.gui.board.buffer.GetSize()
+        width, height = self.gui.canvas.buffer.GetSize()
         self.size = (width, height)
 
         self.hctrl = wx.SpinCtrl(self, min=1, max=12000)
@@ -852,7 +852,7 @@ class Resize(wx.Dialog):
 
 
     def apply(self, event):
-        self.size = self.gui.board.buffer.GetSize()
+        self.size = self.gui.canvas.buffer.GetSize()
 
     def ok(self, event):
         self.resize()
@@ -860,10 +860,10 @@ class Resize(wx.Dialog):
 
     def resize(self, event=None):
         value = (self.wctrl.GetValue(), self.hctrl.GetValue())
-        self.gui.board.resize(value)
+        self.gui.canvas.resize(value)
 
     def cancel(self, event):
-        self.gui.board.resize(self.size)
+        self.gui.canvas.resize(self.size)
         self.Close()
 
 #----------------------------------------------------------------------
@@ -1031,7 +1031,7 @@ class ShapeViewer(wx.Dialog):
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
                            wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
         self.gui = gui
-        self.shapes = list(self.gui.board.shapes)
+        self.shapes = list(self.gui.canvas.shapes)
         self.SetSizeHints(550, 400)
         self.buttons = []  # move up/down/top/bottom buttons
 
@@ -1231,15 +1231,15 @@ class ShapeViewer(wx.Dialog):
         self.gui.tabs.SetSelection(selection)
         self.pages.SetSelection(selection)
         self.gui.on_change_tab()
-        self.shapes = list(self.gui.board.shapes)
+        self.shapes = list(self.gui.canvas.shapes)
         self.populate()
         self.check_buttons()
 
 
     def on_delete(self, event):
         index, item = self.find_shape()
-        self.gui.board.selected = item
-        self.gui.board.delete_selected()
+        self.gui.canvas.selected = item
+        self.gui.canvas.delete_selected()
         self.shapes.pop(index)
         self.populate()
         self.list.Select(0)
@@ -1272,9 +1272,9 @@ class ShapeViewer(wx.Dialog):
         event.Skip()
 
     def apply(self, event=None):
-        self.gui.board.add_undo()
-        self.gui.board.shapes = self.shapes
-        self.gui.board.redraw_all(True)
+        self.gui.canvas.add_undo()
+        self.gui.canvas.shapes = self.shapes
+        self.gui.canvas.redraw_all(True)
 
 
 #----------------------------------------------------------------------
