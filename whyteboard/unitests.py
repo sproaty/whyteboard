@@ -32,7 +32,7 @@ from lib.validate import Validator
 from lib.pubsub import pub
 
 import fakewidgets
-from fakewidgets.core import Bitmap, Event, Colour, Window
+from fakewidgets.core import Bitmap, Event, Colour
 import gui
 import meta
 import tools as tools

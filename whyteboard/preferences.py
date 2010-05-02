@@ -19,17 +19,15 @@
 
 
 """
-This module contains a class which implements Whyteboard's preference dialog.
-It has been separated from the dialog module as it may become rather large.
+This module contains a base Dialog class and several Panel classes that create
+Whyteboard's preferences dialog. It has been separated from the dialog module
+as it's a large unit of functionality.
 
-NOTE: A ConfigObj is stored inside my gui class, so the module first creates its
-own copy of the obj, so any changes made don't affect the original.
-
-All changes are then written to this object. Only when the user presses ok on
-the preferences dialog window will be updated configobj be written to disk and
-updates the GUI's config too. The on_okay() method of Preferences updates the
-GUI too.
-
+NOTE: A ConfigObj is stored inside the GUI, so this module first creates its own
+copy of the ConfigObj. All changes are then written to this object. Only when
+the user presses ok on the preferences dialog window will be updated configobj
+be written to disk and updates the GUI to its new state, and updated its config
+file.
 """
 
 import os
@@ -40,7 +38,6 @@ from wx.lib import scrolledpanel as scrolled
 
 from lib.pubsub import pub
 
-import tools
 import meta
 from functions import create_colour_bitmap
 from dialogs import FindIM
@@ -102,11 +99,10 @@ class Preferences(wx.Dialog):
                           % _(self.config['language']), "Whyteboard")
 
         if self.config['handle_size'] != old['handle_size']:
-            tools.HANDLE_SIZE = self.config['handle_size']
+            pub.sendMessage('tools.set_handle_size', handle_size=self.config['handle_size'])
 
         if self.config['canvas_border'] != old['canvas_border']:
             pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
-            self.gui.canvas.resize(self.gui.canvas.area)
 
 
         if 'default_font' in self.config:

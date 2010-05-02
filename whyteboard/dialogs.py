@@ -31,7 +31,6 @@ import zipfile
 import time
 import wx
 import wx.lib.mixins.listctrl as listmix
-from wx.lib.buttons import GenBitmapButton
 
 from urllib import urlopen, urlretrieve, urlencode
 try:

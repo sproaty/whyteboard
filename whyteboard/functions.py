@@ -35,7 +35,6 @@ from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 
 _ = wx.GetTranslation
 
-
 #----------------------------------------------------------------------
 
 
@@ -65,6 +64,19 @@ def get_time(seconds):
     else:
         h = ""
     return h + "%02d:%02d" % (m, s)
+
+
+def file_dialog(gui, title, style, wildcard, defaultDir="", defaultFile=""):
+    """
+    Returns the result of a file dialog
+    """
+    dlg = wx.FileDialog(gui, title, style=style, wildcard=wildcard,
+                        defaultDir=defaultDir, defaultFile=defaultFile)
+    result = False
+    if dlg.ShowModal() == wx.ID_OK:
+        result = dlg.GetPath()
+    dlg.Destroy()
+    return result
 
 
 def load_image(path, canvas, image_class):

@@ -58,6 +58,7 @@ BOTTOM = 3
 
 
 
+
 class Canvas(wx.ScrolledWindow):
     """
     The drawing frame of the application. References to self.shape.drawing are
@@ -125,10 +126,6 @@ class Canvas(wx.ScrolledWindow):
 
         pub.subscribe(self.set_border, 'canvas.set_border')
 
-
-    def set_border(self, border_size):
-        global CANVAS_BORDER
-        CANVAS_BORDER = border_size
 
 
     def left_down(self, event):
@@ -207,6 +204,11 @@ class Canvas(wx.ScrolledWindow):
         """Double click for the Select tool - edit text"""
         self.shape.double_click(*self.convert_coords(event))
 
+
+    def set_border(self, border_size):
+        global CANVAS_BORDER
+        CANVAS_BORDER = border_size
+        self.resize(self.area)
 
 
     def select_tool_cursor(self, x, y):
@@ -757,7 +759,7 @@ class CanvasDropTarget(wx.PyDropTarget):
 
             if df in [wx.DF_UNICODETEXT, wx.DF_TEXT]:
 
-                shape = tools.Text(self.gui.canvas, self.gui.util.colour, 1)
+                shape = Text(self.gui.canvas, self.gui.util.colour, 1)
                 shape.text = self.textdo.GetText()
 
                 self.gui.canvas.shape = shape
@@ -779,7 +781,7 @@ class CanvasDropTarget(wx.PyDropTarget):
 
             elif df == wx.DF_BITMAP:
                 bmp = self.bmpdo.GetBitmap()
-                shape = tools.Image(self.gui.canvas, bmp, None)
+                shape = Image(self.gui.canvas, bmp, None)
                 shape.left_down(x, y)
                 wx.Yield()
                 self.gui.canvas.redraw_all(True)

@@ -48,11 +48,13 @@ from lib.validate import Validator
 
 import lib.icon
 import meta
+#import topic_tree
 from canvas import Canvas, CanvasDropTarget
 from tools import Image, Note, Text, Media, Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
 
-from functions import get_home_dir, is_exe, get_clipboard, download_help_files
+from functions import (get_home_dir, is_exe, get_clipboard, download_help_files,
+                       file_dialog)
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
                      ExceptionHook, ShapeViewer, Feedback, PDFCache)
 from panels import ControlPanel, SidePanel, SheetsPopup
@@ -324,7 +326,7 @@ class GUI(wx.Frame):
                   'shape.selected': self.shape_selected,
                   'canvas.capture_mouse': self.capture_mouse,
                   'canvas.release_mouse': self.release_mouse,
-                  'shape_viewer_update': self.update_shape_viewer}
+                  'shape_viewer.update': self.update_shape_viewer}
         [pub.subscribe(value, key) for key, value in topics.items()]
 
         # idle event handlers
@@ -529,25 +531,27 @@ class GUI(wx.Frame):
         """
         Prompts for the filename and location to save to.
         """
-        now = time.localtime(time.time())
-        now = time.strftime("%Y-%m-%d-%H-%M-%S")
+        wildcard = _("Whyteboard file ") + "(*.wtbd)|*.wtbd"
+        _dir = ""
+        _file = time.localtime(time.time())
+        _file = time.strftime("%Y-%m-%d-%H-%M-%S")
 
         if self.util.filename:
-            now = self.util.filename
+            _file = self.util.filename
 
-        dlg = wx.FileDialog(self, _("Save Whyteboard As..."), os.getcwd(),
-                style=wx.SAVE | wx.OVERWRITE_PROMPT, defaultFile=now,
-                wildcard=_("Whyteboard file ") + "(*.wtbd)|*.wtbd")
-        if dlg.ShowModal() == wx.ID_OK:
-            filename = dlg.GetPath()
-            if not os.path.splitext(filename)[1]:  # no file extension
-                filename += '.wtbd'
+        if self.util.config.get('last_opened_dir'):
+            _dir = self.util.config['last_opened_dir']
+
+        name = file_dialog(self, _("Save Whyteboard As..."),
+                           wx.SAVE | wx.OVERWRITE_PROMPT, wildcard, _dir, _file)
+        if name:
+            if not os.path.splitext(name)[1]:  # no file extension
+                name += '.wtbd'
 
             # only store whyteboard files, not an image as the current file
-            if filename.endswith(".wtbd"):
-                self.util.filename = filename
+            if name.endswith(".wtbd"):
+                self.util.filename = name
                 self.on_save()
-        dlg.Destroy()
 
 
     def on_open(self, event=None, text=None):
@@ -556,29 +560,24 @@ class GUI(wx.Frame):
         an unsaved file and calls do_open().
         text is img/pdf/ps for the "import file" menu item
         """
-        wc = meta.dialog_wildcard
+        wildcard = meta.dialog_wildcard
         if text == "img":
-            wc = wc[ wc.find(_("Image Files")) : wc.find(_('Whyteboard files')) ]  # image to page
+            wildcard = wildcard[wildcard.find(_("Image Files")) :
+                                wildcard.find(_('Whyteboard files')) ]  # image to page
         elif text:
-            wc = wc[ wc.find("PDF/PS/SVG") : wc.find("*.SVG|")]  # page descriptions
+            wildcard = wildcard[wildcard.find("PDF/PS/SVG") :
+                                wildcard.find("*.SVG|")]  # page descriptions
 
         _dir = ""
         if self.util.config.get('last_opened_dir'):
             _dir = self.util.config['last_opened_dir']
 
-        dlg = wx.FileDialog(self, _("Open file..."), style=wx.OPEN, wildcard=wc,
-                             defaultDir=_dir)
-        dlg.SetFilterIndex(0)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            name = dlg.GetPath()
-
+        name = file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir)
+        if name:
             if name.endswith(".wtbd"):
                 self.util.prompt_for_save(self.do_open, args=[name])
             else:
                 self.do_open(name)
-        else:
-            dlg.Destroy()
 
 
     def do_open(self, path):
@@ -608,12 +607,10 @@ class GUI(wx.Frame):
             self.util.prompt_for_im()
         if not self.util.im_location:
             return
-        filename = ""
+        filename = file_dialog(self, _("Export data to..."),
+                               wx.SAVE | wx.OVERWRITE_PROMPT, "PDF (*.pdf)|*.pdf")
 
-        dlg = wx.FileDialog(self, _("Export data to..."), style=wx.SAVE |
-                             wx.OVERWRITE_PROMPT, wildcard="PDF (*.pdf)|*.pdf")
-        if dlg.ShowModal() == wx.ID_OK:
-            filename = dlg.GetPath()
+        if filename:
             ext = os.path.splitext(filename)[1]
             if not ext:  # no file extension
                 filename += '.pdf'
@@ -622,8 +619,6 @@ class GUI(wx.Frame):
                               "Whyteboard")
                 return
 
-        dlg.Destroy()
-        if filename:
             names = []
             canvas = self.canvas
             for x in range(self.tab_count):
@@ -676,14 +671,11 @@ class GUI(wx.Frame):
         if not os.path.exists(self.util.config.filename):
             wx.MessageBox(_("You have not set any preferences"), _("Export Error"))
             return
-        filename = ""
-        wc = _("Whyteboard Preference Files") + " (*.pref)|*.pref"
+        wildcard = _("Whyteboard Preference Files") + " (*.pref)|*.pref"
 
-        dlg = wx.FileDialog(self, _("Export preferences to..."), style=wx.SAVE |
-                             wx.OVERWRITE_PROMPT, wildcard=wc)
-        if dlg.ShowModal() == wx.ID_OK:
-            filename = dlg.GetPath()
-
+        filename = file_dialog(self, _("Export preferences to..."),
+                               wx.SAVE | wx.OVERWRITE_PROMPT, wildcard)
+        if filename:
             if not os.path.splitext(filename)[1]:
                 filename += ".pref"
             shutil.copy(os.path.join(get_home_dir(), "user.pref"), filename)
@@ -694,14 +686,12 @@ class GUI(wx.Frame):
         Imports the preference file. Backsup the user's current prefernce file
         into a directory, with a timestamp on the filename
         """
-        wc = _("Whyteboard Preference Files") + " (*.pref)|*.pref"
+        wildcard = _("Whyteboard Preference Files") + " (*.pref)|*.pref"
 
-        dlg = wx.FileDialog(self, _("Import Preferences From..."), get_home_dir(),
-                            style=wx.OPEN, wildcard=wc)
+        filename = file_dialog(self, _("Import Preferences From..."), wx.OPEN,
+                               wildcard, get_home_dir())
 
-        if dlg.ShowModal() == wx.ID_OK:
-            filename = dlg.GetPath()
-
+        if filename:
             config = ConfigObj(filename, configspec=meta.config_scheme.split("\n"))
             validator = Validator()
             config.validate(validator)
@@ -737,11 +727,11 @@ class GUI(wx.Frame):
     def export_prompt(self):
         """Find out the filename to save to"""
         val = None  # return value
-        wc = ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
-               "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
+        wildcard = ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
+                    "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
 
-        dlg = wx.FileDialog(self, _("Export data to..."), style=wx.SAVE |
-                             wx.OVERWRITE_PROMPT, wildcard=wc)
+        dlg = wx.FileDialog(self, _("Export data to..."),
+                            style=wx.SAVE | wx.OVERWRITE_PROMPT, wildcard=wildcard)
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
             _name = os.path.splitext(filename)[1].replace(".", "")
@@ -756,7 +746,6 @@ class GUI(wx.Frame):
                               "Whyteboard")
             else:
                 val = filename
-
         dlg.Destroy()
         return val
 
@@ -822,10 +811,6 @@ class GUI(wx.Frame):
         self.dialog = ProgressDialog(self, _("Loading..."), 5)
         self.dialog.Show()
         self.on_change_tab()
-
-        # Update thumbnails
-        for x in range(self.tab_count):
-            self.thumbs.text[x].SetLabel(self.tabs.GetPageText(x))
 
         pub.sendMessage('sheet.move', event=event, tab_count=self.tab_count)
         self.on_done_load()
@@ -1106,7 +1091,7 @@ class GUI(wx.Frame):
             if self.canvas.selected:
                 shape = self.canvas.selected
 
-                map = { wx.WXK_UP: (shape.x, shape.y - SCROLL_AMOUNT),
+                _map = { wx.WXK_UP: (shape.x, shape.y - SCROLL_AMOUNT),
                         wx.WXK_DOWN: (shape.x, shape.y + SCROLL_AMOUNT),
                         wx.WXK_LEFT: (shape.x - SCROLL_AMOUNT, shape.y),
                         wx.WXK_RIGHT: (shape.x + SCROLL_AMOUNT, shape.y) }
@@ -1119,7 +1104,7 @@ class GUI(wx.Frame):
                 else:
                     self.hotkey_timer.Restart(300)
 
-                shape.move(map.get(code)[0], map.get(code)[1], offset=shape.offset(shape.x, shape.y))
+                shape.move(_map.get(code)[0], _map.get(code)[1], offset=shape.offset(shape.x, shape.y))
                 self.canvas.draw_shape(shape)
                 shape.find_edges()
                 self.canvas.shape_near_canvas_edge(shape.edges[EDGE_LEFT],
@@ -1146,14 +1131,14 @@ class GUI(wx.Frame):
             x, y = self.canvas.GetViewStart()
             x2, y2 = self.canvas.GetClientSizeTuple()
 
-            map = { wx.WXK_PAGEUP: (-1, y - y2),
+            _map = { wx.WXK_PAGEUP: (-1, y - y2),
                     wx.WXK_PAGEDOWN: (-1, y + y2),
                     wx.WXK_UP: (-1, y - SCROLL_AMOUNT),
                     wx.WXK_DOWN: (-1, y + SCROLL_AMOUNT),
                     wx.WXK_LEFT: (x - SCROLL_AMOUNT, -1),
                     wx.WXK_RIGHT: (x + SCROLL_AMOUNT, -1) }
 
-            x, y = map.get(code)[0], map.get(code)[1]
+            x, y = _map.get(code)[0], _map.get(code)[1]
 
         if x != None and y != None:
             self.canvas.Scroll(x, y)

@@ -37,13 +37,13 @@ _ = wx.GetTranslation
 
 
 # Creates a wxPython wildcard filter from a list of known/supported filetypes.
-all = [ (_('PDF/PS/SVG'), ['ps', 'pdf', 'svg']),
+_all = [ (_('PDF/PS/SVG'), ['ps', 'pdf', 'svg']),
         (_('Image Files'), ["jpeg", "jpg", "png", "tiff", "bmp", "pcx"]),
         (_('Whyteboard files'), ['wtbd']) ]
 
 wc_list, types, tmp = [], [], []
 
-for label, exts in all:
+for label, exts in _all:
     [types.append(x) for x in exts]
     exts = ['*.%s' % a for a in exts]
     visexts = ', '.join(exts)

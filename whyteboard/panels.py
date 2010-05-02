@@ -38,7 +38,7 @@ from lib.pubsub import pub
 import meta
 from event_ids import (ID_TRANSPARENT, ID_SWAP_COLOURS, ID_MOVE_UP, ID_MOVE_DOWN,
                        ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM)
-from functions import create_colour_bitmap, get_time
+from functions import create_colour_bitmap, get_time, file_dialog
 
 _ = wx.GetTranslation
 
@@ -450,19 +450,17 @@ class MediaPanel(wx.Panel):
         """
         vids = "*.avi; *.mkv; *.mov; *.mpg; *ogg; *.wmv"
         audio = "*.mp3; *.oga; *.ogg; *.wav"
-        wc = _("Media Files")+" |%s;%s|" % (vids, audio)
-        wc += _("Video Files")+" (%s)|%s|" % (vids, vids)
-        wc += _("Audio Files")+" (%s)|%s" % (audio, audio)
+        wildcard = _("Media Files")+" |%s;%s|" % (vids, audio)
+        wildcard += _("Video Files")+" (%s)|%s|" % (vids, vids)
+        wildcard += _("Audio Files")+" (%s)|%s" % (audio, audio)
 
         _dir = ""
         if self.directory:
             _dir = self.directory
 
-        dlg = wx.FileDialog(self, message=_("Choose a media file"),
-                            wildcard=wc, style=wx.OPEN, defaultDir=_dir)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.do_load_file(dlg.GetPath())
-        dlg.Destroy()
+        name = file_dialog(self, _("Choose a media file"), wx.OPEN, wildcard, _dir)
+        if name:
+            self.do_load_file(name)
 
 
     def do_load_file(self, path):
@@ -993,7 +991,7 @@ class Thumbs(scrolled.ScrolledPanel):
         self.thumbs[0].current = True
         pub.subscribe(self.highlight_current, 'thumbs.text.highlight')
         pub.subscribe(self.rename, 'sheet.rename')
-
+        pub.subscribe(self.sheet_moved, 'sheet.move')
 
     def highlight_current(self, tab, select):
         if self.text:
@@ -1099,6 +1097,11 @@ class Thumbs(scrolled.ScrolledPanel):
             memory.DrawRectangle(0, 0, 150, 150)
             memory.SelectObject(wx.NullBitmap)
         return bitmap
+
+
+    def sheet_moved(self, event, tab_count):
+        for x in range(tab_count):
+            self.text[x].SetLabel(self.gui.tabs.GetPageText(x))
 
 
     def rename(self, _id, text):

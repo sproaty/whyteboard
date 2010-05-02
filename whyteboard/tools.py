@@ -61,6 +61,11 @@ EDGE_RIGHT  = 10
 EDGE_BOTTOM = 11
 EDGE_LEFT   = 12
 
+def set_handle_size(handle_size):
+    global HANDLE_SIZE
+    HANDLE_SIZE = handle_size
+
+pub.subscribe(set_handle_size, 'tools.set_handle_size')
 
 class Tool(object):
     """ Abstract class representing a tool: Drawing canvas/colour/thickness """
@@ -1745,7 +1750,7 @@ class Select(Tool):
         if self.dragging:
             self.shape.end_select_action(self.handle)
 
-        pub.sendMessage('shape_viewer_update')
+        pub.sendMessage('shape_viewer.update')
         self.canvas.update_thumb()
         self.canvas.change_current_tool()
 
