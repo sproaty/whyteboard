@@ -17,6 +17,7 @@
 # Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 """
 This module contains classes which can be drawn onto a Whyteboard frame
 
@@ -803,13 +804,20 @@ class Ellipse(Rectangle):
     def preview(self, dc, width, height):
         dc.DrawEllipse(5, 5, width - 12, height - 12)
 
+    def find_center(self):
+        x, y, w, h = self.get_args()
+        return (x + w / 2, y + h/ 2)
+
     def hit_test(self, x, y):
         """ http://www.conandalton.net/2009/01/how-to-draw-ellipse.html """
-        dx = (x - self.x) / self.width
-        dy = (y - self.y) / self.height
+        center = self.find_center()
+        dx = int((x - center[0]) / (self.width / 2))
+        dy = int((y - center[1]) / (self.height / 2))
+
         if dx * dx + dy * dy < 1:
             return True
         return False
+
 
 #----------------------------------------------------------------------
 
@@ -996,7 +1004,7 @@ class Arrow(Line):
             odc = wx.DCOverlay(self.canvas.overlay, dc)
             odc.Clear()
         self.make_pen(dc)
-        dc.SetPen(wx.Pen(self.colour, self.thickness))        
+        dc.SetPen(wx.Pen(self.colour, self.thickness))
         dc.SetBrush(self.brush)
 
         x0, x1, y0, y1 = self.x, self.x2, self.y, self.y2
@@ -1431,7 +1439,7 @@ class Image(OverlayShape):
             self.img = wx.ImageFromBitmap(self.image)
         if not self.img.HasAlpha():  # black background otherwise
             self.img.InitAlpha()
-            
+
         self.find_center()
         self.rotate_handle = wx.Rect(self.x + self.image.GetWidth() / 2 - 6,
                                      self.y + self.image.GetHeight() / 2 - 6,
@@ -1574,7 +1582,7 @@ class Image(OverlayShape):
         if not hasattr(self, "dragging"):
             self.dragging = False
         if not hasattr(self, "scale_size"):
-            self.scale_size = (0, 0)            
+            self.scale_size = (0, 0)
 
         if not hasattr(self, "filename") or not self.filename:
             self.filename = os.path.basename(self.path)
@@ -1649,7 +1657,7 @@ class Select(Tool):
             if self.check_for_hit(shape, x, y):
                 break  # breaking is vital to selecting the correct shape
         else:
-            self.canvas.deselect()
+            self.canvas.deselect_shape()
 
 
     def check_for_hit(self, shape, x, y):
@@ -1667,16 +1675,9 @@ class Select(Tool):
             found = True
 
         if found:
-            self.canvas.overlay = wx.Overlay()
             self.shape = shape
             self.dragging = True
             self.offset = self.shape.offset(x, y)
-
-            if self.canvas.selected:
-                self.canvas.deselect()
-            self.canvas.selected = shape
-            shape.selected = True
-
             pub.sendMessage('shape.selected', shape=shape)
         return found
 
@@ -1723,10 +1724,10 @@ class Select(Tool):
                 self.shape.move(x, y, self.offset)
                 self.shape.find_edges()
                 direction = self.canvas.drag_direction(self.shape.edges[EDGE_LEFT], self.shape.edges[EDGE_TOP])
-                
+
                 self.canvas.shape_near_canvas_edge(self.shape.edges[EDGE_LEFT],
                                          self.shape.edges[EDGE_TOP], direction, True)
-                                
+
             else:
                 if not self.anchored:  # don't want to keep anchoring
                     self.shape.anchor(self.handle)
@@ -1773,7 +1774,7 @@ class BitmapSelect(Rectangle):
     def left_down(self, x, y):
         self.canvas.overlay = wx.Overlay()
         super(BitmapSelect, self).left_down(x, y)
-        self.canvas.deselect()
+        self.canvas.deselect_shape()
         self.canvas.copy = None
         self.canvas.redraw_all()
         self.canvas.copy = self

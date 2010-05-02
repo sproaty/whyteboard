@@ -17,6 +17,7 @@
 # Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 """
 Unit tests for the functionality parts of Whyteboard. Simulates wxPython
 with mock classes. Doesn't test the GUI itself (i.e. parts of wx), but parts of
@@ -24,13 +25,14 @@ the GUI event handling code (example: undo/redo closing tabs)
 """
 
 import os
+import time
 
 from lib.configobj import ConfigObj
 from lib.validate import Validator
 from lib.pubsub import pub
 
 import fakewidgets
-from fakewidgets.core import Bitmap, Event, Colour
+from fakewidgets.core import Bitmap, Event, Colour, Window
 import gui
 import meta
 import tools as tools
@@ -68,15 +70,9 @@ class SimpleApp(fakewidgets.core.PySimpleApp):
 
 #----------------------------------------------------------------------
 
-class TestWhyteboard:
+class TestCanvas:
     """
-    Tests the Whyteboard panel and its functionality:
-        Undo/redo
-        Adding new shapes
-        Select tool
-        Clearing shapes of single sheet / keep images
-        "" ..all sheets
-        undoing/redoing the clearing (per-sheet basis)
+    Tests the Canvas and its functionality
     """
     def __init__(self):
         self.canvas = None
@@ -92,12 +88,16 @@ class TestWhyteboard:
         make_shapes(self.canvas)
         self.shapes = list(self.canvas.shapes)  # value to test changes against
 
+
     def test_add(self):
-        """Add a shape to the list, optionally positional"""
+        """
+        Adds some shape to the canvas' shape list
+        """
         shape = tools.Rectangle(self.canvas, (0, 0, 0), 1)
         self.canvas.add_shape(shape)
+        assert len(self.canvas.shapes) == 1
         assert not self.canvas.redo_list, "Redo list should be empty"
-        assert not self.canvas.gui.util.saved
+        assert not self.canvas.gui.util.saved, "Program should be in 'unsaved' state"
 
 
     def test_select_tool(self):
@@ -115,14 +115,26 @@ class TestWhyteboard:
         self.canvas.change_current_tool()
         assert isinstance(self.canvas.shape, tools.Eraser)
 
-    def test_deselect(self):
+
+    def test_select_shape(self):
         self.canvas.shapes[-1].selected = True
         self.canvas.selected = self.canvas.shapes[-1]
-        self.canvas.deselect()
+        self.canvas.deselect_shape()
         assert not self.canvas.selected
         for x in self.canvas.shapes:
             if not isinstance(x, tools.Eyedrop):
                 assert not x.selected, x
+
+
+    def test_deselect_shape(self):
+        self.canvas.shapes[-1].selected = True
+        self.canvas.selected = self.canvas.shapes[-1]
+        self.canvas.deselect_shape()
+        assert not self.canvas.selected
+        for x in self.canvas.shapes:
+            if not isinstance(x, tools.Eyedrop):
+                assert not x.selected, x
+
 
     def test_undo_then_redo(self):
         """Test undoing/redoing together"""
@@ -131,10 +143,12 @@ class TestWhyteboard:
         [self.canvas.redo() for x in range(4)]
         assert len(self.canvas.shapes) == len(self.shapes)
 
+
     def test_clear(self):
         self.canvas.clear()
         assert not self.canvas.shapes
         assert self.canvas.undo_list
+
 
     def test_clear_keep_images(self):
         """
@@ -150,11 +164,14 @@ class TestWhyteboard:
         assert self.canvas.shapes
         assert self.canvas.undo_list
 
+
     def test_clear_all(self):
         pass
 
+
     def test_clear_all_keep_images(self):
         pass
+
 
     def test_undo_and_redo_clear(self):
         """
@@ -308,7 +325,7 @@ class TestShapes:
         poly = tools.Polygon(self.canvas, (0, 0, 0), 1)
         poly.x, poly.y = 180, 248
         poly.points = [(180.0, 248.0), (319.0, 383.0), (420.0, 110.0)]
-        poly.center_and_bbox()
+        poly.sort_handles()
         assert poly.hit_test(350, 217)
         assert poly.hit_test(204, 256)
         assert not poly.hit_test(373, 255)

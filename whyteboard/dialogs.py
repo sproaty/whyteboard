@@ -17,6 +17,7 @@
 # Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 """
 This module contains classes extended from wx.Dialog used by the GUI.
 """
@@ -403,7 +404,7 @@ class UpdateDialog(wx.Dialog):
             if os.name == "posix":
                 os.system("tar -xf "+ tmp[0] +" --strip-components=1")
             else:
-                extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]), 
+                extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]),
                             self.version, self.gui.util.backup_ext)
             os.remove(tmp[0])
             args = ['python', ['python', sys.argv[0]]]  # for os.execvp
@@ -781,12 +782,14 @@ class PromptForSave(wx.Dialog):
 
     def okay(self, event):
         self.gui.on_save()
+        self.Close()
         if self.gui.util.saved or self.method == os.execvp:
             self.method(*self.args)  # force restart, otherwise 'cancel'
                                      # returns to application
 
     def no(self, event):
         self.method(*self.args)
+        self.Close()
         if self.method == self.gui.Destroy:
             sys.exit()
 
@@ -901,7 +904,7 @@ class MyPrintout(wx.Printout):
     def OnPrintPage(self, page):
         dc = self.GetDC()
         canvas = self.gui.tabs.GetPage(page - 1)
-        canvas.deselect()
+        canvas.deselect_shape()
 
         maxX = canvas.buffer.GetWidth()
         maxY = canvas.buffer.GetHeight()
@@ -1006,7 +1009,7 @@ def ExceptionHook(exctype, value, trace):
 class WhyteboardList(wx.ListCtrl, listmix.ListRowHighlighter):
 
     def __init__(self, parent):
-        wx.ListCtrl.__init__(self, parent, style=wx.DEFAULT_CONTROL_BORDER | 
+        wx.ListCtrl.__init__(self, parent, style=wx.DEFAULT_CONTROL_BORDER |
                              wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES)
         listmix.ListRowHighlighter.__init__(self, (206, 218, 255))
 
@@ -1099,7 +1102,7 @@ class ShapeViewer(wx.Dialog):
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_delete)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
-        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.on_deselect)        
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.on_deselect)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
         pub.subscribe(self.shape_add, 'shape.add')
@@ -1142,7 +1145,7 @@ class ShapeViewer(wx.Dialog):
             self.list.SetColumnWidth(4, wx.LIST_AUTOSIZE)
 
         self.list.SetColumnWidth(0, 60)
-        self.list.SetColumnWidth(1, 70)                
+        self.list.SetColumnWidth(1, 70)
         self.list.SetColumnWidth(2, 70)
         self.list.SetColumnWidth(3, wx.LIST_AUTOSIZE)
 
@@ -1350,19 +1353,19 @@ class PDFCache(wx.Dialog):
             index = self.list.InsertStringItem(sys.maxint, "")
             self.list.SetStringItem(index, 0, _("There are no cached items to display"))
         else:
-    
+
             for x, key in self.files.items():
                 f = self.files[x]
                 index = self.list.InsertStringItem(sys.maxint, str(x + 1))
                 date = f.get('date', _("No Date Saved"))
-    
+
                 self.list.SetStringItem(index, 0, f['file'])
                 self.list.SetStringItem(index, 1, f['quality'].capitalize())
                 self.list.SetStringItem(index, 2, "%s" % len(f['images']))
-                self.list.SetStringItem(index, 3, date)            
+                self.list.SetStringItem(index, 3, date)
 
         self.list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-        self.list.SetColumnWidth(1, 70)                
+        self.list.SetColumnWidth(1, 70)
         self.list.SetColumnWidth(2, 60)
         self.list.SetColumnWidth(3, wx.LIST_AUTOSIZE)
 

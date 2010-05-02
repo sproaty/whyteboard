@@ -20,14 +20,10 @@
 
 """
 This module implements the Whyteboard application.  It takes a Canvas class
-and wraps it in a GUI with a menu/toolbar/statusbar; can save and load drawings,
-clear the workspace, undo, redo, a simple history "replayer", allowing you to
-have a replay of what you have drawn played back to you.
+and wraps it in a GUI with a menu, toolbar, statusbar and some control panels.
 
-Also on the GUI is a panel for setting color and line thickness, with an
-indicator that shows a drawing preview. On the right is a tabbed panel, allowing
-the user to switch between viewing Thumbnails of each drawing's tab, or a Tree
-of Notes that the user has inputted.
+The GUI acts as a controller for the application - it delegates method calls
+to the appropriate classes when certain actions take place.
 """
 
 from __future__ import with_statement
@@ -273,7 +269,7 @@ class GUI(wx.Frame):
         sheets.Append(ID_RENAME, _("&Rename Sheet...") + "\tF2", _("Rename the current sheet"))
         sheets.Append(ID_RESIZE, _("Resi&ze Canvas...") + "\tCtrl+R", _("Change the canvas' size"))
         sheets.AppendSeparator()
-        self.next = sheets.Append(ID_NEXT, _("&Next Sheet") + "\tCtrl+Tab", _("Go to the next sheet"))
+        self.next = sheets.Append(ID_NEXT, _("&Next Sheet") + "\tCtrl+Tab", _("Go to the next sheet"))#
         self.prev = sheets.Append(ID_PREV, _("&Previous Sheet") + "\tCtrl+Shift+Tab", _("Go to the previous sheet"))
         sheets.AppendItem(undo_sheet)
         sheets.AppendMenu(ID_RECENTLY_CLOSED, _("Recently &Closed Sheets"), self.closed_tabs_menu, _("View all recently closed sheets"))
@@ -408,7 +404,7 @@ class GUI(wx.Frame):
                      ID_MOVE_DOWN: "move_down",
                      ID_MOVE_TO_TOP: "move_top",
                      ID_MOVE_TO_BOTTOM: "move_bottom",
-                     ID_DESELECT: "deselect",
+                     ID_DESELECT: "deselect_shape",
                      ID_RELOAD_PREF: "reload_preferences",
                      ID_TOOL_PREVIEW: "tool_preview",
                      ID_COLOUR_GRID: "colour_grid",
@@ -484,15 +480,12 @@ class GUI(wx.Frame):
             self.Bind(wx.EVT_MENU, lambda evt, tab=tab: self.on_undo_tab(tab=tab),
                       id=_id)
 
+
     def shape_selected(self, shape):
         """
         Shape getting selected (by Select tool)
         """
-        x = self.canvas.shapes.index(shape)
-        self.canvas.shapes.pop(x)
-        self.canvas.redraw_all()  # hide 'original'
-        self.canvas.shapes.insert(x, shape)
-        shape.draw(self.canvas.get_dc(), False)  # draw 'new'
+        self.canvas.select_shape(shape)
 
         ctrl, menu = True, True
         if not shape.background == wx.TRANSPARENT:
@@ -934,8 +927,8 @@ class GUI(wx.Frame):
         self.canvas.delete_selected()
         self.update_shape_viewer()
 
-    def on_deselect(self, event=None):
-        self.canvas.deselect()
+    def on_deselect_shape(self, event=None):
+        self.canvas.deselect_shape()
 
 
     def update_menus(self, event):
@@ -1105,7 +1098,7 @@ class GUI(wx.Frame):
 
         if code == wx.WXK_ESCAPE:  # close fullscreen/deselect shape
             if self.canvas.selected:
-                self.canvas.deselect()  # check this before fullscreen
+                self.canvas.deselect_shape()  # check this before fullscreen
                 return
             if self.IsFullScreen():
                 self.on_fullscreen(None, False)

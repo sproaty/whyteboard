@@ -287,6 +287,9 @@ class Window(object):
     def HasCapture(self):
         return self.captured
 
+    def GetId(self):
+        pass
+
     def Fit(self):
         pass
 
@@ -373,6 +376,9 @@ class ScrolledWindow(Window):
 
     def SetScrollRate(self, *size):
         pass
+
+    def GetViewStart(self):
+        return (0, 0)
 
     def SetVirtualSize(self, *size):
         pass
@@ -655,6 +661,9 @@ class VisualAttributes(object):
     def __init__(self, *args, **kwds):
         self.font = Font()
 
+class AcceleratorTable(object):
+    def __init__(self, *args, **kwds):
+        pass
 
 class StatusBar(Window):
     def __init__(self, *args, **kwds):
@@ -778,7 +787,7 @@ class Menu(object):
 
     def Append(self, id, label, tip="", kind=None):
         self.items.append((label,tip))
-        return self.items[-1]
+        return MenuItem(self.items[-1])
 
     def AppendItem(self, item):
         self.items.append(item)

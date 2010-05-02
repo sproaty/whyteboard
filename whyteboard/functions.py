@@ -17,6 +17,12 @@
 # Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
+
+"""
+Contains generic functions for the program that are not dependent on any other
+classes, only Python and wx functionality.
+"""
+
 import os
 import sys
 import random
@@ -164,7 +170,7 @@ def get_clipboard():
     if success:
         return text
     return False
-    
+
 
 def transparent_supported():
     """
@@ -177,15 +183,15 @@ def transparent_supported():
         return True
     except NotImplementedError:
         return False
-    
+
 
 def is_exe():
     """
     Determine if Whyteboard is being run as an exe
     """
-    return hasattr(sys, "frozen") 
-    
-    
+    return hasattr(sys, "frozen")
+
+
 
 def download_help_files(path):
     """
@@ -232,4 +238,4 @@ def extract_tar(path, _file, version, backup_ext):
 
     # move extracted file to current dir, remove tar, remove extracted dir
     distutils.dir_util.copy_tree(src, path)
-    distutils.dir_util.remove_tree(src)    
+    distutils.dir_util.remove_tree(src)

@@ -17,6 +17,7 @@
 # Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 """
 This module contains a utility helper class to reduce the amount of code
 inside gui.py - whyteboard-file saving/loading, pdf/ps loading/conversion and
@@ -585,7 +586,7 @@ class Utility(object):
         depending on the filetype. gif is buggered for some reason :-/
         """
         const = get_wx_image_type(filename)
-        self.gui.canvas.deselect()
+        self.gui.canvas.deselect_shape()
 
         context = wx.MemoryDC(self.gui.canvas.buffer)
         memory = wx.MemoryDC()

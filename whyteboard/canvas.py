@@ -122,10 +122,10 @@ class Canvas(wx.ScrolledWindow):
         self.Bind(wx.EVT_MIDDLE_UP, self.middle_up)
         self.Bind(wx.EVT_MOTION, self.motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        
+
         pub.subscribe(self.set_border, 'canvas.set_border')
-        
-        
+
+
     def set_border(self, border_size):
         global CANVAS_BORDER
         CANVAS_BORDER = border_size
@@ -141,7 +141,7 @@ class Canvas(wx.ScrolledWindow):
             return
 
         if not isinstance(self.shape, Select) and self.selected:
-            self.deselect()
+            self.deselect_shape()
 
         self.shape.left_down(x, y)
         #  Crashes without the Text check
@@ -405,7 +405,7 @@ class Canvas(wx.ScrolledWindow):
         self.shapes.append(shape)
 
         if self.selected:
-            self.deselect()
+            self.deselect_shape()
             self.redraw_all()
         if self.text:
             self.text = None
@@ -441,7 +441,7 @@ class Canvas(wx.ScrolledWindow):
         list_b.append(list(self.shapes))
         shapes = list_a.pop()
         self.shapes = shapes
-        self.deselect()
+        self.deselect_shape()
         self.redraw_all(True)
 
         # nicest (and laziest) way to sort the notes out at the moment
@@ -655,14 +655,29 @@ class Canvas(wx.ScrolledWindow):
 
 
 
-    def deselect(self):
-        """Deselects the selected shape"""
+    def deselect_shape(self):
+        """Deselects the currently selected shape"""
         for x in self.shapes:
             if isinstance(x, OverlayShape):
                 x.selected = False
         if self.selected:
             self.selected = None
             self.redraw_all()
+
+
+    def select_shape(self, shape):
+        """Selects the selected shape"""
+        self.overlay = wx.Overlay()
+        if self.selected:
+            self.deselect_shape()
+
+        self.selected = shape
+        shape.selected = True
+        x = self.shapes.index(shape)
+        self.shapes.pop(x)
+        self.redraw_all()  # hide 'original'
+        self.shapes.insert(x, shape)
+        shape.draw(self.get_dc(), False)  # draw 'new'
 
 
     def get_dc(self):

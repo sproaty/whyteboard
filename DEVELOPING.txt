@@ -1,4 +1,5 @@
-Whyteboard - Help for development
+Whyteboard - Help for developmers
+Version 0.39.4 - last updated: 1 May 2010
 ---------------------------------
 
 This document serves to help a developer who wishes to contribute / understand
@@ -20,15 +21,15 @@ current tab to undo its last operation, Or, saving a file will involve prompting
 the user for the location to save the file to, and then call a function in the
 utility class to actually save the data.
 
-Since the program is tabbed, the gui keeps a reference to its active "board".
-The gui updates its canvas reference when opening/closing/changing tabs. Often we
-want to perform operations only on the current tab, e.g. paste an image into a
+Since the program is tabbed, the gui keeps a reference to its active canvas.
+The gui updates its canvas reference when opening/closing/changing tabs. Often,
+we want to perform operations only on the current tab, e.g paste an image into a
 tab, export the current tab as an image and so on. Thus knowing the current tab
 is useful.
 
-The Canvas contains the drawable canvas - a scrollable window. It has its own 
-event bindings and no title bar. Multiple Canvases will exists at a given time, 
-and the GUI presents these views to the user through its tab list, thumbnails 
+The Canvas contains the drawable canvas - a scrollable window. It has its own
+event bindings and no title bar. Multiple Canvases will exists at a given time,
+and the GUI presents these views to the user through its tab list, thumbnails
 panel and the Notes tree.
 
 The Canvas class contains a list of shapes that has been drawn upon it. Each
@@ -92,7 +93,6 @@ tools.py, making sure the filename defined in its "icon" attribute exists under
 
 ----------------------------------
 
-
 The source files are organised as follows:
 
 lib/           - third party modules
@@ -108,24 +108,23 @@ panels.py      - control panel, notes, thumnbails
 preferences.py - preferences dialog
 tools.py       - class definitions for the drawing tool.s
 unitests.py    - unit tests
-utility.py     - a class the GUI references that performs saving/loading files, 
+utility.py     - a class the GUI references that performs saving/loading files,
                  getting file paths and misc. things
-
 
 ------------------------------------------
 
-
 CODING PRACTICES
-Try and follow Python's Pep 8 guidelines http://www.python.org/dev/peps/pep-0008
-80 characters per line can be hard to use at times and can be broken in some
-cases. 
-Name methods like_this, not AsSuch. As wxPython uses CamelCased method names,
-it easily allows you to differentiate between wx and whyteboard's methods. Very
-useful for dialogs and custom panels.
 
-Try and learn to use PubSub. It will help to decouple objects and even modules'
-dependencies on each other which is always a very good thing, and allows for
-easier testing
-Be wary of performance issues when performing loops. 
-Try and write a unit test for your functionality to assert it works correctly
-Python has a high overhead for functions calls so please be wary of that, too.
+* Try and follow Python's Pep 8 guidelines http://www.python.org/dev/peps/pep-0008
+* 80 characters per line can be hard to use at times and can be broken in some
+  cases.
+* Name methods like_this, not AsSuch. As wxPython uses CamelCased method names,
+  it easily allows you to differentiate between wx and whyteboard's methods. Very
+  useful for dialogs and custom panels.
+
+* Try and write a unit test for your functionality to assert it works correctly
+* Learn to use PubSub. It will help to decouple objects and even modules'
+  dependencies on each other which is always a very good thing, and allows for
+  easier testing
+* Be wary of performance issues when performing loops.
+* Python has a high overhead for functions calls so please be wary of that, too.

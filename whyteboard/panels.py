@@ -17,6 +17,7 @@
 # Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
+
 """
 This module contains classes for the GUI side panels and pop-up menus.
 """
@@ -540,8 +541,8 @@ class MediaPanel(wx.Panel):
 
     def on_volume(self, evt):
         self.mc.SetVolume(float(self.volume.GetValue() / 100))
-        
-        
+
+
 #---------------------------------------------------------------------
 
 class MediaDropTarget(wx.FileDropTarget):
@@ -552,7 +553,7 @@ class MediaDropTarget(wx.FileDropTarget):
 
     def OnDropFiles(self, x, y, filenames):
         self.panel.do_load_file(filenames[0])
-        
+
 #---------------------------------------------------------------------
 
 
@@ -698,11 +699,11 @@ class Notes(wx.Panel):
         item = self.tree.GetPyData(event.GetItem())
 
         if not item.selected:
-            self.gui.canvas.deselect()
+            self.gui.canvas.deselect_shape()
             item.selected = True
             self.gui.canvas.selected = item
         else:
-            self.gui.canvas.deselect()
+            self.gui.canvas.deselect_shape()
 
         if draw:
             self.gui.canvas.redraw_all()
@@ -943,11 +944,11 @@ class ShapePopup(Popup):
 
     def select(self, draw=True):
         if not self.item.selected:
-            self.gui.canvas.deselect()
+            self.gui.canvas.deselect_shape()
             self.item.selected = True
             self.gui.canvas.selected = self.item
         else:
-            self.gui.canvas.deselect()
+            self.gui.canvas.deselect_shape()
 
         if draw:
             self.gui.canvas.redraw_all()

@@ -17,11 +17,14 @@
 # Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
-import wx
 
 """
-IDs used by the program for event binding
+wxPython event IDs used by the program for event binding and for a common ID
+to be used for multiple events (menu/toolbar/idle)
 """
+
+import wx
+
 
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
