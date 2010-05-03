@@ -85,15 +85,28 @@ class Bitmap(object):
         self.filename = filename
         self.flag = flag
         self.calls = []
+        self.width = 0
+        self.height = 0
+
+
+    def SetSize(self, w, h):
+        self.width = w
+        self.height = h
+
+    def GetSize(self):
+        return (self.width, self.height)
+
+    def GetHeight(self):
+        return self.height
+
+    def GetWidth(self):
+        return self.width
 
     def SetMaskColour(self, color):
         self.mask_color = color
 
     def SetMask(self, mask):
         self.mask = mask
-
-    def GetSize(self):
-        return (1, 1)
 
     def __getattr__(self, attr):
         """Just fake any other methods"""
@@ -103,14 +116,31 @@ class Bitmap(object):
 class EmptyBitmap(Bitmap):
     def __init__(self, *args, **kwds):
         self.calls = []
+        self.width = 0
+        self.height = 0
 
 class Image(object):
     def __init__(self, filename=None, type=None):
         self.calls = []
+        self.width = 0
+        self.height = 0
+
+
+    def SetSize(self, w, h):
+        self.width = w
+        self.height = h
+
+    def GetSize(self):
+        return (self.width, self.height)
+
+    def GetHeight(self):
+        return self.height
+
+    def GetWidth(self):
+        return self.width
 
     def Resize(self, width, height):
         pass
-
 
     def __getattr__(self, attr):
         """Just fake any other methods"""
@@ -284,6 +314,9 @@ class Window(object):
 
     def Enable(self):
         self.Enabled=True
+
+    def IsEnabled(self):
+        return self.Enabled
 
     def GetClassDefaultAttributes(self):
         return VisualAttributes()

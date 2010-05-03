@@ -244,8 +244,24 @@ class TestGuiFunctionality:
         self.gui.on_undo_tab()  # nothing to undo
         assert self.gui.tab_count == 5
 
+    def test_hotkey(self):
+        self.hotkey(115, whyteboard.tools.Select)  # 's'
+        self.hotkey(112, whyteboard.tools.Pen)  # 'p'
+        self.hotkey(98, whyteboard.tools.BitmappSelect)  # 'b'
+        self.hotkey(98, whyteboard.tools.BitmappSelect), "current tool shouldn't have changed"
+
+    def hotkey(self, code, expected):
+        evt = Event()
+        evt.GetKeyCode = lambda code=code: code
+        self.gui.hotkey(evt)
+        assert isinstance(self.gui.canvas.shape, expected)
+
 
 #    def test_next(self):
+#        assert self.gui.current_tab == 5, self.gui.current_tab
+#        self.gui.on_next()
+#        assert self.gui.current_tab == 5, self.gui.current_tab
+#        self.gui.on_next()
 #        evt = Event()
 #        evt.selection = 0
 #        self.gui.on_change_tab(evt)
@@ -253,16 +269,24 @@ class TestGuiFunctionality:
 #        assert self.gui.current_tab == 1, self.gui.current_tab
 #
 #    def test_prev(self):
+#        assert self.gui.current_tab == 5, self.gui.current_tab
+#        self.gui.on_prev()
+#        assert self.gui.current_tab == 4, self.gui.current_tab
+#        self.gui.on_next()
 #        evt = Event()
 #        evt.selection = 1
 #        self.gui.on_change_tab(evt)
-#        self.gui.on_next()
+#        self.gui.on_prev()
+#        assert self.gui.current_tab == 1, self.gui.current_tab
+#        self.gui.on_prev()
 #        assert self.gui.current_tab == 0, self.gui.current_tab
-
-    #def test_load_wtbd(self):
-    #    _file = os.path.join(os.getcwd(), "test.wtbd")
-    #    assert os.path.exists(_file), _file
-        #self.gui.do_open(_file)
+#        self.gui.on_prev()
+#        assert self.gui.current_tab == 0, self.gui.current_tab
+#
+#    def test_load_wtbd(self):
+#        _file = os.path.join(os.getcwd(), "test.wtbd")
+#        assert os.path.exists(_file), _file
+#        self.gui.do_open(_file)
 
 
 #----------------------------------------------------------------------
@@ -272,6 +296,7 @@ class TestShapes:
     """
     We want to test shape's functionality, if they respond to their hit tests
     correctly and boundaries. Can probably ignore the math-based ones (?)
+    This doesn't depend on the GUI or its classes
     """
     def __init__(self):
         self.canvas = None
@@ -292,35 +317,105 @@ class TestShapes:
         assert circ.hit_test(36, 45)  # very edge
         assert not circ.hit_test(34, 50)
 
+
+    def test_ellipse_hit(self):
+        """
+        values from playing with the ellipse itself
+        """
+        ellipse = whyteboard.tools.Ellipse(self.canvas, (0, 0, 0), 1)
+        ellipse.width = 150
+        ellipse.height = 152
+        ellipse.x = 50
+        ellipse.y = 50
+
+        assert not ellipse.hit_test(46, 73)
+        assert not ellipse.hit_test(151, 204)
+        assert ellipse.hit_test(51, 128)  # very edge
+        assert not ellipse.hit_test(49, 46)
+        assert ellipse.hit_test(125, 125)
+
+
     def test_rect_hit(self):
-        r1 =  whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
-        r2 =  whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
-        r3 =  whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
-        r4 =  whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
-        x, y = 150, 150
-        r1.x, r2.x, r3.x, r4.x = x, x, x, x
-        r1.y, r2.y, r3.y, r4.y = y, y, y, y
+        """
+        Test the rectangle by using different x/y combinations to represent
+        the user drawing the rectangle by dragging to different directions
+        """
+        rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
+        rect.x = 150
+        rect.y = 150
 
-        r1.width, r1.height = 50, 50
-        r1.update_rect()
-        assert r1.hit_test(155, 155)
-        assert not r1.hit_test(145, 155)
+        rect.width, rect.height = 50, 50
+        rect.update_rect()
+        assert rect.hit_test(155, 155)
+        assert not rect.hit_test(145, 155)
 
-        r2.width, r2.height = -50, -50
-        r2.update_rect()
-        assert r2.hit_test(120, 130)
-        assert not r2.hit_test(155, 155)
+        rect.width, rect.height = -50, -50
+        rect.update_rect()
+        assert rect.hit_test(120, 130)
+        assert not rect.hit_test(155, 155)
 
-        r3.width, r3.height = 50, -50
-        r3.update_rect()
-        assert r3.hit_test(165, 130)
-        assert not r3.hit_test(140, 155)
+        rect.width, rect.height = 50, -50
+        rect.update_rect()
+        assert rect.hit_test(165, 130)
+        assert not rect.hit_test(140, 155)
 
-        r4.width, r4.height = -50, 50
-        r4.update_rect()
-        assert r4.hit_test(120, 180)
-        assert not r4.hit_test(120, 130)
-        assert not r4.hit_test(155, 155)
+        rect.width, rect.height = -50, 50
+        rect.update_rect()
+        assert rect.hit_test(120, 180)
+        assert not rect.hit_test(120, 130)
+        assert not rect.hit_test(155, 155)
+
+
+    def test_image_hit(self):
+        """
+        Essentially a rectangle
+        """
+        img = whyteboard.tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg")
+        img.x = 150
+        img.y = 150
+        img.image.SetSize(50, 50)
+        img.sort_handles()
+
+        assert img.hit_test(160, 160)
+        assert img.hit_test(150, 150)
+        assert img.hit_test(199, 199)
+        assert not img.hit_test(149, 149)
+        assert not img.hit_test(201, 201)
+        assert img.handle_hit_test(149, 149)
+        assert img.handle_hit_test(148, 148)
+        assert img.handle_hit_test(203, 203)
+        assert not img.handle_hit_test(147, 147)
+
+
+
+    def test_text_hit(self):
+        """
+        Mocking with a fixed text extent
+        """
+        img = whyteboard.tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg")
+        img.x = 150
+        img.y = 150
+        img.image.SetSize(50, 50)
+        img.sort_handles()
+
+        assert img.hit_test(160, 160)
+        assert not img.hit_test(145, 155)
+
+
+
+    def test_note_hit(self):
+        """
+        Same as text, with added padding for the rectangle
+        """
+        img = whyteboard.tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg")
+        img.x = 150
+        img.y = 150
+        img.image.SetSize(50, 50)
+        img.sort_handles()
+
+        assert img.hit_test(160, 160)
+        assert not img.hit_test(145, 155)
+
 
     def test_line_hit(self):
         line = whyteboard.tools.Line(self.canvas, (0, 0, 0), 1)  # diagonal right
@@ -343,5 +438,14 @@ class TestShapes:
         assert not poly.hit_test(373, 255)
         assert not poly.hit_test(183, 231)
 
+    def test_select_tool(self):
+        poly = whyteboard.tools.Polygon(self.canvas, (0, 0, 0), 1)
+        poly.x, poly.y = 180, 248
+        poly.points = [(180.0, 248.0), (319.0, 383.0), (420.0, 110.0)]
+        poly.sort_handles()
+        assert poly.hit_test(350, 217)
+        assert poly.hit_test(204, 256)
+        assert not poly.hit_test(373, 255)
+        assert not poly.hit_test(183, 231)
 
 #----------------------------------------------------------------------

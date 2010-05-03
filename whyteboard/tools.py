@@ -1620,7 +1620,6 @@ class Image(OverlayShape):
     def hit_test(self, x, y):
         width, height = self.image.GetSize()
         rect = wx.Rect(self.x, self.y, width, height)
-
         if rect.ContainsXY(x, y):
             return True
         return False

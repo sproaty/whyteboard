@@ -49,7 +49,6 @@ from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
 
 EDGE = 15    # distance from canvas edge before shape will scroll canvas
 TO_MOVE = 5  # pixels shape will cause canvas to scroll
-CANVAS_BORDER = 15  # border pixels in size (overridable by user)
 
 # area user clicked on canvas to resize
 RIGHT = 1
@@ -64,6 +63,8 @@ class Canvas(wx.ScrolledWindow):
     The drawing frame of the application. References to self.shape.drawing are
     for the Polygon tool, mainly avoiding isinstance() checks
     """
+    CANVAS_BORDER = 15  # border pixels in size (overridable by user)
+    
     def __init__(self, tab, gui):
         """
         Initalise the window, class variables and bind mouse/paint events
@@ -206,8 +207,7 @@ class Canvas(wx.ScrolledWindow):
 
 
     def set_border(self, border_size):
-        global CANVAS_BORDER
-        CANVAS_BORDER = border_size
+        self.CANVAS_BORDER = border_size
         self.resize(self.area)
 
 
@@ -308,7 +308,7 @@ class Canvas(wx.ScrolledWindow):
 
         self.buffer = wx.EmptyBitmap(*size)
         self.area = size
-        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)
+        size = (size[0] + self.CANVAS_BORDER, size[1] + self.CANVAS_BORDER)
         self.SetVirtualSize(size)
         self.redraw_all(resizing=True)
 
@@ -552,7 +552,6 @@ class Canvas(wx.ScrolledWindow):
             if self.selected.edges[EDGE_LEFT] < start[0] + EDGE and direction == "left":
                 scroll = (start[0] - TO_MOVE, -1)
             if self.selected.edges[EDGE_TOP] < start[1] + EDGE and direction == "up":
-                print 'up'
                 scroll = (-1, start[1] - TO_MOVE)
 
         else:
