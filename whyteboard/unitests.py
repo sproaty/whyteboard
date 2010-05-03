@@ -49,13 +49,9 @@ def make_shapes(canvas):
     params = [canvas, Colour(0, 0, 0), 1]
 
     for tool in canvas.gui.util.items:
-        #if not isinstance(item, (tools.Media, tools.Select)):
-        #pub.sendMessage('shape.add', shape=item)#canvas.add_shape(item(*params))
-        if not isinstance(tool, (whyteboard.tools.Select, whyteboard.tools.Media,
-                                 whyteboard.tools.BitmapSelect, whyteboard.tools.Eyedrop)):
-            item = tool(*params)
-            item.left_down(5, 6)
-            item.left_up(10, 15)
+        item = tool(*params)
+        item.left_down(5, 6)
+        item.left_up(10, 15)
 
 class SimpleApp(fakewidgets.core.PySimpleApp):
     """
@@ -247,8 +243,8 @@ class TestGuiFunctionality:
     def test_hotkey(self):
         self.hotkey(115, whyteboard.tools.Select)  # 's'
         self.hotkey(112, whyteboard.tools.Pen)  # 'p'
-        self.hotkey(98, whyteboard.tools.BitmappSelect)  # 'b'
-        self.hotkey(98, whyteboard.tools.BitmappSelect), "current tool shouldn't have changed"
+        self.hotkey(98, whyteboard.tools.BitmapSelect)  # 'b'
+        self.hotkey(98, whyteboard.tools.BitmapSelect), "current tool shouldn't have changed"
 
     def hotkey(self, code, expected):
         evt = Event()
