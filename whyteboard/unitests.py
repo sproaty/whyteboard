@@ -386,31 +386,42 @@ class TestShapes:
 
     def test_text_hit(self):
         """
-        Mocking with a fixed text extent
+        Mocking with a fixed text extent (58, 17)
         """
-        img = whyteboard.tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg")
-        img.x = 150
-        img.y = 150
-        img.image.SetSize(50, 50)
-        img.sort_handles()
+        text = whyteboard.tools.Text(self.canvas, (0, 0, 0), 3)
+        text.x = 100
+        text.y = 102
+        text.text = "blah blah"
+        text.find_extent()
 
-        assert img.hit_test(160, 160)
-        assert not img.hit_test(145, 155)
+        assert not text.hit_test(163, 110)
+        assert not text.hit_test(122, 87)
+        assert not text.hit_test(95, 117)
+        assert text.hit_test(103, 117)
+        assert text.hit_test(130, 108)
+        assert text.hit_test(154, 114)
 
 
 
     def test_note_hit(self):
         """
-        Same as text, with added padding for the rectangle
+        Same as text, with added padding for the background
         """
-        img = whyteboard.tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg")
-        img.x = 150
-        img.y = 150
-        img.image.SetSize(50, 50)
-        img.sort_handles()
+        note = whyteboard.tools.Note(self.canvas, (0, 0, 0), 3)
+        note.x = 100
+        note.y = 99
+        note.note = "blah blah"
+        note.find_extent()
 
-        assert img.hit_test(160, 160)
-        assert not img.hit_test(145, 155)
+        assert not note.hit_test(88, 99)
+        assert not note.hit_test(129, 87)
+        assert not note.hit_test(168, 106)
+        assert not note.hit_test(119, 126)
+        assert note.hit_test(91, 108)
+        assert note.hit_test(130, 91)
+        assert note.hit_test(166, 106)
+        assert note.hit_test(144, 121)
+        assert note.hit_test(126, 111)
 
 
     def test_line_hit(self):

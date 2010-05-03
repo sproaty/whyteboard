@@ -247,7 +247,7 @@ class DC(object):
         self.calls = []
 
     def GetMultiLineTextExtent(self, *args, **kwds):
-        return (0, 0)
+        return (58, 17, 17)
 
     def GetBoundingBox(self):
         return (100, 100, 150, 150)
