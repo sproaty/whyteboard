@@ -141,6 +141,9 @@ class Font(object):
     def SetWeight(self, weight):
         pass
 
+    def GetNativeFontInfoDesc(self):
+        return "Sans 10"
+
     def SetNativeFontInfoFromString(self, string):
         pass
 
@@ -172,6 +175,16 @@ class Colour(object):
 
     def Get(self):
         return self.colour
+
+    def Red(self):
+        return self.colour[0]
+
+    def Green(self):
+        return self.colour[1]
+
+    def Blue(self):
+        return self.colour[2]
+
 
 class Region(object):
     def __init__(self, x, y, w, d):
@@ -275,6 +288,9 @@ class Window(object):
     def GetClassDefaultAttributes(self):
         return VisualAttributes()
 
+    def GetFont(self):
+        return Font()
+
     def Disable(self):
         self.Enabled=False
 
@@ -316,6 +332,9 @@ class Window(object):
 
     def SetSize(self, size):
         self.size = size
+
+    def GetFullTextExtent(self, string, font=None):
+        return (5, 5, 10, 10)
 
     def RefreshRect(self, rect):
         pass
@@ -1135,6 +1154,13 @@ class GridBagSizer(FlexGridSizer):
     def __init__(self, vgap=0, hgap=0):
         FlexGridSizer.__init__(self, None)
 
+
+class StdDialogButtonSizer(BoxSizer):
+    def __init__(self, vgap=0, hgap=0):
+        BoxSizer.__init__(self, None)
+
+    def AddButton(self, button):
+        pass
 
 #############
 # Functions

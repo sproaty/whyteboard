@@ -35,7 +35,7 @@ import fakewidgets
 from fakewidgets.core import Bitmap, Event, Colour
 import gui
 import meta
-import tools as tools
+import whyteboard.tools
 
 config = ConfigObj(configspec=meta.config_scheme.split("\n"))
 validator = Validator()
@@ -50,11 +50,12 @@ def make_shapes(canvas):
 
     for tool in canvas.gui.util.items:
         #if not isinstance(item, (tools.Media, tools.Select)):
-        #print item
         #pub.sendMessage('shape.add', shape=item)#canvas.add_shape(item(*params))
-        item = tool(*params)
-        item.left_down(5, 6)
-
+        if not isinstance(tool, (whyteboard.tools.Select, whyteboard.tools.Media,
+                                 whyteboard.tools.BitmapSelect, whyteboard.tools.Eyedrop)):
+            item = tool(*params)
+            item.left_down(5, 6)
+            item.left_up(10, 15)
 
 class SimpleApp(fakewidgets.core.PySimpleApp):
     """
@@ -66,7 +67,6 @@ class SimpleApp(fakewidgets.core.PySimpleApp):
 
         g = gui.GUI(None, config)  # mock the GUI, referenced by all
         self.canvas = g.canvas
-        self.canvas.Show()
 
 #----------------------------------------------------------------------
 
@@ -93,10 +93,11 @@ class TestCanvas:
         """
         Adds some shape to the canvas' shape list
         """
-        shape = tools.Rectangle(self.canvas, (0, 0, 0), 1)
+        self.canvas.shapes = list()
+        shape = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
         self.canvas.add_shape(shape)
         assert len(self.canvas.shapes) == 1
-        assert not self.canvas.redo_list, "Redo list should be empty"
+        assert len(self.canvas.redo_list) == 0, "Redo list should be empty"
         assert not self.canvas.gui.util.saved, "Program should be in 'unsaved' state"
 
 
@@ -105,25 +106,23 @@ class TestCanvas:
         This depends on the Tool list order not changing, unlikely from a UI
         perspective; note: change_current_tool() called in Whyteboard.__init__
         """
-        assert isinstance(self.canvas.shape, tools.Pen)
+        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
         self.canvas.change_current_tool(1)  # passing in Pen explicitly
-        assert isinstance(self.canvas.shape, tools.Pen)
+        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
         self.canvas.change_current_tool()
-        assert isinstance(self.canvas.shape, tools.Pen)
+        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
         self.canvas.change_current_tool(2)
-        assert isinstance(self.canvas.shape, tools.Eraser)
+        assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
         self.canvas.change_current_tool()
-        assert isinstance(self.canvas.shape, tools.Eraser)
+        assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
 
 
     def test_select_shape(self):
-        self.canvas.shapes[-1].selected = True
-        self.canvas.selected = self.canvas.shapes[-1]
-        self.canvas.deselect_shape()
-        assert not self.canvas.selected
-        for x in self.canvas.shapes:
-            if not isinstance(x, tools.Eyedrop):
-                assert not x.selected, x
+        shape = self.canvas.shapes[3]
+        self.canvas.select_shape(shape)
+        assert self.canvas.selected == shape
+        assert shape.selected
+
 
 
     def test_deselect_shape(self):
@@ -132,7 +131,7 @@ class TestCanvas:
         self.canvas.deselect_shape()
         assert not self.canvas.selected
         for x in self.canvas.shapes:
-            if not isinstance(x, tools.Eyedrop):
+            if not isinstance(x, whyteboard.tools.Eyedrop):
                 assert not x.selected, x
 
 
@@ -159,7 +158,7 @@ class TestCanvas:
         assert not self.canvas.shapes
         self.canvas.shapes = self.shapes  # restore shapes
 
-        self.canvas.add_shape(tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg"))
+        self.canvas.add_shape(whyteboard.tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg"))
         self.canvas.clear(True)
         assert self.canvas.shapes
         assert self.canvas.undo_list
@@ -209,13 +208,16 @@ class TestGuiFunctionality:
         """
         self.canvas = SimpleApp().canvas
         self.gui = self.canvas.gui
-        for x in range(9):
+        for x in range(4):
+            shapes = list(self.gui.canvas.shapes)
             self.gui.on_new_tab()
-            make_shapes(self.canvas)
-        assert len(self.gui.tabs.pages) == 10, len(self.gui.tabs.pages)
+            self.gui.canvas.shapes = shapes
+        assert len(self.gui.tabs.pages) == 5, len(self.gui.tabs.pages)
 
     def test_close_sheet(self):
-        """Currently lacking a faked tab thing that's good enough"""
+        """
+        Currently lacking a faked system that's good enough
+        """
         x = len(self.gui.tabs.pages)
         self.gui.on_close_tab()
         assert len(self.gui.tabs.pages) == x - 1
@@ -232,20 +234,30 @@ class TestGuiFunctionality:
         #assert self.gui.current_tab == 4
 
     def test_undo_closed_sheets(self):
-        assert self.gui.tab_count == 10
+        assert self.gui.tab_count == 5
         shapes = self.gui.canvas.shapes
         self.gui.on_close_tab()
-        assert self.gui.tab_count == 9
+        assert self.gui.tab_count == 4
         self.gui.on_undo_tab()
-        assert self.gui.tab_count == 10
+        assert self.gui.tab_count == 5
         assert self.gui.canvas.shapes == shapes
+        self.gui.on_undo_tab()  # nothing to undo
+        assert self.gui.tab_count == 5
 
 
-    def test_next(self):
-        pass
-
-    def test_prev(self):
-        pass
+#    def test_next(self):
+#        evt = Event()
+#        evt.selection = 0
+#        self.gui.on_change_tab(evt)
+#        self.gui.on_next()
+#        assert self.gui.current_tab == 1, self.gui.current_tab
+#
+#    def test_prev(self):
+#        evt = Event()
+#        evt.selection = 1
+#        self.gui.on_change_tab(evt)
+#        self.gui.on_next()
+#        assert self.gui.current_tab == 0, self.gui.current_tab
 
     #def test_load_wtbd(self):
     #    _file = os.path.join(os.getcwd(), "test.wtbd")
@@ -270,7 +282,7 @@ class TestShapes:
         self.gui = self.canvas.gui
 
     def test_circle_hit(self):
-        circ = tools.Circle(self.canvas, (0, 0, 0), 1)
+        circ = whyteboard.tools.Circle(self.canvas, (0, 0, 0), 1)
         circ.radius = 15
         circ.x = 50
         circ.y = 50
@@ -281,10 +293,10 @@ class TestShapes:
         assert not circ.hit_test(34, 50)
 
     def test_rect_hit(self):
-        r1 =  tools.Rectangle(self.canvas, (0, 0, 0), 1)
-        r2 =  tools.Rectangle(self.canvas, (0, 0, 0), 1)
-        r3 =  tools.Rectangle(self.canvas, (0, 0, 0), 1)
-        r4 =  tools.Rectangle(self.canvas, (0, 0, 0), 1)
+        r1 =  whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
+        r2 =  whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
+        r3 =  whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
+        r4 =  whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
         x, y = 150, 150
         r1.x, r2.x, r3.x, r4.x = x, x, x, x
         r1.y, r2.y, r3.y, r4.y = y, y, y, y
@@ -311,7 +323,7 @@ class TestShapes:
         assert not r4.hit_test(155, 155)
 
     def test_line_hit(self):
-        line = tools.Line(self.canvas, (0, 0, 0), 1)  # diagonal right
+        line = whyteboard.tools.Line(self.canvas, (0, 0, 0), 1)  # diagonal right
         line.x, line.y = 150, 150
         line.x2, line.y2 = 250, 70
 
@@ -322,7 +334,7 @@ class TestShapes:
 
 
     def test_poly_hit(self):
-        poly = tools.Polygon(self.canvas, (0, 0, 0), 1)
+        poly = whyteboard.tools.Polygon(self.canvas, (0, 0, 0), 1)
         poly.x, poly.y = 180, 248
         poly.points = [(180.0, 248.0), (319.0, 383.0), (420.0, 110.0)]
         poly.sort_handles()
