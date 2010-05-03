@@ -215,6 +215,8 @@ class Colour(object):
     def Blue(self):
         return self.colour[2]
 
+    def SetFromName(self, name):
+        pass
 
 class Region(object):
     def __init__(self, x, y, w, d):

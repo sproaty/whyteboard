@@ -1490,8 +1490,7 @@ class WhyteboardApp(wx.App):
             path = options.conf
 
         config = ConfigObj(path, configspec=meta.config_scheme.split("\n"))
-        validator = Validator()
-        config.validate(validator)
+        config.validate(Validator())
 
         set_lang = False
         lang_name = config['language']

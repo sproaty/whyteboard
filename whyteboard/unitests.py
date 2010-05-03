@@ -37,14 +37,10 @@ import gui
 import meta
 import whyteboard.tools
 
-config = ConfigObj(configspec=meta.config_scheme.split("\n"))
-validator = Validator()
-config.validate(validator)
-
 
 def make_shapes(canvas):
     """
-    Generates shapes. Needs a Whyteboard instance to add the shapes to
+    Generates shapes. Needs a Canvas instance to add the shapes to
     """
     params = [canvas, Colour(0, 0, 0), 1]
 
@@ -53,15 +49,18 @@ def make_shapes(canvas):
         item.left_down(5, 6)
         item.left_up(10, 15)
 
+
 class SimpleApp(fakewidgets.core.PySimpleApp):
     """
-    Create a GUI instance and create a new
+    Create a GUI instance and create a new canvas reference
     """
     def __init__(self):
-        global config
         fakewidgets.core.PySimpleApp.__init__(self)
 
-        g = gui.GUI(None, config)  # mock the GUI, referenced by all
+        config = ConfigObj(configspec=meta.config_scheme.split("\n"))
+        config.validate(Validator())
+
+        g = gui.GUI(None, config)  # mock the GUI with fake wxPython classes
         self.canvas = g.canvas
 
 #----------------------------------------------------------------------
@@ -122,6 +121,9 @@ class TestCanvas:
 
 
     def test_deselect_shape(self):
+        """
+        Previous shape should now be "deselected"
+        """
         self.canvas.shapes[-1].selected = True
         self.canvas.selected = self.canvas.shapes[-1]
         self.canvas.deselect_shape()
@@ -132,7 +134,9 @@ class TestCanvas:
 
 
     def test_undo_then_redo(self):
-        """Test undoing/redoing together"""
+        """
+        Test undoing/redoing together
+        """
         [self.canvas.undo() for x in range(4)]
         assert len(self.canvas.shapes) == len(self.shapes) - 4
         [self.canvas.redo() for x in range(4)]
@@ -174,10 +178,41 @@ class TestCanvas:
         """
         self.canvas.clear()
         self.canvas.undo()
-        assert len(self.canvas.shapes) == len(self.shapes)
+        assert len(self.canvas.shapes) == len(self.shapes), "Shapes should be restored"
         self.canvas.redo()
         assert len(self.canvas.shapes) == 0, "Shapes should be empty"
 
+
+    def test_move_top(self):
+        shape = self.canvas.shapes[0]
+        top_shape = self.canvas.shapes[3]
+        self.canvas.move_top(shape)
+        assert self.canvas.shapes[3] == shape
+        assert self.canvas.shapes[2] == top_shape
+        assert not self.canvas.shapes[0] == shape
+
+
+    def test_move_up(self):
+        shape = self.canvas.shapes[0]
+        shape_above = self.canvas.shapes[1]
+        self.canvas.move_up(shape)
+        assert self.canvas.shapes[1] == shape
+        assert self.canvas.shapes[0] == shape_above
+
+    def test_move_down(self):
+        shape = self.canvas.shapes[2]
+        shape_below = self.canvas.shapes[1]
+        self.canvas.move_down(shape)
+        assert self.canvas.shapes[1] == shape
+        assert self.canvas.shapes[2] == shape_below
+
+
+    def test_move_bottom(self):
+        shape = self.canvas.shapes[3]
+        bottom_shape = self.canvas.shapes[0]
+        self.canvas.move_bottom(shape)
+        assert self.canvas.shapes[0] == shape
+        assert self.canvas.shapes[1] == bottom_shape
 
 #----------------------------------------------------------------------
 
@@ -185,14 +220,7 @@ class TestCanvas:
 class TestGuiFunctionality:
     """
     Bit tricky to do due to some GUI functions firing events and depending upon
-    that function call at that time in -that- function call. Testing:
-        Adding new sheets
-        Closing sheets
-        Changing sheets
-        Undoing closed sheets
-        Changing next/previous sheets
-        Loading .wtbd files
-        Saving .wtbd files
+    that function call at that time in -that- function call.
     """
     def __init__(self):
         self.canvas = None
@@ -302,6 +330,7 @@ class TestShapes:
         self.canvas = SimpleApp().canvas
         self.gui = self.canvas.gui
 
+
     def test_circle_hit(self):
         circ = whyteboard.tools.Circle(self.canvas, (0, 0, 0), 1)
         circ.radius = 15
@@ -324,11 +353,11 @@ class TestShapes:
         ellipse.x = 50
         ellipse.y = 50
 
+        assert ellipse.hit_test(51, 128)  # very edge
+        assert ellipse.hit_test(125, 125)
         assert not ellipse.hit_test(46, 73)
         assert not ellipse.hit_test(151, 204)
-        assert ellipse.hit_test(51, 128)  # very edge
         assert not ellipse.hit_test(49, 46)
-        assert ellipse.hit_test(125, 125)
 
 
     def test_rect_hit(self):
@@ -339,9 +368,9 @@ class TestShapes:
         rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
         rect.x = 150
         rect.y = 150
-
         rect.width, rect.height = 50, 50
         rect.update_rect()
+
         assert rect.hit_test(155, 155)
         assert not rect.hit_test(145, 155)
 
@@ -375,11 +404,11 @@ class TestShapes:
         assert img.hit_test(160, 160)
         assert img.hit_test(150, 150)
         assert img.hit_test(199, 199)
-        assert not img.hit_test(149, 149)
-        assert not img.hit_test(201, 201)
         assert img.handle_hit_test(149, 149)
         assert img.handle_hit_test(148, 148)
         assert img.handle_hit_test(203, 203)
+        assert not img.hit_test(149, 149)
+        assert not img.hit_test(201, 201)
         assert not img.handle_hit_test(147, 147)
 
 
@@ -394,13 +423,12 @@ class TestShapes:
         text.text = "blah blah"
         text.find_extent()
 
-        assert not text.hit_test(163, 110)
-        assert not text.hit_test(122, 87)
-        assert not text.hit_test(95, 117)
         assert text.hit_test(103, 117)
         assert text.hit_test(130, 108)
         assert text.hit_test(154, 114)
-
+        assert not text.hit_test(163, 110)
+        assert not text.hit_test(122, 87)
+        assert not text.hit_test(95, 117)
 
 
     def test_note_hit(self):
@@ -413,15 +441,15 @@ class TestShapes:
         note.note = "blah blah"
         note.find_extent()
 
-        assert not note.hit_test(88, 99)
-        assert not note.hit_test(129, 87)
-        assert not note.hit_test(168, 106)
-        assert not note.hit_test(119, 126)
         assert note.hit_test(91, 108)
         assert note.hit_test(130, 91)
         assert note.hit_test(166, 106)
         assert note.hit_test(144, 121)
         assert note.hit_test(126, 111)
+        assert not note.hit_test(88, 99)
+        assert not note.hit_test(129, 87)
+        assert not note.hit_test(168, 106)
+        assert not note.hit_test(119, 126)
 
 
     def test_line_hit(self):
@@ -445,14 +473,47 @@ class TestShapes:
         assert not poly.hit_test(373, 255)
         assert not poly.hit_test(183, 231)
 
+
     def test_select_tool(self):
-        poly = whyteboard.tools.Polygon(self.canvas, (0, 0, 0), 1)
-        poly.x, poly.y = 180, 248
-        poly.points = [(180.0, 248.0), (319.0, 383.0), (420.0, 110.0)]
-        poly.sort_handles()
-        assert poly.hit_test(350, 217)
-        assert poly.hit_test(204, 256)
-        assert not poly.hit_test(373, 255)
-        assert not poly.hit_test(183, 231)
+        select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
+
+        # create some shapes
+        rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
+        rect.x = 150
+        rect.y = 150
+        rect.width, rect.height = 50, 50
+
+        text = whyteboard.tools.Text(self.canvas, (0, 0, 0), 3)
+        text.x = 150
+        text.y = 150
+        text.text = "blah blah"  # 'x' extent of 58
+        text.find_extent()
+
+        circle = whyteboard.tools.Circle(self.canvas, (0, 0, 0), 1)
+        circle.radius = 25
+        circle.x = 250
+        circle.y = 250
+
+        # add shapes to canvas, update the shapes for hit testing
+        shapes = [rect, text, circle]
+        for shape in shapes:
+            pub.sendMessage('shape.add', shape=shape)
+            shape.sort_handles()
+
+        assert len(self.canvas.shapes) == 3
+
+        # test that one of them is hit
+        select.left_down(250, 250)
+        assert circle.selected
+
+        # a 'miss' selection should deselect the circle
+        select.left_down(550, 550)
+        assert not circle.selected
+
+        # test hits on overlapping shapes - topmost shape should 'win'
+        select.left_down(155, 155)
+        assert text.selected
+        assert not rect.selected
+
 
 #----------------------------------------------------------------------

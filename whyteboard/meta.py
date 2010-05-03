@@ -138,6 +138,7 @@ translators = [
      'Lorenzo Baracchi https://launchpad.net/~baracchi-lorenzo (Italian)',
      'Lukáš Machyán https://launchpad.net/~phobulos (Czech)',
      'Marcel Schmücker https://launchpad.net/~versus666 (German)',
+     '"melinor" https://launchpad.net/~aka-melv (Russian)',
      'Medina https://launchpad.net/~medina-colpaca (Spanish)',
      'Miguel Anxo Bouzada https://launchpad.net/~mbouzada/ (Galician)',
      'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
