@@ -37,6 +37,8 @@ import gui
 import meta
 import whyteboard.tools
 
+from canvas import RIGHT, DIAGONAL, BOTTOM
+
 
 def make_shapes(canvas):
     """
@@ -98,9 +100,11 @@ class TestCanvas:
 
     def test_select_tool(self):
         """
-        This depends on the Tool list order not changing, unlikely from a UI
-        perspective; note: change_current_tool() called in Whyteboard.__init__
+        User changing tools actually updates the drawing tool
         """
+        # This depends on the Tool list order not changing, unlikely from a UI
+        # perspective; note: change_current_tool() called in Whyteboard.__init__
+
         assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
         self.canvas.change_current_tool(1)  # passing in Pen explicitly
         assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
@@ -113,29 +117,41 @@ class TestCanvas:
 
 
     def test_select_shape(self):
+        """Selected shape will now be selected"""
         shape = self.canvas.shapes[3]
+        other = self.canvas.shapes[2]
         self.canvas.select_shape(shape)
         assert self.canvas.selected == shape
         assert shape.selected
-
+        self.canvas.select_shape(other)
+        assert self.canvas.selected == other
+        assert other.selected
+        assert not shape.selected
 
 
     def test_deselect_shape(self):
-        """
-        Previous shape should now be "deselected"
-        """
-        self.canvas.shapes[-1].selected = True
-        self.canvas.selected = self.canvas.shapes[-1]
+        """Previous shape should now be "deselected"""
+        self.canvas.select_shape(self.canvas.shapes[2])
         self.canvas.deselect_shape()
         assert not self.canvas.selected
-        for x in self.canvas.shapes:
-            if not isinstance(x, whyteboard.tools.Eyedrop):
-                assert not x.selected, x
+        assert not self.canvas.shapes[2].selected
+
+
+    def test_resize(self):
+        """Canvas should resize correctly"""
+        self.canvas.resize((800, 600))
+        assert self.canvas.area == (800, 600)
+        self.canvas.resize((200, 300))
+        assert self.canvas.area == (200, 300)
+        self.canvas.resize((0, 300))
+        assert self.canvas.area == (200, 300)
+        self.canvas.resize((200, 0))
+        assert self.canvas.area == (200, 300)
 
 
     def test_undo_then_redo(self):
         """
-        Test undoing/redoing together
+        Undo then redo puts us back in the same state
         """
         [self.canvas.undo() for x in range(4)]
         assert len(self.canvas.shapes) == len(self.shapes) - 4
@@ -144,32 +160,39 @@ class TestCanvas:
 
 
     def test_clear(self):
+        """Clearing the canvas of all shapes"""
         self.canvas.clear()
         assert not self.canvas.shapes
         assert self.canvas.undo_list
+        self.canvas.add_shape(whyteboard.tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg"))
+        self.canvas.clear()
+        assert len(self.canvas.shapes) == 0
 
 
     def test_clear_keep_images(self):
         """
-        Try clearing, asking to keep images without any images existing in the
+        Clearing, asking to keep images without any images existing in the
         list, then add an image and check again
         """
         self.canvas.clear(True)
-        assert not self.canvas.shapes
+        assert len(self.canvas.shapes) == 0
         self.canvas.shapes = self.shapes  # restore shapes
 
         self.canvas.add_shape(whyteboard.tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg"))
         self.canvas.clear(True)
-        assert self.canvas.shapes
-        assert self.canvas.undo_list
+        assert len(self.canvas.shapes) == 1
+        assert len(self.canvas.undo_list)
 
 
-    def test_clear_all(self):
-        pass
-
-
-    def test_clear_all_keep_images(self):
-        pass
+    def test_check_resize_direction(self):
+        """Check the correct resize canvas mouse direction is returned"""
+        self.canvas.resize((800, 600))
+        direction = self.canvas.check_resize_direction(805, 100)
+        assert direction == RIGHT
+        direction = self.canvas.check_resize_direction(600, 700)
+        assert direction == BOTTOM
+        direction = self.canvas.check_resize_direction(805, 605)
+        assert direction == DIAGONAL
 
 
     def test_undo_and_redo_clear(self):
@@ -184,22 +207,28 @@ class TestCanvas:
 
 
     def test_move_top(self):
+        """shape moves to top"""
         shape = self.canvas.shapes[0]
         top_shape = self.canvas.shapes[3]
         self.canvas.move_top(shape)
         assert self.canvas.shapes[3] == shape
         assert self.canvas.shapes[2] == top_shape
         assert not self.canvas.shapes[0] == shape
+        self.canvas.move_top(shape)
+        assert self.canvas.shapes[3] == shape
 
 
     def test_move_up(self):
+        """shape moves up"""
         shape = self.canvas.shapes[0]
         shape_above = self.canvas.shapes[1]
         self.canvas.move_up(shape)
         assert self.canvas.shapes[1] == shape
         assert self.canvas.shapes[0] == shape_above
 
+
     def test_move_down(self):
+        """shape moves down"""
         shape = self.canvas.shapes[2]
         shape_below = self.canvas.shapes[1]
         self.canvas.move_down(shape)
@@ -208,6 +237,7 @@ class TestCanvas:
 
 
     def test_move_bottom(self):
+        """shape moves to the bottom"""
         shape = self.canvas.shapes[3]
         bottom_shape = self.canvas.shapes[0]
         self.canvas.move_bottom(shape)
@@ -229,18 +259,23 @@ class TestGuiFunctionality:
     def setup(self):
         """
         Add a few mock tabs, each with random shapes
+        Currently lacking a faked system that's good enough
         """
         self.canvas = SimpleApp().canvas
         self.gui = self.canvas.gui
+        make_shapes(self.canvas)
+        shapes = list(self.canvas.shapes)
+
         for x in range(4):
-            shapes = list(self.gui.canvas.shapes)
             self.gui.on_new_tab()
-            self.gui.canvas.shapes = shapes
+            self.gui.canvas.shapes = list(shapes)
+
         assert len(self.gui.tabs.pages) == 5, len(self.gui.tabs.pages)
+
 
     def test_close_sheet(self):
         """
-        Currently lacking a faked system that's good enough
+        A sheet closes correctly
         """
         x = len(self.gui.tabs.pages)
         self.gui.on_close_tab()
@@ -248,7 +283,9 @@ class TestGuiFunctionality:
         self.gui.on_close_tab()
         assert len(self.gui.tabs.pages) == x - 2
 
+
     def test_changing_sheets(self):
+        """Changing a sheet"""
         evt = Event()
         evt.selection = 2
         self.gui.on_change_tab(evt)
@@ -257,7 +294,9 @@ class TestGuiFunctionality:
         #self.gui.on_change_tab(evt)
         #assert self.gui.current_tab == 4
 
+
     def test_undo_closed_sheets(self):
+        """Undoing a closed sheet restores its data"""
         assert self.gui.tab_count == 5
         shapes = self.gui.canvas.shapes
         self.gui.on_close_tab()
@@ -268,11 +307,14 @@ class TestGuiFunctionality:
         self.gui.on_undo_tab()  # nothing to undo
         assert self.gui.tab_count == 5
 
+
     def test_hotkey(self):
+        """Hotkey triggers tool change"""
         self.hotkey(115, whyteboard.tools.Select)  # 's'
         self.hotkey(112, whyteboard.tools.Pen)  # 'p'
         self.hotkey(98, whyteboard.tools.BitmapSelect)  # 'b'
         self.hotkey(98, whyteboard.tools.BitmapSelect), "current tool shouldn't have changed"
+
 
     def hotkey(self, code, expected):
         evt = Event()
@@ -281,7 +323,38 @@ class TestGuiFunctionality:
         assert isinstance(self.gui.canvas.shape, expected)
 
 
+    def test_clear_all(self):
+        """Clearing all sheets' shapes"""
+        for x in range(self.gui.tab_count):
+            canvas = self.gui.tabs.GetPage(x)
+            canvas.clear()
+            assert not canvas.shapes
+            #assert canvas.undo_list
+
+            canvas.add_shape(whyteboard.tools.Image(canvas, Bitmap(None), "C:\picture.jpg"))
+            canvas.clear()
+            assert len(canvas.shapes) == 0
+
+
+    def test_clear_all_keep_images(self):
+        """Clearing all sheets' shapes while keeping images"""
+        shapes = list(self.canvas.shapes)
+
+        for x in range(self.gui.tab_count):
+            canvas = self.gui.tabs.GetPage(x)
+            canvas.clear(True)
+            assert len(canvas.shapes) == 0
+            canvas.shapes = list(shapes)  # restore shapes
+
+            canvas.add_shape(whyteboard.tools.Image(canvas, Bitmap(None), "C:\picture.jpg"))
+            canvas.clear(True)
+            assert len(canvas.shapes) == 1
+            assert len(canvas.undo_list)
+
+
+
 #    def test_next(self):
+#        """change to next sheet"""
 #        assert self.gui.current_tab == 5, self.gui.current_tab
 #        self.gui.on_next()
 #        assert self.gui.current_tab == 5, self.gui.current_tab
@@ -293,6 +366,7 @@ class TestGuiFunctionality:
 #        assert self.gui.current_tab == 1, self.gui.current_tab
 #
 #    def test_prev(self):
+#        """change to previous sheet"""
 #        assert self.gui.current_tab == 5, self.gui.current_tab
 #        self.gui.on_prev()
 #        assert self.gui.current_tab == 4, self.gui.current_tab
@@ -332,6 +406,7 @@ class TestShapes:
 
 
     def test_circle_hit(self):
+        """Circle's hit test"""
         circ = whyteboard.tools.Circle(self.canvas, (0, 0, 0), 1)
         circ.radius = 15
         circ.x = 50
@@ -344,9 +419,8 @@ class TestShapes:
 
 
     def test_ellipse_hit(self):
-        """
-        values from playing with the ellipse itself
-        """
+        """Ellipse hit test"""
+        #values from playing with the ellipse itself
         ellipse = whyteboard.tools.Ellipse(self.canvas, (0, 0, 0), 1)
         ellipse.width = 150
         ellipse.height = 152
@@ -392,9 +466,7 @@ class TestShapes:
 
 
     def test_image_hit(self):
-        """
-        Essentially a rectangle
-        """
+        """Image hit test"""
         img = whyteboard.tools.Image(self.canvas, Bitmap(None), "C:\picture.jpg")
         img.x = 150
         img.y = 150
@@ -453,6 +525,7 @@ class TestShapes:
 
 
     def test_line_hit(self):
+        """Hit test on a line"""
         line = whyteboard.tools.Line(self.canvas, (0, 0, 0), 1)  # diagonal right
         line.x, line.y = 150, 150
         line.x2, line.y2 = 250, 70
@@ -464,6 +537,7 @@ class TestShapes:
 
 
     def test_poly_hit(self):
+        """Hit test on a polygon"""
         poly = whyteboard.tools.Polygon(self.canvas, (0, 0, 0), 1)
         poly.x, poly.y = 180, 248
         poly.points = [(180.0, 248.0), (319.0, 383.0), (420.0, 110.0)]
@@ -475,6 +549,7 @@ class TestShapes:
 
 
     def test_select_tool(self):
+        """Select Tool is functioning correctly"""
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
 
         # create some shapes

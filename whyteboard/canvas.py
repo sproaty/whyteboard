@@ -64,7 +64,7 @@ class Canvas(wx.ScrolledWindow):
     for the Polygon tool, mainly avoiding isinstance() checks
     """
     CANVAS_BORDER = 15  # border pixels in size (overridable by user)
-    
+
     def __init__(self, tab, gui):
         """
         Initalise the window, class variables and bind mouse/paint events
