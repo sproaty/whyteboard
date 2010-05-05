@@ -31,6 +31,7 @@ from lib.configobj import ConfigObj
 from lib.validate import Validator
 from lib.pubsub import pub
 
+import wx
 import fakewidgets
 from fakewidgets.core import Bitmap, Event, Colour
 import gui
@@ -137,6 +138,18 @@ class TestCanvas:
         assert not self.canvas.shapes[2].selected
 
 
+    def test_toggle_transparency(self):
+        """Shape's transparency should be toggled on/off"""
+        undo = self.canvas.undo_list
+        shape = self.canvas.shapes[3]
+        self.canvas.select_shape(shape)
+
+        self.canvas.toggle_transparent()
+        assert shape.background != wx.TRANSPARENT
+        self.canvas.toggle_transparent()
+        assert shape.background == wx.TRANSPARENT
+
+
     def test_resize(self):
         """Canvas should resize correctly"""
         self.canvas.resize((800, 600))
@@ -147,6 +160,19 @@ class TestCanvas:
         assert self.canvas.area == (200, 300)
         self.canvas.resize((200, 0))
         assert self.canvas.area == (200, 300)
+
+
+    def test_resize_right(self):
+        """Canvas should not resize in y direction, only x"""
+        self.canvas.resize((800, 600))         # given
+        self.canvas.resize((900, 400), RIGHT)  # when
+        assert self.canvas.area == (900, 600)  # then
+
+    def test_resize_down(self):
+        """Canvas should not resize in x direction, only y"""
+        self.canvas.resize((800, 600))          # given
+        self.canvas.resize((500, 900), BOTTOM)  # when
+        assert self.canvas.area == (800, 900)   # then
 
 
     def test_undo_then_redo(self):

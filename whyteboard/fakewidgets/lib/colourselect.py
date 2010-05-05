@@ -1,10 +1,10 @@
 from .. import core
 
 class ColourSelect(core.BitmapButton):
-        
-    def GetColour(self, width, height):
+
+    def GetColour(self, width=None, height=None):
         pass
-        
+
     def SetValue(self, attr):
         pass
 

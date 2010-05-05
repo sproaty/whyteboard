@@ -443,6 +443,10 @@ class ScrolledWindow(Window):
     def CalcScrolledPosition(self, x1, x2):
         pass
 
+    def GetVirtualSizeTuple(self):
+        return (0, 0)
+
+
 class Panel(Window):
     def __init__(self, *args, **kwds):
         Window.__init__(self, *args, **kwds)
