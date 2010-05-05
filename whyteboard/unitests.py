@@ -151,7 +151,7 @@ class TestCanvas:
 
 
     def test_resize(self):
-        """Canvas should resize correctly"""
+        """Canvas should resize diagonally in any size"""
         self.canvas.resize((800, 600))
         assert self.canvas.area == (800, 600)
         self.canvas.resize((200, 300))
@@ -175,14 +175,25 @@ class TestCanvas:
         assert self.canvas.area == (800, 900)   # then
 
 
-    def test_undo_then_redo(self):
-        """
-        Undo then redo puts us back in the same state
-        """
-        [self.canvas.undo() for x in range(4)]
-        assert len(self.canvas.shapes) == len(self.shapes) - 4
-        [self.canvas.redo() for x in range(4)]
-        assert len(self.canvas.shapes) == len(self.shapes)
+    def test_undo(self):
+        """Undo reverts to previous states"""
+        shapes = self.canvas.shapes
+        assert len(self.canvas.redo_list) == 0
+        self.canvas.undo()
+        assert shapes != self.canvas.shapes
+        assert len(self.canvas.redo_list) > 0
+
+
+    def test_redo(self):
+        """Redo after undoing restores the state"""
+        shapes = self.canvas.shapes
+        self.canvas.undo()
+        self.canvas.redo()
+        assert shapes == self.canvas.shapes
+        self.canvas.redo()  # nothing to restore
+        assert shapes == self.canvas.shapes
+        assert len(self.canvas.redo_list) == 0
+        assert len(self.canvas.undo_list) > 0
 
 
     def test_clear(self):
@@ -419,8 +430,7 @@ class TestGuiFunctionality:
 class TestShapes:
     """
     We want to test shape's functionality, if they respond to their hit tests
-    correctly and boundaries. Can probably ignore the math-based ones (?)
-    This doesn't depend on the GUI or its classes
+    correctly and boundaries.
     """
     def __init__(self):
         self.canvas = None
@@ -429,6 +439,7 @@ class TestShapes:
     def setup(self):
         self.canvas = SimpleApp().canvas
         self.gui = self.canvas.gui
+        self.rect, self.circle, self.text = None, None, None
 
 
     def test_circle_hit(self):
@@ -574,47 +585,69 @@ class TestShapes:
         assert not poly.hit_test(183, 231)
 
 
-    def test_select_tool(self):
-        """Select Tool is functioning correctly"""
+    def test_select_tool_click_selects(self):
+        """Select Tool left click selects a shape"""
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
+        self.make_test_tools()
+        assert len(self.canvas.shapes) == 3
 
+        select.left_down(250, 250)
+        assert self.circle.selected
+
+
+    def test_select_tool_click_deselects(self):
+        """Select Tool left click de-selects a shape when no shape is 'hit'"""
+        select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
+        self.make_test_tools()
+        select.left_down(250, 250)
+
+        # a 'miss' selection should deselect the circle
+        select.left_down(550, 550)
+        assert not self.circle.selected
+
+
+    def test_select_tool_click_selects_shape_overlapping(self):
+        """Select Tool left click selects top shape when shapes overlap'"""
+        select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
+        self.make_test_tools()
+        select.left_down(250, 250)
+
+        select.left_down(155, 155)
+        assert self.text.selected
+        assert not self.rect.selected
+
+        self.canvas.deselect_shape()
+        self.canvas.move_top(self.rect)  # new top shape
+
+        select.left_down(155, 155)
+        assert self.rect.selected
+        assert not self.text.selected
+
+
+    def make_test_tools(self):
         # create some shapes
-        rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
-        rect.x = 150
-        rect.y = 150
-        rect.width, rect.height = 50, 50
+        self.rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
+        self.rect.x = 150
+        self.rect.y = 150
+        self.rect.width, self.rect.height = 50, 50
 
-        text = whyteboard.tools.Text(self.canvas, (0, 0, 0), 3)
-        text.x = 150
-        text.y = 150
-        text.text = "blah blah"  # 'x' extent of 58
-        text.find_extent()
+        self.text = whyteboard.tools.Text(self.canvas, (0, 0, 0), 3)
+        self.text.x = 150
+        self.text.y = 150
+        self.text.text = "blah blah"  # 'x' extent of 58
+        self.text.find_extent()
 
-        circle = whyteboard.tools.Circle(self.canvas, (0, 0, 0), 1)
-        circle.radius = 25
-        circle.x = 250
-        circle.y = 250
+        self.circle = whyteboard.tools.Circle(self.canvas, (0, 0, 0), 1)
+        self.circle.radius = 25
+        self.circle.x = 250
+        self.circle.y = 250
 
         # add shapes to canvas, update the shapes for hit testing
-        shapes = [rect, text, circle]
+        shapes = [self.rect, self.text, self.circle]
         for shape in shapes:
             pub.sendMessage('shape.add', shape=shape)
             shape.sort_handles()
 
-        assert len(self.canvas.shapes) == 3
-
-        # test that one of them is hit
-        select.left_down(250, 250)
-        assert circle.selected
-
-        # a 'miss' selection should deselect the circle
-        select.left_down(550, 550)
-        assert not circle.selected
-
-        # test hits on overlapping shapes - topmost shape should 'win'
-        select.left_down(155, 155)
-        assert text.selected
-        assert not rect.selected
 
 
 #----------------------------------------------------------------------
