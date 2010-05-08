@@ -65,6 +65,7 @@ xx May 2010 -- 0.4
 * Minimise button added to the Shape Viewer
 * Undo closed tabs remembers the "viewport" of the canvas when closed
 * Removed the "Rotate Image" dialog
+* Ctrl+Enter in text input dialog will "submit" the text
 * Restructured source code directories -- now just run whyteboard.py from the
   main directory to start the program
 * Started improving code: removing module dependencies and tight coupling, to

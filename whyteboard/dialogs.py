@@ -503,7 +503,7 @@ class TextInput(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
         self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
-        self.Bind(wx.EVT_BUTTON, self.on_close, self.cancelButton)
+        self.Bind(wx.EVT_CHAR_HOOK, self.char_hook, self.ctrl)
 
         ac = [(wx.ACCEL_CTRL, wx.WXK_RETURN, self.ctrl.GetId())]
 
@@ -554,6 +554,13 @@ class TextInput(wx.Dialog):
         self.ctrl.SetFocus()
         self.ctrl.SetInsertionPointEnd()
 
+    def char_hook(self, event):
+        """Process ctrl+enter to submit the dialog"""
+        if event.CmdDown() and event.GetKeyCode() == wx.WXK_RETURN:
+            self.EndModal(wx.ID_OK)
+        else:
+            event.Skip()
+
     def update_canvas(self, event=None):
         """Updates the canvas with the inputted text"""
         if self.note:
@@ -566,9 +573,6 @@ class TextInput(wx.Dialog):
 
         shape.find_extent()
         canvas.redraw_all()  # stops overlapping text
-        if event and isinstance(event, wx.KeyEvent):
-            if event.CmdDown() and event.GetKeyCode() == wx.WXK_RETURN:
-                self.Close()
 
 
     def transfer_data(self, text_obj):
@@ -577,9 +581,6 @@ class TextInput(wx.Dialog):
         text_obj.font = self.ctrl.GetFont()
         text_obj.colour = self.colour
 
-    def on_close(self, event):
-        """Leaves dialog.ShowModal() == wx.ID_CANCEL to handle closing"""
-        event.Skip()
 
 #----------------------------------------------------------------------
 

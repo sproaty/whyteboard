@@ -1138,7 +1138,6 @@ class FlatNotebookDragEvent(FlatNotebookEvent):
         self.notify = wx.NotifyEvent(eventType, id)
         self._oldnotebook = -1
         self._newnotebook = -1
-        print yo
 
     def GetNotebook(self):
         return self._newnotebook

@@ -1599,7 +1599,7 @@ class Image(OverlayShape):
             if self.path and os.path.exists(self.path):
                 self.image = wx.Bitmap(self.path)
             else:
-                self.image = wx.EmptyBitmap(0, 0)
+                self.image = wx.EmptyBitmap(1, 1)
                 wx.MessageBox(_("Path for the image %s not found.") % self.path,
                               "Whyteboard")
         else:
@@ -1609,7 +1609,7 @@ class Image(OverlayShape):
                 self.image = wx.BitmapFromImage(wx.ImageFromStream(stream))
 
             except KeyError:
-                self.image = wx.EmptyBitmap(0, 0)
+                self.image = wx.EmptyBitmap(1, 1)
                 wx.MessageBox(_("File %s not found in the save") % self.filename,
                               "Whyteboard")
 
