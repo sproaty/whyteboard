@@ -246,9 +246,6 @@ class Utility(object):
             for shape in canvas.shapes:
                 if isinstance(shape, tools.Image):
                     img = shape.image.ConvertToImage()
-                    if not img.HasAlpha():
-                        img.InitAlpha()
-                    img.ConvertAlphaToMask()
                     img_data = img.GetData()
 
                     for k, v in data.items():
@@ -259,9 +256,11 @@ class Utility(object):
 
                     #  the above iteration didn't find any common pastes
                     if not shape.filename:
+                        tmp_name = make_filename() + ".png"
+                        img.SaveFile(tmp_name, wx.BITMAP_TYPE_PNG)
+                        img = wx.Image(tmp_name)
+                        
                         name = make_filename() + ".jpg"
-                        img.SaveFile(name, wx.BITMAP_TYPE_PNG)
-                        img = wx.Image(name)
                         img.SaveFile(name, wx.BITMAP_TYPE_JPEG)
                         shape.filename = name
                         data[shape.filename] = img_data
@@ -337,7 +336,7 @@ class Utility(object):
         a filename (path) or a Python file object (from the zip archive)
         Pretty messy code, to support old save files written in "w", not "wb"
         """
-        sys.modules['tools'] = tools  # monkey patch for new src layout (0.39.4)
+        sys.modules['tools'] = tools  # monkey patch for new src layout (0.4)
 
         temp = {}
         method = pickle.load
@@ -459,7 +458,9 @@ class Utility(object):
         ver = [int(x) for x in meta.version.split(".")]
         if len(num) == 2:
             num.append(0)
-
+        if len(ver) == 2:
+            ver.append(0)
+            
         if num[1] > ver[1]:
             self.update_version = False
         elif num[1] == ver[1]:

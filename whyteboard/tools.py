@@ -1447,8 +1447,7 @@ class Image(OverlayShape):
 
         self.find_center()
         self.rotate_handle = wx.Rect(self.x + self.image.GetWidth() / 2 - 6,
-                                     self.y + self.image.GetHeight() / 2 - 6,
-                                     HANDLE_SIZE, HANDLE_SIZE)
+                                     self.y + self.image.GetHeight() / 2 - 6, 15, 15)
 
 
     def find_center(self):
@@ -1538,6 +1537,8 @@ class Image(OverlayShape):
             img = wx.BitmapFromImage(self.img)
             img = wx.ImageFromBitmap(img)
             img.Rescale(self.scale_size[0], self.scale_size[1], wx.IMAGE_QUALITY_HIGH)
+
+            img.SetMaskColour(255, 255, 255)  # stop black border bug
 
             img = img.Rotate(-self.angle, self.center)
             self.image = wx.BitmapFromImage(img)

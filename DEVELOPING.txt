@@ -1,5 +1,5 @@
-Whyteboard - Help for developmers
-Version 0.39.4 - last updated: 1 May 2010
+Whyteboard - Help for developers
+Version 0.4 - last updated: 1 May 2010
 ---------------------------------
 
 This document serves to help a developer who wishes to contribute / understand
@@ -115,11 +115,11 @@ utility.py     - a class the GUI references that performs saving/loading files,
 
 CODING PRACTICES
 
-* Try and follow Python's Pep 8 guidelines http://www.python.org/dev/peps/pep-0008
+* Try and follow Python's Pep 8 guide http://www.python.org/dev/peps/pep-0008
 * 80 characters per line can be hard to use at times and can be broken in some
   cases.
 * Name methods like_this, not AsSuch. As wxPython uses CamelCased method names,
-  it easily allows you to differentiate between wx and whyteboard's methods. Very
+  it easily allows you to differentiate between wx and Whyteboard methods. Very
   useful for dialogs and custom panels.
 
 * Try and write a unit test for your functionality to assert it works correctly

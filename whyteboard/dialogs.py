@@ -451,7 +451,7 @@ class TextInput(wx.Dialog):
         Standard constructor - sets text to supplied text variable, if present.
         """
         wx.Dialog.__init__(self, gui, title=_("Enter text"),
-              style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER, size=(350, 280))
+              style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.WANTS_CHARS, size=(350, 280))
 
         self.ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(300, 120))
         self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
@@ -504,6 +504,11 @@ class TextInput(wx.Dialog):
         self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
         self.Bind(wx.EVT_BUTTON, self.on_close, self.cancelButton)
+
+        ac = [(wx.ACCEL_CTRL, wx.WXK_RETURN, self.ctrl.GetId())]
+
+        tbl = wx.AcceleratorTable(ac)
+        self.SetAcceleratorTable(tbl)
 
         if text:
             self.update_canvas()
@@ -561,6 +566,10 @@ class TextInput(wx.Dialog):
 
         shape.find_extent()
         canvas.redraw_all()  # stops overlapping text
+        if event and isinstance(event, wx.KeyEvent):
+            if event.CmdDown() and event.GetKeyCode() == wx.WXK_RETURN:
+                self.Close()
+
 
     def transfer_data(self, text_obj):
         """Transfers the dialog's data to an object."""

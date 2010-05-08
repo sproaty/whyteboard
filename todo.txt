@@ -1,6 +1,6 @@
-Whyteboard 0.39.4 - To do list
+Whyteboard 0.4 - To do list
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-xx xx April 2010
+xx xx May 2010
 
 ---- NEW FEATURES ----
 
