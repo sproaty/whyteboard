@@ -383,6 +383,9 @@ class Window(object):
     def SetCursor(self, cursor):
         pass
 
+    def SetAcceleratorTable(self, table):
+        pass
+
     def SetToolTipString(self,tip):
         """Sets ToolTipString variable"""
 

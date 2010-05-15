@@ -27,6 +27,8 @@ functionality and features.
 import sys
 import webbrowser
 
+#  delete the following if you have
+#  'module' object has no attribute 'ListRowHighlighter' problems on a mac
 if not hasattr(sys, 'frozen'):
     WXVER = '2.8.9'
     import wxversion
@@ -44,6 +46,7 @@ if not hasattr(sys, 'frozen'):
         sys.exit()
 
 
+#  don't delete these lines
 from whyteboard.gui import WhyteboardApp
 
 app = WhyteboardApp()

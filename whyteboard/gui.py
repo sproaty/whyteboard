@@ -1100,15 +1100,16 @@ class GUI(wx.Frame):
                     self.hotkey_pressed = True
                     self.canvas.add_undo()
                     shape.start_select_action(0)
-                    self.hotkey_timer = wx.CallLater(300, self.reset_hotkey)
+                    self.hotkey_timer = wx.CallLater(150, self.reset_hotkey)
                 else:
-                    self.hotkey_timer.Restart(300)
+                    self.hotkey_timer.Restart(150)
 
-                shape.move(_map.get(code)[0], _map.get(code)[1], offset=shape.offset(shape.x, shape.y))
+                shape.move(_map.get(code)[0], _map.get(code)[1],
+                           offset=shape.offset(shape.x, shape.y))
                 self.canvas.draw_shape(shape)
-                shape.find_edges()
-                self.canvas.shape_near_canvas_edge(shape.edges[EDGE_LEFT],
-                                         shape.edges[EDGE_TOP], True)
+                #shape.find_edges()
+                #self.canvas.shape_near_canvas_edge(shape.edges[EDGE_LEFT],
+                #                                   shape.edges[EDGE_TOP], True)
                 return
         self.hotkey_scroll(code, event)
 
@@ -1300,6 +1301,7 @@ class GUI(wx.Frame):
         """ Clears current sheet """
         self.canvas.clear()
         self.update_shape_viewer()
+        self.thumbs.update_all()
 
     def on_clear_sheets(self, event=None):
         """ Clears all sheets' drawings, except images. """
@@ -1313,6 +1315,7 @@ class GUI(wx.Frame):
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear()
         self.update_shape_viewer()
+        self.thumbs.update_all()
 
 
     def on_refresh(self):

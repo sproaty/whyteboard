@@ -63,6 +63,19 @@ http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14
 
 
 
+Mac users:
+
+   File "/Users/x/whyteboard/whyteboard/tools.py", line 40, in <module>
+     from dialogs import TextInput
+   File "/Users/x/whyteboard/whyteboard/dialogs.py", line 1018, in <module>
+     class WhyteboardList(wx.ListCtrl, listmix.ListRowHighlighter):
+ AttributeError: 'module' object has no attribute 'ListRowHighlighter'
+
+There is some problems involving the default wxPython version installed on a Mac
+where the program will select an older version. Please delete the lines
+"if not hasattr(sys, 'frozen'):" to  "sys.exit()" in whyteboard.py
+
+
 ---- KNOWN BUGS ----
 
 * Printing quality may be bad

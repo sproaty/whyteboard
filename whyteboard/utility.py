@@ -259,13 +259,14 @@ class Utility(object):
                         tmp_name = make_filename() + ".png"
                         img.SaveFile(tmp_name, wx.BITMAP_TYPE_PNG)
                         img = wx.Image(tmp_name)
-                        
+
                         name = make_filename() + ".jpg"
                         img.SaveFile(name, wx.BITMAP_TYPE_JPEG)
                         shape.filename = name
                         data[shape.filename] = img_data
                         _zip.write(name, os.path.join("data", name))
                         to_remove.append(name)
+                        to_remove.append(tmp_name)
 
                     else:
                         name = shape.filename
@@ -460,7 +461,7 @@ class Utility(object):
             num.append(0)
         if len(ver) == 2:
             ver.append(0)
-            
+
         if num[1] > ver[1]:
             self.update_version = False
         elif num[1] == ver[1]:

@@ -1727,18 +1727,18 @@ class Select(Tool):
                 self.shape.start_select_action(self.handle)
             if not self.handle:  # moving
                 self.shape.move(x, y, self.offset)
-                self.shape.find_edges()
-                direction = self.canvas.drag_direction(self.shape.edges[EDGE_LEFT], self.shape.edges[EDGE_TOP])
+                #self.shape.find_edges()
+                #direction = self.canvas.drag_direction(self.shape.edges[EDGE_LEFT], self.shape.edges[EDGE_TOP])
 
-                self.canvas.shape_near_canvas_edge(self.shape.edges[EDGE_LEFT],
-                                         self.shape.edges[EDGE_TOP], direction, True)
+                #self.canvas.shape_near_canvas_edge(self.shape.edges[EDGE_LEFT],
+                #                         self.shape.edges[EDGE_TOP], direction, True)
 
             else:
                 if not self.anchored:  # don't want to keep anchoring
                     self.shape.anchor(self.handle)
                     self.anchored = True
                 self.shape.resize(x, y, self.handle)
-                self.canvas.shape_near_canvas_edge(x, y, self.canvas.drag_direction(x, y))
+                #self.canvas.shape_near_canvas_edge(x, y, self.canvas.drag_direction(x, y))
 
 
     def draw(self, dc, replay=False):

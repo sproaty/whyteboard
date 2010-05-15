@@ -35,8 +35,8 @@ import os
 import copy
 
 import wx
-import wx.lib.dragscroller
 
+from lib.dragscroller import DragScroller
 from lib.pubsub import pub
 
 from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
@@ -55,6 +55,10 @@ RIGHT = 1
 DIAGONAL = 2
 BOTTOM = 3
 
+DRAG_LEFT = 1
+DRAG_RIGHT = 2
+DRAG_UP = 3
+DRAG_DOWN = 4
 
 
 
@@ -84,7 +88,7 @@ class Canvas(wx.ScrolledWindow):
         if os.name == "posix":
             self.ClearBackground()
 
-        self.scroller = wx.lib.dragscroller.DragScroller(self)
+        self.scroller = DragScroller(self)
         self.overlay = wx.Overlay()
         self.buffer = wx.EmptyBitmap(*self.area)
         #self.hit_buffer = wx.EmptyBitmap(*self.area)  # used by pen for hit test
@@ -183,6 +187,7 @@ class Canvas(wx.ScrolledWindow):
         if self.resizing:
             self.resizing = False
             self.redraw_all(True)  # update thumb for new canvas size
+            self.Layout()
             if self.copy:
                 self.draw_shape(self.copy)  # draw back the GCDC
             return
@@ -514,18 +519,18 @@ class Canvas(wx.ScrolledWindow):
         Work out the direction a shape's being moved in so that we don't scroll
         the canvas as a shape is being dragged away from a canvas edge.
         """
-        direction = None
+        direction = []
 
-        # left
         if self.prev_drag[0] > x:
-            direction = 'left'
-        if self.prev_drag[0] < x:
-            direction = 'right'
-        if self.prev_drag[1] > y:
-            direction = 'up'
+            direction.append(DRAG_LEFT)
+        elif self.prev_drag[0] < x:
+            direction.append(DRAG_RIGHT)
         if self.prev_drag[1] < y:
-            direction = 'down'
+            direction.append(DRAG_DOWN)
+        elif self.prev_drag[1] > y:
+            direction.append(DRAG_UP)
 
+        print direction
         self.prev_drag = (x, y)
         return direction
 
@@ -540,20 +545,28 @@ class Canvas(wx.ScrolledWindow):
         if not self.area > size:  # canvas is too small to need to scroll
             return
 
+        # no point continuing if we're not near the canvas' border
         start = self.GetViewStart()
+        end_x = self.GetClientSize()[0] + start[0]
+        end_y = self.GetClientSize()[1] + start[1]
+
+        rect = wx.Rect(start[0] + EDGE, start[1] + EDGE, end_x - EDGE, end_y - EDGE)
+
+        if rect.ContainsXY(x, y):
+            return
+
         scroll = (-1, -1)
 
         if moving:
-            if self.selected.edges[EDGE_RIGHT] > start[0] + size[0] - EDGE and direction == "right":
+            if self.selected.edges[EDGE_RIGHT] > start[0] + size[0] - EDGE and DRAG_RIGHT in direction:
                 scroll = (start[0] + TO_MOVE, -1)
-            if self.selected.edges[EDGE_BOTTOM] > start[1] + size[1] - EDGE and direction == "down":
+            if self.selected.edges[EDGE_BOTTOM] > start[1] + size[1] - EDGE and DRAG_DOWN in direction:
                 scroll = (-1, start[1] + TO_MOVE)
 
-            if self.selected.edges[EDGE_LEFT] < start[0] + EDGE and direction == "left":
+            if self.selected.edges[EDGE_LEFT] < start[0] + EDGE and DRAG_LEFT in direction:
                 scroll = (start[0] - TO_MOVE, -1)
-            if self.selected.edges[EDGE_TOP] < start[1] + EDGE and direction == "up":
+            if self.selected.edges[EDGE_TOP] > start[1] + EDGE and DRAG_RIGHT in direction:
                 scroll = (-1, start[1] - TO_MOVE)
-
         else:
             if x > start[0] + size[0] - EDGE:
                 scroll = (start[0] + TO_MOVE, -1)
