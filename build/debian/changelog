@@ -1,0 +1,12 @@
+whyteboard (0.40-0) jaunty; urgency=low
+
+  * Non-maintainer upload.
+  * Highlighter tool
+  * Improved image rotation. Polygon scaling/rotating
+  * PDF Cache Viewer
+  * Improvements to Shape Viewer
+  * Too many general improvements and bug fixes to list...
+  * (LP: #485391)
+
+ -- Steven Sproat <sproaty@gmail.com>  Sun, 16 May 2010 01:38:38 +0100
+

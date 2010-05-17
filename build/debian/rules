@@ -1,0 +1,105 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	touch configure-stamp
+
+
+build: build-stamp
+
+build-stamp: configure-stamp
+	dh_testdir
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	dh_clean
+
+
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean ­k
+	dh_installdirs
+	# Add here commands to install the package into debian/whyteboard.
+	#$(MAKE) install DESTDIR=$(CURDIR)/debian/whyteboard
+
+	cp whyteboard.py $(CURDIR)/debian/whyteboard/usr/lib/whyteboard/whyteboard.py
+	cp whyteboard.png $(CURDIR)/debian/whyteboard/usr/lib/whyteboard/whyteboard.png
+	cp LICENSE.txt $(CURDIR)/debian/whyteboard/usr/lib/whyteboard/LICENSE.txt
+
+	cp -ap images $(CURDIR)/debian/whyteboard/usr/lib/whyteboard
+	cp -ap locale $(CURDIR)/debian/whyteboard/usr/lib/whyteboard
+	cp -ap whyteboard $(CURDIR)/debian/whyteboard/usr/lib/whyteboard
+	cp -ap whyteboard-help $(CURDIR)/debian/whyteboard/usr/lib/whyteboard
+
+	ln -s /usr/lib/whyteboard/whyteboard.py $(CURDIR)/debian/whyteboard/usr/bin/whyteboard
+
+	### Installing menufile, mimes and docs
+	cp whyteboard.desktop $(CURDIR)/debian/whyteboard/usr/share/applications/
+
+	cp CHANGELOG.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/changelog.txt
+	cp DEVELOPING.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/developing.txt
+	cp LICENSE.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/LICENSE.txt
+	cp README.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/README.txt
+	cp TODO.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/TODO.txt
+
+	xdg-icon-resource install --novendor --context mimetypes --size 64 ./whyteboard.png application-x-whyteboard
+	xdg-mime install --novendor ./whyteboard.xml
+	xdg-mime default ./whyteboard.desktop application/x-whyteboard
+
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+#	dh_install
+#	dh_installmenu
+#	dh_installdebconf
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_python
+#	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_perl
+#	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
