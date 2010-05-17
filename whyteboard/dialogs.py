@@ -479,7 +479,6 @@ class TextInput(wx.Dialog):
         else:
             font = gui.util.font
 
-
         self.set_text_colour(text)
         self.ctrl.SetFont(font)
         self.colourBtn.SetColour(self.colour)
@@ -503,10 +502,8 @@ class TextInput(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
         self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
-        #self.Bind(wx.EVT_CHAR_HOOK, self.char_hook, self.ctrl)
 
         ac = [(wx.ACCEL_CTRL, wx.WXK_RETURN, self.okButton.GetId())]
-
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
 
@@ -554,12 +551,6 @@ class TextInput(wx.Dialog):
         self.ctrl.SetFocus()
         self.ctrl.SetInsertionPointEnd()
 
-    def char_hook(self, event):
-        """Process ctrl+enter to submit the dialog"""
-        if event.CmdDown() and event.GetKeyCode() == wx.WXK_RETURN:
-            self.EndModal(wx.ID_OK)
-        else:
-            event.Skip()
 
     def update_canvas(self, event=None):
         """Updates the canvas with the inputted text"""
@@ -1191,8 +1182,7 @@ class ShapeViewer(wx.Dialog):
         else:
             self.buttons[2].Enable()
             self.buttons[3].Enable()
-        if os.name == "nt":
-            self.Refresh()
+        self.Refresh()
         #self.SetFocus()
 
 

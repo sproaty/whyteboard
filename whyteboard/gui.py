@@ -510,6 +510,7 @@ class GUI(wx.Frame):
         if self.viewer:
             self.viewer.shapes = list(self.canvas.shapes)
             self.viewer.populate()
+            self.viewer.check_buttons()
 
     def save_last_path(self, path):
         self.util.config['last_opened_dir'] = os.path.dirname(path)

@@ -587,6 +587,8 @@ class Canvas(wx.ScrolledWindow):
         """
         if not self.selected or isinstance(self.selected, Media):
             return False
+        if not self.selected in self.shapes:
+            return False
         if pos in ["top", "up"]:
             length = len(self.shapes) - 1
             if length < 0:
