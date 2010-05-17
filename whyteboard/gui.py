@@ -1073,7 +1073,6 @@ class GUI(wx.Frame):
     def hotkey(self, event=None):
         """escape / home / end / page up / page down/arrow key)"""
         code = event.GetKeyCode()
-
         if os.name == "posix":
             for x, key in enumerate(self.hotkeys):
 
@@ -1112,7 +1111,8 @@ class GUI(wx.Frame):
                 #                                   shape.edges[EDGE_TOP], True)
                 return
         self.hotkey_scroll(code, event)
-
+        event.Skip()
+        
 
     def hotkey_scroll(self, code, event):
         """Scrolls the viewport depending on the key pressed"""
@@ -1538,9 +1538,18 @@ class WhyteboardApp(wx.App):
 
         self.frame = GUI(None, config)
         self.frame.Show(True)
+        
+        try:
+            _file = os.path.abspath(sys.argv[1])
+            if _file.endswith(".wtbd"):
+                
+                if os.path.exists(_file):
+                    self.frame.do_open(_file)
+            elif options.file:
+                    self.load_file(options.file)                
+        except IndexError:
+            pass                        
 
-        if options.file:
-            self.load_file(options.file)
         if options.width:
             self.frame.canvas.resize((options.width, self.frame.canvas.area[1]))
         if options.height:

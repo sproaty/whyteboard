@@ -503,9 +503,9 @@ class TextInput(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
         self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
-        self.Bind(wx.EVT_CHAR_HOOK, self.char_hook, self.ctrl)
+        #self.Bind(wx.EVT_CHAR_HOOK, self.char_hook, self.ctrl)
 
-        ac = [(wx.ACCEL_CTRL, wx.WXK_RETURN, self.ctrl.GetId())]
+        ac = [(wx.ACCEL_CTRL, wx.WXK_RETURN, self.okButton.GetId())]
 
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
@@ -1191,7 +1191,8 @@ class ShapeViewer(wx.Dialog):
         else:
             self.buttons[2].Enable()
             self.buttons[3].Enable()
-        #self.Refresh()
+        if os.name == "nt":
+            self.Refresh()
         #self.SetFocus()
 
 
