@@ -1,12 +1,10 @@
-whyteboard (0.40-0) jaunty; urgency=low
+whyteboard (0.40-2) jaunty; urgency=high
 
-  * Non-maintainer upload.
-  * Highlighter tool
-  * Improved image rotation. Polygon scaling/rotating
-  * PDF Cache Viewer
-  * Improvements to Shape Viewer
-  * Too many general improvements and bug fixes to list...
-  * (LP: #485391)
+  * Fix shape viewer buttons being enabled when they should be
+  * Fix possible crash with deleting shape
+  * (LP: #581499) - Opening a .wtbd file from a file browser doesn't work
+  * (LP: #581484) - Windows: function key shortcuts don't work
+  * (LP: #581483) - shape viewer doesn't redraw correctly
 
  -- Steven Sproat <sproaty@gmail.com>  Sun, 16 May 2010 01:38:38 +0100
 

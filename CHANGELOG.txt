@@ -1,8 +1,17 @@
-Whyteboard 0.40.1 - A simple image, PDF and postscript file annotator
+Whyteboard 0.40.2 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Mon 17 May 2010
 
 ---- VERSION HISTORY ----
+
+----------------------------------------------------------------------
+
+xx May 2010 -- 0.40.2
+
+- Fix tab ordering in "sure you want to exit" and text input dialogs
+- Fix cancelling the Save As dialog in save changes prompt closing the dialog
+- Fix eraser being a black square
+
 
 ----------------------------------------------------------------------
 
@@ -11,7 +20,7 @@ Mon 17 May 2010
 -- Bugfixes:
 
 * Possible crash with deleting shapes
-* Shape Viewer's buttons not being properly disabled on changing sheets 
+* Shape Viewer's buttons not being properly disabled on changing sheets
 * Opening a .wtbd file from a file explorer wouldn't work
 * Windows: function and other shortcut keys not working (e.g. F2/F11/Shift+Tab)
 * Windows: Shape Viewer dialog drawing its bitmaps as enabled when they were

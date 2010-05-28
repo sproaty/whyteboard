@@ -44,7 +44,8 @@ from lib.BeautifulSoup import BeautifulSoup
 
 import meta
 import tools
-from functions import get_home_dir, bitmap_button, is_exe, extract_tar
+from functions import (get_home_dir, bitmap_button, is_exe, extract_tar,
+                       fix_std_sizer_tab_order)
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -229,12 +230,10 @@ class ProgressDialog(wx.Dialog):
     Shows a Progres Gauge while an operation is taking place. May be cancellable
     which is possible when converting pdf/ps
     """
-    def __init__(self, gui, title, to_add=1, cancellable=False):
+    def __init__(self, gui, title, cancellable=False):
         """Defines a gauge and a timer which updates the gauge."""
         wx.Dialog.__init__(self, gui, title=title, style=wx.CAPTION)
         self.gui = gui
-        self.count = 0
-        self.to_add = to_add
         self.timer = wx.Timer(self)
         self.gauge = wx.Gauge(self, range=100, size=(180, 30))
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -254,15 +253,12 @@ class ProgressDialog(wx.Dialog):
         self.SetFocus()
 
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
-        self.timer.Start(30)
+        self.timer.Start(95)
 
 
     def on_timer(self, event):
         """Increases the gauge's progress."""
-        self.count += self.to_add
-        if self.count > 100:
-            self.count = 0
-        self.gauge.SetValue(self.count)
+        self.gauge.Pulse()
 
 
     def on_cancel(self, event):
@@ -454,11 +450,12 @@ class TextInput(wx.Dialog):
               style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.WANTS_CHARS, size=(350, 280))
 
         self.ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(300, 120))
+        fontBtn = wx.Button(self, label=_("Select Font"))
+        self.colourBtn = wx.ColourPickerCtrl(self)
         self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         self.okButton.SetDefault()
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        self.colourBtn = wx.ColourPickerCtrl(self)
-        fontBtn = wx.Button(self, label=_("Select Font"))
+
         extent = self.ctrl.GetFullTextExtent("Hy")
         lineHeight = extent[1] + extent[3]
         self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
@@ -469,6 +466,7 @@ class TextInput(wx.Dialog):
         self.note = None
         self.colour = gui.util.colour
         gap = wx.LEFT | wx.TOP | wx.RIGHT
+        font = gui.util.font
 
         if note:
             self.note = note
@@ -476,8 +474,6 @@ class TextInput(wx.Dialog):
             text = note.text
             font = wx.FFont(1, 1)
             font.SetNativeFontInfoFromString(note.font_data)
-        else:
-            font = gui.util.font
 
         self.set_text_colour(text)
         self.ctrl.SetFont(font)
@@ -497,6 +493,7 @@ class TextInput(wx.Dialog):
         sizer.Add((10, 10))  # Spacer.
         sizer.Add(btnSizer, 0, wx.BOTTOM | wx.ALIGN_CENTRE, 6)
         self.SetSizer(sizer)
+        fix_std_sizer_tab_order(btnSizer)
 
         self.set_focus()
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
@@ -752,6 +749,7 @@ class PromptForSave(wx.Dialog):
         self.SetSizerAndFit(mainSizer)
         self.SetFocus()
         self.SetAutoLayout(True)
+        fix_std_sizer_tab_order(btnSizer)
         self.Bind(wx.EVT_BUTTON, self.okay, saveButton)
         self.Bind(wx.EVT_BUTTON, self.no, noButton)
 
@@ -782,7 +780,8 @@ class PromptForSave(wx.Dialog):
 
     def okay(self, event):
         self.gui.on_save()
-        self.Close()
+        if self.gui.util.saved:
+            self.Close()
         if self.gui.util.saved or self.method == os.execvp:
             self.method(*self.args)  # force restart, otherwise 'cancel'
                                      # returns to application
@@ -815,8 +814,8 @@ class Resize(wx.Dialog):
         width, height = self.gui.canvas.buffer.GetSize()
         self.size = (width, height)
 
-        self.hctrl = wx.SpinCtrl(self, min=1, max=12000)
         self.wctrl = wx.SpinCtrl(self, min=1, max=12000)
+        self.hctrl = wx.SpinCtrl(self, min=1, max=12000)
 
         csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
         csizer.Add(wx.StaticText(self, label=_("Width:")), 0, wx.TOP |
@@ -842,11 +841,12 @@ class Resize(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(csizer, 0, gap, 7)
         sizer.Add((10, 15))
-        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE, 5)
-        sizer.Add((10, 10))
+        sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
+        sizer.Add((10, 15))
         self.SetSizer(sizer)
         self.SetFocus()
         sizer.Fit(self)
+
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         applyButton.Bind(wx.EVT_BUTTON, self.apply)

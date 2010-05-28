@@ -313,13 +313,13 @@ class GUI(wx.Frame):
         """
         Performs event binding.
         """
-        self.Bind(wx.EVT_CLOSE, self.on_exit)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.on_change_tab)
-        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_DROPPED, self.on_drop_tab)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CONTEXT_MENU, self.tab_popup)
-        self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # end pdf conversion
+        self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_DROPPED, self.on_drop_tab)
         self.Bind(self.LOAD_DONE_EVENT, self.on_done_load)
         self.Bind(wx.EVT_CHAR_HOOK, self.hotkey)
+        self.Bind(wx.EVT_CLOSE, self.on_exit)
+        self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # end pdf conversion
         self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
 
         topics = {'shape.add': self.shape_add,
@@ -330,13 +330,12 @@ class GUI(wx.Frame):
         [pub.subscribe(value, key) for key, value in topics.items()]
 
         # idle event handlers
-        ids = [ID_NEXT, ID_PREV, ID_UNDO_SHEET, ID_MOVE_UP, ID_DESELECT,
-               ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, wx.ID_COPY,
-               wx.ID_PASTE, wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE, ID_TRANSPARENT,
-               ID_SWAP_COLOURS, ID_RECENTLY_CLOSED, wx.ID_CLOSE]
+        ids = [ID_DESELECT, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP,
+               ID_MOVE_UP, ID_NEXT, ID_PREV, ID_RECENTLY_CLOSED, ID_SWAP_COLOURS,
+               ID_TRANSPARENT, ID_UNDO_SHEET, wx.ID_CLOSE, wx.ID_COPY, wx.ID_DELETE,
+               wx.ID_PASTE, wx.ID_REDO, wx.ID_UNDO]
         [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
 
-        # hotkeys
         self.hotkeys = [x.hotkey for x in self.util.items]
         ac = []
         # Need to bind each item's hotkey to trigger change tool, passing its ID
@@ -354,66 +353,65 @@ class GUI(wx.Frame):
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
 
-
-        # import sub-menu bindings
+        # "import" sub-menu's bindings
         ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
         [self.Bind(wx.EVT_MENU, lambda evt, text=key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
         # menu bindings
-        bindings = { ID_NEW: "new_win",
-                     wx.ID_NEW : "new_tab",
-                     wx.ID_OPEN: "open",
-                     wx.ID_CLOSE: "close_tab",
-                     wx.ID_SAVE: "save",
-                     wx.ID_SAVEAS: "save_as",
+        bindings = { ID_CLEAR_ALL: "clear_all",
+                     ID_CLEAR_ALL_SHEETS: "clear_all_sheets",
+                     ID_CLEAR_SHEETS: "clear_sheets",
+                     ID_COLOUR_GRID: "colour_grid",
+                     ID_DESELECT: "deselect_shape",
                      ID_EXPORT: "export",
                      ID_EXPORT_ALL: "export_all",
-                     wx.ID_PRINT_SETUP: "page_setup",
+                     ID_EXPORT_PDF: "export_pdf",
+                     ID_EXPORT_PREF: "export_pref",
+                     ID_FEEDBACK: "feedback",
+                     ID_FULLSCREEN: "fullscreen",
+                     ID_HISTORY: "history",
+                     ID_IMPORT_PREF: "import_pref",
+                     ID_MOVE_DOWN: "move_down",
+                     ID_MOVE_TO_BOTTOM: "move_bottom",
+                     ID_MOVE_TO_TOP: "move_top",
+                     ID_MOVE_UP: "move_up",
+                     ID_NEW: "new_win",
+                     ID_NEXT: "next",
+                     ID_PASTE_NEW: "paste_new",
+                     ID_PDF_CACHE: "pdf_cache",
+                     ID_PREV: "prev",
+                     ID_RELOAD_PREF: "reload_preferences",
+                     ID_RENAME: "rename",
+                     ID_REPORT_BUG: "report_bug",
+                     ID_RESIZE: "resize",
+                     ID_SHAPE_VIEWER: "shape_viewer",
+                     ID_STATUSBAR: "statusbar",
+                     ID_SWAP_COLOURS: "swap_colours",
+                     ID_TOOL_PREVIEW: "tool_preview",
+                     ID_TOOLBAR: "toolbar",
+                     ID_TRANSLATE: "translate",
+                     ID_TRANSPARENT: "transparent",
+                     ID_UNDO_SHEET: "undo_tab",
+                     ID_UPDATE: "update",
+                     wx.ID_ABOUT: "about",
+                     wx.ID_CLEAR: "clear",
+                     wx.ID_CLOSE: "close_tab",
+                     wx.ID_COPY: "copy",
+                     wx.ID_DELETE: "delete_shape",
+                     wx.ID_EXIT: "exit",
+                     wx.ID_HELP: "help",
+                     wx.ID_NEW : "new_tab",
+                     wx.ID_OPEN: "open",
+                     wx.ID_PASTE: "paste",
+                     wx.ID_PREFERENCES: "preferences",
                      wx.ID_PREVIEW_PRINT: "print_preview",
                      wx.ID_PRINT: "print",
-                     wx.ID_EXIT: "exit",
-                     wx.ID_UNDO: "undo",
+                     wx.ID_PRINT_SETUP: "page_setup",
                      wx.ID_REDO: "redo",
-                     ID_UNDO_SHEET: "undo_tab",
-                     wx.ID_COPY: "copy",
-                     wx.ID_PASTE: "paste",
-                     wx.ID_DELETE: "delete_shape",
-                     wx.ID_PREFERENCES: "preferences",
-                     ID_PASTE_NEW: "paste_new",
-                     ID_HISTORY: "history",
-                     ID_RESIZE: "resize",
-                     ID_FULLSCREEN: "fullscreen",
-                     ID_TOOLBAR: "toolbar",
-                     ID_STATUSBAR: "statusbar",
-                     ID_PREV: "prev",
-                     ID_NEXT: "next",
-                     wx.ID_CLEAR: "clear",
-                     ID_CLEAR_ALL: "clear_all",
-                     ID_CLEAR_SHEETS: "clear_sheets",
-                     ID_CLEAR_ALL_SHEETS: "clear_all_sheets",
-                     ID_RENAME: "rename",
-                     wx.ID_HELP: "help",
-                     ID_UPDATE: "update",
-                     ID_TRANSLATE: "translate",
-                     ID_REPORT_BUG: "report_bug",
-                     wx.ID_ABOUT: "about",
-                     ID_EXPORT_PDF: "export_pdf",
-                     ID_IMPORT_PREF: "import_pref",
-                     ID_EXPORT_PREF: "export_pref",
-                     ID_SHAPE_VIEWER: "shape_viewer",
-                     ID_MOVE_UP: "move_up",
-                     ID_MOVE_DOWN: "move_down",
-                     ID_MOVE_TO_TOP: "move_top",
-                     ID_MOVE_TO_BOTTOM: "move_bottom",
-                     ID_DESELECT: "deselect_shape",
-                     ID_RELOAD_PREF: "reload_preferences",
-                     ID_TOOL_PREVIEW: "tool_preview",
-                     ID_COLOUR_GRID: "colour_grid",
-                     ID_FEEDBACK: "feedback",
-                     ID_TRANSPARENT: "transparent",
-                     ID_SWAP_COLOURS: "swap_colours",
-                     ID_PDF_CACHE: "pdf_cache", }
+                     wx.ID_SAVE: "save",
+                     wx.ID_SAVEAS: "save_as",
+                     wx.ID_UNDO: "undo" }
 
         for _id, name in bindings.items():
             method = getattr(self, "on_" + name)  # self.on_*
@@ -449,19 +447,16 @@ class GUI(wx.Frame):
             bmps[_id] = wx.Bitmap(path + "move-" + icon + "-small.png")
 
         # add tools, add a separator and bind paste/undo/redo for UI updating
-        x = 0
-        for _id, art_id, tip in zip(ids, arts, tips):
-
+        for x, (_id, art_id, tip) in enumerate(zip(ids, arts, tips)):
             if _id in _move:
                 art = bmps[_id]
             else:
                 art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
 
             self.toolbar.AddSimpleTool(_id, art, tip)
-
             if x == 2 or x == 6:
                 self.toolbar.AddSeparator()
-            x += 1
+
         self.toolbar.EnableTool(wx.ID_PASTE, self.can_paste)
         self.toolbar.Realize()
 
@@ -809,7 +804,7 @@ class GUI(wx.Frame):
         if event.GetSelection() == event.GetOldSelection():
             return
 
-        self.dialog = ProgressDialog(self, _("Loading..."), 5)
+        self.dialog = ProgressDialog(self, _("Loading..."))
         self.dialog.Show()
         self.on_change_tab()
 
@@ -1113,7 +1108,7 @@ class GUI(wx.Frame):
                 return
         self.hotkey_scroll(code, event)
         event.Skip()
-        
+
 
     def hotkey_scroll(self, code, event):
         """Scrolls the viewport depending on the key pressed"""
@@ -1207,7 +1202,7 @@ class GUI(wx.Frame):
         """
         self.process = wx.Process(self)
         self.pid = wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
-        self.dialog = ProgressDialog(self, _("Converting..."), cancellable=True)
+        self.dialog = ProgressDialog(self, _("Converting..."), True)
         self.dialog.ShowModal()
 
 
@@ -1539,17 +1534,17 @@ class WhyteboardApp(wx.App):
 
         self.frame = GUI(None, config)
         self.frame.Show(True)
-        
+
         try:
             _file = os.path.abspath(sys.argv[1])
             if _file.endswith(".wtbd"):
-                
+
                 if os.path.exists(_file):
                     self.frame.do_open(_file)
             elif options.file:
-                    self.load_file(options.file)                
+                    self.load_file(options.file)
         except IndexError:
-            pass                        
+            pass
 
         if options.width:
             self.frame.canvas.resize((options.width, self.frame.canvas.area[1]))

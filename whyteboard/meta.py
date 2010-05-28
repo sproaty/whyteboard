@@ -58,7 +58,7 @@ wc_list.insert(0, '%s|%s'%(_("All suppported files"), ';'.join(tmp)))
 
 dialog_wildcard = '|'.join(wc_list)
 transparent = True
-version = "0.40.1"
+version = "0.40.2"
 languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
               (_("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
               (_("Japanese"), wx.LANGUAGE_JAPANESE),
@@ -75,8 +75,6 @@ languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
               (_("Czech"), wx.LANGUAGE_CZECH),
               (_("Italian"), wx.LANGUAGE_ITALIAN),
               (_("Galician"), wx.LANGUAGE_GALICIAN) )
-
-
 
 config_scheme = """
 bmp_select_transparent = boolean(default=False)

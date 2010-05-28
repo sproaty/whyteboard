@@ -66,6 +66,7 @@ import webbrowser
 import time
 import zipfile
 import wx
+import shutil
 
 try:
     import cPickle as pickle
@@ -139,7 +140,7 @@ class Utility(object):
         the pickled file, otherwise it gets added twice
         """
         if self.filename:
-            self.gui.dialog = ProgressDialog(self.gui, _("Saving..."), 30)
+            self.gui.dialog = ProgressDialog(self.gui, _("Saving..."))
             self.gui.dialog.Show()
 
             _zip = zipfile.ZipFile('whyteboard_temp_new.wtbd', 'w')
@@ -194,7 +195,7 @@ class Utility(object):
                     try:
                         pickle.dump(_file, f)
                         self.gui.SetTitle("%s - %s" %
-                                          (os.path.split(self.filename)[1], self.gui.title))
+                                          (os.path.basename(self.filename), self.gui.title))
                     except pickle.PickleError:
                         wx.MessageBox(_("Error saving file data"), "Whyteboard")
                         self.saved = False
@@ -206,7 +207,7 @@ class Utility(object):
 
                 if os.path.exists(self.filename):
                     os.remove(self.filename)
-                os.rename('whyteboard_temp_new.wtbd', self.filename)
+                shutil.move('whyteboard_temp_new.wtbd', self.filename)
 
                 self.zip = zipfile.ZipFile(self.filename, "r")
                 self.is_zipped = True
@@ -381,7 +382,7 @@ class Utility(object):
         Recreates the saved .wtbd file's state
         """
         self.filename = filename
-        self.gui.dialog = ProgressDialog(self.gui, _("Loading..."), 30)
+        self.gui.dialog = ProgressDialog(self.gui, _("Loading..."))
         self.gui.dialog.Show()
         self.remove_all_sheets()
 
@@ -392,7 +393,7 @@ class Utility(object):
         self.gui.control.change_tool(_id=self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
-        self.gui.SetTitle(os.path.split(filename)[1] + ' - ' + self.gui.title)
+        self.gui.SetTitle("%s - %s" % (os.path.basename(filename), self.gui.title))
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
@@ -561,7 +562,7 @@ class Utility(object):
             self.library_write(_file, images, quality)
 
         # Just in case it's a file with many pages
-        self.gui.dialog = ProgressDialog(self.gui, _("Loading..."), 30)
+        self.gui.dialog = ProgressDialog(self.gui, _("Loading..."))
         self.gui.dialog.Show()
         self.gui.on_done_load()
 
@@ -575,7 +576,7 @@ class Utility(object):
             self.remove_all_sheets()
 
         for x in range(len(images)):
-            name = os.path.split(_file)[1][:15] + " - %s" % (x + 1)
+            name = "%s - %s" % (os.path.basename(_file)[:15], x + 1)
             self.gui.on_new_tab(name=name)
             load_image(images[x], self.gui.canvas, tools.Image)
 

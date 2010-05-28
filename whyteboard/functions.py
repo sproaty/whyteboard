@@ -147,7 +147,7 @@ def convert_quality(quality, im_location, _file, path):
         density = 250
         resample = 100
     cmd = ('"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"'
-           % (im_location.decode("utf-8"), density, _file.decode("utf-8"), resample, path.decode("utf-8")))
+           % (im_location, density, _file, resample, path))
     return cmd
 
 
@@ -204,7 +204,18 @@ def is_exe():
     return hasattr(sys, "frozen")
 
 
-
+def fix_std_sizer_tab_order(sizer):
+    """
+    Fixes wx.StdDialogButtonSizer's tab ordering
+    """
+    buttons = []
+    for child in sizer.GetChildren():
+        win = child.GetWindow()
+        if win is not None:
+            buttons.append(win)
+    buttons[1].MoveAfterInTabOrder(buttons[0])
+    
+        
 def download_help_files(path):
     """
     Downloads the help files to the user's directory and shows them

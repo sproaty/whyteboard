@@ -384,7 +384,7 @@ class Polygon(OverlayShape):
         inside = False
 
         p1x, p1y = self.points[0]
-        for i in range(n + 1):
+        for i in xrange(n + 1):
             p2x, p2y = self.points[i % n]
             if y > min(p1y, p2y):
                 if y <= max(p1y, p2y):
@@ -1103,8 +1103,8 @@ class Eraser(Pen):
         memory.SelectObject(cursor)
 
         if os.name == "posix":
-            memory.SetPen(wx.Pen((255, 255, 255), 1))  # border
-            memory.SetBrush(wx.Brush((0, 0, 0)))
+            memory.SetPen(wx.Pen((0, 0, 0), 1))  # border
+            memory.SetBrush(wx.Brush((255, 255, 255)))
         else:
             memory.SetPen(wx.Pen((0, 0, 0), 1))  # border
             memory.SetBrush(wx.Brush((255, 255, 255)))
