@@ -213,9 +213,47 @@ def fix_std_sizer_tab_order(sizer):
         win = child.GetWindow()
         if win is not None:
             buttons.append(win)
-    buttons[1].MoveAfterInTabOrder(buttons[0])
-    
-        
+    if len(buttons) >= 1:
+        buttons[1].MoveAfterInTabOrder(buttons[0])
+
+
+def format_bytes(total):
+    """
+    Turn an amount of byte into readable KB/MB format
+    http://www.5dollarwhitebox.org/drupal/node/84
+    """
+    bytes = float(total)
+    if bytes >= 1048576:
+        megabytes = bytes / 1048576
+        size = '%.2fMB' % megabytes
+    elif bytes >= 1024:
+        kilobytes = bytes / 1024
+        size = '%.2fKB' % kilobytes
+    else:
+        size = '%.2fb' % bytes
+    return size
+
+
+def get_version_int(version):
+    """
+    Turns a version string like 0.40.2 into [0, 40, 2]
+    """
+    num = [int(x) for x in version.split(".")]
+    if len(num) == 2:
+        num.append(0)
+    return num
+
+
+def version_is_greater(version1, version2):
+    """
+    Checks whether the first version is greater than the 2nd
+    """
+    a = get_version_int(version1)
+    b = get_version_int(version2)
+
+    return b[1] < a[1] or (b[1] == a[1] and b[2] < a[2])
+
+
 def download_help_files(path):
     """
     Downloads the help files to the user's directory and shows them

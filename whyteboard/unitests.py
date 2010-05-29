@@ -472,10 +472,8 @@ class TestShapes:
 
 
     def test_rect_hit(self):
-        """
-        Test the rectangle by using different x/y combinations to represent
-        the user drawing the rectangle by dragging to different directions
-        """
+        """Rectangle hit test"""
+        # using different x/y combinations to mock user drawing the rectangle
         rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
         rect.x = 150
         rect.y = 150
@@ -523,9 +521,8 @@ class TestShapes:
 
 
     def test_text_hit(self):
-        """
-        Mocking with a fixed text extent (58, 17)
-        """
+        """Text tool is hit"""
+        # mocking with a fixed text extent (58, 17)
         text = whyteboard.tools.Text(self.canvas, (0, 0, 0), 3)
         text.x = 100
         text.y = 102
@@ -541,9 +538,8 @@ class TestShapes:
 
 
     def test_note_hit(self):
-        """
-        Same as text, with added padding for the background
-        """
+        """Note tool is hit"""
+        # Same as text, with added padding for the background
         note = whyteboard.tools.Note(self.canvas, (0, 0, 0), 3)
         note.x = 100
         note.y = 99
@@ -588,7 +584,7 @@ class TestShapes:
     def test_select_tool_click_selects(self):
         """Select Tool left click selects a shape"""
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
-        self.make_test_tools()
+        self.make_tools()
         assert len(self.canvas.shapes) == 3
 
         select.left_down(250, 250)
@@ -598,7 +594,7 @@ class TestShapes:
     def test_select_tool_click_deselects(self):
         """Select Tool left click de-selects a shape when no shape is 'hit'"""
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
-        self.make_test_tools()
+        self.make_tools()
         select.left_down(250, 250)
 
         # a 'miss' selection should deselect the circle
@@ -609,7 +605,7 @@ class TestShapes:
     def test_select_tool_click_selects_shape_overlapping(self):
         """Select Tool left click selects top shape when shapes overlap'"""
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
-        self.make_test_tools()
+        self.make_tools()
         select.left_down(250, 250)
 
         select.left_down(155, 155)
@@ -624,7 +620,7 @@ class TestShapes:
         assert not self.text.selected
 
 
-    def make_test_tools(self):
+    def make_tools(self):
         # create some shapes
         self.rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
         self.rect.x = 150
@@ -651,3 +647,41 @@ class TestShapes:
 
 
 #----------------------------------------------------------------------
+
+class TestFunctions:
+    """Test the stand-alone functions"""
+    import whyteboard.functions
+
+    def test_get_version_int(self):
+        """A list with the correct version is returned from a string"""
+        assert whyteboard.functions.get_version_int("0.4") == [0, 4, 0]
+        assert whyteboard.functions.get_version_int("0.4.0") == [0, 4, 0]
+
+
+    def test_version_is_greater(self):
+        """Ensuring certain versions are greater than one another"""
+        assert whyteboard.functions.version_is_greater("0.4", "0.4.0") == False
+        assert whyteboard.functions.version_is_greater("0.4.0", "0.4.0") == False
+        assert whyteboard.functions.version_is_greater("0.4", "0.4.1") == False
+        assert whyteboard.functions.version_is_greater("0.4.1", "0.4.15") == False
+        assert whyteboard.functions.version_is_greater("0.4.1", "0.3") == True
+        assert whyteboard.functions.version_is_greater("0.3.1", "0.3") == True
+
+
+    def test_get_time(self):
+        """The correct time for the media player is returned"""
+        assert whyteboard.functions.get_time(1) == "00:01"
+        assert whyteboard.functions.get_time(10) == "00:10"
+        assert whyteboard.functions.get_time(60) == "01:00"
+        assert whyteboard.functions.get_time(45) == "00:45"
+        assert whyteboard.functions.get_time(3590) == "59:50"
+        assert whyteboard.functions.get_time(3600) == "1:00:00"
+        assert whyteboard.functions.get_time(7199) == "1:59:59"
+        assert whyteboard.functions.get_time(7200) == "2:00:00"
+
+    def test_get_wx_image_type(self):
+        """Correct wx.BITMAP_TYPE is returned"""
+        assert whyteboard.functions.get_wx_image_type("/blah.png") == wx.BITMAP_TYPE_PNG
+        assert whyteboard.functions.get_wx_image_type("blah.TifF") == wx.BITMAP_TYPE_TIF
+        assert whyteboard.functions.get_wx_image_type("/blah.JPG") == wx.BITMAP_TYPE_JPEG
+        assert whyteboard.functions.get_wx_image_type("/blah.jpeg") == wx.BITMAP_TYPE_JPEG

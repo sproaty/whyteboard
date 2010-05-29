@@ -8,10 +8,12 @@ Mon 17 May 2010
 
 xx May 2010 -- 0.40.2
 
+- Improved program updating
+- Removed code that was handling loading older .wtbd save files from around a
+  year back as it's no longer needed
 - Fix tab ordering in "sure you want to exit" and text input dialogs
 - Fix cancelling the Save As dialog in save changes prompt closing the dialog
 - Fix eraser being a black square
-
 
 ----------------------------------------------------------------------
 

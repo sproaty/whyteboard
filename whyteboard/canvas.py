@@ -788,7 +788,7 @@ class CanvasDropTarget(wx.PyDropTarget):
                     if x or self.gui.canvas.shapes:
                         self.gui.on_new_tab()
 
-                    if name.endswith(".wtbd"):
+                    if name.lower().endswith(".wtbd"):
                         self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
                     else:
                         self.gui.do_open(name)

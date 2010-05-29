@@ -1144,6 +1144,9 @@ class Sizer(object):
     def Fit(self, window):
         pass
 
+    def GetChildren(self):
+        return []
+
 class BoxSizer(Sizer):
     def __init__(self, *args, **kwds):
         Sizer.__init__(self, *args, **kwds)

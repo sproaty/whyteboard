@@ -77,7 +77,7 @@ from lib.pubsub import pub
 
 from dialogs import ProgressDialog, FindIM, PromptForSave
 from functions import (get_home_dir, load_image, convert_quality, make_filename,
-                       get_wx_image_type)
+                       get_wx_image_type, version_is_greater)
 
 import meta
 import tools
@@ -397,20 +397,9 @@ class Utility(object):
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
-            name = None
-            try:
-                name = temp[3][x]
-            except KeyError:
-                pass
+            self.gui.on_new_tab(name=temp[3][x])
+            self.gui.canvas.resize(temp[4][x])
 
-            self.gui.on_new_tab(name=name)
-
-            try:
-                self.gui.canvas.resize(temp[4][x])
-            except KeyError:
-                pass
-
-            media = []
             try:
                 media = temp[5][x]
                 for m in media:
@@ -418,7 +407,7 @@ class Utility(object):
                     m.load()
                     self.gui.canvas.medias.append(m)
             except KeyError:
-                pass
+                break
 
             for shape in temp[1][x]:
                 try:
@@ -433,41 +422,22 @@ class Utility(object):
         wx.PostEvent(self.gui, self.gui.LoadEvent())
         self.saved = True
         self.gui.canvas.change_current_tool()
+        self.gui.tabs.SetSelection(temp[0][3])
+        self.gui.on_change_tab()
+
+        self.saved_version = temp[0][4]
 
         try:
-            self.gui.tabs.SetSelection(temp[0][3])
-            self.gui.on_change_tab()
-        except IndexError:
-            pass
-
-        try:
-            version = temp[0][4]
-        except IndexError:
-            version = "0.33"
-        self.saved_version = version
-        font = None
-
-        try:
-            if temp[0][5]:
-                font = wx.FFont(1, 1)
-                font.SetNativeFontInfoFromString(temp[0][5])
+            font = wx.FFont(1, 1)
+            font.SetNativeFontInfoFromString(temp[0][5])
             self.font = font
         except IndexError:
             pass
 
         #  Don't save .wtbd file of future versions as current, older version
-        num = [int(x) for x in version.split(".")]
-        ver = [int(x) for x in meta.version.split(".")]
-        if len(num) == 2:
-            num.append(0)
-        if len(ver) == 2:
-            ver.append(0)
-
-        if num[1] > ver[1]:
+        if version_is_greater(self.saved_version, meta.version):
             self.update_version = False
-        elif num[1] == ver[1]:
-            if num[2] > ver[2]:
-                self.update_version = False
+
 
 
     def library_create(self):

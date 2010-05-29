@@ -40,12 +40,11 @@ except ImportError:
 
 import lib.errdlg
 from lib.pubsub import pub
-from lib.BeautifulSoup import BeautifulSoup
 
 import meta
 import tools
 from functions import (get_home_dir, bitmap_button, is_exe, extract_tar,
-                       fix_std_sizer_tab_order)
+                       fix_std_sizer_tab_order, format_bytes, version_is_greater)
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -290,7 +289,7 @@ class UpdateDialog(wx.Dialog):
         wx.Dialog.__init__(self, gui, title=_("Updates"), size=(350, 200))
         self.gui = gui
         self.downloaded = 0
-        self.version = None
+        self.new_version = None
         self._file = None
         self._type = None
 
@@ -310,59 +309,45 @@ class UpdateDialog(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.text, 0, wx.LEFT | wx.TOP | wx.RIGHT, 10)
         sizer.Add(self.text2, 0, wx.LEFT | wx.RIGHT, 10)
-        sizer.Add((10, 20)) # Spacer.
+        sizer.Add((10, 20))
         sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE)
         self.SetSizer(sizer)
         self.SetFocus()
 
         self.btn.Bind(wx.EVT_BUTTON, self.update)
-        wx.CallAfter(self.check)  # we want to show the dialog then fetch URL
+        wx.CallAfter(self.check)  # we want to show the dialog *then* fetch URL
 
 
     def check(self):
         """
-        Opens a connection to Google Code's site and uses BeautifulSoup to
-        parse the website for the filename and file size. Extract the new
-        file's version from its filename, and compare against current version
+        Parses the "control" file giving information about the latest release
         """
         try:
-            f = urlopen("http://code.google.com/p/whyteboard/downloads/list")
+            f = urlopen("http://whyteboard.org/latest")
         except IOError:
             self.text.SetLabel(_("Could not connect to server."))
             return
-        html = f.read()
+        html = f.read().split("\n")
         f.close()
-        soup = BeautifulSoup(html)
-        found = False
-        _type = ".tar.gz"
-        if os.name == "nt":
-            if is_exe():
-                _type = ".zip"
+        self.new_version = html[0]
 
-        for i, td in enumerate(soup.findAll("td", {"class": "vt id col_0"})):
-            _file = td.findNext('a').renderContents().strip()
+        if version_is_greater(meta.version, self.new_version):
+            self.text.SetLabel(_("You are running the latest version."))
+            return
 
-            if _file.endswith(_type) and _file.find("help") == -1:
-                found = True
-                start = _file.find("-") + 1
-                stop = _file.find(_type)
-                version = _file[start : stop]
-                _all = soup.findAll("td", {"class": "vt col_3"})
-                size = _all[i].findNext('a').renderContents().strip()
+        self._file, size = html[3], html[4]
+        self._type = ".tar.gz"
 
-                if version != meta.version:
-                    s = (_(" There is a new version available")+", %s\n File: %s\n"+
-                        " Size: %s") % (version, _file, size)
-                    self.text.SetLabel(s)
-                    self.btn.Enable(True)
-                    self._file = td.findNext('a')['href']
-                    self._type = _type
-                    self.version = version
-                    break
-                else:
-                    self.text.SetLabel(_("You are running the latest version."))
-        if not found:
-            self.text.SetLabel(_("Error getting file list from the server."))
+        if os.name == "nt" and is_exe():
+            self._file, size = html[1], html[2]
+            self._type = ".zip"
+
+        s = (_("There is a new version available, %(version)s\nFile: %(filename)s\nSize: %(filesize)s")
+             % {'version': html[0], 'filename': self._file, 'filesize': format_bytes(size)} )
+        self.text.SetLabel(s)
+        self.btn.Enable(True)
+        self._file = "http://whyteboard.googlecode.com/files/" + self._file
+
 
 
     def update(self, event=None):
@@ -385,53 +370,36 @@ class UpdateDialog(wx.Dialog):
             self.btn.SetLabel(_("Retry"))
             return
 
-        if is_exe():
+        if os.name == "nt" and is_exe():
             # rename current exe, extract zip which contains whyteboard.exe
-            if os.name == "nt":
-                os.rename(path[1], "wtbd-bckup.exe")
-                _zip = zipfile.ZipFile(tmp_file)
-                _zip.extractall()
-                _zip.close()
-                os.remove(tmp_file)
-                wb = os.path.abspath(sys.argv[0])
-                args = [wb, [wb]]
+            os.rename(path[1], "wtbd-bckup.exe")
+            _zip = zipfile.ZipFile(tmp_file)
+            _zip.extractall()
+            _zip.close()
+            os.remove(tmp_file)
+            wb = os.path.abspath(sys.argv[0])
+            args = [wb, [wb]]
         else:
             if os.name == "posix":
-                os.system("tar -xf "+ tmp[0] +" --strip-components=1")
+                os.system("tar -xf %s --strip-components=1" % tmp[0])
             else:
                 extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]),
-                            self.version, self.gui.util.backup_ext)
+                            self.new_version, self.gui.util.backup_ext)
             os.remove(tmp[0])
             args = ['python', ['python', sys.argv[0]]]  # for os.execvp
 
         if self.gui.util.filename:
             name = '"%s"' % self.gui.util.filename  # gotta escape for Windows
+            args[1].append("-f")
             args[1].append(name)  # restart, load .wtbd
         self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)
 
 
     def reporter(self, count, block, total):
-        """Updates a text label with progress on a download"""
         self.downloaded += block
-        done = self.downloaded / 1024
 
-        _type = "KB"
-        rem = ""
-        if done >= 1024:
-            rem = "%.2i" % (done % 1024)
-            done //= 1024
-            _type = "MB"
-
-        _type2 = "KB"
-        total /= 1024
-        rem2 = ""
-        if total >= 1024:
-            rem2 = "%.2i" % (total % 1024)
-            total //= 1024
-            _type2 = "MB"
-
-        self.text2.SetLabel(" "+_("Downloaded")+" %s.%s%s" % (int(done), rem, _type) +
-                            " of %s.%s%s" % (int(total), rem2, _type2))
+        wx.CallAfter(self.text2.SetLabel, _("Downloaded %s of %s")
+                            % (format_bytes(self.downloaded), format_bytes(total)))
 
 
 #----------------------------------------------------------------------

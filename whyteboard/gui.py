@@ -545,7 +545,7 @@ class GUI(wx.Frame):
                 name += '.wtbd'
 
             # only store whyteboard files, not an image as the current file
-            if name.endswith(".wtbd"):
+            if name.lower().endswith(".wtbd"):
                 self.util.filename = name
                 self.on_save()
 
@@ -570,7 +570,7 @@ class GUI(wx.Frame):
 
         name = file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir)
         if name:
-            if name.endswith(".wtbd"):
+            if name.lower().endswith(".wtbd"):
                 self.util.prompt_for_save(self.do_open, args=[name])
             else:
                 self.do_open(name)
@@ -586,7 +586,7 @@ class GUI(wx.Frame):
         self.config.Flush()
         self.save_last_path(path)
 
-        if path.endswith(".wtbd"):
+        if path.lower().endswith(".wtbd"):
             self.util.load_wtbd(path)
         else:
             self.util.temp_file = path
@@ -1233,7 +1233,7 @@ class GUI(wx.Frame):
             return
         self.filehistory.AddFileToHistory(path)  # move up the list
 
-        if path.endswith(".wtbd"):
+        if path.lower().endswith(".wtbd"):
             self.util.prompt_for_save(self.do_open, args=[path])
         else:
             self.do_open(path)
@@ -1537,7 +1537,7 @@ class WhyteboardApp(wx.App):
 
         try:
             _file = os.path.abspath(sys.argv[1])
-            if _file.endswith(".wtbd"):
+            if _file.lower().endswith(".wtbd"):
 
                 if os.path.exists(_file):
                     self.frame.do_open(_file)

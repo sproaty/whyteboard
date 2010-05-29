@@ -96,7 +96,6 @@ Identified and confirmed bugs are always fixed before a new release.
 Python, core programmling language - http://www.python.org/
 wxPython, GUI framework - http://www.wxpython.org
 ImageMagick, image editing suite - http://www.imagemagick.net
-BeautifulSoup, Python HTML parser - http://www.crummy.com/software/BeautifulSoup/
 ConfigObj, Python configuration files - http://www.voidspace.org.uk/python/configobj.html
 Editra Control Library, extra wxPython widgets - http://editra.org/eclib
 Pubsub, publish/subscribe API -- http://pubsub.sourceforge.net
