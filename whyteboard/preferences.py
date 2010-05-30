@@ -192,14 +192,10 @@ class General(wx.Panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
 
-        # we want to show the translated messages, but keep them in the same
-        # order as the English ones, to set the config in English
-        self.options = [i[0] for i in meta.languages]
-        self.options.sort()
-        self.translated = [_(i).capitalize() for i in self.options]
-        translated = list(self.translated)
+        translated = [i[1] for i in meta.languages]
         translated.sort()
-        self.lang = wx.ComboBox(self, choices=translated, style=wx.CB_READONLY)
+        self.lang = wx.ComboBox(self, choices=translated, style=wx.CB_READONLY, size=(240, 30))
+        self.lang.Layout()
 
         undo = wx.StaticText(self, label=_("Number of Recently Closed Sheets"))
         self.undoctrl = wx.SpinCtrl(self, min=5, max=50)
@@ -219,7 +215,7 @@ class General(wx.Panel):
 
         self.handlectrl.SetValue(self.config['handle_size'])
         self.undoctrl.SetValue(self.config['undo_sheets'])
-        self.lang.SetValue(_(self.config['language'].capitalize()))
+        self.lang.SetValue(_(self.config['language']))
         self.borderctrl.SetValue(self.config['canvas_border'])
 
         self.lang.Bind(wx.EVT_COMBOBOX, self.on_lang)
@@ -237,9 +233,9 @@ class General(wx.Panel):
         sizer.Add(self.borderctrl, 0, wx.LEFT, 30)
 
     def on_lang(self, event):
-        for x, lang in enumerate(self.translated):
-            if self.lang.GetValue() == lang:
-                self.config['language'] = self.options[x]  # english
+        for lang in meta.languages:
+            if self.lang.GetValue() == lang[1]:
+                self.config['language'] = lang[0]  # english string
 
 
     def on_undo(self, event):

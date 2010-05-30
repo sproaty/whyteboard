@@ -1,5 +1,5 @@
 Whyteboard - Help for developers
-Version 0.40.1 - last updated: 1 May 2010
+Version 0.40.2 - document last updated: 1 May 2010
 ---------------------------------
 
 This document serves to help a developer who wishes to contribute / understand
@@ -106,7 +106,7 @@ gui.py         - main program frame, wx.App
 meta.py        - meta data, meant to be dependent on wxPython only
 panels.py      - control panel, notes, thumnbails
 preferences.py - preferences dialog
-tools.py       - class definitions for the drawing tool.s
+tools.py       - class definitions for the drawing tools
 unitests.py    - unit tests
 utility.py     - a class the GUI references that performs saving/loading files,
                  getting file paths and misc. things

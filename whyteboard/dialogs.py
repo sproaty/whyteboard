@@ -810,7 +810,7 @@ class Resize(wx.Dialog):
         sizer.Add(csizer, 0, gap, 7)
         sizer.Add((10, 15))
         sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
-        sizer.Add((10, 15))
+        sizer.Add((10, 5))
         self.SetSizer(sizer)
         self.SetFocus()
         sizer.Fit(self)

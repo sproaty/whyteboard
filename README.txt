@@ -1,4 +1,4 @@
-Whyteboard 0.40.1 - A simple image, PDF and postscript file annotator
+Whyteboard 0.40.2 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Mon 17 May 2010
 
@@ -60,20 +60,6 @@ http://www.microsoft.com/downloads/details.aspx?familyid=A5C84275-3B97-4AB7-A40D
 
 - or use this 64 bit version if you have Windows 64. 4.7MB
 http://www.microsoft.com/downloads/details.aspx?familyid=BA9257CA-337F-4B40-8C14-157CFDFFEE4E
-
-
-
-Mac users:
-
-   File "/Users/x/whyteboard/whyteboard/tools.py", line 40, in <module>
-     from dialogs import TextInput
-   File "/Users/x/whyteboard/whyteboard/dialogs.py", line 1018, in <module>
-     class WhyteboardList(wx.ListCtrl, listmix.ListRowHighlighter):
- AttributeError: 'module' object has no attribute 'ListRowHighlighter'
-
-There is some problems involving the default wxPython version installed on a Mac
-where the program will select an older version. Please delete the lines
-"if not hasattr(sys, 'frozen'):" to  "sys.exit()" in whyteboard.py
 
 
 ---- KNOWN BUGS ----

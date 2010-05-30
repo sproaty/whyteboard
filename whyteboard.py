@@ -19,35 +19,28 @@
 
 
 """
-This is the main module which fires up the program. It checks if the wxPython
-version that is installed is recent enough, as the program uses its newer
-functionality and features.
+This is the main module which fires up Whyteboard. It checks if the installed
+wxPython version is recent enough, as Whyteboard uses newer versions' features.
 """
 
 import sys
 import webbrowser
 
-#  delete the following if you have
-#  'module' object has no attribute 'ListRowHighlighter' problems on a mac
 if not hasattr(sys, 'frozen'):
     WXVER = '2.8.9'
     import wxversion
-    if wxversion.checkInstalled(WXVER):
-        wxversion.select([WXVER, '2.8.10'])
-    else:
+    if not wxversion.checkInstalled(WXVER):
         import wx
         app = wx.App(False)
 
-        wx.MessageBox("The requested version of wxPython is not installed.\n"+
-                     "Please install version "+ WXVER, "wxPython Version Error",
-                     "Whyteboard")
+        wx.MessageBox("The minimum required version of wxPython, \n%s is not installed." % WXVER,
+                      "wxPython Version Error")
         app.MainLoop()
         webbrowser.open("http://www.wxpython.org/download.php")
         sys.exit()
 
 
-#  don't delete these lines
+import wx
 from whyteboard.gui import WhyteboardApp
 
-app = WhyteboardApp()
-app.MainLoop()
+WhyteboardApp().MainLoop()

@@ -59,22 +59,25 @@ wc_list.insert(0, '%s|%s'%(_("All suppported files"), ';'.join(tmp)))
 dialog_wildcard = '|'.join(wc_list)
 transparent = True
 version = "0.40.2"
-languages = ( (_("English"), wx.LANGUAGE_ENGLISH),
-              (_("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
-              (_("Japanese"), wx.LANGUAGE_JAPANESE),
-              (_("Portuguese"), wx.LANGUAGE_PORTUGUESE),
-              (_("Dutch"), wx.LANGUAGE_DUTCH),
-              (_("German"), wx.LANGUAGE_GERMAN),
-              (_("Russian"), wx.LANGUAGE_RUSSIAN),
-              (_("Arabic"), wx.LANGUAGE_ARABIC),
-              (_("Hindi"), wx.LANGUAGE_HINDI),
-              (_("Spanish"), wx.LANGUAGE_SPANISH),
-              (_("French"), wx.LANGUAGE_FRENCH),
-              (_("Welsh"), wx.LANGUAGE_WELSH),
-              (_("Traditional Chinese"), wx.LANGUAGE_CHINESE_TRADITIONAL),
-              (_("Czech"), wx.LANGUAGE_CZECH),
-              (_("Italian"), wx.LANGUAGE_ITALIAN),
-              (_("Galician"), wx.LANGUAGE_GALICIAN) )
+languages = ( (u"English", _("English"), wx.LANGUAGE_ENGLISH),
+              (u"English (United Kingdom)", _("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
+              (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
+              (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
+              (u"Dutch", _("Dutch"), wx.LANGUAGE_DUTCH),
+              (u"German", _("German"), wx.LANGUAGE_GERMAN),
+              (u"Russian", _("Russian"), wx.LANGUAGE_RUSSIAN),
+              (u"Arabic", _("Arabic"), wx.LANGUAGE_ARABIC),
+              (u"Hindi", _("Hindi"), wx.LANGUAGE_HINDI),
+              (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
+              (u"French", _("French"), wx.LANGUAGE_FRENCH),
+              (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
+              (u"Traditional Chinese", _("Traditional Chinese"), wx.LANGUAGE_CHINESE_TRADITIONAL),
+              (u"Czech", _("Czech"), wx.LANGUAGE_CZECH),
+              (u"Italian", _("Italian"), wx.LANGUAGE_ITALIAN),
+              (u"Galician", _("Galician"), wx.LANGUAGE_GALICIAN) )
+
+
+_langs = "'" + "', '".join(str(x[0]) for x in languages) + "'"
 
 config_scheme = """
 bmp_select_transparent = boolean(default=False)
@@ -95,10 +98,7 @@ default_width = integer(min=1, max=12000, default=640)
 default_height = integer(min=1, max=12000, default=480)
 imagemagick_path = string
 handle_size = integer(min=3, max=15, default=6)
-language = option('English', 'English (United Kingdom)', 'Russian', 'Hindi', \
-                  'Portugese', 'Japanese', 'French', 'Traditional Chinese',  \
-                  'Dutch', 'German', 'Welsh', 'Spanish', 'Italian', 'Czech', \
-                  'Galician', default='English')
+language = option(""" + _langs + """)
 last_opened_dir = string
 print_title = boolean(default=True)
 statusbar = boolean(default=True)
@@ -108,7 +108,6 @@ toolbox = option('icon', 'text', default='icon')
 toolbox_columns = option(2, 3, default=2)
 undo_sheets = integer(min=5, max=50, default=10)
 """
-
 
 translators = [
      'A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
@@ -141,6 +140,7 @@ translators = [
      'Miguel Anxo Bouzada https://launchpad.net/~mbouzada/ (Galician)',
      'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
      '"MixCool" https://launchpad.net/~mixcool (German)',
+     '"nafergo" https://launchpad.net/~nafergo (Portuguese)',
      'Nkolay Parukhin https://launchpad.net/~parukhin (Russian)',
      '"Pallas" https://launchpad.net/~v-launchpad-geekin-de (German)',
      '"pmkvodka" https://launchpad.net/~jazon23 (French)',

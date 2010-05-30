@@ -1510,7 +1510,7 @@ class WhyteboardApp(wx.App):
                     break
                 elif config['language'].capitalize() == x[0]:
                     nolog = wx.LogNull()
-                    self.locale = wx.Locale(x[1], wx.LOCALE_LOAD_DEFAULT)
+                    self.locale = wx.Locale(x[2], wx.LOCALE_LOAD_DEFAULT)
 
         if hasattr(self, "locale"):
             if not wx.Locale.IsOk(self.locale):
