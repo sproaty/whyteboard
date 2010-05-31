@@ -108,18 +108,18 @@ class Utility(object):
         self.saved = True
         self.save_time = time.time()
         self.colour = wx.BLACK
-        self.background = "White"
+        self.background = u"White"
         self.transparent = True  # overwrites background
         self.thickness = 1
         self.font = None  # default font for text input
         self.tool = 1  # Current tool ID that is being drawn with
         self.items = tools.items  # shortcut
         self.update_version = True
-        self.saved_version = ""
-        self.backup_ext = ".blah5bl8ah123bla6h"  # backup file extension
+        self.saved_version = u""
+        self.backup_ext = u".blah5bl8ah123bla6h"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
-        self.library = os.path.join(get_home_dir(), "library.known")
+        self.library = os.path.join(get_home_dir(), u"library.known")
         self.config = config
 
         tools.HANDLE_SIZE = self.config['handle_size']
@@ -143,7 +143,7 @@ class Utility(object):
             self.gui.dialog = ProgressDialog(self.gui, _("Saving..."))
             self.gui.dialog.Show()
 
-            _zip = zipfile.ZipFile('whyteboard_temp_new.wtbd', 'w')
+            _zip = zipfile.ZipFile(u'whyteboard_temp_new.wtbd', 'w')
             self.save_bitmap_data(_zip)
 
             temp = {}
@@ -194,10 +194,10 @@ class Utility(object):
                 with open("save.data", 'wb') as f:
                     try:
                         pickle.dump(_file, f)
-                        self.gui.SetTitle("%s - %s" %
+                        self.gui.SetTitle(u"%s - %s" %
                                           (os.path.basename(self.filename), self.gui.title))
                     except pickle.PickleError:
-                        wx.MessageBox(_("Error saving file data"), "Whyteboard")
+                        wx.MessageBox(_("Error saving file data"), u"Whyteboard")
                         self.saved = False
                         self.filename = None
 
@@ -257,15 +257,15 @@ class Utility(object):
 
                     #  the above iteration didn't find any common pastes
                     if not shape.filename:
-                        tmp_name = make_filename() + ".png"
+                        tmp_name = make_filename() + u".png"
                         img.SaveFile(tmp_name, wx.BITMAP_TYPE_PNG)
                         img = wx.Image(tmp_name)
 
-                        name = make_filename() + ".jpg"
+                        name = make_filename() + u".jpg"
                         img.SaveFile(name, wx.BITMAP_TYPE_JPEG)
                         shape.filename = name
                         data[shape.filename] = img_data
-                        _zip.write(name, os.path.join("data", name))
+                        _zip.write(name, os.path.join(u"data", name))
                         to_remove.append(name)
                         to_remove.append(tmp_name)
 
@@ -291,7 +291,7 @@ class Utility(object):
             filename = self.temp_file
 
         _file, _type = os.path.splitext(filename)  # convert to lowercase to
-        _type = _type.replace(".", "").lower()  # save typing filename[1:] :)
+        _type = _type.replace(u".", u"").lower()  # save typing filename[1:] :)
 
         if _type in meta.types[:3]:
             self.convert()
@@ -300,8 +300,8 @@ class Utility(object):
             load_image(self.temp_file, self.gui.canvas, tools.Image)
             self.gui.canvas.redraw_all()
         else:
-            wx.MessageBox(_("Whyteboard doesn't support the filetype") + " .%s" % _type,
-                          "Whyteboard")
+            wx.MessageBox(_("Whyteboard doesn't support the filetype") + u" .%s" % _type,
+                          u"Whyteboard")
 
 
     def load_wtbd(self, filename):
@@ -352,7 +352,7 @@ class Utility(object):
             temp = method(f)
         except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):
             wx.MessageBox(_('"%s" has corrupt data.\nThis file cannot be loaded.') % os.path.basename(filename),
-                            "Whyteboard")
+                            u"Whyteboard")
             return
         except ImportError:  # older windows/linux incompatible type
 
@@ -364,7 +364,7 @@ class Utility(object):
                 temp = method(f)
             except (pickle.UnpicklingError, AttributeError, ImportError, ValueError, TypeError, EOFError):
                 wx.MessageBox(_('"%s" has corrupt data.\nThis file cannot be loaded.') % os.path.basename(filename),
-                              "Whyteboard")
+                              u"Whyteboard")
                 return
             finally:
                 if not pickle_data:
@@ -393,7 +393,7 @@ class Utility(object):
         self.gui.control.change_tool(_id=self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
-        self.gui.SetTitle("%s - %s" % (os.path.basename(filename), self.gui.title))
+        self.gui.SetTitle(u"%s - %s" % (os.path.basename(filename), self.gui.title))
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
@@ -426,13 +426,12 @@ class Utility(object):
         self.gui.on_change_tab()
 
         self.saved_version = temp[0][4]
-
+        self.font = wx.FFont(1, 1)
         try:
-            font = wx.FFont(1, 1)
-            font.SetNativeFontInfoFromString(temp[0][5])
-            self.font = font
+            self.font.SetNativeFontInfoFromString(temp[0][5])
         except IndexError:
             pass
+
 
         #  Don't save .wtbd file of future versions as current, older version
         if version_is_greater(self.saved_version, meta.version):
@@ -443,7 +442,7 @@ class Utility(object):
     def library_create(self):
         if not os.path.exists(self.library):
             with open(self.library, "w") as f:
-                f.write("")
+                f.write(u"")
                 pickle.dump({}, f)
 
 
@@ -498,10 +497,10 @@ class Utility(object):
         if cached:
             self.display_converted(_file, cached)
         else:
-            path = get_home_dir("wtbd-tmp")  # directory to store the images
+            path = get_home_dir(u"wtbd-tmp")  # directory to store the images
             tmp_file = make_filename()
             before = os.walk(path).next()[2]  # file count before convert
-            full_path = path + tmp_file + ".png"
+            full_path = path + tmp_file + u".png"
 
             cmd = convert_quality(quality, self.im_location, _file, full_path)
             self.gui.convert_dialog(cmd)  # show progress bar, kick off convert
@@ -516,17 +515,17 @@ class Utility(object):
             if not count:
                 wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
                 wx.BeginBusyCursor()
-                webbrowser.open_new_tab("http://pages.cs.wisc.edu/~ghost/")
+                webbrowser.open_new_tab(u"http://pages.cs.wisc.edu/~ghost/")
                 wx.CallAfter(wx.EndBusyCursor)
                 return
 
             if count == 1:
-                images.append(path + tmp_file + ".png")
+                images.append(path + tmp_file + u".png")
                 ignore = True
             else:
                 for x in range(count):
                     # store the temp file path for this file in the dictionary
-                    images.append(path + tmp_file + "-%s" % x + ".png")
+                    images.append(u"%s%s-%i.png" % (path, tmp_file, x))
 
             self.display_converted(_file, images, ignore)
             self.library_write(_file, images, quality)
@@ -541,12 +540,11 @@ class Utility(object):
         """
         Display converted items. _file: PDF/PS name. Images: list of files
         """
-        if (not ignore_close and self.gui.tab_count == 1
-            and not self.gui.canvas.shapes):
+        if not ignore_close and self.gui.tab_count == 1 and not self.gui.canvas.shapes:
             self.remove_all_sheets()
 
         for x in range(len(images)):
-            name = "%s - %s" % (os.path.basename(_file)[:15], x + 1)
+            name = u"%s - %s" % (os.path.basename(_file)[:15], x + 1)
             self.gui.on_new_tab(name=name)
             load_image(images[x], self.gui.canvas, tools.Image)
 
@@ -613,14 +611,13 @@ class Utility(object):
         initialisation. Save location to config file.
         """
         if os.name == "posix":
-            value = os.system("which convert")
+            value = os.system(u"which convert")
             if value == 256:
                 wx.MessageBox(_("ImageMagick was not found. You will be unable to load PDF and PS files until it is installed."),
-                              "Whyteboard")
+                              u"Whyteboard")
             else:
-                self.im_location = "convert"
+                self.im_location = u"convert"
         elif os.name == "nt":
-
             if not 'imagemagick_path' in self.config:
                 dlg = FindIM(self, self.gui, self.check_im_path)
                 dlg.ShowModal()
@@ -636,9 +633,9 @@ class Utility(object):
         Checks the ImageMagick path before getting/setting the string to ensure
         convert.exe exists
         """
-        _file = os.path.join(path, "convert.exe")
+        _file = os.path.join(path, u"convert.exe")
         if not os.path.exists(_file):
-            wx.MessageBox(_('Folder "%s" does not contain convert.exe') % path, "Whyteboard")
+            wx.MessageBox(_('Folder "%s" does not contain convert.exe') % path, u"Whyteboard")
             return False
 
         self.im_location = _file
@@ -648,8 +645,8 @@ class Utility(object):
     def get_path(self):
         """Fetch the correct resource"""
         if self.path[0] == "/usr/bin":
-            return "/usr/lib/whyteboard"
-        return self.path[0]
+            return u"/usr/lib/whyteboard"
+        return self.path[0].decode("utf-8")
 
 
     def set_clipboard(self, rect):

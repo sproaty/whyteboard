@@ -69,10 +69,10 @@ pub.subscribe(set_handle_size, 'tools.set_handle_size')
 
 class Tool(object):
     """ Abstract class representing a tool: Drawing canvas/colour/thickness """
-    tooltip = ""
-    name = ""
-    icon = ""
-    hotkey = ""
+    tooltip = u""
+    name = u""
+    icon = u""
+    hotkey = u""
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL, join=wx.JOIN_ROUND):
@@ -180,7 +180,7 @@ class OverlayShape(Tool):
             self.sort_handles()
 
 
-    def draw(self, dc, replay=False, _type="Rectangle"):
+    def draw(self, dc, replay=False, _type=u"Rectangle"):
         """
         Draws a shape polymorphically, using Python's introspection; is called
         by any sub-class that needs to be overlayed.
@@ -196,7 +196,7 @@ class OverlayShape(Tool):
         pen.SetJoin(self.join)
         dc.SetPen(pen)
         dc.SetBrush(self.brush)
-        getattr(dc, "Draw" + _type)(*self.get_args())
+        getattr(dc, u"Draw" + _type)(*self.get_args())
 
 
         if self.selected:
@@ -288,8 +288,8 @@ class Polygon(OverlayShape):
     """
     tooltip = _("Draw a polygon")
     name = _("Polygon")
-    icon = "polygon"
-    hotkey = "y"
+    icon = u"polygon"
+    hotkey = u"y"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_CROSS, join=wx.JOIN_ROUND):
@@ -350,9 +350,9 @@ class Polygon(OverlayShape):
     def start_select_action(self, handle):
         self.points = list(self.points)
         if wx.GetKeyState(wx.WXK_CONTROL):
-            self.operation = "rotate"
+            self.operation = u"rotate"
         elif wx.GetKeyState(wx.WXK_SHIFT):
-            self.operation = "rescale"
+            self.operation = u"rescale"
 
 
     def end_select_action(self, handle):
@@ -415,10 +415,10 @@ class Polygon(OverlayShape):
         if pos < 0:
             pos = 0
 
-        if self.operation == "rotate":
+        if self.operation == u"rotate":
             self.rotate((x, y))
             self.x, self.y = self.points[0]  # for the correct offset when moving
-        elif self.operation == "rescale":
+        elif self.operation == u"rescale":
             self.rescale(x, y)
             self.x, self.y = self.points[0]
         else:
@@ -495,7 +495,7 @@ class Polygon(OverlayShape):
     def properties(self):
         return _("Number of points: %s") % len(self.points)
 
-    def draw(self, dc, replay=False, _type="Polygon"):
+    def draw(self, dc, replay=False, _type=u"Polygon"):
         super(Polygon, self).draw(dc, replay, _type)
 
     def preview(self, dc, width, height):
@@ -516,8 +516,8 @@ class Pen(Polygon):
     """
     tooltip = _("Draw strokes with a brush")
     name = _("Pen")
-    icon = "pen"
-    hotkey = "p"
+    icon = u"pen"
+    hotkey = u"p"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL, join=wx.JOIN_ROUND):
@@ -565,7 +565,7 @@ class Pen(Polygon):
     def hit_test(self, x, y):
         pass
 
-    def draw(self, dc, replay=True, _type="LineList"):
+    def draw(self, dc, replay=True, _type=u"LineList"):
         super(Pen, self).draw(dc, replay, _type)
 
     def get_args(self):
@@ -591,8 +591,8 @@ class Pen(Polygon):
 class Highlighter(Pen):
     tooltip = _("Highlight with a transparent pen")
     name = _("Highlighter")
-    icon = "highlighter"
-    hotkey = "h"
+    icon = u"highlighter"
+    hotkey = u"h"
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_PENCIL, join=wx.JOIN_ROUND):
         Pen.__init__(self, canvas, colour, thickness + 6)
@@ -615,7 +615,7 @@ class Highlighter(Pen):
         self.y_tmp = y
 
 
-    def draw(self, dc, replay=False, _type="LineList"):
+    def draw(self, dc, replay=False, _type=u"LineList"):
         if not dc:
             dc = self.canvas.get_dc()
 
@@ -656,8 +656,8 @@ class Rectangle(OverlayShape):
     """
     tooltip = _("Draw a rectangle")
     name = _("Rectangle")
-    icon = "rectangle"
-    hotkey = "r"
+    icon = u"rectangle"
+    hotkey = u"r"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, canvas, colour, thickness, background,
@@ -783,7 +783,7 @@ class Rectangle(OverlayShape):
 
     def properties(self):
         x, y, w, h = self.get_args()[:4]
-        return "X: %i, Y: %i, %s %i, %s %i" % (x, y, _("Width:"), w, _("Height:"), h)
+        return u"X: %i, Y: %i, %s %i, %s %i" % (x, y, _("Width:"), w, _("Height:"), h)
 
     def load(self):
         super(Rectangle, self).load()
@@ -801,10 +801,10 @@ class Ellipse(Rectangle):
     """
     tooltip = _("Draw an oval shape")
     name = _("Ellipse")
-    icon = "ellipse"
-    hotkey = "o"
+    icon = u"ellipse"
+    hotkey = u"o"
     def draw(self, dc, replay=False):
-        super(Ellipse, self).draw(dc, replay, "Ellipse")
+        super(Ellipse, self).draw(dc, replay, u"Ellipse")
 
     def preview(self, dc, width, height):
         dc.DrawEllipse(5, 5, width - 12, height - 12)
@@ -833,8 +833,8 @@ class Circle(OverlayShape):
     """
     tooltip = _("Draw a circle")
     name = _("Circle")
-    icon = "circle"
-    hotkey = "c"
+    icon = u"circle"
+    hotkey = u"c"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, canvas, colour, thickness, background)
@@ -849,7 +849,7 @@ class Circle(OverlayShape):
                       EDGE_BOTTOM: y + r, EDGE_LEFT: x - r}
 
     def draw(self, dc, replay=False):
-        super(Circle, self).draw(dc, replay, "Circle")
+        super(Circle, self).draw(dc, replay, u"Circle")
 
     def preview(self, dc, width, height):
         dc.DrawCircle(width/2, height/2, 15)
@@ -864,7 +864,7 @@ class Circle(OverlayShape):
 
     def properties(self):
         r = _("Radius")
-        return "X: %i, Y: %i, %s: %i" % (self.x, self.y, r, self.radius)
+        return u"X: %i, Y: %i, %s: %i" % (self.x, self.y, r, self.radius)
 
     def hit_test(self, x, y):
         val = ((x - self.x) * (x - self.x)) + ((y - self.y) * (y - self.y))
@@ -881,11 +881,11 @@ class RoundedRect(Rectangle):
     """
     tooltip = _("Draw a rectangle with rounded edges")
     name = _("Rounded Rect")
-    icon = "rounded-rect"
-    hotkey = "u"
+    icon = u"rounded-rect"
+    hotkey = u"u"
 
     def draw(self, dc, replay=False):
-        super(RoundedRect, self).draw(dc, replay, "RoundedRectangle")
+        super(RoundedRect, self).draw(dc, replay, u"RoundedRectangle")
 
     def preview(self, dc, width, height):
         dc.DrawRoundedRectangle(5, 5, width - 10, height - 7, 8)
@@ -904,8 +904,8 @@ class Line(OverlayShape):
     """
     tooltip = _("Draw a straight line")
     name = _("Line")
-    icon = "line"
-    hotkey = "l"
+    icon = u"line"
+    hotkey = u"l"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, canvas, colour, thickness, background)
@@ -937,13 +937,13 @@ class Line(OverlayShape):
 
 
     def draw(self, dc, replay=False):
-        super(Line, self).draw(dc, replay, "Line")
+        super(Line, self).draw(dc, replay, u"Line")
 
     def get_args(self):
         return [self.x, self.y, self.x2, self.y2]
 
     def properties(self):
-        return "X: %i, Y: %i, X2: %i, Y2: %i" % (self.x, self.y, self.x2, self.y2)
+        return u"X: %i, Y: %i, X2: %i, Y2: %i" % (self.x, self.y, self.x2, self.y2)
 
     def move(self, x, y, offset):
         self.x = x - offset[0][0]
@@ -998,8 +998,8 @@ class Line(OverlayShape):
 class Arrow(Line):
     tooltip = _("Draw an arrow")
     name = _("Arrow")
-    hotkey = "a"
-    icon = "arrow"
+    hotkey = u"a"
+    icon = u"arrow"
 
     def draw(self, dc, replay=False):
         """
@@ -1039,8 +1039,8 @@ class Arrow(Line):
 class Media(Tool):
     tooltip = _("Insert media and audio")
     name = _("Media")
-    hotkey = "m"
-    icon = "media"
+    hotkey = u"m"
+    icon = u"media"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT,
                  cursor=wx.CURSOR_ARROW):
@@ -1062,7 +1062,7 @@ class Media(Tool):
                 self.mc.do_load_file(self.filename)
 
     def properties(self):
-        return _("Loaded file")+ ": " + str(self.filename)
+        return _("Loaded file") + u": %s" % self.filename
 
 
     def save(self):
@@ -1088,8 +1088,8 @@ class Eraser(Pen):
     """
     tooltip = _("Erase a drawing to the background")
     name = _("Eraser")
-    icon = "eraser"
-    hotkey = "e"
+    icon = u"eraser"
+    hotkey = u"e"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         cursor = self.make_cursor(thickness)
@@ -1137,8 +1137,8 @@ class Eyedrop(Tool):
     """
     tooltip = _("Picks a color from the selected pixel")
     name = _("Eyedropper")
-    icon = "eyedrop"
-    hotkey = "d"
+    icon = u"eyedrop"
+    hotkey = u"d"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         Tool.__init__(self, canvas, colour, thickness, background, wx.CURSOR_CROSS)
@@ -1175,14 +1175,14 @@ class Text(OverlayShape):
     """
     tooltip = _("Input text")
     name = _("Text")
-    icon = "text"
-    hotkey = "t"
+    icon = u"text"
+    hotkey = u"t"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         OverlayShape.__init__(self, canvas, colour, thickness, background,
                               wx.CURSOR_IBEAM)
         self.font = None
-        self.text = ""
+        self.text = u""
         self.font_data = ""
         self.extent = (0, 0)
 
@@ -1260,7 +1260,7 @@ class Text(OverlayShape):
         dc.SetTextForeground(self.colour)
         if self.background != wx.TRANSPARENT:
             dc.SetBackground(wx.Brush(self.background))
-        super(Text, self).draw(dc, replay, "Label")
+        super(Text, self).draw(dc, replay, u"Label")
 
 
     def restore_font(self):
@@ -1307,7 +1307,7 @@ class Text(OverlayShape):
 
     def preview(self, dc, width, height):
         dc.SetTextForeground(self.colour)
-        dc.DrawText("abcdef", 15, height / 2 - 10)
+        dc.DrawText(u"abcdef", 15, height / 2 - 10)
 
 
     def save(self):
@@ -1333,8 +1333,8 @@ class Note(Text):
     """
     tooltip = _("Insert a note")
     name = _("Note")
-    icon = "note"
-    hotkey = "n"
+    icon = u"note"
+    hotkey = u"n"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         Text.__init__(self, canvas, colour, thickness, background)
@@ -1551,7 +1551,7 @@ class Image(OverlayShape):
 
 
     def draw(self, dc, replay=False):
-        super(Image, self).draw(dc, replay, "Bitmap")
+        super(Image, self).draw(dc, replay, u"Bitmap")
         if self.dragging:
             self.outline.draw(dc, replay)
 
@@ -1564,7 +1564,7 @@ class Image(OverlayShape):
         a, b = "", ""
         if self.filename:
             a, b = _("Filename:"), self.filename
-        return "X: %i, Y: %i %s %i %s %i %s %s" % (self.x, self.y, _("Width:"),
+        return u"X: %i, Y: %i %s %i %s %i %s %s" % (self.x, self.y, _("Width:"),
                                             self.image.GetWidth(), _("Height:"),
                                             self.image.GetHeight(), a, b)
 
@@ -1601,7 +1601,7 @@ class Image(OverlayShape):
             else:
                 self.image = wx.EmptyBitmap(1, 1)
                 wx.MessageBox(_("Path for the image %s not found.") % self.path,
-                              "Whyteboard")
+                              u"Whyteboard")
         else:
             try:
                 data = self.canvas.gui.util.zip.read("data/" + self.filename)
@@ -1611,7 +1611,7 @@ class Image(OverlayShape):
             except KeyError:
                 self.image = wx.EmptyBitmap(1, 1)
                 wx.MessageBox(_("File %s not found in the save") % self.filename,
-                              "Whyteboard")
+                              u"Whyteboard")
 
         self.img = wx.ImageFromBitmap(self.image)
         self.colour = wx.BLACK
@@ -1635,8 +1635,8 @@ class Select(Tool):
     """
     tooltip = _("Select a shape to move and resize it")
     name = _("Shape Select ")
-    icon = "select"
-    hotkey = "s"
+    icon = u"select"
+    hotkey = u"s"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         Tool.__init__(self, canvas, (0, 0, 0), 1, background, cursor=wx.CURSOR_ARROW)
@@ -1756,8 +1756,9 @@ class Select(Tool):
 
 
     def preview(self, dc, width, height):
-        dc.DrawBitmap(wx.Bitmap(os.path.join(self.canvas.gui.util.get_path(), "images",
-                                   "icons", "cursor.png")), width / 2 - 5, 12)
+        bmp = wx.Bitmap(os.path.join(self.canvas.gui.util.get_path(), u"images",
+                                   u"icons", u"cursor.png"))
+        dc.DrawBitmap(bmp, width / 2 - 5, 12)
 
 
 #----------------------------------------------------------------------
@@ -1770,8 +1771,8 @@ class BitmapSelect(Rectangle):
     """
     tooltip = _("Select a rectangle region to copy as a bitmap")
     name = _("Bitmap Select")
-    icon = "select-rectangular"
-    hotkey = "b"
+    icon = u"select-rectangular"
+    hotkey = u"b"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         Rectangle.__init__(self, canvas, (0, 0, 0), 1)
@@ -1828,8 +1829,8 @@ class Zoom(Tool):
     """
     tooltip = _("Zoom in and out of the canvas")
     name = _("Zoom")
-    icon = "zoom"
-    hotkey = "z"
+    icon = u"zoom"
+    hotkey = u"z"
 
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         Tool.__init__(self, canvas, (0, 0, 0), 1, background, wx.CURSOR_MAGNIFIER)
@@ -1856,8 +1857,8 @@ class Flood(Tool):
     """
     tooltip = _("Flood fill an area")
     name = _("Flood Fill")
-    icon = "flood"
-    hotkey = "f"
+    icon = u"flood"
+    hotkey = u"f"
 
     def __init__(self, canvas, colour, thickness):
         Tool.__init__(self, canvas, colour, 1)

@@ -14,8 +14,9 @@ To run Whyteboard from source, here are the requirements:
 
 http://www.python.org/download/releases/2.6.5/
 
-* wxPython - latest version is -always- recommended (currently 2.8.10.1).
-    ---- WXPYTHON 2.8.9.0 NEEDED AT MINIMUM
+* wxPython - the latest version is -always- recommended (currently 2.8.11.0).
+  You will want the unicode build.
+  wxPython 2.8.9.0 needed at minimum
 
 http://www.wxpython.org/download.php
 

@@ -113,8 +113,8 @@ class Canvas(wx.ScrolledWindow):
         self.drawing = False
         self.prev_drag = (0, 0)
 
-        img = wx.Image(os.path.join(self.gui.util.get_path(), "images",
-                                    "cursors", "") + "rotate.png")
+        img = wx.Image(u"%srotate.png" % os.path.join(self.gui.util.get_path(),
+                                                      u"images", u"cursors", u""))
         self.rotate_cursor = wx.CursorFromImage(img)
         self.change_current_tool()
         self.redraw_all()
@@ -166,7 +166,7 @@ class Canvas(wx.ScrolledWindow):
                 return
 
         if self.gui.bar_shown:
-            self.gui.SetStatusText(" %s, %s" % (x, y))
+            self.gui.SetStatusText(u" %s, %s" % (x, y))
 
         if self.drawing or self.shape.drawing:
             self.shape.motion(x, y)
@@ -589,13 +589,13 @@ class Canvas(wx.ScrolledWindow):
             return False
         if not self.selected in self.shapes:
             return False
-        if pos in ["top", "up"]:
+        if pos in [u"top", u"up"]:
             length = len(self.shapes) - 1
             if length < 0:
                 length = 0
             if self.shapes.index(self.selected) != length:
                 return True
-        elif pos in ["down", "bottom"]:
+        elif pos in [u"down", u"bottom"]:
             if self.shapes.index(self.selected) != 0:
                 return True
         return False
@@ -788,7 +788,7 @@ class CanvasDropTarget(wx.PyDropTarget):
                     if x or self.gui.canvas.shapes:
                         self.gui.on_new_tab()
 
-                    if name.lower().endswith(".wtbd"):
+                    if name.lower().endswith(u".wtbd"):
                         self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
                     else:
                         self.gui.do_open(name)

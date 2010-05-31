@@ -8,16 +8,16 @@ Mon 17 May 2010
 
 xx May 2010 -- 0.40.2
 
-- Improved program updating
+- Improved program updating, removed a dependency on an external library
 - Removed code that was handling loading older .wtbd save files from around a
   year back as it's no longer needed
 
 - Fix bug on Mac where wrong version of wxPython was being used
 - Fix bug where program was writing the Language preference as the translated
-  language; the program was expecting the language to be in English
-- Fix tab ordering in "sure you want to exit" and text input dialogs
+  language; the program was expecting the language in English
+- Fix tab ordering on many dialogs
 - Fix cancelling the Save As dialog in save changes prompt closing the dialog
-- Fix eraser being a black square
+- Fix the eraser tool appearing as a black square
 
 ----------------------------------------------------------------------
 

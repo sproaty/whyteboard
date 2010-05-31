@@ -71,7 +71,6 @@ class ControlPanel(wx.Panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
         thickness = wx.StaticText(self.pane, label=_("Thickness:"))
-        #prev = wx.StaticText(self.pane, label=_("Preview:"))
 
         colour = self.colour_buttons()
         self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
@@ -79,7 +78,7 @@ class ControlPanel(wx.Panel):
         self.make_colour_grid()
         self.make_toolbox(gui.util.config['toolbox'])
 
-        choices = ''.join(str(i) + " " for i in range(1, 35) ).split()
+        choices = u''.join(u"%s " % i for i in range(1, 35) ).split()
         self.thickness = wx.ComboBox(self.pane, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
         self.thickness.SetSelection(0)
@@ -132,8 +131,7 @@ class ControlPanel(wx.Panel):
         self.background.SetValue("White")
         self.transparent = wx.CheckBox(panel, label=_("Transparent"), pos=(0, 69))
         self.transparent.SetValue(True)
-        icon = os.path.join(self.gui.util.get_path(), "images",
-                            "icons", "swap_colours.png")
+        icon = os.path.join(self.gui.util.get_path(), u"images", u"icons", u"swap_colours.png")
 
         swap = wx.BitmapButton(panel, bitmap=wx.Bitmap(icon), pos=(70, 0),
                                      style=wx.NO_BORDER)
@@ -156,19 +154,18 @@ class ControlPanel(wx.Panel):
         return panel
 
 
-    def make_toolbox(self, _type="text"):
+    def make_toolbox(self, _type=u"text"):
         """Creates a toolbox made from toggleable text or icon buttons"""
         items = [_(i.name) for i in self.gui.util.items]
         self.toolsizer.SetCols(1)
 
-        if _type == "icon":
+        if _type == u"icon":
             items = [_(i.icon) for i in self.gui.util.items]
             self.toolsizer.SetCols(int(self.gui.util.config['toolbox_columns']))
 
         for x, val in enumerate(items):
-            if _type == "icon":
-                path = os.path.join(self.gui.util.get_path(), "images", "tools",
-                                    val.decode("utf-8") + ".png")
+            if _type == u"icon":
+                path = os.path.join(self.gui.util.get_path(), u"images", u"tools", u"%s.png" % val)
                 b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
                                           style=wx.NO_BORDER)
                 evt = wx.EVT_BUTTON
@@ -176,7 +173,7 @@ class ControlPanel(wx.Panel):
                 b = wx.ToggleButton(self.pane, x + 1, val)
                 evt = wx.EVT_TOGGLEBUTTON
 
-            b.SetToolTipString("%s\n%s %s" % (_(self.gui.util.items[x].tooltip),
+            b.SetToolTipString(u"%s\n%s %s" % (_(self.gui.util.items[x].tooltip),
                                             _("Shortcut Key:"),
                                             self.gui.util.items[x].hotkey.upper()))
 
@@ -273,7 +270,7 @@ class ControlPanel(wx.Panel):
         if event and not colour:
             colour = event.GetValue()  # from the colour button
         self.colour.SetColour(colour)
-        self.update(colour, "colour")
+        self.update(colour, u"colour")
 
 
     def change_background(self, event=None, colour=None):
@@ -281,11 +278,11 @@ class ControlPanel(wx.Panel):
         if event and not colour:
             colour = event.GetValue()  # from the colour button
         self.background.SetColour(colour)
-        self.update(colour, "background")
+        self.update(colour, u"background")
 
 
     def change_thickness(self, event=None):
-        self.update(self.thickness.GetSelection(), "thickness")
+        self.update(self.thickness.GetSelection(), u"thickness")
 
 
     def update(self, value, var_name):
@@ -294,9 +291,9 @@ class ControlPanel(wx.Panel):
 
         if self.gui.canvas.selected:
             self.gui.canvas.add_undo()
-            if var_name == "background" and not self.transparent.IsChecked():
+            if var_name == u"background" and not self.transparent.IsChecked():
                 setattr(self.gui.canvas.selected, var_name, value)
-            elif var_name != "background":
+            elif var_name != u"background":
                 setattr(self.gui.canvas.selected, var_name, value)
             self.gui.canvas.redraw_all(True)
 
@@ -368,11 +365,11 @@ class MediaPanel(wx.Panel):
         self.file_drop = MediaDropTarget(self)
         self.SetDropTarget(self.file_drop)
 
-        path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
+        path = os.path.join(self.gui.util.get_path(), u"images", u"icons", u"")
         self.open = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR))
-        self.play = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "play.png"))
-        self.pause = wx.BitmapButton(self, bitmap=wx.Bitmap(path +  "pause.png"))
-        self.stop = wx.BitmapButton(self, bitmap=wx.Bitmap(path + "stop.png"))
+        self.play = wx.BitmapButton(self, bitmap=wx.Bitmap(path + u"play.png"))
+        self.pause = wx.BitmapButton(self, bitmap=wx.Bitmap(path +  u"pause.png"))
+        self.stop = wx.BitmapButton(self, bitmap=wx.Bitmap(path + u"stop.png"))
         self.play.Disable()
         self.pause.Disable()
         self.stop.Disable()
@@ -448,13 +445,13 @@ class MediaPanel(wx.Panel):
         """
         Display a file chooser window and try to load the file
         """
-        vids = "*.avi; *.mkv; *.mov; *.mpg; *ogg; *.wmv"
-        audio = "*.mp3; *.oga; *.ogg; *.wav"
-        wildcard = _("Media Files")+" |%s;%s|" % (vids, audio)
-        wildcard += _("Video Files")+" (%s)|%s|" % (vids, vids)
-        wildcard += _("Audio Files")+" (%s)|%s" % (audio, audio)
+        vids = u"*.avi; *.mkv; *.mov; *.mpg; *ogg; *.wmv"
+        audio = u"*.mp3; *.oga; *.ogg; *.wav"
+        wildcard = _("Media Files") + u" |%s;%s|" % (vids, audio)
+        wildcard += _("Video Files") + u" (%s)|%s|" % (vids, vids)
+        wildcard += _("Audio Files") + u" (%s)|%s" % (audio, audio)
 
-        _dir = ""
+        _dir = u""
         if self.directory:
             _dir = self.directory
 
@@ -470,7 +467,7 @@ class MediaPanel(wx.Panel):
         """
         if not self.mc.Load(path):
             wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
-                         "Whyteboard", wx.ICON_ERROR | wx.OK)
+                         u"Whyteboard", wx.ICON_ERROR | wx.OK)
             self.play.Disable()
             self.pause.Disable()
             self.stop.Disable()
@@ -490,7 +487,7 @@ class MediaPanel(wx.Panel):
         self.total = get_time(self.mc.Length() / 1000)
         wordwrap(os.path.basename(self.tool.filename), 350, wx.ClientDC(self.gui))
         self.file.SetLabel(os.path.basename(self.tool.filename))
-        self.elapsed.SetLabel("00:00/" + self.total)
+        self.elapsed.SetLabel(u"00:00/" + self.total)
         self.mc.SetInitialSize()
         self.slider.SetRange(0, self.mc.Length())
         self.GetSizer().Layout()
@@ -511,7 +508,7 @@ class MediaPanel(wx.Panel):
     def on_play(self, evt):
         if not self.mc.Play():
             wx.MessageBox(_("Unable to play file %s") % self.tool.filename,
-                          "Whyteboard", wx.ICON_ERROR | wx.OK)
+                          u"Whyteboard", wx.ICON_ERROR | wx.OK)
         else:
             self.play.Disable()
             self.pause.Enable()
@@ -527,15 +524,14 @@ class MediaPanel(wx.Panel):
         if not ignore:
             self.mc.Stop()
         self.slider.SetValue(0)
-        self.elapsed.SetLabel("00:00/" + self.total)
+        self.elapsed.SetLabel(u"00:00/" + self.total)
         self.play.Enable()
         self.pause.Disable()
         self.stop.Disable()
 
     def on_seek(self, evt):
         self.mc.Seek(self.slider.GetValue())
-        self.elapsed.SetLabel(get_time(self.slider.GetValue() / 1000) + "/" +
-                              self.total )
+        self.elapsed.SetLabel(u"%s/%s" % (get_time(self.slider.GetValue() / 1000), self.total))
 
     def on_volume(self, evt):
         self.mc.SetVolume(float(self.volume.GetValue() / 100))
@@ -623,7 +619,7 @@ class Notes(wx.Panel):
         if not _id:
             _id = 0
         if not name:
-            name = _("Sheet")+" %s" % (_id + 1)
+            name = _("Sheet") + u" %s" % (_id + 1)
 
         data = wx.TreeItemData(_id)
         t = self.tree.AppendItem(self.root, name, data=data)
@@ -636,7 +632,7 @@ class Notes(wx.Panel):
         element's text in the tree - newlines are replaced to stop the tree's
         formatting becoming too wide.
         """
-        text = note.text.replace("\n", " ")[:15]
+        text = note.text.replace(u"\n", u" ")[:15]
         _id = self.tabs[self.gui.tabs.GetSelection()]
 
         data = wx.TreeItemData(note)
@@ -713,7 +709,7 @@ class Notes(wx.Panel):
 
     def edit_note(self, tree_id, text):
         """Edit a non-blank Note by changing its tree item's text"""
-        text = text.replace("\n", " ")[:15]
+        text = text.replace(u"\n", u" ")[:15]
         self.tree.SetItemText(tree_id, text)
 
 
@@ -793,11 +789,11 @@ class Popup(wx.Menu):
 
         self.Append(ID, _("&Select"))
         self.AppendSeparator()
-        self.Append(wx.ID_NEW, _("&New Sheet")+"\tCtrl-T")
-        self.Append(wx.ID_CLOSE, _("Re&move Sheet")+"\tCtrl-W")
+        self.Append(wx.ID_NEW, _("&New Sheet") + u"\tCtrl-T")
+        self.Append(wx.ID_CLOSE, _("Re&move Sheet") + u"\tCtrl-W")
         self.AppendSeparator()
-        self.Append(ID2, _("&Rename...")+"\tF2")
-        self.Append(ID3, _("&Export...")+"\tCtrl+E")
+        self.Append(ID2, _("&Rename...") + u"\tF2")
+        self.Append(ID3, _("&Export...") + u"\tCtrl+E")
 
         self.Bind(wx.EVT_MENU, self.select_tab_method(extra), id=ID)
         self.Bind(wx.EVT_MENU, self.rename, id=ID2)
@@ -853,7 +849,7 @@ class NotesPopup(Popup):
             self.Append(ID, text)
             self.Append(ID2, _("&Edit Note..."))
             self.AppendSeparator()
-            self.Append(ID3, _("&Delete")+"\tDelete")
+            self.Append(ID3, _("&Delete") + u"\tDelete")
 
             self.Bind(wx.EVT_MENU, lambda x: self.parent.select(extra), id=ID)
             self.Bind(wx.EVT_MENU, self.select_tab_method(extra), id=ID2)
@@ -891,7 +887,7 @@ class ShapePopup(Popup):
     def make_menu(self, extra):
         SELECT, EDIT, DELETE, POINT, SWAP = wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId()
 
-        self.SetTitle(self.item.name)
+        self.SetTitle(_(self.item.name))
         text, _help = _("&Select"), _("Selects this shape")
         if self.item.selected:
             text, _help =  _("De&select"), _("Deselects this shape")
@@ -904,17 +900,17 @@ class ShapePopup(Popup):
         self.AppendCheckItem(ID_TRANSPARENT, _("T&ransparent"))
         self.Append(ID_SWAP_COLOURS, _("Swap &Colors"))
         self.AppendSeparator()
-        self.Append(ID_MOVE_UP, _("Move &Up")+"\tCtrl-Up")
-        self.Append(ID_MOVE_DOWN, _("Move &Down")+"\tCtrl-Down")
-        self.Append(ID_MOVE_TO_TOP, _("Move To &Top")+"\tCtrl-Shift-Up")
-        self.Append(ID_MOVE_TO_BOTTOM, _("Move To &Bottom")+"\tCtrl-Shift-Down")
+        self.Append(ID_MOVE_UP, _("Move &Up") + u"\tCtrl-Up")
+        self.Append(ID_MOVE_DOWN, _("Move &Down") + u"\tCtrl-Down")
+        self.Append(ID_MOVE_TO_TOP, _("Move To &Top") + u"\tCtrl-Shift-Up")
+        self.Append(ID_MOVE_TO_BOTTOM, _("Move To &Bottom") + u"\tCtrl-Shift-Down")
 
-        if not self.item.name in ["Text", "Note"]:
+        if not self.item.name in [u"Text", u"Note"]:
             self.Enable(EDIT, False)
-        if not self.item.name == "Polygon":
+        if not self.item.name == u"Polygon":
             self.Enable(POINT, False)
 
-        if not self.item.name in ["Image", "Text", "Note"]:
+        if not self.item.name in [u"Image", u"Text", u"Note"]:
             if self.item.background == wx.TRANSPARENT:
                 self.Check(ID_TRANSPARENT, True)
                 self.Enable(ID_SWAP_COLOURS, False)
@@ -1032,7 +1028,7 @@ class Thumbs(scrolled.ScrolledPanel):
 
         btn = ThumbButton(self, _id, bmp, name)
         if not name:
-            name = _("Sheet")+" %s" % (_id + 1)
+            name = _("Sheet") + u" %s" % (_id + 1)
 
         text = wx.StaticText(self, label=name)
         self.text.insert(_id, text)

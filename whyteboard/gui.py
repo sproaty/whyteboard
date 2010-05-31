@@ -1488,7 +1488,7 @@ class WhyteboardApp(wx.App):
         if options.conf:
             path = options.conf
 
-        config = ConfigObj(path, configspec=meta.config_scheme.split("\n"))
+        config = ConfigObj(path, configspec=meta.config_scheme.split("\n"), encoding=u"utf-8")
         config.validate(Validator())
 
         set_lang = False

@@ -69,11 +69,11 @@ class History(wx.Dialog):
         #                        style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
         #self.slider.SetTickFreq(5, 1)
 
-        path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
+        path = os.path.join(self.gui.util.get_path(), u"images", u"icons", u"")
 
-        self.playButton = bitmap_button(self, path + "play.png", True, toggle=True)
-        self.pauseButton = bitmap_button(self, path + "pause.png", True, toggle=True)
-        self.stopButton = bitmap_button(self, path + "stop.png", True, toggle=True)
+        self.playButton = bitmap_button(self, path + u"play.png", True, toggle=True)
+        self.pauseButton = bitmap_button(self, path + u"pause.png", True, toggle=True)
+        self.stopButton = bitmap_button(self, path + u"stop.png", True, toggle=True)
         closeButton = wx.Button(self, wx.ID_CANCEL, _("&Close"))
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -327,7 +327,7 @@ class UpdateDialog(wx.Dialog):
         except IOError:
             self.text.SetLabel(_("Could not connect to server."))
             return
-        html = f.read().split("\n")
+        html = f.read().split(u"\n")
         f.close()
         self.new_version = html[0]
 
@@ -336,17 +336,17 @@ class UpdateDialog(wx.Dialog):
             return
 
         self._file, size = html[3], html[4]
-        self._type = ".tar.gz"
+        self._type = u".tar.gz"
 
         if os.name == "nt" and is_exe():
             self._file, size = html[1], html[2]
-            self._type = ".zip"
+            self._type = u".zip"
 
         s = (_("There is a new version available, %(version)s\nFile: %(filename)s\nSize: %(filesize)s")
              % {'version': html[0], 'filename': self._file, 'filesize': format_bytes(size)} )
         self.text.SetLabel(s)
         self.btn.Enable(True)
-        self._file = "http://whyteboard.googlecode.com/files/" + self._file
+        self._file = u"http://whyteboard.googlecode.com/files/%s" % self._file
 
 
 
@@ -361,7 +361,7 @@ class UpdateDialog(wx.Dialog):
         path = self.gui.util.path
         args = []  # args to reload running program, may include filename
         tmp = None
-        tmp_file = os.path.join(path[0], 'tmp-wb-' + self._type)
+        tmp_file = os.path.join(path[0], u'tmp-wb-' + self._type)
 
         try:
             tmp = urlretrieve(self._file, tmp_file, self.reporter)
@@ -372,7 +372,7 @@ class UpdateDialog(wx.Dialog):
 
         if os.name == "nt" and is_exe():
             # rename current exe, extract zip which contains whyteboard.exe
-            os.rename(path[1], "wtbd-bckup.exe")
+            os.rename(path[1], u"wtbd-bckup.exe")
             _zip = zipfile.ZipFile(tmp_file)
             _zip.extractall()
             _zip.close()
@@ -381,16 +381,16 @@ class UpdateDialog(wx.Dialog):
             args = [wb, [wb]]
         else:
             if os.name == "posix":
-                os.system("tar -xf %s --strip-components=1" % tmp[0])
+                os.system(u"tar -xf %s --strip-components=1" % tmp[0])
             else:
                 extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]),
                             self.new_version, self.gui.util.backup_ext)
             os.remove(tmp[0])
-            args = ['python', ['python', sys.argv[0]]]  # for os.execvp
+            args = [u'python', [u'python', sys.argv[0]]]  # for os.execvp
 
         if self.gui.util.filename:
-            name = '"%s"' % self.gui.util.filename  # gotta escape for Windows
-            args[1].append("-f")
+            name = u'"%s"' % self.gui.util.filename  # gotta escape for Windows
+            args[1].append(u"-f")
             args[1].append(name)  # restart, load .wtbd
         self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)
 
@@ -398,8 +398,8 @@ class UpdateDialog(wx.Dialog):
     def reporter(self, count, block, total):
         self.downloaded += block
 
-        wx.CallAfter(self.text2.SetLabel, _("Downloaded %s of %s")
-                            % (format_bytes(self.downloaded), format_bytes(total)))
+        self.text2.SetLabel(_("Downloaded %s of %s") %
+                            (format_bytes(self.downloaded), format_bytes(total)))
 
 
 #----------------------------------------------------------------------
@@ -410,7 +410,7 @@ class TextInput(wx.Dialog):
     Shows a text input screen, updates the canvas' text as text is being input
     and has methods for
     """
-    def __init__(self, gui, note=None, text=""):
+    def __init__(self, gui, note=None, text=u""):
         """
         Standard constructor - sets text to supplied text variable, if present.
         """
@@ -424,7 +424,7 @@ class TextInput(wx.Dialog):
         self.okButton.SetDefault()
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
 
-        extent = self.ctrl.GetFullTextExtent("Hy")
+        extent = self.ctrl.GetFullTextExtent(u"Hy")
         lineHeight = extent[1] + extent[3]
         self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
 
@@ -456,10 +456,10 @@ class TextInput(wx.Dialog):
         btnSizer.Realize()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 7)
-        sizer.Add(_sizer, 0, gap | wx.ALIGN_RIGHT, 5)
+        sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 10)
+        sizer.Add(_sizer, 0, wx.ALIGN_RIGHT | wx.RIGHT | wx.LEFT | wx.TOP, 10)
         sizer.Add((10, 10))  # Spacer.
-        sizer.Add(btnSizer, 0, wx.BOTTOM | wx.ALIGN_CENTRE, 6)
+        sizer.Add(btnSizer, 0, wx.BOTTOM | wx.ALIGN_CENTRE, 10)
         self.SetSizer(sizer)
         fix_std_sizer_tab_order(btnSizer)
 
@@ -549,7 +549,7 @@ class FindIM(wx.Dialog):
         wx.Dialog.__init__(self, gui, title=_("ImageMagick Notification"))
         self.gui = gui
         self.method = method
-        self.path = "C:/Program Files/"
+        self.path = u"C:/Program Files/"
 
         t = (_("Whyteboard uses ImageMagick to load PDF, SVG and PS files. \nPlease select its installed location."))
         text = wx.StaticText(self, label=t)
@@ -639,15 +639,15 @@ class Feedback(wx.Dialog):
     def submit(self, event):
         """Submit feedback."""
         if not self.email.GetValue() or self.email.GetValue().find("@") == -1:
-            wx.MessageBox(_("Please fill out your email address"), "Whyteboard")
+            wx.MessageBox(_("Please fill out your email address"), u"Whyteboard")
             return
         if len(self.feedback.GetValue()) < 10:
-            wx.MessageBox(_("Please provide some feedback"), "Whyteboard")
+            wx.MessageBox(_("Please provide some feedback"), u"Whyteboard")
             return
         params = urlencode({'submitted': 'fgdg',
                             'feedback': self.feedback.GetValue(),
                             'email': self.email.GetValue()})
-        f = urlopen("http://www.whyteboard.org/feedback_submit.php", params)
+        f = urlopen(u"http://www.whyteboard.org/feedback_submit.php", params)
         wx.MessageBox(_("Your feedback has been sent, thank you."), _("Feedback Sent"))
         self.Destroy()
 
@@ -729,19 +729,19 @@ class PromptForSave(wx.Dialog):
 
         # ugly....
         if m > 0 and h < 1:
-            mins = ("%i " % m) + _("minutes")
+            mins = (u"%i " % m) + _("minutes")
         if m == 1 and h < 1:
             mins = _("minute")
         if h > 0:
-            hours = ("%i " % h) + _("hours")
+            hours = (u"%i " % h) + _("hours")
         if h == 1:
             hours = _("hour")
         if s == 1 and m < 1:
             seconds = _("second")
         elif s > 1 and m < 1:
-            seconds = ("%i " % s) + _("seconds")
+            seconds = (u"%i " % s) + _("seconds")
 
-        ms = "%s%s%s" % (hours, mins, seconds)
+        ms = u"%s%s%s" % (hours, mins, seconds)
 
         return _("If you don't save, changes from the last\n%s will be permanently lost.") % ms
 
@@ -820,6 +820,7 @@ class Resize(wx.Dialog):
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
         self.hctrl.Bind(wx.EVT_SPINCTRL, self.resize)
         self.wctrl.Bind(wx.EVT_SPINCTRL, self.resize)
+        fix_std_sizer_tab_order(sizer)
 
 
     def apply(self, event):
@@ -891,7 +892,7 @@ class MyPrintout(wx.Printout):
 
         dc.SetUserScale(actualScale, actualScale)
         dc.SetDeviceOrigin(int(posX), int(posY))
-        dc.DrawText(_("Page:")+" %d" % page, marginX / 2, maxY - marginY + 100)
+        dc.DrawText(_("Page:") + u" %d" % page, marginX / 2, maxY - marginY + 100)
 
         if self.gui.util.config['print_title']:
             filename = _("Untitled")
@@ -929,18 +930,18 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
         info = super(ErrorDialog, self).GetEnvironmentInfo()
 
         info = info.split(os.linesep)
-        path = os.path.join(get_home_dir(), "user.pref")
+        path = os.path.join(get_home_dir(), u"user.pref")
         if os.path.exists(path):
-            info.append("#---- Preferences ----#")
+            info.append(u"#---- Preferences ----#")
             with open(path) as f:
                 for x in f:
                     info.append(x.rstrip())
-            info.append("")
-            info.append("")
+            info.append(u"")
+            info.append(u"")
         return os.linesep.join(info)
 
     def GetProgramName(self):
-        return "Whyteboard " + meta.version
+        return "Whyteboard %s" % meta.version
 
 
     def Send(self):
@@ -973,15 +974,12 @@ def ExceptionHook(exctype, value, trace):
 #----------------------------------------------------------------------
 
 
-
 class WhyteboardList(wx.ListCtrl, listmix.ListRowHighlighter):
 
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, style=wx.DEFAULT_CONTROL_BORDER |
                              wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES)
         listmix.ListRowHighlighter.__init__(self, (206, 218, 255))
-
-
 
 
 #----------------------------------------------------------------------
@@ -1006,38 +1004,37 @@ class ShapeViewer(wx.Dialog):
         self.SetSizeHints(550, 400)
         self.buttons = []  # move up/down/top/bottom buttons
 
-        self.list = WhyteboardList(self)
-        self.pages = wx.ComboBox(self, size=(125, 25), style=wx.CB_READONLY)
         label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
         sizer = wx.BoxSizer(wx.VERTICAL)
-
-        self.list.RefreshRows()
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        path = os.path.join(self.gui.util.get_path(), "images", "icons", "")
-        icons = ["top", "up", "down", "bottom"]
-        tips = [_("To Top"), ("Up"), ("Down"), ("To Bottom")]
-        self.deleteBtn = bitmap_button(self, path + "delete.png", False)
+        path = os.path.join(self.gui.util.get_path(), u"images", u"icons", "")
+        icons = [u"top", u"up", u"down", u"bottom"]
+        tips = [_("Move Shape To Top"), ("Move Shape Up"), ("Move Shape Down"), ("Move Shape To Bottom")]
 
         for icon, tip in zip(icons, tips):
-            btn = bitmap_button(self, path + "move-" + icon + ".png", False)
-            btn.SetToolTipString(_("Move Shape")+" "+tip)
-            btn.Bind(wx.EVT_BUTTON, getattr(self, "on_"+icon))
+            btn = bitmap_button(self, path + u"move-%s.png" % icon, False)
+            btn.SetToolTipString(tip)
+            btn.Bind(wx.EVT_BUTTON, getattr(self, u"on_%s" % icon))
             bsizer.Add(btn, 0, wx.RIGHT, 5)
             self.buttons.append(btn)
 
-        self.prev = bitmap_button(self, path + "prev_sheet.png", False)
+        self.deleteBtn = bitmap_button(self, path + u"delete.png", False)
+        self.deleteBtn.SetToolTipString(_("Delete Shape"))
+        bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
+        
+        self.prev = bitmap_button(self, path + u"prev_sheet.png", False)
         self.prev.SetToolTipString(_("Previous Sheet"))
-        self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
         nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
 
-        self.next = bitmap_button(self, path + "next_sheet.png", False)
+        self.next = bitmap_button(self, path + u"next_sheet.png", False)
         self.next.SetToolTipString(_("Next Sheet"))
-        self.next.Bind(wx.EVT_BUTTON, self.on_next)
         nextprevsizer.Add(self.next)
 
-        bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
+        self.pages = wx.ComboBox(self, size=(125, 25), style=wx.CB_READONLY)
+        self.list = WhyteboardList(self)
+
         bsizer.Add((1, 1), 1, wx.EXPAND)  # align to the right
         bsizer.Add(nextprevsizer, 0, wx.RIGHT, 10)
         bsizer.Add(self.pages, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
@@ -1068,6 +1065,8 @@ class ShapeViewer(wx.Dialog):
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
+        self.prev.Bind(wx.EVT_BUTTON, self.on_prev)     
+        self.next.Bind(wx.EVT_BUTTON, self.on_next)
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_delete)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.on_deselect)
@@ -1118,7 +1117,6 @@ class ShapeViewer(wx.Dialog):
         self.list.SetColumnWidth(3, wx.LIST_AUTOSIZE)
 
 
-
     def check_buttons(self):
         """ Enable / Disable the appropriate buttons """
         if self.gui.current_tab + 1 < self.gui.tab_count:
@@ -1151,7 +1149,6 @@ class ShapeViewer(wx.Dialog):
             self.buttons[2].Enable()
             self.buttons[3].Enable()
         self.Refresh()
-        #self.SetFocus()
 
 
     def find_shape(self):
@@ -1274,7 +1271,7 @@ class PDFCache(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        path = os.path.join(self.gui.util.get_path(), "images", "icons", "delete.png")
+        path = os.path.join(self.gui.util.get_path(), u"images", u"icons", u"delete.png")
 
         self.deleteBtn = bitmap_button(self, path, False)
         self.deleteBtn.SetToolTipString(_("Remove cached item"))
@@ -1329,7 +1326,7 @@ class PDFCache(wx.Dialog):
 
                 self.list.SetStringItem(index, 0, f['file'])
                 self.list.SetStringItem(index, 1, f['quality'].capitalize())
-                self.list.SetStringItem(index, 2, "%s" % len(f['images']))
+                self.list.SetStringItem(index, 2, u"%s" % len(f['images']))
                 self.list.SetStringItem(index, 3, date)
 
         self.list.SetColumnWidth(0, wx.LIST_AUTOSIZE)

@@ -91,6 +91,12 @@ tools.py, making sure the filename defined in its "icon" attribute exists under
 /images/tools/[icon].png
 
 
+The file "meta" contains read-only metadata used by the program. This may seem
+a nasty way of having global data, but in Python, but the values are read-only
+and the module isn't tied to any classes. It contains common data such as the
+version number, configuration scheme, list of translators, whether the host
+system supports transparency etc.
+
 ----------------------------------
 
 The source files are organised as follows:

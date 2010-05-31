@@ -51,7 +51,7 @@ def get_home_dir(extra_path=None):
 
     if not os.path.isdir(path):
         os.makedirs(path)
-    return path.decode("utf-8")
+    return path
 
 
 def get_time(seconds):
@@ -60,10 +60,10 @@ def get_time(seconds):
     h, m = divmod(m, 60)
 
     if h > 0:
-        h = "%d:" % h
+        h = u"%d:" % h
     else:
-        h = ""
-    return h + "%02d:%02d" % (m, s)
+        h = u""
+    return h + u"%02d:%02d" % (m, s)
 
 
 def file_dialog(gui, title, style, wildcard, defaultDir="", defaultFile=""):
@@ -147,7 +147,7 @@ def convert_quality(quality, im_location, _file, path):
         density = 250
         resample = 100
     cmd = ('"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"'
-           % (im_location, density, _file, resample, path))
+           % (im_location.encode("utf-8"), density, _file.encode("utf-8"), resample, path.encode("utf-8")))
     return cmd
 
 
@@ -155,14 +155,13 @@ def make_filename():
     """
     Create a random filename using letters, numbers and other characters
     """
-    alphabet = ("abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@$%_ " +
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    alphabet = (u"abcdefghijklmnopqrstuvwxyz1234567890-+!^&()=[]@$%_ ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     _list = []
     for x in random.sample(alphabet, random.randint(8, 20)):
         _list.append(x)
 
-    string = "".join(_list)
-    return string +"-temp-%s" % (random.randrange(0, 999999))
+    string = u"".join(_list)
+    return string + u"-temp-%s" % (random.randrange(0, 999999))
 
 
 def get_clipboard():
@@ -238,7 +237,7 @@ def get_version_int(version):
     """
     Turns a version string like 0.40.2 into [0, 40, 2]
     """
-    num = [int(x) for x in version.split(".")]
+    num = [int(x) for x in version.split(u".")]
     if len(num) == 2:
         num.append(0)
     return num
@@ -258,8 +257,8 @@ def download_help_files(path):
     """
     Downloads the help files to the user's directory and shows them
     """
-    _file = os.path.join(path, "whyteboard-help.tar.gz")
-    url = "http://whyteboard.googlecode.com/files/help-files.tar.gz"
+    _file = os.path.join(path, u"whyteboard-help.tar.gz")
+    url = u"http://whyteboard.googlecode.com/files/help-files.tar.gz"
     tmp = None
     try:
         tmp = urllib.urlretrieve(url, _file)
@@ -268,7 +267,7 @@ def download_help_files(path):
         raise IOError
 
     if os.name == "posix":
-        os.system("tar -xf " + tmp[0])
+        os.system(u"tar -xf " + tmp[0])
     else:
         tar = tarfile.open(tmp[0])
         tar.extractall(path)
@@ -285,7 +284,7 @@ def extract_tar(path, _file, version, backup_ext):
     tar.extractall(path)
     tar.close()
     # remove 2 folders that will be updated, may not exist
-    src = os.path.join(path, "whyteboard-" + version)
+    src = os.path.join(path, u"whyteboard-" + version)
 
     # rename all relevant files - ignore any dirs
     for f in os.listdir(path):

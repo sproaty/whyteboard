@@ -33,10 +33,10 @@ if not hasattr(sys, 'frozen'):
         import wx
         app = wx.App(False)
 
-        wx.MessageBox("The minimum required version of wxPython, \n%s is not installed." % WXVER,
-                      "wxPython Version Error")
+        wx.MessageBox(u"The minimum required version of wxPython, \n%s is not installed." % WXVER,
+                      u"wxPython Version Error")
         app.MainLoop()
-        webbrowser.open("http://www.wxpython.org/download.php")
+        webbrowser.open(u"http://www.wxpython.org/download.php")
         sys.exit()
 
 

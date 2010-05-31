@@ -52,7 +52,7 @@ class Preferences(wx.Dialog):
     Contains a tabbed bar corresponding to each "page" of different options
     """
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui, title=_("Preferences"), size=(400, 500),
+        wx.Dialog.__init__(self, gui, title=_("Preferences"), size=(450, 500),
                            style=wx.CLOSE_BOX | wx.CAPTION)
         self.gui = gui
         self.config = copy(gui.util.config)
@@ -96,7 +96,7 @@ class Preferences(wx.Dialog):
         old = self.gui.util.config
         if self.config['language'] != old['language']:
             wx.MessageBox(_("Whyteboard will be translated into %s when restarted")
-                          % _(self.config['language']), "Whyteboard")
+                          % _(self.config['language']), u"Whyteboard")
 
         if self.config['handle_size'] != old['handle_size']:
             pub.sendMessage('tools.set_handle_size', handle_size=self.config['handle_size'])
@@ -365,16 +365,16 @@ class FontAndColours(wx.Panel):
         size = font.GetPointSize()
         weight = font.GetWeightString()
         style = font.GetStyle()
-        w = s = ""
+        w = s = u""
 
         if weight == "wxBOLD":
-            w = "Bold"
+            w = _("Bold")
         elif weight == "wxLIGHT":
-            w = "Light"
+            w = _("Light")
         if style == wx.ITALIC:
-            s = "Italic"
+            s = _("Italic")
 
-        self.button.SetLabel("%s %s %s %s" % (font.GetFaceName() , w, s, size))
+        self.button.SetLabel(u"%s %s %s %s" % (font.GetFaceName() , w, s, size))
 
 
     def on_colour(self, event, _id):
@@ -541,9 +541,9 @@ class PDF(wx.Panel):
         label = wx.StaticText(self, label=_("Conversion Quality:"))
         note = wx.StaticText(self, label=wordwrap(_("Note: Higher quality takes longer to convert"), 350, wx.ClientDC(gui)))
 
-        radio1 = wx.RadioButton(self, label=" " + _("Highest"))
-        radio2 = wx.RadioButton(self, label=" " + _("High"))
-        radio3 = wx.RadioButton(self, label=" " + _("Normal"))
+        radio1 = wx.RadioButton(self, label=_("Highest"))
+        radio2 = wx.RadioButton(self, label=_("High"))
+        radio3 = wx.RadioButton(self, label=_("Normal"))
 
         font = label.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
@@ -607,9 +607,9 @@ class PDF(wx.Panel):
 
 
     def check_im_path(self, path):
-        _file = os.path.join(path, "convert.exe")
+        _file = os.path.join(path, u"convert.exe")
         if not os.path.exists(_file):
-            wx.MessageBox(_('Folder "%s" does not contain convert.exe') % path, "Whyteboard")
+            wx.MessageBox(_('Folder "%s" does not contain convert.exe') % path, u"Whyteboard")
             self.im_result = None
             return False
 

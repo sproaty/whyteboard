@@ -37,28 +37,28 @@ _ = wx.GetTranslation
 
 
 # Creates a wxPython wildcard filter from a list of known/supported filetypes.
-_all = [ (_('PDF/PS/SVG'), ['ps', 'pdf', 'svg']),
-        (_('Image Files'), ["jpeg", "jpg", "png", "tiff", "bmp", "pcx"]),
-        (_('Whyteboard files'), ['wtbd']) ]
+_all = [ (_('PDF/PS/SVG'), [u'ps', u'pdf', u'svg']),
+        (_('Image Files'), [u"jpeg", u"jpg", u"png", u"tiff", u"bmp", u"pcx"]),
+        (_('Whyteboard files'), [u'wtbd']) ]
 
 wc_list, types, tmp = [], [], []
 
 for label, exts in _all:
     [types.append(x) for x in exts]
-    exts = ['*.%s' % a for a in exts]
-    visexts = ', '.join(exts)
+    exts = [u'*.%s' % a for a in exts]
+    visexts = u', '.join(exts)
 
     exts.extend([e.upper() for e in exts])
     tmp.extend(exts)
-    [types.append(x.replace("*.", "")) for x in exts]
-    wc_list.append('%s (%s)|%s' % (label, visexts, ';'.join(exts)))
+    [types.append(x.replace(u"*.", u"")) for x in exts]
+    wc_list.append(u'%s (%s)|%s' % (label, visexts, u';'.join(exts)))
 
-wc_list.insert(0, '%s|%s'%(_('All files')+' (*.*)', '*.*'))
-wc_list.insert(0, '%s|%s'%(_("All suppported files"), ';'.join(tmp)))
+wc_list.insert(0, '%s|%s' % (_('All files') + u' (*.*)', u'*.*'))
+wc_list.insert(0, '%s|%s' % (_("All suppported files"), u';'.join(tmp)))
 
-dialog_wildcard = '|'.join(wc_list)
+dialog_wildcard = u'|'.join(wc_list)
 transparent = True
-version = "0.40.2"
+version = u"0.40.2"
 languages = ( (u"English", _("English"), wx.LANGUAGE_ENGLISH),
               (u"English (United Kingdom)", _("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
               (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
@@ -110,55 +110,55 @@ undo_sheets = integer(min=5, max=50, default=10)
 """
 
 translators = [
-     'A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
-     'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
-     'Aljosha Papsch https://launchpad.net/~joschi-papsch (German)',
-     '"Amy" https://launchpad.net/~anthropofobe (German)',
-     'Antoine Jouve https://launchpad.net/~aj94tj (French)',
-     '"Auduf" https://launchpad.net/~5097-mail (Russian)',
-     '"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
-     'Cristian Asenjo https://launchpad.net/~apu2009 (Spanish)',
-     'David Aller https://launchpad.net/~niclamus (Italian)',
-     '"Dennis" https://launchpad.net/~dlinn83 (German)',
-     'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
-     '"Donkade" https://launchpad.net/~donkade (Dutch)',
-     'Fabian Riechsteiner https://launchpad.net/~ruffy91-gmail (German)',
-     'Federico Vera https://launchpad.net/~fedevera (Spanish)',
-     'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',
-     'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
-     'Hiroshi Tagawa https://launchpad.net/~kuponuga (Japanese)',
-     'Javier Acuña Ditzel https://launchpad.net/~santoposmoderno (Spanish)',
-     'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
-     'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
-     '"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
-     '"Lauren" https://launchpad.net/~lewakefi (French)',
-     'Lorenzo Baracchi https://launchpad.net/~baracchi-lorenzo (Italian)',
-     'Lukáš Machyán https://launchpad.net/~phobulos (Czech)',
-     'Marcel Schmücker https://launchpad.net/~versus666 (German)',
-     '"melinor" https://launchpad.net/~aka-melv (Russian)',
-     'Medina https://launchpad.net/~medina-colpaca (Spanish)',
-     'Miguel Anxo Bouzada https://launchpad.net/~mbouzada/ (Galician)',
-     'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
-     '"MixCool" https://launchpad.net/~mixcool (German)',
-     '"nafergo" https://launchpad.net/~nafergo (Portuguese)',
-     'Nkolay Parukhin https://launchpad.net/~parukhin (Russian)',
-     '"Pallas" https://launchpad.net/~v-launchpad-geekin-de (German)',
-     '"pmkvodka" https://launchpad.net/~jazon23 (French)',
-     '"pygmee" https://launchpad.net/~pygmee (French)',
-     '"Rarulis" https://launchpad.net/~rarulis (French)',
-     'Roberto Bondi https://launchpad.net/~bondi (Italian)',
-     '"RodriT" https://launchpad.net/~rodri316 (Spanish)',
-     'Sergey Sedov https://launchpad.net/~serg-sedov (Russian)',
-     'Simon Junga https://launchpad.net/~simonthechipmunk (German)',
-     '"SimonimNetz" https://launchpad.net/~s-marquardt (German)',
-     'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
-     '"Tobberoth" https://launchpad.net/~tobberoth (Japanese)',
-     'Tobias Baldauf https://launchpad.net/~technopagan (German)',
-     '"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
-     '"ucnj" https://launchpad.net/~ucn (German)',
-     '"Vonlist" https://launchpad.net/~hengartt (Spanish)',
-     'Will https://launchpad.net/~willbickerstaff (UK English)',
-     'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']
+     u'A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
+     u'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
+     u'Aljosha Papsch https://launchpad.net/~joschi-papsch (German)',
+     u'"Amy" https://launchpad.net/~anthropofobe (German)',
+     u'Antoine Jouve https://launchpad.net/~aj94tj (French)',
+     u'"Auduf" https://launchpad.net/~5097-mail (Russian)',
+     u'"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
+     u'Cristian Asenjo https://launchpad.net/~apu2009 (Spanish)',
+     u'David Aller https://launchpad.net/~niclamus (Italian)',
+     u'"Dennis" https://launchpad.net/~dlinn83 (German)',
+     u'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
+     u'"Donkade" https://launchpad.net/~donkade (Dutch)',
+     u'Fabian Riechsteiner https://launchpad.net/~ruffy91-gmail (German)',
+     u'Federico Vera https://launchpad.net/~fedevera (Spanish)',
+     u'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',
+     u'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
+     u'Hiroshi Tagawa https://launchpad.net/~kuponuga (Japanese)',
+     u'Javier Acuña Ditzel https://launchpad.net/~santoposmoderno (Spanish)',
+     u'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
+     u'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
+     u'"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
+     u'"Lauren" https://launchpad.net/~lewakefi (French)',
+     u'Lorenzo Baracchi https://launchpad.net/~baracchi-lorenzo (Italian)',
+     u'Lukáš Machyán https://launchpad.net/~phobulos (Czech)',
+     u'Marcel Schmücker https://launchpad.net/~versus666 (German)',
+     u'"melinor" https://launchpad.net/~aka-melv (Russian)',
+     u'Medina https://launchpad.net/~medina-colpaca (Spanish)',
+     u'Miguel Anxo Bouzada https://launchpad.net/~mbouzada/ (Galician)',
+     u'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
+     u'"MixCool" https://launchpad.net/~mixcool (German)',
+     u'"nafergo" https://launchpad.net/~nafergo (Portuguese)',
+     u'Nkolay Parukhin https://launchpad.net/~parukhin (Russian)',
+     u'"Pallas" https://launchpad.net/~v-launchpad-geekin-de (German)',
+     u'"pmkvodka" https://launchpad.net/~jazon23 (French)',
+     u'"pygmee" https://launchpad.net/~pygmee (French)',
+     u'"Rarulis" https://launchpad.net/~rarulis (French)',
+     u'Roberto Bondi https://launchpad.net/~bondi (Italian)',
+     u'"RodriT" https://launchpad.net/~rodri316 (Spanish)',
+     u'Sergey Sedov https://launchpad.net/~serg-sedov (Russian)',
+     u'Simon Junga https://launchpad.net/~simonthechipmunk (German)',
+     u'"SimonimNetz" https://launchpad.net/~s-marquardt (German)',
+     u'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
+     u'"Tobberoth" https://launchpad.net/~tobberoth (Japanese)',
+     u'Tobias Baldauf https://launchpad.net/~technopagan (German)',
+     u'"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
+     u'"ucnj" https://launchpad.net/~ucn (German)',
+     u'"Vonlist" https://launchpad.net/~hengartt (Spanish)',
+     u'Will https://launchpad.net/~willbickerstaff (UK English)',
+     u'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']
 
 
 def find_transparent():
