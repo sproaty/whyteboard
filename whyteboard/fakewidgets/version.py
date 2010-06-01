@@ -1,7 +1,6 @@
-# replicates the wxversion.Select() 
+# replicates the wxversion.Select()
 
 def select(versions, optionsRequired=False):
-    print 'ey'
     pass
 
 import wxversion

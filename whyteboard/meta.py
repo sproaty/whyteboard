@@ -53,8 +53,8 @@ for label, exts in _all:
     [types.append(x.replace(u"*.", u"")) for x in exts]
     wc_list.append(u'%s (%s)|%s' % (label, visexts, u';'.join(exts)))
 
-wc_list.insert(0, '%s|%s' % (_('All files') + u' (*.*)', u'*.*'))
-wc_list.insert(0, '%s|%s' % (_("All suppported files"), u';'.join(tmp)))
+wc_list.insert(0, u'%s|%s' % (_('All files') + u' (*.*)', u'*.*'))
+wc_list.insert(0, u'%s|%s' % (_("All suppported files"), u';'.join(tmp)))
 
 dialog_wildcard = u'|'.join(wc_list)
 transparent = True

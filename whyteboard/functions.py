@@ -34,7 +34,7 @@ import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 
 _ = wx.GetTranslation
-
+path = os.path.split(os.path.abspath(sys.argv[0]))
 #----------------------------------------------------------------------
 
 
@@ -200,7 +200,7 @@ def is_exe():
     """
     Determine if Whyteboard is being run as an exe
     """
-    return hasattr(sys, "frozen")
+    return hasattr(sys, u"frozen")
 
 
 def fix_std_sizer_tab_order(sizer):
@@ -224,12 +224,12 @@ def format_bytes(total):
     bytes = float(total)
     if bytes >= 1048576:
         megabytes = bytes / 1048576
-        size = '%.2fMB' % megabytes
+        size = u'%.2fMB' % megabytes
     elif bytes >= 1024:
         kilobytes = bytes / 1024
-        size = '%.2fKB' % kilobytes
+        size = u'%.2fKB' % kilobytes
     else:
-        size = '%.2fb' % bytes
+        size = u'%.2fb' % bytes
     return size
 
 
@@ -263,7 +263,7 @@ def download_help_files(path):
     try:
         tmp = urllib.urlretrieve(url, _file)
     except IOError:
-        wx.MessageBox(_("Could not connect to server.\n Check your Internet connection and firewall settings"), "Whyteboard")
+        wx.MessageBox(_("Could not connect to server.\n Check your Internet connection and firewall settings"), u"Whyteboard")
         raise IOError
 
     if os.name == "posix":
@@ -292,10 +292,28 @@ def extract_tar(path, _file, version, backup_ext):
         if not os.path.isdir(location):
             _type = os.path.splitext(f)
 
-            if _type[1] in [".py", ".txt"]:
+            if _type[1] in [u".py", u".txt"]:
                 new_file = os.path.join(path, _type[0]) + backup_ext
                 os.rename(location, new_file)
 
     # move extracted file to current dir, remove tar, remove extracted dir
     distutils.dir_util.copy_tree(src, path)
     distutils.dir_util.remove_tree(src)
+
+
+def get_path():
+    """
+    Root directory from wherever the application is installed to
+    """
+    path = os.path.dirname(os.path.abspath(sys.argv[0]))
+
+    if path == "/usr/bin":
+        return u"/usr/lib/whyteboard"
+    return path.decode("utf-8")
+
+
+def get_image_path(directory, filename):
+    """
+    Fetch an image from the correct directory
+    """
+    return os.path.join(get_path(), u"images", directory, u"%s.png" % filename)

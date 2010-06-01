@@ -1104,7 +1104,6 @@ class FileDialog(Dialog):
         self.defaultFile = defaultFile
 
     def GetPaths(self):
-        print "Getting paths:", self.paths
         return self.paths
 
     def __getattr__(self, attr):

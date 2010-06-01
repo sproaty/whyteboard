@@ -39,6 +39,7 @@ from lib.pubsub import pub
 import meta
 from dialogs import TextInput
 from panels import MediaPanel, ShapePopup
+from functions import get_image_path
 
 _ = wx.GetTranslation
 
@@ -1756,8 +1757,7 @@ class Select(Tool):
 
 
     def preview(self, dc, width, height):
-        bmp = wx.Bitmap(os.path.join(self.canvas.gui.util.get_path(), u"images",
-                                   u"icons", u"cursor.png"))
+        bmp = wx.Bitmap(get_image_path(u"icons", u"cursor"))
         dc.DrawBitmap(bmp, width / 2 - 5, 12)
 
 

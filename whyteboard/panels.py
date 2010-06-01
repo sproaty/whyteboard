@@ -38,7 +38,7 @@ from lib.pubsub import pub
 import meta
 from event_ids import (ID_TRANSPARENT, ID_SWAP_COLOURS, ID_MOVE_UP, ID_MOVE_DOWN,
                        ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM)
-from functions import create_colour_bitmap, get_time, file_dialog
+from functions import create_colour_bitmap, get_time, file_dialog, get_image_path
 
 _ = wx.GetTranslation
 
@@ -131,10 +131,10 @@ class ControlPanel(wx.Panel):
         self.background.SetValue("White")
         self.transparent = wx.CheckBox(panel, label=_("Transparent"), pos=(0, 69))
         self.transparent.SetValue(True)
-        icon = os.path.join(self.gui.util.get_path(), u"images", u"icons", u"swap_colours.png")
 
-        swap = wx.BitmapButton(panel, bitmap=wx.Bitmap(icon), pos=(70, 0),
-                                     style=wx.NO_BORDER)
+
+        swap = wx.BitmapButton(panel, bitmap=wx.Bitmap(get_image_path(u"icons", u"swap_colours")),
+                               pos=(70, 0), style=wx.NO_BORDER)
 
         self.colour.Bind(csel.EVT_COLOURSELECT, self.change_colour)
         self.background.Bind(csel.EVT_COLOURSELECT, self.change_background)
@@ -165,7 +165,7 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             if _type == u"icon":
-                path = os.path.join(self.gui.util.get_path(), u"images", u"tools", u"%s.png" % val)
+                path = get_image_path(u"tools", val)
                 b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
                                           style=wx.NO_BORDER)
                 evt = wx.EVT_BUTTON
@@ -365,11 +365,10 @@ class MediaPanel(wx.Panel):
         self.file_drop = MediaDropTarget(self)
         self.SetDropTarget(self.file_drop)
 
-        path = os.path.join(self.gui.util.get_path(), u"images", u"icons", u"")
         self.open = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR))
-        self.play = wx.BitmapButton(self, bitmap=wx.Bitmap(path + u"play.png"))
-        self.pause = wx.BitmapButton(self, bitmap=wx.Bitmap(path +  u"pause.png"))
-        self.stop = wx.BitmapButton(self, bitmap=wx.Bitmap(path + u"stop.png"))
+        self.play = wx.BitmapButton(self, bitmap=wx.Bitmap(get_image_path(u"icons", u"play")))
+        self.pause = wx.BitmapButton(self, bitmap=wx.Bitmap(get_image_path(u"icons", u"pause")))
+        self.stop = wx.BitmapButton(self, bitmap=wx.Bitmap(get_image_path(u"icons", u"stop")))
         self.play.Disable()
         self.pause.Disable()
         self.stop.Disable()

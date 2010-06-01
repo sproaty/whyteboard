@@ -54,7 +54,7 @@ from tools import Image, Note, Text, Media, Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
 
 from functions import (get_home_dir, is_exe, get_clipboard, download_help_files,
-                       file_dialog)
+                       file_dialog, get_path, get_image_path)
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
                      ExceptionHook, ShapeViewer, Feedback, PDFCache)
 from panels import ControlPanel, SidePanel, SheetsPopup
@@ -92,7 +92,7 @@ class GUI(wx.Frame):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
-        wx.Frame.__init__(self, parent, title=_("Untitled") + " - " + self.title)
+        wx.Frame.__init__(self, parent, title=_("Untitled") + u" - %s" % self.title)
         ico = lib.icon.whyteboard.getIcon()
         self.SetIcon(ico)
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
@@ -105,7 +105,7 @@ class GUI(wx.Frame):
         self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
 
         self.filehistory = wx.FileHistory(8)
-        self.config = wx.Config("Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
+        self.config = wx.Config(u"Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
         self.filehistory.Load(self.config)
 
         self._oldhook = sys.excepthook
@@ -139,7 +139,6 @@ class GUI(wx.Frame):
         self.closed_tabs = []  # [shapes: undo, redo, canvas_size, view_x, view_y] per tab
         self.closed_tabs_id = {}  # wx.Menu IDs for undo closed tab list
         self.hotkeys = []
-
         self.showcolour, self.showtool, self.next = None, None, None
         self.showstat, self.showprevious, self.prev = None, None, None
         self.closed_tabs_menu = wx.Menu()
@@ -154,7 +153,7 @@ class GUI(wx.Frame):
 
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
-        self.tabs.AddPage(self.canvas, _("Sheet") + " 1")
+        self.tabs.AddPage(self.canvas, _("Sheet") + u" 1")
         box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         box.Add(self.control, 0, wx.EXPAND)
         box.Add(self.tabs, 1, wx.EXPAND)
@@ -250,12 +249,12 @@ class GUI(wx.Frame):
         view.Append(ID_HISTORY, _("&History Viewer...") + "\tCtrl+H", _("View and replay your drawing history"))
         view.Append(ID_PDF_CACHE, _("&PDF Cache...") + "\tF4", _("View and modify Whyteboard's PDF Cache"))
         view.AppendSeparator()
-        self.showtool = view.Append(ID_TOOLBAR, " " + _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
-        self.showstat = view.Append(ID_STATUSBAR, " " + _("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
-        self.showprevious = view.Append(ID_TOOL_PREVIEW, " " + _("Tool &Preview"), _("Show and hide the tool preview"), kind=wx.ITEM_CHECK)
-        self.showcolour = view.Append(ID_COLOUR_GRID, " " + _("&Color Grid"), _("Show and hide the color grid"), kind=wx.ITEM_CHECK)
+        self.showtool = view.Append(ID_TOOLBAR, u" " + _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
+        self.showstat = view.Append(ID_STATUSBAR, u" " + _("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
+        self.showprevious = view.Append(ID_TOOL_PREVIEW, u" " + _("Tool &Preview"), _("Show and hide the tool preview"), kind=wx.ITEM_CHECK)
+        self.showcolour = view.Append(ID_COLOUR_GRID, u" " + _("&Color Grid"), _("Show and hide the color grid"), kind=wx.ITEM_CHECK)
         view.AppendSeparator()
-        view.Append(ID_FULLSCREEN, " " + _("&Full Screen") + "\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
+        view.Append(ID_FULLSCREEN, u" " + _("&Full Screen") + "\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
 
         shapes.Append(ID_MOVE_UP, _("Move Shape &Up") + "\tCtrl-Up", _("Moves the currently selected shape up"))
         shapes.Append(ID_MOVE_DOWN, _("Move Shape &Down") + "\tCtrl-Down", _("Moves the currently selected shape down"))
@@ -300,13 +299,13 @@ class GUI(wx.Frame):
         self.menu.Enable(wx.ID_PASTE, self.can_paste)
         self.menu.Enable(ID_PASTE_NEW, self.can_paste)
 
-        keys = ['toolbar', 'statusbar', 'tool_preview', 'colour_grid']
+        keys = [u'toolbar', u'statusbar', u'tool_preview', u'colour_grid']
         ids = [ID_TOOLBAR, ID_STATUSBAR, ID_TOOL_PREVIEW, ID_COLOUR_GRID]
         for x, _id in zip(keys, ids):
             if self.util.config[x]:
                 view.Check(_id, True)
             else:
-                getattr(self, "on_" + x)(None, False)
+                getattr(self, u"on_" + x)(None, False)
 
 
     def do_bindings(self):
@@ -347,8 +346,8 @@ class GUI(wx.Frame):
                 ac.append((wx.ACCEL_NORMAL, ord(item.hotkey.upper()), _id))
                 self.Bind(wx.EVT_MENU, blah, id=_id)
         else:
-            ac = [(wx.ACCEL_CTRL, ord('\t'), self.next.GetId()),
-                  (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('\t'), self.prev.GetId()) ]
+            ac = [(wx.ACCEL_CTRL, ord(u'\t'), self.next.GetId()),
+                  (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord(u'\t'), self.prev.GetId()) ]
 
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
@@ -414,7 +413,7 @@ class GUI(wx.Frame):
                      wx.ID_UNDO: "undo" }
 
         for _id, name in bindings.items():
-            method = getattr(self, "on_" + name)  # self.on_*
+            method = getattr(self, u"on_" + name)  # self.on_*
             self.Bind(wx.EVT_MENU, method, id=_id)
 
 
@@ -425,7 +424,6 @@ class GUI(wx.Frame):
         """
         self.toolbar = self.CreateToolBar()
         _move = [ID_MOVE_TO_TOP, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM]
-        move = _("Move Shape") + " "
 
         ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_COPY, wx.ID_PASTE,
                wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE]
@@ -434,17 +432,16 @@ class GUI(wx.Frame):
                 wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO, wx.ART_DELETE]
         tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"),
                 _("Paste an Image/Text"), _("Undo the Last Action"), _("Redo the Last Undone Action"),
-                _("Delete the currently selected shape"), move + _("To Top"), move + _("Up"),
-                move + _("Down"), move + _("To Bottom")]
+                _("Delete the currently selected shape"), _("Move Shape To Top"), ("Move Shape Up"),
+                ("Move Shape Down"), ("Move Shape To Bottom")]
 
         ids.extend(_move)
         arts.extend(_move)
-        path = os.path.join(self.util.get_path(), "images", "icons", "")
-        icons = ["top", "up", "down", "bottom"]
+        icons = [u"top", u"up", u"down", u"bottom"]
 
         bmps = {}
         for icon, _id in zip(icons, _move):
-            bmps[_id] = wx.Bitmap(path + "move-" + icon + "-small.png")
+            bmps[_id] = wx.Bitmap(get_image_path(u"icons", u"move-%s-small" % icon))
 
         # add tools, add a separator and bind paste/undo/redo for UI updating
         for x, (_id, art_id, tip) in enumerate(zip(ids, arts, tips)):
@@ -472,8 +469,8 @@ class GUI(wx.Frame):
             _id = wx.NewId()
             name = tab[4]
             self.closed_tabs_id[_id] = tab
-            self.closed_tabs_menu.Append(_id, "&%i: %s" % (x + 1, name),
-                                         _("Restore") + ' "%s"' % name)
+            self.closed_tabs_menu.Append(_id, u"&%i: %s" % (x + 1, name),
+                                         _('Restore sheet "%s"') % name)
             self.Bind(wx.EVT_MENU, lambda evt, tab=tab: self.on_undo_tab(tab=tab),
                       id=_id)
 
@@ -527,10 +524,10 @@ class GUI(wx.Frame):
         """
         Prompts for the filename and location to save to.
         """
-        wildcard = _("Whyteboard file ") + "(*.wtbd)|*.wtbd"
+        wildcard = _("Whyteboard file ") + u"(*.wtbd)|*.wtbd"
         _dir = ""
         _file = time.localtime(time.time())
-        _file = time.strftime("%Y-%m-%d-%H-%M-%S")
+        _file = time.strftime(u"%Y-%m-%d-%H-%M-%S")
 
         if self.util.filename:
             _file = self.util.filename
@@ -542,10 +539,10 @@ class GUI(wx.Frame):
                            wx.SAVE | wx.OVERWRITE_PROMPT, wildcard, _dir, _file)
         if name:
             if not os.path.splitext(name)[1]:  # no file extension
-                name += '.wtbd'
+                name += u'.wtbd'
 
             # only store whyteboard files, not an image as the current file
-            if name.lower().endswith(".wtbd"):
+            if name.lower().endswith(u".wtbd"):
                 self.util.filename = name
                 self.on_save()
 
@@ -557,20 +554,20 @@ class GUI(wx.Frame):
         text is img/pdf/ps for the "import file" menu item
         """
         wildcard = meta.dialog_wildcard
-        if text == "img":
+        if text == u"img":
             wildcard = wildcard[wildcard.find(_("Image Files")) :
                                 wildcard.find(_('Whyteboard files')) ]  # image to page
         elif text:
-            wildcard = wildcard[wildcard.find("PDF/PS/SVG") :
-                                wildcard.find("*.SVG|")]  # page descriptions
+            wildcard = wildcard[wildcard.find(u"PDF/PS/SVG") :
+                                wildcard.find(u"*.SVG|")]  # page descriptions
 
-        _dir = ""
+        _dir = u""
         if self.util.config.get('last_opened_dir'):
             _dir = self.util.config['last_opened_dir']
 
         name = file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir)
         if name:
-            if name.lower().endswith(".wtbd"):
+            if name.lower().endswith(u".wtbd"):
                 self.util.prompt_for_save(self.do_open, args=[name])
             else:
                 self.do_open(name)
@@ -586,7 +583,7 @@ class GUI(wx.Frame):
         self.config.Flush()
         self.save_last_path(path)
 
-        if path.lower().endswith(".wtbd"):
+        if path.lower().endswith(u".wtbd"):
             self.util.load_wtbd(path)
         else:
             self.util.temp_file = path
@@ -604,22 +601,22 @@ class GUI(wx.Frame):
         if not self.util.im_location:
             return
         filename = file_dialog(self, _("Export data to..."),
-                               wx.SAVE | wx.OVERWRITE_PROMPT, "PDF (*.pdf)|*.pdf")
+                               wx.SAVE | wx.OVERWRITE_PROMPT, u"PDF (*.pdf)|*.pdf")
 
         if filename:
             ext = os.path.splitext(filename)[1]
             if not ext:  # no file extension
-                filename += '.pdf'
-            elif ext.lower() != ".pdf":
-                wx.MessageBox(_("Invalid filetype to export as:") + " .%s" % ext,
-                              "Whyteboard")
+                filename += u'.pdf'
+            elif ext.lower() != u".pdf":
+                wx.MessageBox(_("Invalid filetype to export as:") + u" .%s" % ext,
+                              u"Whyteboard")
                 return
 
             names = []
             canvas = self.canvas
             for x in range(self.tab_count):
                 self.canvas = self.tabs.GetPage(x)
-                name = "%s-tempblahhahh-%s-.jpg" % (filename, x)
+                name = u"%s-tempblahhahh-%s-.jpg" % (filename, x)
                 names.append(name)
                 self.util.export(name)
             self.canvas = canvas
@@ -627,9 +624,9 @@ class GUI(wx.Frame):
             self.process = wx.Process(self)
             files = ""
             for x in names:
-                files += '"%s" ' % x  # quote filenames for windows
+                files += u'"%s" ' % x  # quote filenames for windows
 
-            cmd = '%s -define pdf:use-trimbox=true %s"%s"' % (self.util.im_location.decode("utf-8"), files, filename)
+            cmd = u'%s -define pdf:use-trimbox=true %s"%s"' % (self.util.im_location, files, filename)
             self.pid = wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
             self.dialog = ProgressDialog(self, _("Converting..."))
             self.dialog.ShowModal()
@@ -656,7 +653,7 @@ class GUI(wx.Frame):
             canvas = self.canvas
             for x in range(self.tab_count):
                 self.canvas = self.tabs.GetPage(x)
-                self.util.export("%s-%s%s" % (name[0], x + 1, name[1]))
+                self.util.export(u"%s-%s%s" % (name[0], x + 1, name[1]))
             self.canvas = canvas
 
 
@@ -667,14 +664,14 @@ class GUI(wx.Frame):
         if not os.path.exists(self.util.config.filename):
             wx.MessageBox(_("You have not set any preferences"), _("Export Error"))
             return
-        wildcard = _("Whyteboard Preference Files") + " (*.pref)|*.pref"
+        wildcard = _("Whyteboard Preference Files") + u" (*.pref)|*.pref"
 
         filename = file_dialog(self, _("Export preferences to..."),
                                wx.SAVE | wx.OVERWRITE_PROMPT, wildcard)
         if filename:
             if not os.path.splitext(filename)[1]:
-                filename += ".pref"
-            shutil.copy(os.path.join(get_home_dir(), "user.pref"), filename)
+                filename += u".pref"
+            shutil.copy(os.path.join(get_home_dir(), u"user.pref"), filename)
 
 
     def on_import_pref(self, event=None):
@@ -682,25 +679,25 @@ class GUI(wx.Frame):
         Imports the preference file. Backsup the user's current prefernce file
         into a directory, with a timestamp on the filename
         """
-        wildcard = _("Whyteboard Preference Files") + " (*.pref)|*.pref"
+        wildcard = _("Whyteboard Preference Files") + u" (*.pref)|*.pref"
 
         filename = file_dialog(self, _("Import Preferences From..."), wx.OPEN,
                                wildcard, get_home_dir())
 
         if filename:
-            config = ConfigObj(filename, configspec=meta.config_scheme.split("\n"))
+            config = ConfigObj(filename, configspec=meta.config_scheme.split(u"\n"))
             validator = Validator()
             config.validate(validator)
-            _dir = os.path.join(get_home_dir(), "pref-bkup")
+            _dir = os.path.join(get_home_dir(), u"pref-bkup")
 
             if not os.path.isdir(_dir):
                 os.makedirs(_dir)
 
-            home = os.path.join(get_home_dir(), "user.pref")
+            home = os.path.join(get_home_dir(), u"user.pref")
             if os.path.exists(home):
-                stamp = time.strftime("%d-%b-%Y_%Hh-%Mm_%Ss", time.gmtime())
+                stamp = time.strftime(u"%d-%b-%Y_%Hh-%Mm_%Ss", time.gmtime())
 
-                os.rename(home, os.path.join(_dir, stamp + ".user.pref"))
+                os.rename(home, os.path.join(_dir, stamp + u".user.pref"))
             pref = Preferences(self)
             pref.config = config
             pref.config.filename = home
@@ -709,7 +706,7 @@ class GUI(wx.Frame):
 
 
     def on_reload_preferences(self, event):
-        home = os.path.join(get_home_dir(), "user.pref")
+        home = os.path.join(get_home_dir(), u"user.pref")
         if os.path.exists(home):
             config = ConfigObj(home, configspec=meta.config_scheme.split("\n"))
             validator = Validator()
@@ -723,23 +720,23 @@ class GUI(wx.Frame):
     def export_prompt(self):
         """Find out the filename to save to"""
         val = None  # return value
-        wildcard = ("PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
-                    "BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
+        wildcard = (u"PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
+                    u"BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
 
         dlg = wx.FileDialog(self, _("Export data to..."),
                             style=wx.SAVE | wx.OVERWRITE_PROMPT, wildcard=wildcard)
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
-            _name = os.path.splitext(filename)[1].replace(".", "")
-            types = {0: "png", 1: "jpg", 2: "bmp", 3: "tiff"}
+            _name = os.path.splitext(filename)[1].replace(u".", u"")
+            types = {0: u"png", 1: u"jpg", 2: u"bmp", 3: u"tiff"}
 
             if not os.path.splitext(filename)[1]:
                 _name = types[dlg.GetFilterIndex()]
-                filename += "." + _name
+                filename += u"." + _name
                 val = filename
             if not _name in meta.types[2:]:
-                wx.MessageBox(_("Invalid filetype to export as:") + " .%s" % _name,
-                              "Whyteboard")
+                wx.MessageBox(_("Invalid filetype to export as:") + u" .%s" % _name,
+                              u"Whyteboard")
             else:
                 val = filename
         dlg.Destroy()
@@ -748,7 +745,7 @@ class GUI(wx.Frame):
 
     def on_new_win(self, event=None):
         """Fires up a new Whyteboard window"""
-        program = ('python', os.path.abspath(sys.argv[0]))
+        program = (u'python', os.path.abspath(sys.argv[0]))
         if is_exe():
             program = os.path.abspath(sys.argv[0])
 
@@ -764,7 +761,7 @@ class GUI(wx.Frame):
         if not wb:
             self.tab_total += 1
         if not name:
-            name = _("Sheet") + " %s" % self.tab_total
+            name = _("Sheet") + u" %s" % self.tab_total
 
         self.tab_count += 1
         self.thumbs.new_thumb(name=name)
@@ -963,13 +960,13 @@ class GUI(wx.Frame):
                 do = True
             elif _id in [wx.ID_DELETE, ID_DESELECT] and canvas.selected:
                 do = True
-            elif _id == ID_MOVE_UP and canvas.check_move("up"):
+            elif _id == ID_MOVE_UP and canvas.check_move(u"up"):
                 do = True
-            elif _id == ID_MOVE_DOWN and canvas.check_move("down"):
+            elif _id == ID_MOVE_DOWN and canvas.check_move(u"down"):
                 do = True
-            elif _id == ID_MOVE_TO_TOP and canvas.check_move("top"):
+            elif _id == ID_MOVE_TO_TOP and canvas.check_move(u"top"):
                 do = True
-            elif _id == ID_MOVE_TO_BOTTOM and canvas.check_move("bottom"):
+            elif _id == ID_MOVE_TO_BOTTOM and canvas.check_move(u"bottom"):
                 do = True
             elif (_id == ID_TRANSPARENT and canvas.selected
                   and not isinstance(canvas.selected, (Media, Image, Text))):
@@ -1228,12 +1225,12 @@ class GUI(wx.Frame):
         num = evt.GetId() - wx.ID_FILE1
         path = self.filehistory.GetHistoryFile(num)
         if not os.path.exists(path):
-            wx.MessageBox(_("File %s not found") % path, "Whyteboard")
+            wx.MessageBox(_("File %s not found") % path, u"Whyteboard")
             self.filehistory.RemoveFileFromHistory(num)
             return
         self.filehistory.AddFileToHistory(path)  # move up the list
 
-        if path.lower().endswith(".wtbd"):
+        if path.lower().endswith(u".wtbd"):
             self.util.prompt_for_save(self.do_open, args=[path])
         else:
             self.do_open(path)
@@ -1378,10 +1375,10 @@ class GUI(wx.Frame):
             _class.Show()
 
     def on_translate(self, event):
-        self.open_url("https://translations.launchpad.net/whyteboard")
+        self.open_url(u"https://translations.launchpad.net/whyteboard")
 
     def on_report_bug(self, event):
-        self.open_url("https://bugs.launchpad.net/whyteboard")
+        self.open_url(u"https://bugs.launchpad.net/whyteboard")
 
     def on_resize(self, event=None):
         self.show_dialog(Resize(self))
@@ -1410,7 +1407,7 @@ class GUI(wx.Frame):
 
     def find_help(self):
         """Locate the help files, update self.help var"""
-        _file = os.path.join(self.util.get_path(), 'whyteboard-help', 'whyteboard.hhp')
+        _file = os.path.join(get_path(), u'whyteboard-help', u'whyteboard.hhp')
 
         if os.path.exists(_file):
             self.help = HtmlHelpController()
@@ -1449,16 +1446,21 @@ class GUI(wx.Frame):
 
     def on_about(self, event=None):
         inf = wx.AboutDialogInfo()
-        inf.Name = "Whyteboard"
+        inf.Name = u"Whyteboard"
         inf.Version = meta.version
-        inf.Copyright = "(C) 2009 Steven Sproat"
+        inf.Copyright = u"(C) 2009 Steven Sproat"
         inf.Description = _("A simple whiteboard and PDF annotator")
-        inf.Developers = ["Steven Sproat <sproaty@gmail.com>"]
+        inf.Developers = [u"Steven Sproat <sproaty@gmail.com>"]
         inf.Translators = meta.translators
-        x = "http://www.launchpad.net/whyteboard"
+        x = u"http://www.launchpad.net/whyteboard"
         inf.WebSite = (x, x)
-        with open(os.path.join(self.util.get_path(), "LICENSE.txt")) as f:
-            inf.Licence = f.read()
+
+        license = os.path.join(get_path(), u"LICENSE.txt")
+        if os.path.exists(license):
+            with open(license) as f:
+                inf.Licence = f.read()
+        else:
+            inf.Licence = u"GPL 3"
 
         wx.AboutBox(inf)
 
@@ -1472,8 +1474,8 @@ class WhyteboardApp(wx.App):
         Load config file, apply translation, parse arguments and delete any
         temporary filse left over from an update
         """
-        wx.SetDefaultPyEncoding("utf-8")
-        self.SetAppName("whyteboard")  # used to identify app in $HOME/
+        wx.SetDefaultPyEncoding(u"utf-8")
+        self.SetAppName(u"whyteboard")  # used to identify app in $HOME/
 
         parser = OptionParser(version="Whyteboard %s" % meta.version)
         parser.add_option("-f", "--file", help="load FILE on load")
@@ -1483,7 +1485,7 @@ class WhyteboardApp(wx.App):
         parser.add_option("-u", "--update", action="store_true", help="check for a newer version of whyteboard")
         parser.add_option("-l", "--lang", help="set language. can be a country code or language (e.g. fr, french, nl, dutch)")
 
-        path = os.path.join(get_home_dir(), "user.pref")
+        path = os.path.join(get_home_dir(), u"user.pref")
         (options, args) = parser.parse_args()
         if options.conf:
             path = options.conf
@@ -1506,7 +1508,7 @@ class WhyteboardApp(wx.App):
             for x in meta.languages:
                 if config['language'].capitalize() == 'Welsh':
                     self.locale = wx.Locale()
-                    self.locale.Init("Cymraeg", "cy", "cy_GB.utf8")
+                    self.locale.Init(u"Cymraeg", u"cy", u"cy_GB.utf8")
                     break
                 elif config['language'].capitalize() == x[0]:
                     nolog = wx.LogNull()
@@ -1515,20 +1517,17 @@ class WhyteboardApp(wx.App):
         if hasattr(self, "locale"):
             if not wx.Locale.IsOk(self.locale):
 
-                wx.MessageBox("Error setting language to %s - reverting to English" % lang_name,
-                              "Whyteboard")
+                wx.MessageBox(u"Error setting language to %s - reverting to English" % lang_name,
+                              u"Whyteboard")
                 if not set_lang:
                     config['language'] = 'English'
                     config.write()
                 self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
 
-            path = os.path.dirname(sys.argv[0])
-            if path == "/usr/bin":
-                path = "/usr/lib/whyteboard"  # simple workaround...
-            langdir = os.path.join(path, 'locale')
-            locale.setlocale(locale.LC_ALL, '')
+            langdir = os.path.join(get_path(), u'locale')
+            locale.setlocale(locale.LC_ALL, u'')
             self.locale.AddCatalogLookupPathPrefix(langdir)
-            self.locale.AddCatalog("whyteboard")
+            self.locale.AddCatalog(u"whyteboard")
 
         reload(meta)  # fix for some translated strings not being applied
 
@@ -1537,7 +1536,7 @@ class WhyteboardApp(wx.App):
 
         try:
             _file = os.path.abspath(sys.argv[1])
-            if _file.lower().endswith(".wtbd"):
+            if _file.lower().endswith(u".wtbd"):
 
                 if os.path.exists(_file):
                     self.frame.do_open(_file)
@@ -1574,10 +1573,10 @@ class WhyteboardApp(wx.App):
         iterate over the current directory (where the backup files will be) and
         remove any that matches the random file extension
         """
-        if is_exe() and os.path.exists("wtbd-bckup.exe"):
-            os.remove("wtbd-bckup.exe")
+        if is_exe() and os.path.exists(u"wtbd-bckup.exe"):
+            os.remove(u"wtbd-bckup.exe")
         else:
-            path = self.frame.util.get_path()
+            path = get_path()
             for f in os.listdir(path):
                 if f.find(self.frame.util.backup_ext) is not - 1:
                     os.remove(os.path.join(path, f))

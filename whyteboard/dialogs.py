@@ -44,7 +44,8 @@ from lib.pubsub import pub
 import meta
 import tools
 from functions import (get_home_dir, bitmap_button, is_exe, extract_tar,
-                       fix_std_sizer_tab_order, format_bytes, version_is_greater)
+                       fix_std_sizer_tab_order, format_bytes, version_is_greater,
+                       get_image_path)
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -69,11 +70,9 @@ class History(wx.Dialog):
         #                        style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
         #self.slider.SetTickFreq(5, 1)
 
-        path = os.path.join(self.gui.util.get_path(), u"images", u"icons", u"")
-
-        self.playButton = bitmap_button(self, path + u"play.png", True, toggle=True)
-        self.pauseButton = bitmap_button(self, path + u"pause.png", True, toggle=True)
-        self.stopButton = bitmap_button(self, path + u"stop.png", True, toggle=True)
+        self.playButton = bitmap_button(self, get_image_path(u"icons", u"play"), True, toggle=True)
+        self.pauseButton = bitmap_button(self, get_image_path(u"icons", u"pause"), True, toggle=True)
+        self.stopButton = bitmap_button(self, get_image_path(u"icons", u"stop"), True, toggle=True)
         closeButton = wx.Button(self, wx.ID_CANCEL, _("&Close"))
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -371,7 +370,6 @@ class UpdateDialog(wx.Dialog):
             return
 
         if os.name == "nt" and is_exe():
-            # rename current exe, extract zip which contains whyteboard.exe
             os.rename(path[1], u"wtbd-bckup.exe")
             _zip = zipfile.ZipFile(tmp_file)
             _zip.extractall()
@@ -1009,26 +1007,25 @@ class ShapeViewer(wx.Dialog):
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        path = os.path.join(self.gui.util.get_path(), u"images", u"icons", "")
         icons = [u"top", u"up", u"down", u"bottom"]
         tips = [_("Move Shape To Top"), ("Move Shape Up"), ("Move Shape Down"), ("Move Shape To Bottom")]
 
         for icon, tip in zip(icons, tips):
-            btn = bitmap_button(self, path + u"move-%s.png" % icon, False)
+            btn = bitmap_button(self, get_image_path(u"icons", u"move-%s" % icon), False)
             btn.SetToolTipString(tip)
             btn.Bind(wx.EVT_BUTTON, getattr(self, u"on_%s" % icon))
             bsizer.Add(btn, 0, wx.RIGHT, 5)
             self.buttons.append(btn)
 
-        self.deleteBtn = bitmap_button(self, path + u"delete.png", False)
+        self.deleteBtn = bitmap_button(self, get_image_path(u"icons", u"delete"), False)
         self.deleteBtn.SetToolTipString(_("Delete Shape"))
         bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
-        
-        self.prev = bitmap_button(self, path + u"prev_sheet.png", False)
+
+        self.prev = bitmap_button(self, get_image_path(u"icons", u"prev_sheet"), False)
         self.prev.SetToolTipString(_("Previous Sheet"))
         nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
 
-        self.next = bitmap_button(self, path + u"next_sheet.png", False)
+        self.next = bitmap_button(self, get_image_path(u"icons", u"next_sheet"), False)
         self.next.SetToolTipString(_("Next Sheet"))
         nextprevsizer.Add(self.next)
 
@@ -1065,7 +1062,7 @@ class ShapeViewer(wx.Dialog):
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
-        self.prev.Bind(wx.EVT_BUTTON, self.on_prev)     
+        self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
         self.next.Bind(wx.EVT_BUTTON, self.on_next)
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_delete)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
@@ -1271,9 +1268,7 @@ class PDFCache(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        path = os.path.join(self.gui.util.get_path(), u"images", u"icons", u"delete.png")
-
-        self.deleteBtn = bitmap_button(self, path, False)
+        self.deleteBtn = bitmap_button(self, get_image_path(u"icons", "delete"), False)
         self.deleteBtn.SetToolTipString(_("Remove cached item"))
         bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
 

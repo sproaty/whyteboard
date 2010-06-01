@@ -421,17 +421,18 @@ class Utility(object):
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
         self.saved = True
+        self.saved_version = temp[0][4]
         self.gui.canvas.change_current_tool()
         self.gui.tabs.SetSelection(temp[0][3])
         self.gui.on_change_tab()
 
-        self.saved_version = temp[0][4]
-        self.font = wx.FFont(1, 1)
         try:
-            self.font.SetNativeFontInfoFromString(temp[0][5])
+            if temp[0][5]:
+                font = wx.FFont(1, 1)
+                font.SetNativeFontInfoFromString(temp[0][5])
+                self.font = font
         except IndexError:
             pass
-
 
         #  Don't save .wtbd file of future versions as current, older version
         if version_is_greater(self.saved_version, meta.version):
@@ -642,12 +643,6 @@ class Utility(object):
         return True
 
 
-    def get_path(self):
-        """Fetch the correct resource"""
-        if self.path[0] == "/usr/bin":
-            return u"/usr/lib/whyteboard"
-        return self.path[0].decode("utf-8")
-
 
     def set_clipboard(self, rect):
         """Sets the clipboard with a bitmap image data of a selection"""
@@ -662,10 +657,5 @@ class Utility(object):
         wx.TheClipboard.Open()
         wx.TheClipboard.SetData(bmp)
         wx.TheClipboard.Close()
-
-
-#----------------------------------------------------------------------
-
-
 
 #----------------------------------------------------------------------
