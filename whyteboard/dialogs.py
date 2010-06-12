@@ -1268,7 +1268,7 @@ class PDFCache(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.deleteBtn = bitmap_button(self, get_image_path(u"icons", "delete"), False)
+        self.deleteBtn = bitmap_button(self, get_image_path(u"icons", u"delete"), False)
         self.deleteBtn.SetToolTipString(_("Remove cached item"))
         bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
 

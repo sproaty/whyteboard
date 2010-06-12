@@ -1474,7 +1474,7 @@ class WhyteboardApp(wx.App):
         Load config file, apply translation, parse arguments and delete any
         temporary filse left over from an update
         """
-        wx.SetDefaultPyEncoding(u"utf-8")
+        wx.SetDefaultPyEncoding("utf-8")
         self.SetAppName(u"whyteboard")  # used to identify app in $HOME/
 
         parser = OptionParser(version="Whyteboard %s" % meta.version)
@@ -1541,7 +1541,7 @@ class WhyteboardApp(wx.App):
                 if os.path.exists(_file):
                     self.frame.do_open(_file)
             elif options.file:
-                    self.load_file(options.file)
+                self.load_file(options.file)
         except IndexError:
             pass
 

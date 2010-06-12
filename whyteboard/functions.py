@@ -35,6 +35,7 @@ from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 
 _ = wx.GetTranslation
 path = os.path.split(os.path.abspath(sys.argv[0]))
+
 #----------------------------------------------------------------------
 
 
@@ -146,8 +147,8 @@ def convert_quality(quality, im_location, _file, path):
     if quality == 'high':
         density = 250
         resample = 100
-    cmd = ('"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"'
-           % (im_location.encode("utf-8"), density, _file.encode("utf-8"), resample, path.encode("utf-8")))
+    cmd = (u'"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"'
+           % (im_location, density, _file, resample, path))
     return cmd
 
 
@@ -221,15 +222,15 @@ def format_bytes(total):
     Turn an amount of byte into readable KB/MB format
     http://www.5dollarwhitebox.org/drupal/node/84
     """
-    bytes = float(total)
-    if bytes >= 1048576:
-        megabytes = bytes / 1048576
+    _bytes = float(total)
+    if _bytes >= 1048576:
+        megabytes = _bytes / 1048576
         size = u'%.2fMB' % megabytes
-    elif bytes >= 1024:
-        kilobytes = bytes / 1024
+    elif _bytes >= 1024:
+        kilobytes = _bytes / 1024
         size = u'%.2fKB' % kilobytes
     else:
-        size = u'%.2fb' % bytes
+        size = u'%.2fb' % _bytes
     return size
 
 

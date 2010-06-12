@@ -39,7 +39,7 @@ import wx
 from lib.dragscroller import DragScroller
 from lib.pubsub import pub
 
-from functions import get_path, get_image_path
+from functions import get_image_path
 from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
                    Highlighter, Polygon, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT,
                    BOTTOM_RIGHT, CENTER_TOP, CENTER_RIGHT, CENTER_BOTTOM,
@@ -113,7 +113,7 @@ class Canvas(wx.ScrolledWindow):
         self.redo_list = []
         self.drawing = False
         self.prev_drag = (0, 0)
-        
+
         img = wx.Image(get_image_path(u"cursors", u"rotate"))
         self.rotate_cursor = wx.CursorFromImage(img)
         self.change_current_tool()

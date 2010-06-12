@@ -77,7 +77,7 @@ languages = ( (u"English", _("English"), wx.LANGUAGE_ENGLISH),
               (u"Galician", _("Galician"), wx.LANGUAGE_GALICIAN) )
 
 
-_langs = "'" + "', '".join(str(x[0]) for x in languages) + "'"
+_langs = "'%s'" % "', '".join(str(x[0]) for x in languages)
 
 config_scheme = """
 bmp_select_transparent = boolean(default=False)
