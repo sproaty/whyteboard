@@ -29,6 +29,7 @@ import wx
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
 ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
+ID_CLOSE_ALL = wx.NewId()         # close all sheets
 ID_COLOUR_GRID = wx.NewId()       # toggle colour grid
 ID_DESELECT = wx.NewId()          # deselect shape
 ID_EXPORT = wx.NewId()            # export sheet to image file

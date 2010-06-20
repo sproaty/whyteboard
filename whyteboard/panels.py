@@ -37,7 +37,7 @@ from lib.pubsub import pub
 
 import meta
 from event_ids import (ID_TRANSPARENT, ID_SWAP_COLOURS, ID_MOVE_UP, ID_MOVE_DOWN,
-                       ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM)
+                       ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_CLOSE_ALL)
 from functions import create_colour_bitmap, get_time, file_dialog, get_image_path
 
 _ = wx.GetTranslation
@@ -790,6 +790,7 @@ class Popup(wx.Menu):
         self.AppendSeparator()
         self.Append(wx.ID_NEW, _("&New Sheet") + u"\tCtrl-T")
         self.Append(wx.ID_CLOSE, _("Re&move Sheet") + u"\tCtrl-W")
+        self.Append(ID_CLOSE_ALL, _("Close All Sheets") + u"\tCtrl+Shift+W")
         self.AppendSeparator()
         self.Append(ID2, _("&Rename...") + u"\tF2")
         self.Append(ID3, _("&Export...") + u"\tCtrl+E")
@@ -798,6 +799,7 @@ class Popup(wx.Menu):
         self.Bind(wx.EVT_MENU, self.rename, id=ID2)
         self.Bind(wx.EVT_MENU, self.export, id=ID3)
         self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
+        self.Bind(wx.EVT_MENU, self.close_all, id=ID_CLOSE_ALL)
 
 
     def select_tab_method(self, extra):
@@ -812,6 +814,9 @@ class Popup(wx.Menu):
         self.gui.canvas = self.gui.tabs.GetPage(self.item)
         self.gui.on_close_tab()
 
+    def close_all(self, event):
+        self.gui.on_close_all_sheets()
+        
     def export(self, event):
         """
         Change canvas temporarily to 'trick' the gui into exporting the selected

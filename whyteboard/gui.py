@@ -46,7 +46,7 @@ from lib.pubsub import pub
 from lib.configobj import ConfigObj
 from lib.validate import Validator
 
-import lib.icon
+import lib.icon as icon
 import meta
 #import topic_tree
 from canvas import Canvas, CanvasDropTarget
@@ -56,21 +56,22 @@ from utility import Utility
 from functions import (get_home_dir, is_exe, get_clipboard, download_help_files,
                        file_dialog, get_path, get_image_path)
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
-                     ExceptionHook, ShapeViewer, Feedback, PDFCache)
+                     ExceptionHook, ShapeViewer, Feedback, PDFCacheDialog)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
 # phew!
 from event_ids import (ID_CLEAR_ALL, ID_CLEAR_ALL_SHEETS, ID_CLEAR_SHEETS,
-                       ID_COLOUR_GRID, ID_DESELECT, ID_EXPORT, ID_EXPORT_ALL,
-                       ID_EXPORT_PDF, ID_FEEDBACK, ID_EXPORT_PREF, ID_FULLSCREEN,
-                       ID_HISTORY, ID_IMPORT_IMAGE, ID_IMPORT_PDF, ID_IMPORT_PREF,
-                       ID_IMPORT_PS, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP,
-                       ID_MOVE_TO_BOTTOM, ID_NEW, ID_NEXT, ID_PASTE_NEW, ID_PDF_CACHE,
-                       ID_PREV, ID_RECENTLY_CLOSED, ID_RELOAD_PREF, ID_RENAME,
-                       ID_REPORT_BUG, ID_RESIZE, ID_SHAPE_VIEWER, ID_STATUSBAR,
-                       ID_SWAP_COLOURS, ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT,
-                       ID_TRANSLATE, ID_UNDO_SHEET, ID_UPDATE)
+                       ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT, ID_EXPORT,
+                       ID_EXPORT_ALL, ID_EXPORT_PDF, ID_FEEDBACK, ID_EXPORT_PREF,
+                       ID_FULLSCREEN, ID_HISTORY, ID_IMPORT_IMAGE, ID_IMPORT_PDF,
+                       ID_IMPORT_PREF, ID_IMPORT_PS, ID_MOVE_UP, ID_MOVE_DOWN,
+                       ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_NEW, ID_NEXT,
+                       ID_PASTE_NEW, ID_PDF_CACHE, ID_PREV, ID_RECENTLY_CLOSED,
+                       ID_RELOAD_PREF, ID_RENAME, ID_REPORT_BUG, ID_RESIZE,
+                       ID_SHAPE_VIEWER, ID_STATUSBAR, ID_SWAP_COLOURS,
+                       ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT, ID_TRANSLATE,
+                       ID_UNDO_SHEET, ID_UPDATE)
 
 
 _ = wx.GetTranslation  # Define a translation string
@@ -93,11 +94,10 @@ class GUI(wx.Frame):
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
         wx.Frame.__init__(self, parent, title=_("Untitled") + u" - %s" % self.title)
-        ico = lib.icon.whyteboard.getIcon()
-        self.SetIcon(ico)
+        self.SetIcon(icon.whyteboard.getIcon())
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
         self.util = Utility(self, config)
-        self.file_drop = CanvasDropTarget(self)
+        self.file_drop = CanvasDropTarget()
         self.SetDropTarget(self.file_drop)
         self.statusbar = self.CreateStatusBar()
         self.printData = wx.PrintData()
@@ -168,7 +168,7 @@ class GUI(wx.Frame):
 
         self.count = 5  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(50)
-        wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
+        #wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         self.canvas.update_thumb()
         self.make_menu()
         self.do_bindings()
@@ -267,6 +267,7 @@ class GUI(wx.Frame):
         shapes.AppendCheckItem(ID_TRANSPARENT, " " + _("T&ransparent"), _("Toggles the selected shape's transparency"))
 
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet") + "\tCtrl+W", _("Close the current sheet"))
+        sheets.Append(ID_CLOSE_ALL, _("&Close All Sheets") + "\tCtrl+Shift+W", _("Close every sheet"))
         sheets.Append(ID_RENAME, _("&Rename Sheet...") + "\tF2", _("Rename the current sheet"))
         sheets.Append(ID_RESIZE, _("Resi&ze Canvas...") + "\tCtrl+R", _("Change the canvas' size"))
         sheets.AppendSeparator()
@@ -323,22 +324,24 @@ class GUI(wx.Frame):
 
         topics = {'shape.add': self.shape_add,
                   'shape.selected': self.shape_selected,
+                  'shape_viewer.update': self.update_shape_viewer,
                   'canvas.capture_mouse': self.capture_mouse,
                   'canvas.release_mouse': self.release_mouse,
-                  'shape_viewer.update': self.update_shape_viewer}
+                  'canvas.paste_text': self.paste_text,
+                  'canvas.paste_image': self.paste_image,
+                  'gui.open_file': self.open_file}
         [pub.subscribe(value, key) for key, value in topics.items()]
 
         # idle event handlers
-        ids = [ID_DESELECT, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP,
+        ids = [ID_CLOSE_ALL, ID_DESELECT, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP,
                ID_MOVE_UP, ID_NEXT, ID_PREV, ID_RECENTLY_CLOSED, ID_SWAP_COLOURS,
                ID_TRANSPARENT, ID_UNDO_SHEET, wx.ID_CLOSE, wx.ID_COPY, wx.ID_DELETE,
                wx.ID_PASTE, wx.ID_REDO, wx.ID_UNDO]
         [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
 
+
         self.hotkeys = [x.hotkey for x in self.util.items]
         ac = []
-        # Need to bind each item's hotkey to trigger change tool, passing its ID
-        # (position + 1 in the list, basically)
         if os.name == "nt":
             for x, item in enumerate(self.util.items):
                 blah = lambda evt, y = x + 1: self.on_change_tool(evt, y)
@@ -352,15 +355,17 @@ class GUI(wx.Frame):
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
 
-        # "import" sub-menu's bindings
+        # Import sub-menu's bindings
         ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
         [self.Bind(wx.EVT_MENU, lambda evt, text=key: self.on_open(evt, text),
                     id=ids[key]) for key in ids]
+
 
         # menu bindings
         bindings = { ID_CLEAR_ALL: "clear_all",
                      ID_CLEAR_ALL_SHEETS: "clear_all_sheets",
                      ID_CLEAR_SHEETS: "clear_sheets",
+                     ID_CLOSE_ALL: "close_all_sheets",
                      ID_COLOUR_GRID: "colour_grid",
                      ID_DESELECT: "deselect_shape",
                      ID_EXPORT: "export",
@@ -502,11 +507,6 @@ class GUI(wx.Frame):
         if self.viewer:
             self.viewer.shapes = list(self.canvas.shapes)
             self.viewer.populate()
-            self.viewer.check_buttons()
-
-    def save_last_path(self, path):
-        self.util.config['last_opened_dir'] = os.path.dirname(path)
-        self.util.config.write()
 
     def on_save(self, event=None):
         """
@@ -517,7 +517,7 @@ class GUI(wx.Frame):
         else:
             self.util.save_file()
             self.util.saved = True
-            self.save_last_path(self.util.filename)
+            self.util.save_last_path(self.util.filename)
 
 
     def on_save_as(self, event=None):
@@ -555,8 +555,8 @@ class GUI(wx.Frame):
         """
         wildcard = meta.dialog_wildcard
         if text == u"img":
-            wildcard = wildcard[wildcard.find(_("Image Files")) :
-                                wildcard.find(_('Whyteboard files')) ]  # image to page
+            wildcard = wildcard[wildcard.find(_(u"Image Files")) :
+                                wildcard.find(_(u'Whyteboard files')) ]  # image to page
         elif text:
             wildcard = wildcard[wildcard.find(u"PDF/PS/SVG") :
                                 wildcard.find(u"*.SVG|")]  # page descriptions
@@ -565,12 +565,15 @@ class GUI(wx.Frame):
         if self.util.config.get('last_opened_dir'):
             _dir = self.util.config['last_opened_dir']
 
-        name = file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir)
-        if name:
-            if name.lower().endswith(u".wtbd"):
-                self.util.prompt_for_save(self.do_open, args=[name])
+        self.open_file(file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir))
+
+
+    def open_file(self, filename):
+        if filename:
+            if filename.lower().endswith(u".wtbd"):
+                self.util.prompt_for_save(self.do_open, args=[filename])
             else:
-                self.do_open(name)
+                self.do_open(filename)
 
 
     def do_open(self, path):
@@ -581,7 +584,7 @@ class GUI(wx.Frame):
         self.filehistory.AddFileToHistory(path)
         self.filehistory.Save(self.config)
         self.config.Flush()
-        self.save_last_path(path)
+        self.util.save_last_path(path)
 
         if path.lower().endswith(u".wtbd"):
             self.util.load_wtbd(path)
@@ -821,26 +824,17 @@ class GUI(wx.Frame):
     def on_close_tab(self, event=None):
         """
         Closes the current tab (if there are any to close).
-        Adds the 3 lists from the Whyteboard to a list inside the undo tab list.
         """
-        if not self.tab_count - 1:  # must have at least one sheet open
+        if not self.tab_count - 1:
             return
-        if len(self.closed_tabs) == self.util.config['undo_sheets']:
-            del self.closed_tabs[0]
 
+        self.tab_count -= 1
         self.notes.remove_tab(self.current_tab)
         self.thumbs.remove(self.current_tab)
 
         for x in self.canvas.medias:
             x.remove_panel()
-
-        canvas = self.canvas
-        item = [canvas.shapes, canvas.undo_list, canvas.redo_list, canvas.area,
-                self.tabs.GetPageText(self.current_tab), canvas.medias,
-                canvas.GetViewStart()[0], canvas.GetViewStart()[1]]
-
-        self.closed_tabs.append(item)
-        self.tab_count -= 1
+        self.create_sheet_undo_point(self.canvas, self.current_tab)
 
         if os.name == "posix":
             self.tabs.RemovePage(self.current_tab)
@@ -848,7 +842,40 @@ class GUI(wx.Frame):
             self.tabs.DeletePage(self.current_tab)
 
         self.on_change_tab()  # updates self.canvas
+
+
+    def create_sheet_undo_point(self, canvas, tab_number):
+        """
+        Creates an undo entry for a tab that's being closed
+        """
+        if len(self.closed_tabs) == self.util.config['undo_sheets']:
+            del self.closed_tabs[0]
+
+        item = [canvas.shapes, canvas.undo_list, canvas.redo_list, canvas.area,
+                self.tabs.GetPageText(tab_number), canvas.medias,
+                canvas.GetViewStart()[0], canvas.GetViewStart()[1]]
+
+        self.closed_tabs.append(item)
         self.make_closed_tabs_menu()
+
+
+    def on_close_all_sheets(self, event=None):
+        """
+        Closes every sheet, creating undo points for each one.
+        """
+        if not self.tab_count - 1:  # must have at least one sheet open
+            return
+
+        for x in reversed(range(self.tab_count)):
+            self.create_sheet_undo_point(self.tabs.GetPage(x), x)
+
+        self.tabs.DeleteAllPages()
+        self.thumbs.remove_all()
+        self.notes.remove_all()
+        self.tab_count = 0
+        self.tab_total = 0
+
+        self.on_new_tab()
 
 
     def on_undo_tab(self, event=None, tab=None):
@@ -954,7 +981,7 @@ class GUI(wx.Frame):
             elif (_id == ID_NEXT and self.tab_count > 1 and
                   self.current_tab + 1 < self.tab_count):
                 do = True
-            elif _id == wx.ID_CLOSE and self.tab_count > 1:
+            elif _id in [wx.ID_CLOSE, ID_CLOSE_ALL] and self.tab_count > 1:
                 do = True
             elif _id in [ID_UNDO_SHEET, ID_RECENTLY_CLOSED] and self.closed_tabs:
                 do = True
@@ -1004,6 +1031,25 @@ class GUI(wx.Frame):
         self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)
 
 
+    def paste_image(self, bitmap, x, y, ignore=False):
+        shape = Image(self.canvas, bitmap, None)
+        shape.left_down(x, y)
+        wx.Yield()
+        if ignore:
+            self.canvas.resize((bitmap.GetWidth(), bitmap.GetHeight()))
+        self.canvas.redraw_all(True)
+
+
+    def paste_text(self, text, x, y):
+        self.canvas.shape = Text(self.canvas, self.util.colour, 1)
+        self.canvas.shape.text = text
+        self.canvas.shape.left_down(x, y)
+        self.canvas.shape.left_up(x, y)
+        self.canvas.text = None
+        self.canvas.change_current_tool()
+        self.canvas.redraw_all(True)
+
+
     def on_paste(self, event=None, ignore=False):
         """
         Grabs the image from the clipboard and places it on the panel
@@ -1022,27 +1068,13 @@ class GUI(wx.Frame):
             x, y = self.canvas.CalcUnscrolledPosition(x, y)
 
         if isinstance(data, wx.TextDataObject):
-            shape = Text(self.canvas, self.util.colour, 1)
-            shape.text = data.GetText()
-
-            self.canvas.shape = shape
-            shape.left_down(x, y)
-            shape.left_up(x, y)
-            self.canvas.text = None
-            self.canvas.change_current_tool()
-            self.canvas.redraw_all(True)
+            self.paste_text(data.GetText(), x, y)
         else:
-            bmp = data.GetBitmap()
-            shape = Image(self.canvas, bmp, None)
-            shape.left_down(x, y)
-            wx.Yield()
-            self.canvas.redraw_all(True)
-            if ignore:
-                self.canvas.resize((bmp.GetWidth(), bmp.GetHeight()))
+            self.paste_image(data.GetBitmap(), x, y, ignore)
 
 
     def on_paste_new(self, event):
-        """ Pastes the image into a new tab """
+        """ Pastes the text/image into a new tab """
         self.on_new_tab()
         self.on_paste(ignore=True)
 
@@ -1229,11 +1261,7 @@ class GUI(wx.Frame):
             self.filehistory.RemoveFileFromHistory(num)
             return
         self.filehistory.AddFileToHistory(path)  # move up the list
-
-        if path.lower().endswith(u".wtbd"):
-            self.util.prompt_for_save(self.do_open, args=[path])
-        else:
-            self.do_open(path)
+        self.open_file(path)
 
 
     def on_exit(self, event=None):
@@ -1399,7 +1427,7 @@ class GUI(wx.Frame):
         self.show_dialog(History(self))
 
     def on_pdf_cache(self, event=None):
-        self.show_dialog(PDFCache(self))
+        self.show_dialog(PDFCacheDialog(self, self.util.library))
 
     def on_feedback(self, event):
         self.show_dialog(Feedback(self), False)
@@ -1408,12 +1436,11 @@ class GUI(wx.Frame):
     def find_help(self):
         """Locate the help files, update self.help var"""
         _file = os.path.join(get_path(), u'whyteboard-help', u'whyteboard.hhp')
+        self.help = None
 
         if os.path.exists(_file):
             self.help = HtmlHelpController()
             self.help.AddBook(_file)
-        else:
-            self.help = None
 
 
     def on_help(self, event=None, page=None):
@@ -1448,19 +1475,16 @@ class GUI(wx.Frame):
         inf = wx.AboutDialogInfo()
         inf.Name = u"Whyteboard"
         inf.Version = meta.version
-        inf.Copyright = u"(C) 2009 Steven Sproat"
+        inf.Copyright = u"(C) 2010 Steven Sproat"
         inf.Description = _("A simple whiteboard and PDF annotator")
         inf.Developers = [u"Steven Sproat <sproaty@gmail.com>"]
         inf.Translators = meta.translators
-        x = u"http://www.launchpad.net/whyteboard"
-        inf.WebSite = (x, x)
-
+        inf.WebSite = (u"http://www.whyteboard.org", u"http://www.whyteboard.org")
+        inf.Licence = u"GPL 3"
         license = os.path.join(get_path(), u"LICENSE.txt")
         if os.path.exists(license):
             with open(license) as f:
                 inf.Licence = f.read()
-        else:
-            inf.Licence = u"GPL 3"
 
         wx.AboutBox(inf)
 

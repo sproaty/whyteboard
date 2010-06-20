@@ -63,6 +63,7 @@ from __future__ import with_statement
 import os
 import sys
 import webbrowser
+import poppler
 import time
 import zipfile
 import wx
@@ -119,8 +120,9 @@ class Utility(object):
         self.backup_ext = u".blah5bl8ah123bla6h"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
-        self.library = os.path.join(get_home_dir(), u"library.known")
+        self.library = PDFCache(u"library.known")
         self.config = config
+        self.pdf = False
 
         tools.HANDLE_SIZE = self.config['handle_size']
         pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
@@ -163,73 +165,78 @@ class Utility(object):
                 names.append(self.gui.tabs.GetPageText(x))
 
 
-            if temp:
-                for x in temp:
-                    for shape in temp[x]:
-                        if isinstance(shape, tools.Note):
-                            tree_ids.append(shape.tree_id)
-                            shape.tree_id = None
-                        try:
-                            shape.save()  # need to unlink unpickleable items
-                        except Exception:
-                            break
+            if not temp:
+                self.gui.dialog.Destroy()  # remove progress bar
+                return
 
-                version = meta.version
-                if not self.update_version:
-                    version = self.saved_version
-
-                # Now the unpickleable objects are gone, build the save file
-                tab = self.gui.tabs.GetSelection()
-                font = None
-                if self.font:
-                    font = self.font.GetNativeFontInfoDesc()
-                _file = { 0: [self.colour, self.thickness, self.tool, tab,
-                              version, font],
-                          1: temp,
-                          2: None, # was self.to_convert, but wasn't used.
-                          3: names,
-                          4: canvas_sizes,
-                          5: medias }
-
-                with open("save.data", 'wb') as f:
+            for x in temp:
+                for shape in temp[x]:
+                    if isinstance(shape, tools.Note):
+                        tree_ids.append(shape.tree_id)
+                        shape.tree_id = None
                     try:
-                        pickle.dump(_file, f)
-                        self.gui.SetTitle(u"%s - %s" %
-                                          (os.path.basename(self.filename), self.gui.title))
-                    except pickle.PickleError:
-                        wx.MessageBox(_("Error saving file data"), u"Whyteboard")
-                        self.saved = False
-                        self.filename = None
+                        shape.save()  # need to unlink unpickleable items
+                    except Exception:
+                        break
 
-                _zip.write("save.data")
-                _zip.close()
-                os.remove("save.data")
+            version = meta.version
+            if not self.update_version:
+                version = self.saved_version
 
-                if os.path.exists(self.filename):
-                    os.remove(self.filename)
-                shutil.move('whyteboard_temp_new.wtbd', self.filename)
+            # Now the unpickleable objects are gone, build the save file
+            tab = self.gui.tabs.GetSelection()
+            font = None
+            if self.font:
+                font = self.font.GetNativeFontInfoDesc()
+            _file = { 0: [self.colour, self.thickness, self.tool, tab,
+                          version, font],
+                      1: temp,
+                      2: None, # was self.to_convert, but wasn't used.
+                      3: names,
+                      4: canvas_sizes,
+                      5: medias }
 
-                self.zip = zipfile.ZipFile(self.filename, "r")
-                self.is_zipped = True
-                self.save_time = time.time()
+            with open("save.data", 'wb') as f:
+                try:
+                    pickle.dump(_file, f)
+                    self.gui.SetTitle(u"%s - %s" %
+                                      (os.path.basename(self.filename), self.gui.title))
+                except pickle.PickleError:
+                    wx.MessageBox(_("Error saving file data"), u"Whyteboard")
+                    self.saved = False
+                    self.filename = None
 
-                # Fix bug in Windows where the current shapes get reset above
-                count = 0
-                for x in temp:
-                    canvas = self.gui.tabs.GetPage(x)
-                    for shape in temp[x]:
-                        shape.canvas = canvas
-                        if isinstance(shape, tools.Note):
-                            shape.load(False)
-                            shape.tree_id = tree_ids[count]
-                            count += 1
-                        else:
-                            shape.load()
-                    for m in canvas.medias:
-                        m.canvas = canvas
-                        m.load()
+            _zip.write("save.data")
+            _zip.close()
+            os.remove("save.data")
+
+            if os.path.exists(self.filename):
+                os.remove(self.filename)
+            shutil.move('whyteboard_temp_new.wtbd', self.filename)
+
+            self.zip = zipfile.ZipFile(self.filename, "r")
+            self.is_zipped = True
+            self.save_time = time.time()
+
+            # Fix bug in Windows where the current shapes get reset above
+            count = 0
+            for x in temp:
+                canvas = self.gui.tabs.GetPage(x)
+                for shape in temp[x]:
+                    shape.canvas = canvas
+                    if isinstance(shape, tools.Note):
+                        shape.load(False)
+                        shape.tree_id = tree_ids[count]
+                        count += 1
+                    else:
+                        shape.load()
+                for m in canvas.medias:
+                    m.canvas = canvas
+                    m.load()
 
                 self.zip.close()
+                self.saved = True
+                self.save_last_path(self.filename)
 
             self.gui.dialog.Destroy()  # remove progress bar
 
@@ -439,37 +446,9 @@ class Utility(object):
             self.update_version = False
 
 
-
-    def library_create(self):
-        if not os.path.exists(self.library):
-            with open(self.library, "w") as f:
-                f.write(u"")
-                pickle.dump({}, f)
-
-
-    def library_lookup(self, _file, quality):
-        """Check whether a file is inside our known file library"""
-        self.library_create()
-        with open(self.library) as f:
-            files = pickle.load(f)
-
-        for x, key in files.items():
-            if files[x]['file'] == _file and files[x]['quality'] == quality:
-                return files[x]['images']
-        return False
-
-
-    def library_write(self, location, images, quality):
-        """Adds a newly converted file to the library"""
-        self.library_create()
-        with open(self.library) as f:
-            files = pickle.load(f)
-
-        files[len(files)] = {'file': location, 'images': images,
-                             'quality': quality, 'date': time.asctime()}
-
-        with open(self.library, "w") as f:
-            pickle.dump(files, f)
+    def save_last_path(self, path):
+        self.config['last_opened_dir'] = os.path.dirname(path)
+        self.config.write()
 
 
     def convert(self, _file=None):
@@ -484,52 +463,60 @@ class Utility(object):
         An attempt at randomising the temp. file name is made using alphanumeric
         characters to help minimise conflict.
         """
-        if not self.im_location:
-            self.prompt_for_im()
-
-        if not self.im_location:  # above will have changed this if IM exists
-            return
-
         if _file is None:
             _file = self.temp_file
-
-        quality = self.config['convert_quality']
-        cached = self.library_lookup(_file, quality)
-        if cached:
-            self.display_converted(_file, cached)
-        else:
-            path = get_home_dir(u"wtbd-tmp")  # directory to store the images
-            tmp_file = make_filename()
-            before = os.walk(path).next()[2]  # file count before convert
-            full_path = path + tmp_file + u".png"
-
-            cmd = convert_quality(quality, self.im_location, _file, full_path)
-            self.gui.convert_dialog(cmd)  # show progress bar, kick off convert
-
-            if self.gui.convert_cancelled:
-                return
-            after = os.walk(path).next()[2]
-            count = len(after) - len(before)
-            images = []
-            ignore = False
-
-            if not count:
-                wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
-                wx.BeginBusyCursor()
-                webbrowser.open_new_tab(u"http://pages.cs.wisc.edu/~ghost/")
-                wx.CallAfter(wx.EndBusyCursor)
-                return
-
-            if count == 1:
-                images.append(path + tmp_file + u".png")
-                ignore = True
-            else:
-                for x in range(count):
-                    # store the temp file path for this file in the dictionary
-                    images.append(u"%s%s-%i.png" % (path, tmp_file, x))
-
-            self.display_converted(_file, images, ignore)
-            self.library_write(_file, images, quality)
+        path = '/' + os.path.abspath(_file).replace('\\', '/')
+        self.document = poppler.document_new_from_file("file://" + path, None)
+        self.n_pages = self.document.get_n_pages()
+        self.gui.canvas.current_page = self.document.get_page(0)
+        self.gui.canvas.resize_if_large_image(self.gui.canvas.current_page.get_size())
+        self.pdf = True
+#        if not self.im_location:
+#            self.prompt_for_im()
+#
+#        if not self.im_location:  # above will have changed this if IM exists
+#            return
+#
+#        if _file is None:
+#            _file = self.temp_file
+#
+#        quality = self.config['convert_quality']
+#        cached = self.library.lookup(_file, quality)
+#        if cached:
+#            self.display_converted(_file, cached)
+#        else:
+#            path = get_home_dir(u"wtbd-tmp")  # directory to store the images
+#            tmp_file = make_filename()
+#            before = os.walk(path).next()[2]  # file count before convert
+#            full_path = path + tmp_file + u".png"
+#
+#            cmd = convert_quality(quality, self.im_location, _file, full_path)
+#            self.gui.convert_dialog(cmd)  # show progress bar, kick off convert
+#
+#            if self.gui.convert_cancelled:
+#                return
+#            after = os.walk(path).next()[2]
+#            count = len(after) - len(before)
+#            images = []
+#            ignore = False
+#
+#            if not count:
+#                wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
+#                wx.BeginBusyCursor()
+#                webbrowser.open_new_tab(u"http://pages.cs.wisc.edu/~ghost/")
+#                wx.CallAfter(wx.EndBusyCursor)
+#                return
+#
+#            if count == 1:
+#                images.append(path + tmp_file + u".png")
+#                ignore = True
+#            else:
+#                for x in range(count):
+#                    # store the temp file path for this file in the dictionary
+#                    images.append(u"%s%s-%i.png" % (path, tmp_file, x))
+#
+#            self.display_converted(_file, images, ignore)
+#            self.library.write(_file, images, quality)
 
         # Just in case it's a file with many pages
         self.gui.dialog = ProgressDialog(self.gui, _("Loading..."))
@@ -659,3 +646,44 @@ class Utility(object):
         wx.TheClipboard.Close()
 
 #----------------------------------------------------------------------
+
+class PDFCache(object):
+    """
+    Represents a cache of any converted PDF files
+    """
+    def __init__(self, filename):
+        self.path = os.path.join(get_home_dir(), filename)
+
+        if not os.path.exists(self.path):
+            with open(self.path, "w") as f:
+                f.write(u"")
+                pickle.dump({}, f)
+
+
+    def lookup(self, _file, quality):
+        """Check whether a file is inside our known file library"""
+        with open(self.path) as f:
+            files = pickle.load(f)
+
+        for x, key in files.items():
+            if files[x]['file'] == _file and files[x]['quality'] == quality:
+                return files[x]['images']
+        return False
+
+
+    def write(self, location, images, quality):
+        """Adds a newly converted file to the library"""
+        files = self.entries()
+        files[len(files)] = {'file': location, 'images': images,
+                             'quality': quality, 'date': time.asctime()}
+        self.write_dict(files)
+
+
+    def write_dict(self, files):
+        with open(self.path, "w") as f:
+            pickle.dump(files, f)
+
+
+    def entries(self):
+        with open(self.path) as f:
+            return pickle.load(f)

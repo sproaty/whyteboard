@@ -125,11 +125,13 @@ translators = [
      u'Fabian Riechsteiner https://launchpad.net/~ruffy91-gmail (German)',
      u'Federico Vera https://launchpad.net/~fedevera (Spanish)',
      u'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',
+     u'"fgp" https://launchpad.net/~komakino (Spanish)',
      u'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
      u'Hiroshi Tagawa https://launchpad.net/~kuponuga (Japanese)',
      u'Javier Acuña Ditzel https://launchpad.net/~santoposmoderno (Spanish)',
      u'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
      u'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
+     u'"kentxchang" https://launchpad.net/~kentxchang (Traditional Chinese)',
      u'"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
      u'"Lauren" https://launchpad.net/~lewakefi (French)',
      u'Lorenzo Baracchi https://launchpad.net/~baracchi-lorenzo (Italian)',
@@ -156,7 +158,7 @@ translators = [
      u'Tobias Baldauf https://launchpad.net/~technopagan (German)',
      u'"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
      u'"ucnj" https://launchpad.net/~ucn (German)',
-     u'"Vonlist" https://launchpad.net/~hengartt (Spanish)',
+     u'"VonlisT" https://launchpad.net/~hengartt (Spanish)',
      u'Will https://launchpad.net/~willbickerstaff (UK English)',
      u'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']
 

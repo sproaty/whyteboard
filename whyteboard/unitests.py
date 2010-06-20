@@ -26,20 +26,22 @@ the GUI event handling code (example: undo/redo closing tabs)
 
 import os
 import wx
+import time
 
 import fakewidgets
 import gui
 import meta
 import whyteboard.tools
+import lib.mock as mock
 
-from canvas import RIGHT, DIAGONAL, BOTTOM
-from fakewidgets.core import Bitmap, Event, Colour
+from canvas import Canvas, RIGHT, DIAGONAL, BOTTOM
+from fakewidgets.core import Frame, Bitmap, Event, Colour
 from functions import (get_version_int, version_is_greater, get_wx_image_type,
                        get_time, get_image_path, format_bytes, convert_quality)
 
 from lib.configobj import ConfigObj
-from lib.validate import Validator
 from lib.pubsub import pub
+from lib.validate import Validator
 
 
 def make_shapes(canvas):
@@ -54,17 +56,19 @@ def make_shapes(canvas):
         item.left_up(10, 15)
 
 
+def make_config():
+    config = ConfigObj(configspec=meta.config_scheme.split("\n"))
+    config.validate(Validator())
+    return config
+
+
 class SimpleApp(fakewidgets.core.PySimpleApp):
     """
     Create a GUI instance and create a new canvas reference
     """
     def __init__(self):
         fakewidgets.core.PySimpleApp.__init__(self)
-
-        config = ConfigObj(configspec=meta.config_scheme.split("\n"))
-        config.validate(Validator())
-
-        g = gui.GUI(None, config)  # mock the GUI with fake wxPython classes
+        g = gui.GUI(None, make_config())  # mock the GUI with fake wxPython classes
         self.canvas = g.canvas
 
 #----------------------------------------------------------------------
@@ -96,8 +100,8 @@ class TestCanvas:
         shape = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
         self.canvas.add_shape(shape)
         assert len(self.canvas.shapes) == 1
-        assert len(self.canvas.redo_list) == 0, "Redo list should be empty"
-        assert not self.canvas.gui.util.saved, "Program should be in 'unsaved' state"
+        assert len(self.canvas.redo_list) == 0
+        #assert not self.canvas.gui.util.saved
 
 
     def test_select_tool(self):
@@ -302,39 +306,65 @@ class TestGuiFunctionality:
         self.canvas = SimpleApp().canvas
         self.gui = self.canvas.gui
         make_shapes(self.canvas)
+
+    def make_sheets(self):
         shapes = list(self.canvas.shapes)
 
         for x in range(4):
             self.gui.on_new_tab()
             self.gui.canvas.shapes = list(shapes)
 
-        assert len(self.gui.tabs.pages) == 5, len(self.gui.tabs.pages)
+        assert len(self.gui.tabs.pages) == 5
 
 
     def test_close_sheet(self):
         """
         A sheet closes correctly
         """
+        self.make_sheets()
         x = len(self.gui.tabs.pages)
         self.gui.on_close_tab()
         assert len(self.gui.tabs.pages) == x - 1
         self.gui.on_close_tab()
         assert len(self.gui.tabs.pages) == x - 2
 
+    def test_new_sheet(self):
+        """Adding new sheet"""
+        canvas = self.gui.canvas
+        self.gui.on_new_tab()
+        self.gui.on_change_tab()
+        #assert self.gui.current_tab == 1
+        #assert self.gui.canvas != canvas
+
 
     def test_changing_sheets(self):
         """Changing a sheet"""
-        evt = Event()
-        evt.selection = 2
-        self.gui.on_change_tab(evt)
-        #assert self.gui.current_tab == 2, self.gui.current_tab
-        #evt.selection = 4
-        #self.gui.on_change_tab(evt)
-        #assert self.gui.current_tab == 4
+        self.make_sheets()
+        before = self.gui.current_tab
+        self.gui.tabs.SetSelection(2)   # this would usually fire an event
+        self.gui.on_change_tab() # so call it manually
+        assert self.gui.current_tab != before
+
+        before = self.gui.current_tab
+        self.gui.tabs.SetSelection(2)
+        self.gui.on_change_tab()
+        assert self.gui.current_tab == before
+
+        self.gui.tabs.SetSelection(1)
+        self.gui.on_change_tab()
+        assert self.gui.current_tab == 0
+        #print self.gui.thumbs.text[0].GetFontWeight(), self.gui.thumbs.text[1].GetFontWeight(), self.gui.thumbs.text[2].GetFontWeight()
+        #assert self.gui.thumbs.text[2].GetFontWeight() == wx.FONTWEIGHT_NORMAL
+
+        #assert self.gui.thumbs.text[2].GetFontWeight() == wx.FONTWEIGHT_BOLD
+        #assert self.gui.thumbs.text[1].GetFontWeight() == wx.FONTWEIGHT_NORMAL
+         #assert self.gui.current_tab == 2, self.gui.current_tab
+
 
 
     def test_undo_closed_sheets(self):
         """Undoing a closed sheet restores its data"""
+        self.make_sheets()
         assert self.gui.tab_count == 5
         shapes = self.gui.canvas.shapes
         self.gui.on_close_tab()
@@ -348,21 +378,23 @@ class TestGuiFunctionality:
 
     def test_hotkey(self):
         """Hotkey triggers tool change"""
-        self.hotkey(115, whyteboard.tools.Select)  # 's'
-        self.hotkey(112, whyteboard.tools.Pen)  # 'p'
-        self.hotkey(98, whyteboard.tools.BitmapSelect)  # 'b'
-        self.hotkey(98, whyteboard.tools.BitmapSelect), "current tool shouldn't have changed"
+        if os.name == "posix":
+            self.hotkey(115, whyteboard.tools.Select)  # 's'
+            self.hotkey(112, whyteboard.tools.Pen)  # 'p'
+            self.hotkey(98, whyteboard.tools.BitmapSelect)  # 'b'
+            self.hotkey(98, whyteboard.tools.BitmapSelect), "current tool shouldn't have changed"
 
 
     def hotkey(self, code, expected):
         evt = Event()
         evt.GetKeyCode = lambda code=code: code
         self.gui.hotkey(evt)
-        assert isinstance(self.gui.canvas.shape, expected)
+        assert isinstance(self.gui.canvas.shape, expected), (code, self.gui.canvas.shape, expected)
 
 
     def test_clear_all(self):
         """Clearing all sheets' shapes"""
+        self.make_sheets()
         for x in range(self.gui.tab_count):
             canvas = self.gui.tabs.GetPage(x)
             canvas.clear()
@@ -376,6 +408,7 @@ class TestGuiFunctionality:
 
     def test_clear_all_keep_images(self):
         """Clearing all sheets' shapes while keeping images"""
+        self.make_sheets()
         shapes = list(self.canvas.shapes)
 
         for x in range(self.gui.tab_count):
@@ -428,10 +461,9 @@ class TestGuiFunctionality:
 #----------------------------------------------------------------------
 
 
-class TestShapes:
+class TestDialogs():
     """
-    We want to test shape's functionality, if they respond to their hit tests
-    correctly and boundaries.
+    Again, test code functionality and not too much the GUI itself.
     """
     def __init__(self):
         self.canvas = None
@@ -440,6 +472,30 @@ class TestShapes:
     def setup(self):
         self.canvas = SimpleApp().canvas
         self.gui = self.canvas.gui
+        self.rect, self.circle, self.text = None, None, None
+
+    def test_save(self):
+        rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
+        assert rect.canvas not in [False, None]
+        assert rect.brush not in [False, None]
+        rect.save()
+        assert rect.canvas is None
+        assert rect.brush is None
+
+
+#----------------------------------------------------------------------
+
+
+class TestShapes:
+    """
+    We want to test shape's functionality, if they respond to their hit tests
+    correctly and boundaries.
+    """
+    def __init__(self):
+        self.canvas = None
+
+    def setup(self):
+        self.canvas = mock.Mock()#SimpleApp().canvas
         self.rect, self.circle, self.text = None, None, None
 
     def test_save(self):
@@ -592,6 +648,7 @@ class TestShapes:
 
     def test_select_tool_click_selects(self):
         """Select Tool left click selects a shape"""
+        self.canvas = SimpleApp().canvas
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
         self.make_tools()
         assert len(self.canvas.shapes) == 3
@@ -602,6 +659,7 @@ class TestShapes:
 
     def test_select_tool_click_deselects(self):
         """Select Tool left click de-selects a shape when no shape is 'hit'"""
+        self.canvas = SimpleApp().canvas
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
         self.make_tools()
         select.left_down(250, 250)
@@ -613,6 +671,7 @@ class TestShapes:
 
     def test_select_tool_click_selects_shape_overlapping(self):
         """Select Tool left click selects the topmost shape when shapes overlap"""
+        self.canvas = SimpleApp().canvas
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
         self.make_tools()
         select.left_down(250, 250)
@@ -680,15 +739,12 @@ class TestFunctions:
         """
         The correct image paths are returned based on directory/file names
         """
-        val = u"/blah"
-        if os.name == "win32":
-            val = u"C:\blah"
-        whyteboard.functions.get_path = lambda: val
-
-        if os.name == "win32":
-            assert get_image_path(u"icons", u"test") == u"C:\blah\images\icons\test.png"
+        if os.name == "nt":
+            whyteboard.functions.get_path = lambda: u"C:\ssss"
+            assert get_image_path(u"icons", u"test") == u'C:\ssss\images\icons\\test.png'
         else:
-            assert get_image_path(u"icons", u"test") == u"/blah/images/icons/test.png"
+            whyteboard.functions.get_path = lambda: u'/blah'
+            assert get_image_path(u"icons", u"test") == u'/blah/images/icons/test.png'
 
 
     def test_format_bytes(self):

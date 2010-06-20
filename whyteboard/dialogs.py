@@ -222,7 +222,6 @@ class History(wx.Dialog):
 
 #----------------------------------------------------------------------
 
-
 class ProgressDialog(wx.Dialog):
     """
     Shows a Progres Gauge while an operation is taking place. May be cancellable
@@ -939,7 +938,7 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
         return os.linesep.join(info)
 
     def GetProgramName(self):
-        return "Whyteboard %s" % meta.version
+        return u"Whyteboard %s" % meta.version
 
 
     def Send(self):
@@ -948,7 +947,7 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
                             'message': self._panel.err_msg,
                             'desc': self._panel.action.GetValue(),
                             'email': self._panel.email.GetValue()})
-        f = urlopen("http://www.whyteboard.org/bug_submit.php", params)
+        f = urlopen(u"http://www.whyteboard.org/bug_submit.php", params)
 
         self.gui.util.prompt_for_save(self.gui.Destroy)
 
@@ -998,39 +997,32 @@ class ShapeViewer(wx.Dialog):
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
                            wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
         self.gui = gui
+        self.count = 0
+        #self.SetExtraStyle(wx.WS_EX_PROCESS_IDLE)
         self.shapes = list(self.gui.canvas.shapes)
         self.SetSizeHints(550, 400)
-        self.buttons = []  # move up/down/top/bottom buttons
 
         label = wx.StaticText(self, label=_("Shapes at the top of the list are drawn over shapes at the bottom"))
         sizer = wx.BoxSizer(wx.VERTICAL)
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        icons = [u"top", u"up", u"down", u"bottom"]
-        tips = [_("Move Shape To Top"), ("Move Shape Up"), ("Move Shape Down"), ("Move Shape To Bottom")]
-
-        for icon, tip in zip(icons, tips):
-            btn = bitmap_button(self, get_image_path(u"icons", u"move-%s" % icon), False)
-            btn.SetToolTipString(tip)
-            btn.Bind(wx.EVT_BUTTON, getattr(self, u"on_%s" % icon))
-            bsizer.Add(btn, 0, wx.RIGHT, 5)
-            self.buttons.append(btn)
-
-        self.deleteBtn = bitmap_button(self, get_image_path(u"icons", u"delete"), False)
-        self.deleteBtn.SetToolTipString(_("Delete Shape"))
-        bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
-
-        self.prev = bitmap_button(self, get_image_path(u"icons", u"prev_sheet"), False)
-        self.prev.SetToolTipString(_("Previous Sheet"))
-        nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
-
-        self.next = bitmap_button(self, get_image_path(u"icons", u"next_sheet"), False)
-        self.next.SetToolTipString(_("Next Sheet"))
-        nextprevsizer.Add(self.next)
+        self.moveTop = self.make_button(u"move-top", _("Move Shape To Top"))
+        self.moveBottom = self.make_button(u"move-bottom", _("Move Shape To Bottom"))
+        self.moveUp = self.make_button(u"move-up", _("Move Shape Up"))
+        self.moveDown = self.make_button(u"move-down", _("Move Shape Down"))
+        self.deleteBtn = self.make_button(u"delete", _("Delete Shape"))
+        self.prev = self.make_button(u"prev_sheet", _("Previous Sheet"))
+        self.next = self.make_button(u"next_sheet", _("Next Sheet"))
 
         self.pages = wx.ComboBox(self, size=(125, 25), style=wx.CB_READONLY)
         self.list = WhyteboardList(self)
+
+        bsizer.AddMany([(self.moveTop, 0, wx.RIGHT, 5), (self.moveBottom, 0, wx.RIGHT, 5),
+                        (self.moveUp, 0, wx.RIGHT, 5), (self.moveDown, 0, wx.RIGHT, 5),
+                        (self.deleteBtn, 0, wx.RIGHT, 5)])
+        nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
+        nextprevsizer.Add(self.next)
 
         bsizer.Add((1, 1), 1, wx.EXPAND)  # align to the right
         bsizer.Add(nextprevsizer, 0, wx.RIGHT, 10)
@@ -1056,21 +1048,34 @@ class ShapeViewer(wx.Dialog):
         sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
         self.SetSizer(sizer)
         self.populate()
-        self.check_buttons()
         self.Fit()
 
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         applyButton.Bind(wx.EVT_BUTTON, self.apply)
+        self.moveUp.Bind(wx.EVT_BUTTON, self.on_up)
+        self.moveDown.Bind(wx.EVT_BUTTON, self.on_down)
+        self.moveTop.Bind(wx.EVT_BUTTON, self.on_top)
+        self.moveBottom.Bind(wx.EVT_BUTTON, self.on_bottom)
         self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
         self.next.Bind(wx.EVT_BUTTON, self.on_next)
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_delete)
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
-        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.on_deselect)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
+
         pub.subscribe(self.shape_add, 'shape.add')
         pub.subscribe(self.sheet_rename, 'sheet.rename')
+
+        ids = [self.moveUp.GetId(), self.moveTop.GetId(), self.moveDown.GetId(),
+               self.moveBottom.GetId(), self.deleteBtn.GetId(), self.prev.GetId(), self.next.GetId()]
+
+        [self.Bind(wx.EVT_UPDATE_UI, self.update_buttons, id=x) for x in ids]
+
+
+    def make_button(self, filename, tooltip):
+        btn = bitmap_button(self, get_image_path(u"icons", filename), False)
+        btn.SetToolTipString(tooltip)
+        return btn
 
     def shape_add(self, shape):
         self.shapes.append(shape)
@@ -1114,38 +1119,30 @@ class ShapeViewer(wx.Dialog):
         self.list.SetColumnWidth(3, wx.LIST_AUTOSIZE)
 
 
-    def check_buttons(self):
-        """ Enable / Disable the appropriate buttons """
-        if self.gui.current_tab + 1 < self.gui.tab_count:
-            self.next.Enable()
-        else:
-            self.next.Disable()
+    def update_buttons(self, event):
+        _id = event.GetId()
+        do = False
 
-        if self.gui.current_tab > 0:
-            self.prev.Enable()
-        else:
-            self.prev.Disable()
+        if _id == self.next.GetId() and self.gui.current_tab + 1 < self.gui.tab_count:
+            do = True
+        elif _id == self.prev.GetId() and self.gui.current_tab > 0:
+            do = True
+        elif _id == self.deleteBtn.GetId() and self.shapes and self.list.GetFirstSelected() >= 0:
+            do = True
+        elif (_id in [self.moveUp.GetId(), self.moveTop.GetId()] and
+            self.list.GetFirstSelected() > 0 and self.list.GetFirstSelected() >= 0):
+            do = True
+        elif (_id in [self.moveDown.GetId(), self.moveBottom.GetId()] and
+            self.list.GetFirstSelected() != len(self.shapes) - 1  and self.shapes
+            and self.list.GetFirstSelected() >= 0):
+            do = True
 
-        if not self.shapes or self.list.GetFirstSelected() == -1:
-            self.deleteBtn.Disable()
-        else:
-            self.deleteBtn.Enable()
-
-        if self.list.GetFirstSelected() == 0 or self.list.GetFirstSelected() == -1:
-            self.buttons[0].Disable()
-            self.buttons[1].Disable()
-        else:
-            self.buttons[0].Enable()
-            self.buttons[1].Enable()
-
-        if (self.list.GetFirstSelected() == len(self.shapes) - 1  or not self.shapes
-            or self.list.GetFirstSelected() == -1):
-            self.buttons[2].Disable()
-            self.buttons[3].Disable()
-        else:
-            self.buttons[2].Enable()
-            self.buttons[3].Enable()
-        self.Refresh()
+        event.Enable(do)
+        #self.Refresh()
+        #self.count += 1
+        #if self.count == 5:
+        #    self.Refresh()
+        #    self.count = 0
 
 
     def find_shape(self):
@@ -1198,7 +1195,6 @@ class ShapeViewer(wx.Dialog):
         self.gui.on_change_tab()
         self.shapes = list(self.gui.canvas.shapes)
         self.populate()
-        self.check_buttons()
 
 
     def on_delete(self, event):
@@ -1217,13 +1213,6 @@ class ShapeViewer(wx.Dialog):
 
     def on_prev(self, event):
         self.change(self.gui.current_tab - 1)
-
-    def on_select(self, event):
-        self.check_buttons()
-
-    def on_deselect(self, e):
-        if self.list.GetFirstSelected() == -1:
-            self.check_buttons()
 
     def ok(self, event):
         self.apply()
@@ -1244,25 +1233,20 @@ class ShapeViewer(wx.Dialog):
 
 #----------------------------------------------------------------------
 
-class PDFCache(wx.Dialog):
+class PDFCacheDialog(wx.Dialog):
     """
     Views a list of all cached PDFs - showing the amount of pages, location,
     conversion quality and date saved. Has options to remove items to re-convert
     """
-    def __init__(self, gui):
+    def __init__(self, gui, cache):
         wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"), size=(450, 300),
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
                            wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
-        self.gui = gui
-        self.files = {}
-        self.original_files = {}
+        self.cache = cache
+        self.files = cache.entries()
+        self.original_files = dict(cache.entries())
         self.list = WhyteboardList(self)
         self.SetSizeHints(450, 300)
-
-        if os.path.exists(self.gui.util.library):
-            with open(self.gui.util.library) as f:
-                self.files = pickle.load(f)
-                self.original_files = dict(self.files)
 
         label = wx.StaticText(self, label=_("Whyteboard will load these files from its cache instead of re-converting them"))
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1299,6 +1283,7 @@ class PDFCache(wx.Dialog):
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda x: self.check_buttons())
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda x: self.check_buttons())
 
+
     def populate(self):
         """
         Creates all columns and populates them with the PDF cache list
@@ -1313,16 +1298,14 @@ class PDFCache(wx.Dialog):
             index = self.list.InsertStringItem(sys.maxint, "")
             self.list.SetStringItem(index, 0, _("There are no cached items to display"))
         else:
-
             for x, key in self.files.items():
                 f = self.files[x]
                 index = self.list.InsertStringItem(sys.maxint, str(x + 1))
-                date = f.get('date', _("No Date Saved"))
 
                 self.list.SetStringItem(index, 0, f['file'])
                 self.list.SetStringItem(index, 1, f['quality'].capitalize())
                 self.list.SetStringItem(index, 2, u"%s" % len(f['images']))
-                self.list.SetStringItem(index, 3, date)
+                self.list.SetStringItem(index, 3, f.get('date', _("No Date Saved")))
 
         self.list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
         self.list.SetColumnWidth(1, 70)
@@ -1340,8 +1323,7 @@ class PDFCache(wx.Dialog):
 
 
     def ok(self, event):
-        with open(self.gui.util.library, "w") as f:
-            pickle.dump(self.files, f)
+        self.cache.write_dict(self.files)
         self.Close()
 
     def on_remove(self, event):

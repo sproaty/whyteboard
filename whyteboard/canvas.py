@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, 2010 by Steven Sproat
@@ -35,6 +34,7 @@ import os
 import copy
 
 import wx
+#import wx.lib.wxcairo as wxcairo
 
 from lib.dragscroller import DragScroller
 from lib.pubsub import pub
@@ -76,12 +76,11 @@ class Canvas(wx.ScrolledWindow):
         """
         style = wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN
         wx.ScrolledWindow.__init__(self, tab, style=style)
-
         self.area = (gui.util.config['default_width'], gui.util.config['default_height'])
         self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
-        self.file_drop = CanvasDropTarget(gui)
+        self.file_drop = CanvasDropTarget()
         self.SetDropTarget(self.file_drop)
 
         if os.name == "nt":
@@ -118,6 +117,8 @@ class Canvas(wx.ScrolledWindow):
         self.rotate_cursor = wx.CursorFromImage(img)
         self.change_current_tool()
         self.redraw_all()
+
+        self.current_page = None
 
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
@@ -656,6 +657,18 @@ class Canvas(wx.ScrolledWindow):
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
         #dc.SetUserScale(self.scale[0], self.scale[1])
 
+#        if self.current_page:
+#            dc = wx.PaintDC(self)
+#            cr = wxcairo.ContextFromDC(dc)
+#            cr.set_source_rgb(1, 1, 1)  # White background
+#            if self.scale != 1:
+#                cr.scale(self.scale[0], self.scale[1])
+#            cr.rectangle(0, 0, self.area[0], self.area[1])
+#            cr.fill()
+#            self.current_page.render(cr)
+        #else:
+        #    dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
+
         if os.name == "nt":
             relbuf = self.CalcScrolledPosition(self.area)
             cli = self.GetClientSize()
@@ -751,9 +764,8 @@ class Canvas(wx.ScrolledWindow):
 
 class CanvasDropTarget(wx.PyDropTarget):
     """Implements drop target functionality to receive files and text"""
-    def __init__(self, gui):
+    def __init__(self):
         wx.PyDropTarget.__init__(self)
-        self.gui = gui
         self.do = wx.DataObjectComposite()
         self.filedo = wx.FileDataObject()
         self.textdo = wx.TextDataObject()
@@ -772,32 +784,14 @@ class CanvasDropTarget(wx.PyDropTarget):
             df = self.do.GetReceivedFormat().GetType()
 
             if df in [wx.DF_UNICODETEXT, wx.DF_TEXT]:
-
-                shape = Text(self.gui.canvas, self.gui.util.colour, 1)
-                shape.text = self.textdo.GetText()
-
-                self.gui.canvas.shape = shape
-                shape.left_down(x, y)
-                shape.left_up(x, y)
-                self.gui.canvas.text = None
-                self.gui.canvas.change_current_tool()
-                self.gui.canvas.redraw_all(True)
+                pub.sendMessage('canvas.paste_text', text=self.textdo.GetText(),
+                                x=x, y=y)
 
             elif df == wx.DF_FILENAME:
                 for x, name in enumerate(self.filedo.GetFilenames()):
-                    if x or self.gui.canvas.shapes:
-                        self.gui.on_new_tab()
-
-                    if name.lower().endswith(u".wtbd"):
-                        self.gui.util.prompt_for_save(self.gui.do_open, args=[name])
-                    else:
-                        self.gui.do_open(name)
+                    pub.sendMessage('gui.open_file', filename=name)
 
             elif df == wx.DF_BITMAP:
-                bmp = self.bmpdo.GetBitmap()
-                shape = Image(self.gui.canvas, bmp, None)
-                shape.left_down(x, y)
-                wx.Yield()
-                self.gui.canvas.redraw_all(True)
-
+                pub.sendMessage('canvas.paste_image', image=self.bmpdo.GetBitmap(),
+                                x=x, y=y, ignore=True)
         return d

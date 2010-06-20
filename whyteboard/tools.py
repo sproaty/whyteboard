@@ -192,6 +192,7 @@ class OverlayShape(Tool):
             odc = wx.DCOverlay(self.canvas.overlay, dc)
             odc.Clear()
 
+
         self.make_pen(dc)  # Note object needs a DC to draw its outline here
         pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
         pen.SetJoin(self.join)
@@ -1835,16 +1836,15 @@ class Zoom(Tool):
     def __init__(self, canvas, colour, thickness, background=wx.TRANSPARENT):
         Tool.__init__(self, canvas, (0, 0, 0), 1, background, wx.CURSOR_MAGNIFIER)
 
-
     def left_up(self, x, y):
-        x = self.canvas.scale
-        new = (x[0] - 0.1, x[1] - 0.1)
-        self.canvas.scale = new
-        self.canvas.redraw_all()
+        self.set_scale(0.15)
 
     def right_up(self, x, y):
+        self.set_scale(-0.15)
+            
+    def set_scale(self, amount):
         x = self.canvas.scale
-        new = (x[0] + 0.1, x[1] + 0.1)
+        new = (x[0] + amount, x[1] + amount)
         self.canvas.scale = new
         self.canvas.redraw_all()
 
@@ -1862,7 +1862,6 @@ class Flood(Tool):
 
     def __init__(self, canvas, colour, thickness):
         Tool.__init__(self, canvas, colour, 1)
-
 
     def left_down(self, x, y):
         self.x = x
@@ -1882,7 +1881,7 @@ class Flood(Tool):
 #---------------------------------------------------------------------
 
 def find_inverse(colour):
-    """ Invert an RGB colour """
+    """ Returns a wx.Brush inverted the (R, G, B) colour """
     if not isinstance(colour, wx.Colour):
         c = colour
         colour = wx.Colour()
