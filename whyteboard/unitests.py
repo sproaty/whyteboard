@@ -387,7 +387,7 @@ class TestGuiFunctionality:
 
     def hotkey(self, code, expected):
         evt = Event()
-        evt.GetKeyCode = lambda code=code: code
+        evt.GetKeyCode = lambda code = code: code
         self.gui.hotkey(evt)
         assert isinstance(self.gui.canvas.shape, expected), (code, self.gui.canvas.shape, expected)
 

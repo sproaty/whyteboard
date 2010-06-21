@@ -79,7 +79,7 @@ class ControlPanel(wx.Panel):
         colour = self.colour_buttons()
         thickness = wx.StaticText(self.pane, label=_("Thickness:"))
 
-        choices = u''.join(u"%s " % i for i in range(1, 35) ).split()
+        choices = u''.join(u"%s " % i for i in range(1, 35)).split()
         self.thickness = wx.ComboBox(self.pane, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
 
@@ -143,9 +143,7 @@ class ControlPanel(wx.Panel):
         self.transparent.SetToolTipString(_("Ignores the background color"))
         swap.SetToolTipString(_("Swaps the foreground and background colors"))
 
-        sizer.Add(self.background)
-        sizer.Add(self.colour)
-        sizer.Add(self.transparent)
+        sizer.AddMany([(self.background), (self.colour), (self.transparent)])
         swap_sizer.Add(sizer)
         swap_sizer.Add(swap, flag=wx.ALIGN_RIGHT)
         return panel
@@ -224,7 +222,7 @@ class ControlPanel(wx.Panel):
         """
         new = self.gui.util.tool
         if event and not _id:
-            new = int(event.GetId() )  # get widget ID
+            new = int(event.GetId())  # get widget ID
         elif _id:
             new = _id
 
@@ -498,7 +496,7 @@ class MediaPanel(wx.Panel):
         if self.mc.GetState() == wx.media.MEDIASTATE_PLAYING:
             offset = self.mc.Tell()
             self.slider.SetValue(offset)
-            self.elapsed.SetLabel(get_time(offset / 1000)+"/"+ self.total)
+            self.elapsed.SetLabel(get_time(offset / 1000) + "/" + self.total)
 
 
     def on_play(self, evt):
@@ -846,7 +844,7 @@ class NotesPopup(Popup):
             text = _("&Select")
 
             if self.item.selected:
-                text =  _("De&select")
+                text = _("De&select")
             self.Append(ID, text)
             self.Append(ID2, _("&Edit Note..."))
             self.AppendSeparator()
@@ -891,12 +889,12 @@ class ShapePopup(Popup):
         self.SetTitle(_(self.item.name))
         text, _help = _("&Select"), _("Selects this shape")
         if self.item.selected:
-            text, _help =  _("De&select"), _("Deselects this shape")
+            text, _help = _("De&select"), _("Deselects this shape")
         self.Append(SELECT, text, _help)
 
         self.Append(EDIT, _("&Edit..."), _("Edit the text"))
         self.Append(POINT, _("&Add New Point"), _("Adds a new point to the Polygon"))
-        self.Append(wx.ID_DELETE, _("&Delete")+"\tDelete")
+        self.Append(wx.ID_DELETE, _("&Delete") + "\tDelete")
         self.AppendSeparator()
         self.AppendCheckItem(ID_TRANSPARENT, _("T&ransparent"))
         self.Append(ID_SWAP_COLOURS, _("Swap &Colors"))
@@ -982,7 +980,7 @@ class Thumbs(scrolled.ScrolledPanel):
         self.SetScrollRate(0, 120)
 
         self.gui = gui
-        self.thumbs  = []  # ThumbButtons
+        self.thumbs = []  # ThumbButtons
         self.text = []  # StaticTexts
         self.new_thumb()  # inital thumb
         self.thumbs[0].current = True
@@ -1136,7 +1134,7 @@ class ThumbButton(wx.BitmapButton):
     """
     def __init__(self, parent, _id, bitmap, name=None):
         wx.BitmapButton.__init__(self, parent, size=(150, 150))
-        self.thumb_id  = _id
+        self.thumb_id = _id
         self.parent = parent
         self.SetBitmapLabel(bitmap)
         self.buffer = bitmap

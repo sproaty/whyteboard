@@ -187,7 +187,7 @@ class GUI(wx.Frame):
         do_bindings/make_toolbar. I hate this method - made worse by i8n!
         """
         self.menu = wx.MenuBar()
-        _file = wx.Menu()
+        self._file = wx.Menu()
         edit = wx.Menu()
         view = wx.Menu()
         shapes = wx.Menu()
@@ -195,8 +195,8 @@ class GUI(wx.Frame):
         _help = wx.Menu()
         _import = wx.Menu()
         _export = wx.Menu()
-        recent = wx.Menu()
-        self.filehistory.UseMenu(recent)
+        self.recent = wx.Menu()
+        self.filehistory.UseMenu(self.recent)
         self.filehistory.AddFilesToMenu()
         self.make_closed_tabs_menu()
 
@@ -209,7 +209,7 @@ class GUI(wx.Frame):
         _export.Append(ID_EXPORT_PDF, _('As &PDF...'), _("Export every sheet into a PDF file"))
         _export.Append(ID_EXPORT_PREF, _('P&references...'), _("Export your Whyteboard preferences file"))
 
-        new = wx.MenuItem(_file, ID_NEW, _("New &Window") + "\tCtrl-N", _("Opens a new Whyteboard instance"))
+        new = wx.MenuItem(self._file, ID_NEW, _("New &Window") + "\tCtrl-N", _("Opens a new Whyteboard instance"))
         pnew = wx.MenuItem(edit, ID_PASTE_NEW, _("Paste to a &New Sheet") + "\tCtrl+Shift-V", _("Paste from your clipboard into a new sheet"))
         undo_sheet = wx.MenuItem(edit, ID_UNDO_SHEET, _("&Undo Last Closed Sheet") + "\tCtrl+Shift-T", _("Undo the last closed sheet"))
 
@@ -218,23 +218,23 @@ class GUI(wx.Frame):
             pnew.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_PASTE, wx.ART_MENU))
             undo_sheet.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_UNDO, wx.ART_MENU))
 
-        _file.AppendItem(new)
-        _file.Append(wx.ID_NEW, _("&New Sheet") + "\tCtrl-T", _("Add a new sheet"))
-        _file.Append(wx.ID_OPEN, _("&Open...") + "\tCtrl-O", _("Load a Whyteboard save file, an image or convert a PDF/PS document"))
-        _file.AppendMenu(-1, _('Open &Recent'), recent, _("Recently Opened Files"))
-        _file.AppendSeparator()
-        _file.Append(wx.ID_SAVE, _("&Save") + "\tCtrl+S", _("Save the Whyteboard data"))
-        _file.Append(wx.ID_SAVEAS, _("Save &As...") + "\tCtrl+Shift+S", _("Save the Whyteboard data in a new file"))
-        _file.AppendSeparator()
-        _file.AppendMenu(-1, _('&Import File'), _import, _("Import various file types"))
-        _file.AppendMenu(-1, _('&Export File'), _export, _("Export your data files as images/PDFs"))
-        _file.Append(ID_RELOAD_PREF, _('Re&load Preferences'), _("Reload your preferences file"))
-        _file.AppendSeparator()
-        _file.Append(wx.ID_PRINT_SETUP, _("Page Set&up"), _("Set up the page for printing"))
-        _file.Append(wx.ID_PREVIEW_PRINT, _("Print Pre&view"), _("View a preview of the page to be printed"))
-        _file.Append(wx.ID_PRINT, _("&Print...") + "\tCtrl+P", _("Print the current page"))
-        _file.AppendSeparator()
-        _file.Append(wx.ID_EXIT, _("&Quit") + "\tAlt+F4", _("Quit Whyteboard"))
+        self._file.AppendItem(new)
+        self._file.Append(wx.ID_NEW, _("&New Sheet") + "\tCtrl-T", _("Add a new sheet"))
+        self._file.Append(wx.ID_OPEN, _("&Open...") + "\tCtrl-O", _("Load a Whyteboard save file, an image or convert a PDF/PS document"))
+        self._file.AppendMenu(-1, _('Open &Recent'), self.recent, _("Recently Opened Files"))
+        self._file.AppendSeparator()
+        self._file.Append(wx.ID_SAVE, _("&Save") + "\tCtrl+S", _("Save the Whyteboard data"))
+        self._file.Append(wx.ID_SAVEAS, _("Save &As...") + "\tCtrl+Shift+S", _("Save the Whyteboard data in a new file"))
+        self._file.AppendSeparator()
+        self._file.AppendMenu(-1, _('&Import File'), _import, _("Import various file types"))
+        self._file.AppendMenu(-1, _('&Export File'), _export, _("Export your data files as images/PDFs"))
+        self._file.Append(ID_RELOAD_PREF, _('Re&load Preferences'), _("Reload your preferences file"))
+        self._file.AppendSeparator()
+        self._file.Append(wx.ID_PRINT_SETUP, _("Page Set&up"), _("Set up the page for printing"))
+        self._file.Append(wx.ID_PREVIEW_PRINT, _("Print Pre&view"), _("View a preview of the page to be printed"))
+        self._file.Append(wx.ID_PRINT, _("&Print...") + "\tCtrl+P", _("Print the current page"))
+        self._file.AppendSeparator()
+        self._file.Append(wx.ID_EXIT, _("&Quit") + "\tAlt+F4", _("Quit Whyteboard"))
 
         edit.Append(wx.ID_UNDO, _("&Undo") + "\tCtrl+Z", _("Undo the last operation"))
         edit.Append(wx.ID_REDO, _("&Redo") + "\tCtrl+Y", _("Redo the last undone operation"))
@@ -290,7 +290,7 @@ class GUI(wx.Frame):
         _help.Append(ID_FEEDBACK, _("Send &Feedback"), _("Send feedback directly to Whyteboard's developer"))
         _help.AppendSeparator()
         _help.Append(wx.ID_ABOUT, _("&About"), _("View information about Whyteboard"))
-        self.menu.Append(_file, _("&File"))
+        self.menu.Append(self._file, _("&File"))
         self.menu.Append(edit, _("&Edit"))
         self.menu.Append(view, _("&View"))
         self.menu.Append(shapes, _("Sha&pes"))
@@ -309,9 +309,6 @@ class GUI(wx.Frame):
                 getattr(self, u"on_" + x)(None, False)
 
 
-    def file_menu(self, event):
-        print 'tggtfd'
-
     def do_bindings(self):
         """
         Performs event binding.
@@ -324,6 +321,7 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_exit)
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # end pdf conversion
         self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
+        self.Bind(wx.EVT_MENU_OPEN, self.load_recent_files)
 
         topics = {'shape.add': self.shape_add,
                   'shape.selected': self.shape_selected,
@@ -938,6 +936,15 @@ class GUI(wx.Frame):
         self.canvas.deselect_shape()
 
 
+    def load_recent_files(self, event):
+        if event.GetEventObject() == self._file:
+            for x in self.recent.GetMenuItems():
+                self.recent.RemoveItem(x)
+
+            self.config = wx.Config(u"Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
+            self.filehistory.Load(self.config)
+
+
     def update_menus(self, event):
         """
         Enables/disables the undo/redo/next/prev button as appropriate.
@@ -1261,7 +1268,10 @@ class GUI(wx.Frame):
         if not os.path.exists(path):
             wx.MessageBox(_("File %s not found") % path, u"Whyteboard")
             self.filehistory.RemoveFileFromHistory(num)
+            self.filehistory.Save(self.config)
+            self.config.Flush()
             return
+
         self.filehistory.AddFileToHistory(path)  # move up the list
         self.open_file(path)
 
