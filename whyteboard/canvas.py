@@ -121,8 +121,6 @@ class Canvas(wx.ScrolledWindow):
         self.change_current_tool()
         self.redraw_all()
 
-        self.current_page = None
-
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)

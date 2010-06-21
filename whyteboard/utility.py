@@ -63,7 +63,7 @@ from __future__ import with_statement
 import os
 import sys
 import webbrowser
-import poppler
+#import poppler
 import time
 import zipfile
 import wx

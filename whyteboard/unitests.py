@@ -22,11 +22,13 @@
 Unit tests for the functionality parts of Whyteboard. Simulates wxPython
 with mock classes. Doesn't test the GUI itself (i.e. parts of wx), but parts of
 the GUI event handling code (example: undo/redo closing tabs)
+
+Uses mock objects where possible to reduce needing to create the Application
+which is an expensive operation. This also makes the tests run quicker
 """
 
 import os
 import wx
-import time
 
 import fakewidgets
 import gui
@@ -62,6 +64,15 @@ def make_config():
     return config
 
 
+def make_canvas():
+    frame = mock.Mock()
+    frame.util = mock.Mock()
+    frame.util.tool, frame.util.thickness = 1, 1
+    frame.util.items = whyteboard.tools.items
+
+    return Canvas(wx.Notebook(frame), frame, (800, 600))
+
+
 class SimpleApp(fakewidgets.core.PySimpleApp):
     """
     Create a GUI instance and create a new canvas reference
@@ -70,6 +81,7 @@ class SimpleApp(fakewidgets.core.PySimpleApp):
         fakewidgets.core.PySimpleApp.__init__(self)
         g = gui.GUI(None, make_config())  # mock the GUI with fake wxPython classes
         self.canvas = g.canvas
+
 
 #----------------------------------------------------------------------
 
@@ -87,19 +99,13 @@ class TestCanvas:
         The actual values of the shapes don't matter, as they're all
         instanciated to default values of 0
         """
-        frame = mock.Mock()
-        frame.util = mock.Mock()
-        frame.util.tool, frame.util.thickness = 1, 1
-        frame.util.items = whyteboard.tools.items
-
+        self.canvas = make_canvas()
         func = lambda shape: self.canvas.add_shape(shape)
         pub.subscribe(func, 'shape.add')
-        self.canvas = Canvas(wx.Notebook(frame), frame, (800, 600))
-
-        #self.canvas = SimpleApp().canvas
 
         make_shapes(self.canvas)
         self.shapes = list(self.canvas.shapes)  # value to test changes against
+
 
     def test_add(self):
         """
@@ -318,6 +324,7 @@ class TestGuiFunctionality:
         self.gui = self.canvas.gui
         make_shapes(self.canvas)
 
+
     def make_sheets(self):
         shapes = list(self.canvas.shapes)
 
@@ -400,7 +407,7 @@ class TestGuiFunctionality:
         evt = Event()
         evt.GetKeyCode = lambda code = code: code
         self.gui.hotkey(evt)
-        assert isinstance(self.gui.canvas.shape, expected), (code, self.gui.canvas.shape, expected)
+        assert isinstance(self.gui.canvas.shape, expected)
 
 
     def test_clear_all(self):
@@ -476,23 +483,11 @@ class TestDialogs():
     """
     Again, test code functionality and not too much the GUI itself.
     """
-    def __init__(self):
-        self.canvas = None
-        self.gui = None
-
     def setup(self):
-        self.canvas = SimpleApp().canvas
-        self.gui = self.canvas.gui
-        self.rect, self.circle, self.text = None, None, None
+        pass
 
     def test_save(self):
-        rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
-        assert rect.canvas not in [False, None]
-        assert rect.brush not in [False, None]
-        rect.save()
-        assert rect.canvas is None
-        assert rect.brush is None
-
+        pass
 
 #----------------------------------------------------------------------
 
@@ -506,8 +501,15 @@ class TestShapes:
         self.canvas = None
 
     def setup(self):
-        self.canvas = mock.Mock()#SimpleApp().canvas
+        self.canvas = mock.Mock()
         self.rect, self.circle, self.text = None, None, None
+
+    def create_canvas(self):
+        self.canvas = make_canvas()
+        pub.subscribe(self.add, 'shape.add')
+
+    def add(self, shape):
+        self.canvas.add_shape(shape)
 
     def test_save(self):
         rect = whyteboard.tools.Rectangle(self.canvas, (0, 0, 0), 1)
@@ -659,7 +661,7 @@ class TestShapes:
 
     def test_select_tool_click_selects(self):
         """Select Tool left click selects a shape"""
-        self.canvas = SimpleApp().canvas
+        self.create_canvas()
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
         self.make_tools()
         assert len(self.canvas.shapes) == 3

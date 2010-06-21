@@ -192,7 +192,6 @@ class OverlayShape(Tool):
             odc = wx.DCOverlay(self.canvas.overlay, dc)
             odc.Clear()
 
-
         self.make_pen(dc)  # Note object needs a DC to draw its outline here
         pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
         pen.SetJoin(self.join)
