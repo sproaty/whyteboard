@@ -66,38 +66,37 @@ class ControlPanel(wx.Panel):
         self.pane = cp.GetPane()  # every widget's parent
         self.gui = gui
         self.toggled = 1  # Pen, initallly
-        self.preview = DrawingPreview(self.pane, self.gui)
         self.tools = {}
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
-        thickness = wx.StaticText(self.pane, label=_("Thickness:"))
-
-        colour = self.colour_buttons()
+        box = wx.BoxSizer(wx.VERTICAL)
         self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
         self.toolsizer = wx.GridSizer(cols=1, hgap=5, vgap=5)
-        self.make_colour_grid()
+
         self.make_toolbox(gui.util.config['toolbox'])
+        self.make_colour_grid()
+        colour = self.colour_buttons()
+        thickness = wx.StaticText(self.pane, label=_("Thickness:"))
 
         choices = u''.join(u"%s " % i for i in range(1, 35) ).split()
         self.thickness = wx.ComboBox(self.pane, choices=choices, size=(25, 25),
                                         style=wx.CB_READONLY)
+
         self.thickness.SetSelection(0)
         self.thickness.SetToolTipString(_("Sets the drawing thickness"))
+
         line = wx.StaticLine(self, size=(-1, 30))
         line.SetBackgroundColour((0, 0, 0))
+        self.preview = DrawingPreview(self.pane, self.gui)
         spacing = 4
-        box = wx.BoxSizer(wx.VERTICAL)
-        box.Add(self.toolsizer, 0, wx.ALIGN_CENTER | wx.ALL, spacing)
-        box.Add((5, 8))
-        box.Add(self.grid, 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add((5, 8))
-        box.Add(colour, 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add((5, 10))
-        box.Add(thickness, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
-        box.Add(self.thickness, 0, wx.EXPAND | wx.ALL, spacing)
-        box.Add((5, 5))
-        #box.Add(prev, 0, wx.ALL | wx.ALIGN_CENTER, spacing)
-        box.Add(self.preview, 0, wx.EXPAND | wx.ALL, spacing)
+
+        box.AddMany([(self.toolsizer, 0, wx.ALIGN_CENTER | wx.ALL, spacing),
+                     ((5, 8)), (self.grid, 0, wx.EXPAND | wx.ALL, spacing),
+                     ((5, 8)), (colour, 0, wx.EXPAND | wx.ALL, spacing),
+                     ((5, 10)), (thickness, 0, wx.ALL | wx.ALIGN_CENTER, spacing),
+                     (self.thickness, 0, wx.EXPAND | wx.ALL, spacing),
+                     ((5, 5)), (self.preview, 0, wx.EXPAND | wx.ALL, spacing)])
         csizer.Add(box, 1, wx.EXPAND)
         sizer.Add(cp, 1, wx.EXPAND)
 
@@ -129,12 +128,10 @@ class ControlPanel(wx.Panel):
 
         self.background = csel.ColourSelect(parent, pos=(0, 30), size=(30, 30))
         self.background.SetValue("White")
-        self.transparent = wx.CheckBox(panel, label=_("Transparent"), pos=(0, 69))
-        self.transparent.SetValue(True)
-
-
         swap = wx.BitmapButton(panel, bitmap=wx.Bitmap(get_image_path(u"icons", u"swap_colours")),
                                pos=(70, 0), style=wx.NO_BORDER)
+        self.transparent = wx.CheckBox(panel, label=_("Transparent"), pos=(0, 69))
+        self.transparent.SetValue(True)
 
         self.colour.Bind(csel.EVT_COLOURSELECT, self.change_colour)
         self.background.Bind(csel.EVT_COLOURSELECT, self.change_background)
@@ -816,7 +813,7 @@ class Popup(wx.Menu):
 
     def close_all(self, event):
         self.gui.on_close_all_sheets()
-        
+
     def export(self, event):
         """
         Change canvas temporarily to 'trick' the gui into exporting the selected

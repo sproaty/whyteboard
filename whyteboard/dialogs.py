@@ -33,10 +33,6 @@ import wx
 import wx.lib.mixins.listctrl as listmix
 
 from urllib import urlopen, urlretrieve, urlencode
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 import lib.errdlg
 from lib.pubsub import pub

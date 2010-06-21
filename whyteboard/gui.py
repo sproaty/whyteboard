@@ -309,6 +309,9 @@ class GUI(wx.Frame):
                 getattr(self, u"on_" + x)(None, False)
 
 
+    def file_menu(self, event):
+        print 'tggtfd'
+
     def do_bindings(self):
         """
         Performs event binding.
@@ -516,7 +519,6 @@ class GUI(wx.Frame):
             self.on_save_as()
         else:
             self.util.save_file()
-            self.util.saved = True
             self.util.save_last_path(self.util.filename)
 
 
@@ -1527,14 +1529,13 @@ class WhyteboardApp(wx.App):
                 lang_name = country.Description
                 self.locale = wx.Locale(country.Language, wx.LOCALE_LOAD_DEFAULT)
 
-
         if not set_lang:
             for x in meta.languages:
                 if config['language'].capitalize() == 'Welsh':
                     self.locale = wx.Locale()
                     self.locale.Init(u"Cymraeg", u"cy", u"cy_GB.utf8")
                     break
-                elif config['language'].capitalize() == x[0]:
+                elif config['language'] == x[0]:
                     nolog = wx.LogNull()
                     self.locale = wx.Locale(x[2], wx.LOCALE_LOAD_DEFAULT)
 
