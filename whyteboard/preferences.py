@@ -144,7 +144,7 @@ class Preferences(wx.Dialog):
             ctrl.preview.Hide()
         else:
             ctrl.preview.Show()
-            ctrl.preview.Refresh()
+            pub.sendMessage('gui.preview.refresh')
 
         if self.config['toolbox'] != old['toolbox']:
             cols = 1

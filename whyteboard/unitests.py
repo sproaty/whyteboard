@@ -87,10 +87,19 @@ class TestCanvas:
         The actual values of the shapes don't matter, as they're all
         instanciated to default values of 0
         """
-        self.canvas = SimpleApp().canvas
+        frame = mock.Mock()
+        frame.util = mock.Mock()
+        frame.util.tool, frame.util.thickness = 1, 1
+        frame.util.items = whyteboard.tools.items
+
+        func = lambda shape: self.canvas.add_shape(shape)
+        pub.subscribe(func, 'shape.add')
+        self.canvas = Canvas(wx.Notebook(frame), frame, (800, 600))
+
+        #self.canvas = SimpleApp().canvas
+
         make_shapes(self.canvas)
         self.shapes = list(self.canvas.shapes)  # value to test changes against
-
 
     def test_add(self):
         """
@@ -101,23 +110,25 @@ class TestCanvas:
         self.canvas.add_shape(shape)
         assert len(self.canvas.shapes) == 1
         assert len(self.canvas.redo_list) == 0
-        #assert not self.canvas.gui.util.saved
+        assert not self.canvas.gui.util.saved
 
 
-    def test_select_tool(self):
+    def test_change_tool(self):
         """
         User changing tools actually updates the drawing tool
         """
         # This depends on the Tool list order not changing, unlikely from a UI
         # perspective; note: change_current_tool() called in Whyteboard.__init__
+        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
 
+        self.canvas.change_current_tool(1)
         assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
-        self.canvas.change_current_tool(1)  # passing in Pen explicitly
-        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
+
         self.canvas.change_current_tool()
         assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
         self.canvas.change_current_tool(2)
         assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
+
         self.canvas.change_current_tool()
         assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
 
@@ -253,11 +264,11 @@ class TestCanvas:
         shape = self.canvas.shapes[0]
         top_shape = self.canvas.shapes[3]
         self.canvas.move_top(shape)
-        assert self.canvas.shapes[3] == shape
+        assert self.canvas.shapes[3] == shape, (self.canvas.shapes[3], shape)
         assert self.canvas.shapes[2] == top_shape
         assert not self.canvas.shapes[0] == shape
         self.canvas.move_top(shape)
-        assert self.canvas.shapes[3] == shape
+        assert self.canvas.shapes[3] == shape, (self.canvas.shapes[3], shape)
 
 
     def test_move_up(self):

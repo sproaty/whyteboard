@@ -1151,7 +1151,7 @@ class Eyedrop(Tool):
         gui = self.canvas.gui
         gui.control.colour.SetColour(colour)
         gui.util.colour = colour
-        gui.control.preview.Refresh()
+        pub.sendMessage('gui.preview.refresh')
 
     def right_up(self, x, y):
         dc = wx.BufferedDC(None, self.canvas.buffer)  # create tmp DC
@@ -1159,7 +1159,7 @@ class Eyedrop(Tool):
         gui = self.canvas.gui
         gui.control.background.SetColour(colour)
         gui.util.background = colour
-        gui.control.preview.Refresh()
+        pub.sendMessage('gui.preview.refresh')
 
     def preview(self, dc, width, height):
         dc.SetBrush(wx.Brush(self.canvas.gui.util.colour))
@@ -1841,7 +1841,7 @@ class Zoom(Tool):
 
     def right_up(self, x, y):
         self.set_scale(-0.15)
-            
+
     def set_scale(self, amount):
         x = self.canvas.scale
         new = (x[0] + amount, x[1] + amount)

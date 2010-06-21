@@ -70,13 +70,16 @@ class Canvas(wx.ScrolledWindow):
     """
     CANVAS_BORDER = 15  # border pixels in size (overridable by user)
 
-    def __init__(self, tab, gui):
+    def __init__(self, tab, gui, area=None):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
         style = wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN
         wx.ScrolledWindow.__init__(self, tab, style=style)
-        self.area = (gui.util.config['default_width'], gui.util.config['default_height'])
+        self.area = area
+        if not area:
+            self.area = (gui.util.config['default_width'], gui.util.config['default_height'])
+
         self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
@@ -397,7 +400,7 @@ class Canvas(wx.ScrolledWindow):
 
         self.shape = self.gui.util.items[new - 1](*params)  # create new Tool
         self.change_cursor()
-        self.gui.control.preview.Refresh()
+        pub.sendMessage('gui.preview.refresh')
 
 
     def change_cursor(self):
@@ -447,15 +450,12 @@ class Canvas(wx.ScrolledWindow):
         if not list_a:
             return
         list_b.append(list(self.shapes))
-        shapes = list_a.pop()
-        self.shapes = shapes
+        self.shapes = list_a.pop()
         self.deselect_shape()
         self.redraw_all(True)
 
-        # nicest (and laziest) way to sort the notes out at the moment
-        notes = self.gui.notes
-        notes.tree.DeleteChildren(notes.tabs[self.gui.tabs.GetSelection()])
-        for x in shapes:
+        pub.sendMessage('note.delete_sheet_items')  # lazy way of doing things...
+        for x in self.shapes:
             if isinstance(x, Note):
                 pub.sendMessage('note.add', note=x)
 

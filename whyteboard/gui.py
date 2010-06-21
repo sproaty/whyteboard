@@ -1230,7 +1230,7 @@ class GUI(wx.Frame):
             self.showcolour.Check(False)
 
         self.control.pane.Layout()
-        self.control.preview.Refresh()
+        pub.sendMessage('gui.preview.refresh')
 
 
     def convert_dialog(self, cmd):

@@ -312,8 +312,11 @@ class DrawingPreview(wx.Window):
         self.gui = gui
         self.SetBackgroundColour(wx.WHITE)
         self.SetSize((45, 45))
-        self.Bind(wx.EVT_PAINT, self.on_paint)
         self.SetToolTipString(_("A preview of your current tool"))
+
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        pub.subscribe(self.redraw, 'gui.preview.refresh')
+
 
     def on_paint(self, event=None):
         """
@@ -336,6 +339,8 @@ class DrawingPreview(wx.Window):
             width, height = self.GetClientSize()
             dc.DrawRectangle(0, 0, width, height)  # draw a border..
 
+    def redraw(self):
+        self.Refresh()
 
 #----------------------------------------------------------------------
 
@@ -605,7 +610,7 @@ class Notes(wx.Panel):
         pub.subscribe(self.edit_note, 'note.edit')
         pub.subscribe(self.rename, 'sheet.rename')
         pub.subscribe(self.sheet_moved, 'sheet.move')
-
+        pub.subscribe(self.remove_current_sheet_items, 'note.delete_sheet_items')
 
     def add_tab(self, name=None):
         """Adds a new tab as a child to the root element"""
@@ -656,6 +661,8 @@ class Notes(wx.Panel):
         self.tree.DeleteChildren(self.root)
         self.tabs = []
 
+    def remove_current_sheet_items(self):
+        self.tree.DeleteChildren(self.tabs[self.gui.tabs.GetSelection()])
 
     def on_click(self, event):
         """
