@@ -37,7 +37,7 @@ import whyteboard.tools
 import lib.mock as mock
 
 from canvas import Canvas, RIGHT, DIAGONAL, BOTTOM
-from fakewidgets.core import Frame, Bitmap, Event, Colour
+from fakewidgets.core import Bitmap, Event, Colour
 from functions import (get_version_int, version_is_greater, get_wx_image_type,
                        get_time, get_image_path, format_bytes, convert_quality)
 
@@ -162,7 +162,6 @@ class TestCanvas:
 
     def test_toggle_transparency(self):
         """Shape's transparency should be toggled on/off"""
-        undo = self.canvas.undo_list
         shape = self.canvas.shapes[3]
         self.canvas.select_shape(shape)
 

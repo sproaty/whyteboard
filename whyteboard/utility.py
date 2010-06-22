@@ -201,8 +201,6 @@ class Utility(object):
         with open("save.data", 'wb') as f:
             try:
                 pickle.dump(_file, f)
-                self.gui.SetTitle(u"%s - %s" %
-                                  (os.path.basename(self.filename), self.gui.title))
             except pickle.PickleError:
                 wx.MessageBox(_("Error saving file data"), u"Whyteboard")
                 self.saved = False

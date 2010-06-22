@@ -17,6 +17,7 @@ xx May 2010 -- 0.40.2
 - Removed code that was handling loading older .wtbd save files from around a
   year back, as it's no longer needed
 - Removed version number from application title (see About Dialog for it)
+- Little "*" shown in program title when application has unsaved data
 - Removed shortcut key information from popup menus
 
 - Bugfix with removing a file that's been deleted from recent file list not
@@ -28,6 +29,7 @@ xx May 2010 -- 0.40.2
 - Fix tab ordering on many dialogs
 - Fix cancelling the Save As dialog in save changes prompt closing the dialog
 - Fix the eraser tool appearing as a black square
+- Fix undo/redo not making the "sure you want to quit" prompt appear
 - Fix preference dialog "view" tab always scrolling to the bottom of the dialog
 
 ----------------------------------------------------------------------

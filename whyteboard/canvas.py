@@ -235,27 +235,30 @@ class Canvas(wx.ScrolledWindow):
         ret = True
         if res and isinstance(shape, (Line, Polygon)):
             if wx.GetKeyState(wx.WXK_SHIFT):
-                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
+                self.set_cursor(wx.CURSOR_SIZENWSE)
             elif wx.GetKeyState(wx.WXK_CONTROL):
                 self.SetCursor(self.rotate_cursor)
             else:
-                self.SetCursor(wx.StockCursor(wx.CURSOR_SIZING))
+                self.set_cursor(wx.CURSOR_SIZING)
+                
         elif res == HANDLE_ROTATE:
             self.SetCursor(self.rotate_cursor)
         elif res in [TOP_LEFT, BOTTOM_RIGHT]:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENWSE))
+            self.set_cursor(wx.CURSOR_SIZENWSE)
         elif res in [TOP_RIGHT, BOTTOM_LEFT]:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
+            self.set_cursor(wx.CURSOR_SIZENESW)
         elif res in [CENTER_TOP, CENTER_BOTTOM]:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))
+            self.set_cursor(wx.CURSOR_SIZENS)
         elif res in [CENTER_LEFT, CENTER_RIGHT]:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))
+            self.set_cursor(wx.CURSOR_SIZEWE)
         elif shape.hit_test(x, y):
-            self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
+            self.set_cursor(wx.CURSOR_HAND)
         else:
             ret = False
         return ret
 
+    def set_cursor(self, cursor):
+        self.SetCursor(wx.StockCursor(cursor))
 
     def check_mouse_for_resize(self, x, y):
         """
@@ -430,8 +433,7 @@ class Canvas(wx.ScrolledWindow):
 
         if self.redo_list:
             self.redo_list = []
-        if self.gui.util.saved:
-            self.gui.util.saved = False
+        pub.sendMessage('gui.mark_unsaved')
 
 
     def undo(self):
@@ -456,7 +458,8 @@ class Canvas(wx.ScrolledWindow):
         for x in self.shapes:
             if isinstance(x, Note):
                 pub.sendMessage('note.add', note=x)
-
+        pub.sendMessage('gui.mark_unsaved')
+        
 
     def toggle_transparent(self):
         """Toggles the selected item's transparency"""

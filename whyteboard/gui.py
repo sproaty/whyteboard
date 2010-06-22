@@ -263,6 +263,7 @@ class GUI(wx.Frame):
         shapes.AppendSeparator()
         shapes.Append(wx.ID_DELETE, _("&Delete Shape") + "\tDelete", _("Delete the currently selected shape"))
         shapes.Append(ID_DESELECT, _("&Deselect Shape") + "\tCtrl-D", _("Deselects the currently selected shape"))
+        shapes.AppendSeparator()
         shapes.Append(ID_SWAP_COLOURS, _("Swap &Colors"), _("Swaps the foreground and background colors"))
         shapes.AppendCheckItem(ID_TRANSPARENT, " " + _("T&ransparent"), _("Toggles the selected shape's transparency"))
 
@@ -330,7 +331,8 @@ class GUI(wx.Frame):
                   'canvas.release_mouse': self.release_mouse,
                   'canvas.paste_text': self.paste_text,
                   'canvas.paste_image': self.paste_image,
-                  'gui.open_file': self.open_file}
+                  'gui.open_file': self.open_file,
+                  'gui.mark_unsaved': self.mark_unsaved}
         [pub.subscribe(value, key) for key, value in topics.items()]
 
         # idle event handlers
@@ -1447,6 +1449,13 @@ class GUI(wx.Frame):
     def load_history_file(self):
         self.config = wx.Config(u"Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
 
+            
+    def mark_unsaved(self):
+        if self.util.saved:
+            self.util.saved = False
+            self.SetTitle(u"*" + self.GetTitle())
+            
+            
     def find_help(self):
         """Locate the help files, update self.help var"""
         _file = os.path.join(get_path(), u'whyteboard-help', u'whyteboard.hhp')
