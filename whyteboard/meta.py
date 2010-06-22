@@ -60,7 +60,7 @@ dialog_wildcard = u'|'.join(wc_list)
 transparent = True
 version = u"0.40.2"
 languages = ( (u"English", _("English"), wx.LANGUAGE_ENGLISH),
-              (u"English (United Kingdom)", _("English (United Kingdom)"), wx.LANGUAGE_ENGLISH_UK),
+              (u"English (U.K.)", _("English (U.K.)"), wx.LANGUAGE_ENGLISH_UK),
               (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
               (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
               (u"Dutch", _("Dutch"), wx.LANGUAGE_DUTCH),
@@ -71,7 +71,7 @@ languages = ( (u"English", _("English"), wx.LANGUAGE_ENGLISH),
               (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
               (u"French", _("French"), wx.LANGUAGE_FRENCH),
               (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
-              (u"Traditional Chinese", _("Traditional Chinese"), wx.LANGUAGE_CHINESE_TRADITIONAL),
+              (u"Chinese (Traditional)", _("Chinese (Traditional)"), wx.LANGUAGE_CHINESE_TRADITIONAL),
               (u"Czech", _("Czech"), wx.LANGUAGE_CZECH),
               (u"Italian", _("Italian"), wx.LANGUAGE_ITALIAN),
               (u"Galician", _("Galician"), wx.LANGUAGE_GALICIAN) )

@@ -478,7 +478,6 @@ class View(scrolled.ScrolledPanel):
         sizer.Add(title, 0, wx.LEFT | wx.BOTTOM, 10)
         sizer.Add(preview, 0, wx.LEFT | wx.BOTTOM, 10)
         sizer.Add(colour, 0, wx.LEFT, 10)
-        
         self.Scroll(0, 0)
 
         cols.Bind(wx.EVT_COMBOBOX, self.on_columns)

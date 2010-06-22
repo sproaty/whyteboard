@@ -25,6 +25,9 @@ wxPython version is recent enough, as Whyteboard uses newer versions' features.
 
 import sys
 import webbrowser
+import locale
+
+locale.setlocale(locale.LC_ALL)
 
 if not hasattr(sys, 'frozen'):
     WXVER = '2.8.9'

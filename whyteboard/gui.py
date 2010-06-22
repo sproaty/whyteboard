@@ -944,7 +944,7 @@ class GUI(wx.Frame):
             self.load_history_file()
             self.filehistory.Load(self.config)
 
-        
+
     def update_menus(self, event):
         """
         Enables/disables the undo/redo/next/prev button as appropriate.
@@ -1531,43 +1531,7 @@ class WhyteboardApp(wx.App):
         config = ConfigObj(path, configspec=meta.config_scheme.split("\n"), encoding=u"utf-8")
         config.validate(Validator())
 
-        set_lang = False
-        lang_name = config['language']
-
-        if options.lang:
-            country = wx.Locale.FindLanguageInfo(options.lang)
-            if country:
-                set_lang = True
-                lang_name = country.Description
-                self.locale = wx.Locale(country.Language, wx.LOCALE_LOAD_DEFAULT)
-
-        if not set_lang:
-            for x in meta.languages:
-                if config['language'].capitalize() == 'Welsh':
-                    self.locale = wx.Locale()
-                    self.locale.Init(u"Cymraeg", u"cy", u"cy_GB.utf8")
-                    break
-                elif config['language'] == x[0]:
-                    nolog = wx.LogNull()
-                    self.locale = wx.Locale(x[2], wx.LOCALE_LOAD_DEFAULT)
-
-        if hasattr(self, "locale"):
-            if not wx.Locale.IsOk(self.locale):
-
-                wx.MessageBox(u"Error setting language to %s - reverting to English" % lang_name,
-                              u"Whyteboard")
-                if not set_lang:
-                    config['language'] = 'English'
-                    config.write()
-                self.locale = wx.Locale(wx.LANGUAGE_DEFAULT, wx.LOCALE_LOAD_DEFAULT)
-
-            langdir = os.path.join(get_path(), u'locale')
-            locale.setlocale(locale.LC_ALL, u'')
-            self.locale.AddCatalogLookupPathPrefix(langdir)
-            self.locale.AddCatalog(u"whyteboard")
-
-        reload(meta)  # fix for some translated strings not being applied
-
+        self.set_language(config, options.lang)
         self.frame = GUI(None, config)
         self.frame.Show(True)
 
@@ -1617,3 +1581,49 @@ class WhyteboardApp(wx.App):
             for f in os.listdir(path):
                 if f.find(self.frame.util.backup_ext) is not - 1:
                     os.remove(os.path.join(path, f))
+
+
+    def set_language(self, config, option_lang=None):
+        """
+        Sets the user's language'
+        """
+        set_lang = False
+        lang_name = config.get('language', '')
+
+        if option_lang:
+            country = wx.Locale.FindLanguageInfo(option_lang)
+            if country:
+                set_lang = True
+                lang_name = country.Description
+                self.locale = wx.Locale(country.Language)
+
+        if not set_lang:
+            for x in meta.languages:
+                if lang_name.capitalize() == 'Welsh':
+                    self.locale = wx.Locale()
+                    self.locale.Init(u"Cymraeg", u"cy", u"cy_GB.utf8")
+                    break
+                elif lang_name == x[0]:
+                    nolog = wx.LogNull()
+                    self.locale = wx.Locale(x[2])
+
+        if not hasattr(self, "locale"):  # now try sytem language
+            self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
+            config['language'] = wx.Locale.GetLanguageName(wx.LANGUAGE_DEFAULT)
+            config.write()
+
+        if not wx.Locale.IsOk(self.locale):
+
+            wx.MessageBox(u"Error setting language to %s - reverting to English" % lang_name,
+                          u"Whyteboard")
+            if not set_lang:
+                config['language'] = 'English'
+                config.write()
+            self.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
+
+        langdir = os.path.join(get_path(), u'locale')
+        locale.setlocale(locale.LC_ALL, u'')
+        self.locale.AddCatalogLookupPathPrefix(langdir)
+        self.locale.AddCatalog(u"whyteboard")
+
+        reload(meta)  # fix for some translated strings not being applied
