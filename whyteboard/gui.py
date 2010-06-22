@@ -86,7 +86,7 @@ class GUI(wx.Frame):
     and manages their layout with a wx.BoxSizer.  A menu, toolbar and associated
     event handlers call the appropriate functions of other classes.
     """
-    title = "Whyteboard " + meta.version
+    title = u"Whyteboard"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
     def __init__(self, parent, config):
@@ -105,7 +105,7 @@ class GUI(wx.Frame):
         self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
 
         self.filehistory = wx.FileHistory(8)
-        self.config = wx.Config(u"Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
+        self.load_history_file()
         self.filehistory.Load(self.config)
 
         self._oldhook = sys.excepthook
@@ -941,10 +941,10 @@ class GUI(wx.Frame):
             for x in self.recent.GetMenuItems():
                 self.recent.RemoveItem(x)
 
-            self.config = wx.Config(u"Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
+            self.load_history_file()
             self.filehistory.Load(self.config)
 
-
+        
     def update_menus(self, event):
         """
         Enables/disables the undo/redo/next/prev button as appropriate.
@@ -1444,6 +1444,8 @@ class GUI(wx.Frame):
     def on_feedback(self, event):
         self.show_dialog(Feedback(self), False)
 
+    def load_history_file(self):
+        self.config = wx.Config(u"Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
 
     def find_help(self):
         """Locate the help files, update self.help var"""

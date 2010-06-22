@@ -790,12 +790,12 @@ class Popup(wx.Menu):
 
         self.Append(ID, _("&Select"))
         self.AppendSeparator()
-        self.Append(wx.ID_NEW, _("&New Sheet") + u"\tCtrl-T")
-        self.Append(wx.ID_CLOSE, _("Re&move Sheet") + u"\tCtrl-W")
-        self.Append(ID_CLOSE_ALL, _("Close All Sheets") + u"\tCtrl+Shift+W")
+        self.Append(wx.ID_NEW, _("&New Sheet"))
+        self.Append(wx.ID_CLOSE, _("Re&move Sheet"))
+        self.Append(ID_CLOSE_ALL, _("Close All Sheets"))
         self.AppendSeparator()
-        self.Append(ID2, _("&Rename...") + u"\tF2")
-        self.Append(ID3, _("&Export...") + u"\tCtrl+E")
+        self.Append(ID2, _("&Rename..."))
+        self.Append(ID3, _("&Export..."))
 
         self.Bind(wx.EVT_MENU, self.select_tab_method(extra), id=ID)
         self.Bind(wx.EVT_MENU, self.rename, id=ID2)
@@ -855,7 +855,7 @@ class NotesPopup(Popup):
             self.Append(ID, text)
             self.Append(ID2, _("&Edit Note..."))
             self.AppendSeparator()
-            self.Append(ID3, _("&Delete") + u"\tDelete")
+            self.Append(ID3, _("&Delete"))
 
             self.Bind(wx.EVT_MENU, lambda x: self.parent.select(extra), id=ID)
             self.Bind(wx.EVT_MENU, self.select_tab_method(extra), id=ID2)
@@ -901,15 +901,15 @@ class ShapePopup(Popup):
 
         self.Append(EDIT, _("&Edit..."), _("Edit the text"))
         self.Append(POINT, _("&Add New Point"), _("Adds a new point to the Polygon"))
-        self.Append(wx.ID_DELETE, _("&Delete") + "\tDelete")
+        self.Append(wx.ID_DELETE, _("&Delete"))
         self.AppendSeparator()
         self.AppendCheckItem(ID_TRANSPARENT, _("T&ransparent"))
         self.Append(ID_SWAP_COLOURS, _("Swap &Colors"))
         self.AppendSeparator()
-        self.Append(ID_MOVE_UP, _("Move &Up") + u"\tCtrl-Up")
-        self.Append(ID_MOVE_DOWN, _("Move &Down") + u"\tCtrl-Down")
-        self.Append(ID_MOVE_TO_TOP, _("Move To &Top") + u"\tCtrl-Shift-Up")
-        self.Append(ID_MOVE_TO_BOTTOM, _("Move To &Bottom") + u"\tCtrl-Shift-Down")
+        self.Append(ID_MOVE_UP, _("Move &Up"))
+        self.Append(ID_MOVE_DOWN, _("Move &Down"))
+        self.Append(ID_MOVE_TO_TOP, _("Move To &Top"))
+        self.Append(ID_MOVE_TO_BOTTOM, _("Move To &Bottom"))
 
         if not self.item.name in [u"Text", u"Note"]:
             self.Enable(EDIT, False)
