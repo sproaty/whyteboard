@@ -147,7 +147,8 @@ class Utility(object):
         self.gui.dialog = ProgressDialog(self.gui, _("Saving..."))
         self.gui.dialog.Show()
 
-        _zip = zipfile.ZipFile(u'whyteboard_temp_new.wtbd', 'w')
+        tmp_file = os.path.join(os.path.dirname(self.filename), u'whyteboard_temp_new.wtbd')
+        _zip = zipfile.ZipFile(tmp_file, 'w')
         self.save_bitmap_data(_zip)
 
         temp = {}
@@ -212,7 +213,7 @@ class Utility(object):
 
         if os.path.exists(self.filename):
             os.remove(self.filename)
-        shutil.move('whyteboard_temp_new.wtbd', self.filename)
+        shutil.move(tmp_file, self.filename)
 
         self.zip = zipfile.ZipFile(self.filename, "r")
         self.is_zipped = True
@@ -235,9 +236,11 @@ class Utility(object):
                 m.load()
 
         self.zip.close()
+        self.gui.dialog.Destroy()
+        self.gui.SetTitle(u"%s - %s" % (os.path.basename(self.filename), self.gui.title))        
         self.saved = True
         self.save_last_path(self.filename)
-        self.gui.dialog.Destroy()
+
 
 
     def save_bitmap_data(self, _zip):
@@ -399,7 +402,6 @@ class Utility(object):
         self.gui.control.change_tool(_id=self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
-        self.gui.SetTitle(u"%s - %s" % (os.path.basename(filename), self.gui.title))
 
         # re-create tabs and its saved drawings
         for x in temp[1]:
@@ -431,6 +433,7 @@ class Utility(object):
         self.gui.canvas.change_current_tool()
         self.gui.tabs.SetSelection(temp[0][3])
         self.gui.on_change_tab()
+        self.gui.SetTitle(u"%s - %s" % (os.path.basename(filename), self.gui.title))
 
         try:
             if temp[0][5]:

@@ -12,7 +12,7 @@ xx May 2010 -- 0.40.2
   instances
 - Improved program updating; removed a dependency on an external library
 - Fixed Unicode errors on saving/loading/opening PDFs with certain filepaths
-- Program language defaults to the system language where possible
+- Program language defaults to the system language if possible
 
 - Removed code that was handling loading older .wtbd save files from around a
   year back, as it's no longer needed
@@ -20,6 +20,7 @@ xx May 2010 -- 0.40.2
 - Little "*" shown in program title when application has unsaved data
 - Removed shortcut key information from popup menus
 
+- Bugfix: possible permissions error on Linux when saving a file
 - Bugfix with removing a file that's been deleted from recent file list not
   saving the file list
 - Fix bug on Mac where wrong version of wxPython was being used

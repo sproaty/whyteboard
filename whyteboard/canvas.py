@@ -240,7 +240,7 @@ class Canvas(wx.ScrolledWindow):
                 self.SetCursor(self.rotate_cursor)
             else:
                 self.set_cursor(wx.CURSOR_SIZING)
-                
+
         elif res == HANDLE_ROTATE:
             self.SetCursor(self.rotate_cursor)
         elif res in [TOP_LEFT, BOTTOM_RIGHT]:
@@ -459,7 +459,7 @@ class Canvas(wx.ScrolledWindow):
             if isinstance(x, Note):
                 pub.sendMessage('note.add', note=x)
         pub.sendMessage('gui.mark_unsaved')
-        
+
 
     def toggle_transparent(self):
         """Toggles the selected item's transparency"""
@@ -532,7 +532,6 @@ class Canvas(wx.ScrolledWindow):
         elif self.prev_drag[1] > y:
             direction.append(DRAG_UP)
 
-        print direction
         self.prev_drag = (x, y)
         return direction
 
