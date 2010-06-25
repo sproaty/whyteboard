@@ -217,8 +217,7 @@ class ControlPanel(wx.Panel):
 
     def change_tool(self, event=None, _id=None):
         """
-        Toggles the tool buttons on/off and calls change_current_tool on the drawing
-        panel.
+        Toggles the tool buttons on/off
         """
         new = self.gui.util.tool
         if event and not _id:
@@ -232,8 +231,7 @@ class ControlPanel(wx.Panel):
             self.tools[new].SetValue(True)
 
         self.toggled = new
-        if self.gui.canvas:
-            self.gui.canvas.change_current_tool(new)
+        pub.sendMessage('canvas.change_tool', new=new)
 
 
     def on_transparency(self, event):
@@ -245,7 +243,7 @@ class ControlPanel(wx.Panel):
 
         if self.gui.canvas.selected:
             self.gui.canvas.toggle_transparent()
-        self.gui.canvas.change_current_tool()
+        pub.sendMessage('canvas.change_tool')
 
 
     def on_swap(self, event):
@@ -257,7 +255,7 @@ class ControlPanel(wx.Panel):
         self.gui.util.colour = a
         if not self.transparent.IsChecked():
             self.gui.util.background = a
-        self.gui.canvas.change_current_tool()
+        pub.sendMessage('canvas.change_tool')
 
 
     def change_colour(self, event=None, colour=None):
@@ -292,7 +290,7 @@ class ControlPanel(wx.Panel):
                 setattr(self.gui.canvas.selected, var_name, value)
             self.gui.canvas.redraw_all(True)
 
-        self.gui.canvas.change_current_tool()
+        pub.sendMessage('canvas.change_tool')
         self.preview.Refresh()
 
 
@@ -994,6 +992,8 @@ class Thumbs(scrolled.ScrolledPanel):
         pub.subscribe(self.highlight_current, 'thumbs.text.highlight')
         pub.subscribe(self.rename, 'sheet.rename')
         pub.subscribe(self.sheet_moved, 'sheet.move')
+        pub.subscribe(self.update_current, 'thumbs.update_current')
+
 
     def highlight_current(self, tab, select):
         if self.text:
@@ -1109,6 +1109,12 @@ class Thumbs(scrolled.ScrolledPanel):
     def rename(self, _id, text):
         self.text[_id].SetLabel(text)
         self.Layout()
+
+    def update_current(self):
+        """
+        Updates current thumnbail
+        """
+        self.update(self.gui.tabs.GetSelection())
 
     def update(self, _id):
         """

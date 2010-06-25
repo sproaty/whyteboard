@@ -237,7 +237,7 @@ class Utility(object):
 
         self.zip.close()
         self.gui.dialog.Destroy()
-        self.gui.SetTitle(u"%s - %s" % (os.path.basename(self.filename), self.gui.title))        
+        self.gui.SetTitle(u"%s - %s" % (os.path.basename(self.filename), self.gui.title))
         self.saved = True
         self.save_last_path(self.filename)
 
@@ -430,7 +430,7 @@ class Utility(object):
         wx.PostEvent(self.gui, self.gui.LoadEvent())
         self.saved = True
         self.saved_version = temp[0][4]
-        self.gui.canvas.change_current_tool()
+        pub.sendMessage('canvas.change_tool')
         self.gui.tabs.SetSelection(temp[0][3])
         self.gui.on_change_tab()
         self.gui.SetTitle(u"%s - %s" % (os.path.basename(filename), self.gui.title))

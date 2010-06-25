@@ -343,8 +343,8 @@ class Polygon(OverlayShape):
             self.sort_handles()
             pub.sendMessage('shape.add', shape=self)
             pub.sendMessage('canvas.release_mouse')
-            self.canvas.change_current_tool()
-            self.canvas.update_thumb()
+            pub.sendMessage('canvas.change_tool')
+            pub.sendMessage('thumbs.update_current')
 
 
 
@@ -1054,7 +1054,7 @@ class Media(Tool):
         self.y = y
         self.canvas.medias.append(self)
         self.make_panel()
-        self.canvas.change_current_tool()
+        pub.sendMessage('canvas.change_tool')
 
     def make_panel(self):
         if not self.mc:
@@ -1212,7 +1212,7 @@ class Text(OverlayShape):
             dlg.Destroy()
             self.canvas.text = None
             self.canvas.redraw_all()
-            self.canvas.change_current_tool()
+            pub.sendMessage('canvas.change_tool')
             return False
 
         dlg.transfer_data(self)  # grab font and text data
@@ -1752,8 +1752,8 @@ class Select(Tool):
             self.shape.end_select_action(self.handle)
 
         pub.sendMessage('shape_viewer.update')
-        self.canvas.update_thumb()
-        self.canvas.change_current_tool()
+        pub.sendMessage('thumbs.update_current')
+        pub.sendMessage('canvas.change_tool')
 
 
     def preview(self, dc, width, height):
@@ -1810,7 +1810,7 @@ class BitmapSelect(Rectangle):
         """ Doesn't affect the shape list """
         if not (x != self.x and y != self.y):
             self.canvas.copy = None
-            wx.CallAfter(self.canvas.change_current_tool)
+            wx.CallAfter(pub.sendMessage, 'canvas.change_tool')
             self = BitmapSelect.__init__(self, self.canvas, self.colour, self.thickness)
 
 

@@ -169,7 +169,7 @@ class GUI(wx.Frame):
         self.count = 5  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(50)
         #wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
-        self.canvas.update_thumb()
+        pub.sendMessage('thumbs.update_current')
         self.make_menu()
         self.do_bindings()
         self.update_panels(True)  # bold first items
@@ -328,9 +328,10 @@ class GUI(wx.Frame):
                   'shape.selected': self.shape_selected,
                   'shape_viewer.update': self.update_shape_viewer,
                   'canvas.capture_mouse': self.capture_mouse,
-                  'canvas.release_mouse': self.release_mouse,
+                  'canvas.change_tool': self.change_tool,
                   'canvas.paste_text': self.paste_text,
                   'canvas.paste_image': self.paste_image,
+                  'canvas.release_mouse': self.release_mouse,
                   'gui.open_file': self.open_file,
                   'gui.mark_unsaved': self.mark_unsaved}
         [pub.subscribe(value, key) for key, value in topics.items()]
@@ -1043,22 +1044,10 @@ class GUI(wx.Frame):
 
 
     def paste_image(self, bitmap, x, y, ignore=False):
-        shape = Image(self.canvas, bitmap, None)
-        shape.left_down(x, y)
-        wx.Yield()
-        if ignore:
-            self.canvas.resize((bitmap.GetWidth(), bitmap.GetHeight()))
-        self.canvas.redraw_all(True)
-
+        self.canvas.paste_image(bitmap, x, y, ignore)
 
     def paste_text(self, text, x, y):
-        self.canvas.shape = Text(self.canvas, self.util.colour, 1)
-        self.canvas.shape.text = text
-        self.canvas.shape.left_down(x, y)
-        self.canvas.shape.left_up(x, y)
-        self.canvas.text = None
-        self.canvas.change_current_tool()
-        self.canvas.redraw_all(True)
+        self.canvas.paste_text(text, x, y, self.util.colour)
 
 
     def on_paste(self, event=None, ignore=False):
@@ -1090,8 +1079,15 @@ class GUI(wx.Frame):
         self.on_paste(ignore=True)
 
     def on_change_tool(self, event, _id):
+        """ Change tool -- used when being used as a hotkey """
         if not self.canvas.shape.drawing and not self.canvas.drawing:
             self.control.change_tool(_id=_id)
+
+
+    def change_tool(self, new=None):
+        """ pubsub binding """
+        if self.canvas:
+            self.canvas.change_current_tool(new)
 
 
     def on_fullscreen(self, event=None, val=None):
@@ -1107,7 +1103,10 @@ class GUI(wx.Frame):
 
 
     def hotkey(self, event=None):
-        """escape / home / end / page up / page down/arrow key)"""
+        """
+        Checks for hotkeys to either change tools or to move the canvas'
+        viewport. Checks for the arrow keys to move shapes about.
+        """
         code = event.GetKeyCode()
         if os.name == "posix":
             for x, key in enumerate(self.hotkeys):
@@ -1449,13 +1448,13 @@ class GUI(wx.Frame):
     def load_history_file(self):
         self.config = wx.Config(u"Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
 
-            
+
     def mark_unsaved(self):
         if self.util.saved:
             self.util.saved = False
             self.SetTitle(u"*" + self.GetTitle())
-            
-            
+
+
     def find_help(self):
         """Locate the help files, update self.help var"""
         _file = os.path.join(get_path(), u'whyteboard-help', u'whyteboard.hhp')

@@ -33,6 +33,8 @@ import distutils.dir_util
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 
+from lib.pubsub import pub
+
 _ = wx.GetTranslation
 path = os.path.split(os.path.abspath(sys.argv[0]))
 
@@ -89,7 +91,7 @@ def load_image(path, canvas, image_class):
     image = wx.Bitmap(path)
     shape = image_class(canvas, image, path)
     shape.left_down(0, 0)  # renders, updates scrollbars
-    canvas.update_thumb()
+    pub.sendMessage('thumbs.update_current')
 
 
 def create_colour_bitmap(colour):

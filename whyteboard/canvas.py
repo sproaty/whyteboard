@@ -100,7 +100,6 @@ class Canvas(wx.ScrolledWindow):
         #dc.Clear()
 
         self.gui = gui
-        self.tab = tab
         self.scale = (1.0, 1.0)
         self.shapes = []  # list of shapes for re-drawing/saving
         self.shape = None  # currently selected shape *to draw with*
@@ -199,7 +198,7 @@ class Canvas(wx.ScrolledWindow):
             if not isinstance(self.shape, Media):
                 if len(self.shapes) - before:
                     self.change_current_tool()
-                    self.update_thumb()
+                    pub.sendMessage('thumbs.update_current')
             self.drawing = False
 
 
@@ -376,7 +375,7 @@ class Canvas(wx.ScrolledWindow):
             self.copy.draw(dc, True)
         self.Refresh()
         if update_thumb:
-            self.update_thumb()
+            pub.sendMessage('thumbs.update_current')
 
 
     def change_current_tool(self, new=None):
@@ -641,7 +640,7 @@ class Canvas(wx.ScrolledWindow):
 
     def middle_down(self, event):
         """ Begin dragging the scroller to move around the panel """
-        self.SetCursor(wx.StockCursor(wx.CURSOR_SIZENESW))
+        self.set_cursor(wx.CURSOR_SIZENESW)
         self.scroller.Start(event.GetPosition())
 
     def middle_up(self, event):
@@ -682,6 +681,24 @@ class Canvas(wx.ScrolledWindow):
                 dc.Clear()
                 dc.DestroyClippingRegion()
 
+
+    def paste_image(self, bitmap, x, y, ignore=False):
+        shape = Image(self, bitmap, None)
+        shape.left_down(x, y)
+        wx.Yield()
+        if ignore:
+            self.resize((bitmap.GetWidth(), bitmap.GetHeight()))
+        self.redraw_all(True)
+
+
+    def paste_text(self, text, x, y, colour):
+        self.shape = Text(self, colour, 1)
+        self.shape.text = text
+        self.shape.left_down(x, y)
+        self.shape.left_up(x, y)
+        self.text = None
+        self.change_current_tool()
+        self.redraw_all(True)
 
 
     def deselect_shape(self):
@@ -729,10 +746,6 @@ class Canvas(wx.ScrolledWindow):
         self.selected.colour, self.selected.background = self.selected.background, self.selected.colour
         self.redraw_all()
 
-    def get_tab(self):
-        """ Returns the current tab number of this Canvas instance. """
-        return self.tab.GetSelection()
-
     def capture_mouse(self):
         if not self.HasCapture():
             self.CaptureMouse()
@@ -740,11 +753,6 @@ class Canvas(wx.ScrolledWindow):
     def release_mouse(self):
         if self.HasCapture():
             self.ReleaseMouse()
-
-    def update_thumb(self):
-        """ Updates this tab's thumb """
-        self.gui.thumbs.update(self.get_tab())
-
 
     def resize_if_large_image(self, size):
         """ Check whether the canvas should be resized (for large images) """
