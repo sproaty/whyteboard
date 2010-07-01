@@ -440,7 +440,7 @@ class GUI(wx.Frame):
                 wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO, wx.ART_DELETE]
         tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"),
                 _("Paste an Image/Text"), _("Undo the Last Action"), _("Redo the Last Undone Action"),
-                _("Delete the currently selected shape"), ("Move Shape Up"), ("Move Shape Down"), 
+                _("Delete the currently selected shape"), ("Move Shape Up"), ("Move Shape Down"),
                 _("Move Shape To Top"), ("Move Shape To Bottom")]
 
         ids.extend(_move)
@@ -771,7 +771,7 @@ class GUI(wx.Frame):
         self.tab_count += 1
         self.thumbs.new_thumb(name=name)
         self.notes.add_tab(name)
-        self.tabs.AddPage(Canvas(self.tabs, self, (self.util.config['default_width'], 
+        self.tabs.AddPage(Canvas(self.tabs, self, (self.util.config['default_width'],
                                                    self.util.config['default_height'])), name)
 
         self.update_panels(False)  # unhighlight current
@@ -946,6 +946,7 @@ class GUI(wx.Frame):
 
             self.load_history_file()
             self.filehistory.Load(self.config)
+        event.Skip()
 
 
     def update_menus(self, event):
