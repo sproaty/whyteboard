@@ -488,7 +488,6 @@ class Canvas(wx.ScrolledWindow):
             self.add_undo()
             self.shapes.remove(self.selected)
 
-        self.gui.util.saved = False
         self.selected = None
         self.redraw_all(True)
 
@@ -510,7 +509,6 @@ class Canvas(wx.ScrolledWindow):
                     if isinstance(x, Image):
                         images.append(x)
 
-        self.gui.util.saved = False
         self.shapes = images
         self.redraw_all(update_thumb=True)
 

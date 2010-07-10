@@ -962,7 +962,10 @@ class Frame(TopWindow):
 
     def SetMenuBar(self, mb):
         self.MenuBar = mb
-
+        
+    def GetTitle(self):
+        return u"Blah"
+    
     def SetToolBar(self, tb):
         self.ToolBar = tb
 
