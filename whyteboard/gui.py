@@ -791,7 +791,7 @@ class GUI(wx.Frame):
         self.update_panels(True)
         self.thumbs.thumbs[self.current_tab].update()
         self.thumbs.ScrollChildIntoView(self.thumbs.thumbs[self.current_tab])
-        self.control.change_tool()
+        self.control.change_tool()  # updates canvas' shape
 
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]

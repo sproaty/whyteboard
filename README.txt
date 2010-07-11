@@ -9,10 +9,10 @@ start menu. If you have the stand-alone exe, please run whyteboard.exe
 
 To run Whyteboard from source, here are the requirements:
 
-* Python - 2.5.4 or 2.6.5 (untested on other major versions; should work on 2.4)
+* Python - 2.5, 2.6, 2.7 (untested on other major versions; should work on 2.4)
   Whyteboard does not work with Python 3
 
-http://www.python.org/download/releases/2.6.5/
+http://www.python.org/download
 
 * wxPython - the latest version is -always- recommended (currently 2.8.11.0).
   You will want the unicode build.

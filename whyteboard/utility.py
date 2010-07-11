@@ -644,11 +644,10 @@ class Utility(object):
 
         colour = self.colour
         thickness = self.thickness
-        params = [canvas, colour, thickness]  # Object constructor parameters
+        params = [canvas, colour, thickness]
 
         if not self.transparent:
             params.append(self.background)
-
         canvas.shape = self.items[new - 1](*params)  # create new Tool
 
 

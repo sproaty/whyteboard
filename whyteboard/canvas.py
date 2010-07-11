@@ -197,7 +197,7 @@ class Canvas(wx.ScrolledWindow):
             self.shape.left_up(*self.convert_coords(event))
             if not isinstance(self.shape, Media):
                 if len(self.shapes) - before:
-                    self.change_tool()
+                    pub.sendMessage('canvas.change_tool')
                     pub.sendMessage('thumbs.update_current')
             self.drawing = False
 
@@ -587,30 +587,28 @@ class Canvas(wx.ScrolledWindow):
         return (x, self.shapes.pop(x))
 
 
-    def move_up(self, shape):
-        """ Move a shape up in the to-draw list. """
-        x, item = self.do_move(shape)
+    def move_shape(fn):
+        def wrapper(canvas, shape, x=None, item=None):
+            x, item = canvas.do_move(shape)
+            fn(canvas, shape, x, item)
+            canvas.redraw_all(True)
+        return wrapper
+
+    @move_shape
+    def move_up(self, shape, x=None, item=None):
         self.shapes.insert(x + 1, item)
-        self.redraw_all(True)
 
-    def move_down(self, shape):
-        """ Move a shape up in the to-draw list. """
-        x, item = self.do_move(shape)
+    @move_shape
+    def move_down(self, shape, x=None, item=None):
         self.shapes.insert(x - 1, item)
-        self.redraw_all(True)
 
-
-    def move_top(self, shape):
-        """ Move a shape to the top in the to-draw list. """
-        item = self.do_move(shape)[1]
+    @move_shape
+    def move_top(self, shape, x=None, item=None):
         self.shapes.append(item)
-        self.redraw_all(True)
 
-    def move_bottom(self, shape):
-        """ Move a shape up in the to-draw list. """
-        item = self.do_move(shape)[1]
+    @move_shape
+    def move_bottom(self, shape, x=None, item=None):
         self.shapes.insert(0, item)
-        self.redraw_all(True)
 
 
     def convert_coords(self, event):
@@ -676,7 +674,7 @@ class Canvas(wx.ScrolledWindow):
         self.shape.left_down(x, y)
         self.shape.left_up(x, y)
         self.text = None
-        self.change_tool()
+        pub.sendMessage('canvas.change_tool')
         self.redraw_all(True)
 
 
