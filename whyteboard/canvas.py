@@ -70,27 +70,22 @@ class Canvas(wx.ScrolledWindow):
     """
     CANVAS_BORDER = 15  # border pixels in size (overridable by user)
 
-    def __init__(self, tab, gui, area=None):
+    def __init__(self, tab, gui, area):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        style = wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN
-        wx.ScrolledWindow.__init__(self, tab, style=style)
-        self.area = area
-        if not area:
-            self.area = (gui.util.config['default_width'], gui.util.config['default_height'])
-
+        wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN)
         self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
-        self.file_drop = CanvasDropTarget()
-        self.SetDropTarget(self.file_drop)
-
+        self.SetDropTarget(CanvasDropTarget())
+        
         if os.name == "nt":
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
-        if os.name == "posix":
+        else:
             self.ClearBackground()
 
+        self.area = area
         self.scroller = DragScroller(self)
         self.overlay = wx.Overlay()
         self.buffer = wx.EmptyBitmap(*self.area)
@@ -588,10 +583,10 @@ class Canvas(wx.ScrolledWindow):
 
 
     def move_shape(fn):
-        def wrapper(canvas, shape, x=None, item=None):
-            x, item = canvas.do_move(shape)
-            fn(canvas, shape, x, item)
-            canvas.redraw_all(True)
+        def wrapper(self, shape, x=None, item=None):
+            x, item = self.do_move(shape)
+            fn(self, shape, x, item)
+            self.redraw_all(True)
         return wrapper
 
     @move_shape

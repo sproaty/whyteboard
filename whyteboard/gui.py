@@ -97,8 +97,7 @@ class GUI(wx.Frame):
         self.SetIcon(icon.whyteboard.getIcon())
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
         self.util = Utility(self, config)
-        self.file_drop = CanvasDropTarget()
-        self.SetDropTarget(self.file_drop)
+        self.SetDropTarget(CanvasDropTarget())
         self.statusbar = self.CreateStatusBar()
         self.printData = wx.PrintData()
         self.printData.SetPaperId(wx.PAPER_LETTER)
@@ -148,7 +147,7 @@ class GUI(wx.Frame):
                  fnb.FNB_DROPDOWN_TABS_LIST | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS |
                  fnb.FNB_NO_NAV_BUTTONS)
         self.tabs = fnb.FlatNotebook(self, style=style)
-        self.canvas = Canvas(self.tabs, self)  # the active whyteboard tab
+        self.canvas = Canvas(self.tabs, self, (config['default_width'], config['default_height']))
         self.panel = SidePanel(self)
 
         self.thumbs = self.panel.thumbs
@@ -772,7 +771,8 @@ class GUI(wx.Frame):
         self.tab_count += 1
         self.thumbs.new_thumb(name=name)
         self.notes.add_tab(name)
-        self.tabs.AddPage(Canvas(self.tabs, self), name)
+        self.tabs.AddPage(Canvas(self.tabs, self, (self.util.config['default_width'], 
+                                                   self.util.config['default_height'])), name)
 
         self.update_panels(False)  # unhighlight current
         self.thumbs.thumbs[self.current_tab].current = True

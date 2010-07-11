@@ -1150,13 +1150,13 @@ class ShapeViewer(wx.Dialog):
             count += 1
 
     def move_shape(fn):
-        def wrapper(dialog, event, index=None, item=None):
-            index, item = dialog.find_shape()
-            dialog.shapes.pop(index)
-            x = fn(dialog, event, index, item)
+        def wrapper(self, event, index=None, item=None):
+            index, item = self.find_shape()
+            self.shapes.pop(index)
+            x = fn(self, event, index, item)
 
-            dialog.populate()
-            dialog.list.Select(x)
+            self.populate()
+            self.list.Select(x)
         return wrapper
 
     @move_shape
