@@ -1003,10 +1003,10 @@ class ShapeViewer(wx.Dialog):
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.moveTop = self.make_button(u"move-top", _("Move Shape To Top"))
-        self.moveBottom = self.make_button(u"move-bottom", _("Move Shape To Bottom"))
         self.moveUp = self.make_button(u"move-up", _("Move Shape Up"))
         self.moveDown = self.make_button(u"move-down", _("Move Shape Down"))
+        self.moveTop = self.make_button(u"move-top", _("Move Shape To Top"))
+        self.moveBottom = self.make_button(u"move-bottom", _("Move Shape To Bottom"))
         self.deleteBtn = self.make_button(u"delete", _("Delete Shape"))
         self.prev = self.make_button(u"prev_sheet", _("Previous Sheet"))
         self.next = self.make_button(u"next_sheet", _("Next Sheet"))
@@ -1014,8 +1014,8 @@ class ShapeViewer(wx.Dialog):
         self.pages = wx.ComboBox(self, size=(125, 25), style=wx.CB_READONLY)
         self.list = WhyteboardList(self)
 
-        bsizer.AddMany([(self.moveTop, 0, wx.RIGHT, 5), (self.moveBottom, 0, wx.RIGHT, 5),
-                        (self.moveUp, 0, wx.RIGHT, 5), (self.moveDown, 0, wx.RIGHT, 5),
+        bsizer.AddMany([(self.moveUp, 0, wx.RIGHT, 5), (self.moveDown, 0, wx.RIGHT, 5),
+                        (self.moveTop, 0, wx.RIGHT, 5), (self.moveBottom, 0, wx.RIGHT, 5),
                         (self.deleteBtn, 0, wx.RIGHT, 5)])
         nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
         nextprevsizer.Add(self.next)
@@ -1045,6 +1045,7 @@ class ShapeViewer(wx.Dialog):
         self.SetSizer(sizer)
         self.populate()
         self.Fit()
+        self.SetFocus()
 
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
@@ -1182,7 +1183,9 @@ class ShapeViewer(wx.Dialog):
     def on_delete(self, event, index=None, item=None):
         self.gui.canvas.selected = item
         self.gui.canvas.delete_selected()
-        return 0
+        if self.list.GetFirstSelected() - 1 <= 0:
+            return 0
+        return self.list.GetFirstSelected() - 1
 
 
     def change(self, selection):
