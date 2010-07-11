@@ -1149,39 +1149,35 @@ class ShapeViewer(wx.Dialog):
                 return (self.shapes.index(x), x)
             count += 1
 
+    def move_shape(fn):
+        def wrapper(dialog, event, index=None, item=None):
+            index, item = dialog.find_shape()
+            dialog.shapes.pop(index)
+            x = fn(dialog, event, index, item)
+            
+            dialog.populate()
+            dialog.list.Select(x)
+        return wrapper
 
-    def on_top(self, event):
-        index, item = self.find_shape()
-        self.shapes.pop(index)
+    @move_shape
+    def on_top(self, event, index=None, item=None):
         self.shapes.append(item)
-        self.populate()
-        self.list.Select(0)
+        return 0
 
-
-    def on_bottom(self, event):
-        index, item = self.find_shape()
-        self.shapes.pop(index)
+    @move_shape
+    def on_bottom(self, event, index=None, item=None):
         self.shapes.insert(0, item)
-        self.populate()
-        self.list.Select(len(self.shapes) - 1)
+        return len(self.shapes) - 1
 
-
-    def on_up(self, event):
-        index, item = self.find_shape()
-        self.shapes.pop(index)
+    @move_shape
+    def on_up(self, event, index=None, item=None):
         self.shapes.insert(index + 1, item)
-        x = self.list.GetFirstSelected() - 1
-        self.populate()
-        self.list.Select(x)
+        return self.list.GetFirstSelected() - 1
 
-
-    def on_down(self, event):
-        index, item = self.find_shape()
-        self.shapes.pop(index)
+    @move_shape
+    def on_down(self, event, index=None, item=None):
         self.shapes.insert(index - 1, item)
-        x = self.list.GetFirstSelected() + 1
-        self.populate()
-        self.list.Select(x)
+        return self.list.GetFirstSelected() + 1
 
 
     def change(self, selection):
