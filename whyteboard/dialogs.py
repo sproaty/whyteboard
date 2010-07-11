@@ -1125,8 +1125,7 @@ class ShapeViewer(wx.Dialog):
             do = True
         elif _id == self.deleteBtn.GetId() and self.shapes and self.list.GetFirstSelected() >= 0:
             do = True
-        elif (_id in [self.moveUp.GetId(), self.moveTop.GetId()] and
-            self.list.GetFirstSelected() > 0 and self.list.GetFirstSelected() >= 0):
+        elif _id in [self.moveUp.GetId(), self.moveTop.GetId()] and self.list.GetFirstSelected() > 0:
             do = True
         elif (_id in [self.moveDown.GetId(), self.moveBottom.GetId()] and
             self.list.GetFirstSelected() != len(self.shapes) - 1  and self.shapes
@@ -1154,7 +1153,7 @@ class ShapeViewer(wx.Dialog):
             index, item = dialog.find_shape()
             dialog.shapes.pop(index)
             x = fn(dialog, event, index, item)
-            
+
             dialog.populate()
             dialog.list.Select(x)
         return wrapper
@@ -1179,6 +1178,12 @@ class ShapeViewer(wx.Dialog):
         self.shapes.insert(index - 1, item)
         return self.list.GetFirstSelected() + 1
 
+    @move_shape
+    def on_delete(self, event, index=None, item=None):
+        self.gui.canvas.selected = item
+        self.gui.canvas.delete_selected()
+        return 0
+
 
     def change(self, selection):
         """Change the sheet, repopulate"""
@@ -1188,14 +1193,6 @@ class ShapeViewer(wx.Dialog):
         self.shapes = list(self.gui.canvas.shapes)
         self.populate()
 
-
-    def on_delete(self, event):
-        index, item = self.find_shape()
-        self.gui.canvas.selected = item
-        self.gui.canvas.delete_selected()
-        self.shapes.pop(index)
-        self.populate()
-        self.list.Select(0)
 
     def on_change_sheet(self, event):
         self.change(self.pages.GetSelection())
