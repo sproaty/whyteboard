@@ -328,7 +328,7 @@ class GUI(wx.Frame):
                   'shape.selected': self.shape_selected,
                   'shape_viewer.update': self.update_shape_viewer,
                   'canvas.capture_mouse': self.capture_mouse,
-                  'canvas.change_tool': self.change_tool,
+                  'canvas.change_tool': self.pubsub_change_tool,
                   'canvas.paste_text': self.paste_text,
                   'canvas.paste_image': self.paste_image,
                   'canvas.release_mouse': self.release_mouse,
@@ -1084,16 +1084,23 @@ class GUI(wx.Frame):
             self.control.change_tool(_id=_id)
 
 
-    def change_tool(self, new=None):
-        """ pubsub binding """
+    def pubsub_change_tool(self, new=None):
         if self.canvas:
-            self.canvas.change_current_tool(new)
+            self.change_tool(new)
+
+
+    def change_tool(self, new=None, canvas=None):
+        if not canvas:
+            canvas = self.canvas
+
+        self.util.change_tool(canvas, new)
+        canvas.change_tool()
+        pub.sendMessage('gui.preview.refresh')
 
 
     def on_fullscreen(self, event=None, val=None):
         """ Toggles fullscreen. val forces fullscreen on/off """
-        flag = (wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION |
-               wx.FULLSCREEN_NOSTATUSBAR)
+        flag = wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION | wx.FULLSCREEN_NOSTATUSBAR
         if not val:
             val = not self.IsFullScreen()
 
@@ -1454,7 +1461,6 @@ class GUI(wx.Frame):
             self.util.saved = False
             self.SetTitle(u"*" + self.GetTitle())
 
-
     def find_help(self):
         """Locate the help files, update self.help var"""
         _file = os.path.join(get_path(), u'whyteboard-help', u'whyteboard.hhp')
@@ -1529,7 +1535,7 @@ class WhyteboardApp(wx.App):
         parser.add_option("--width", type="int", help="set canvas to WIDTH")
         parser.add_option("--height", type="int", help="set canvas to HEIGHT")
         parser.add_option("-u", "--update", action="store_true", help="check for a newer version of whyteboard")
-        parser.add_option("-l", "--lang", help="set language. can be a country code or language (e.g. fr, french, nl, dutch)")
+        parser.add_option("-l", "--lang", help="set language. can be a country code or language (e.g. fr, french; nl, dutch)")
 
         path = os.path.join(get_home_dir(), u"user.pref")
         (options, args) = parser.parse_args()
@@ -1567,13 +1573,9 @@ class WhyteboardApp(wx.App):
 
 
     def load_file(self, _file):
-        """Forward the first command-line arg to gui.do_open()"""
-        try:
-            _file = os.path.abspath(_file)
-            if os.path.exists(_file):
-                self.frame.do_open(_file)
-        except IndexError:
-            pass
+        _file = os.path.abspath(_file)
+        if os.path.exists(_file):
+            self.frame.do_open(_file)
 
 
     def delete_temp_files(self):

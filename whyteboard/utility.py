@@ -632,6 +632,25 @@ class Utility(object):
         return True
 
 
+    def change_tool(self, canvas, new=None):
+        """
+        Changes the canvas' shape that is being drawn with, or creates a new
+        instance of the currently selected shape
+        """
+        if not new:
+            new = self.tool
+        else:
+            self.tool = new
+
+        colour = self.colour
+        thickness = self.thickness
+        params = [canvas, colour, thickness]  # Object constructor parameters
+
+        if not self.transparent:
+            params.append(self.background)
+
+        canvas.shape = self.items[new - 1](*params)  # create new Tool
+
 
     def set_clipboard(self, rect):
         """Sets the clipboard with a bitmap image data of a selection"""

@@ -124,18 +124,18 @@ class TestCanvas:
         User changing tools actually updates the drawing tool
         """
         # This depends on the Tool list order not changing, unlikely from a UI
-        # perspective; note: change_current_tool() called in Whyteboard.__init__
+        # perspective; note: change_tool() called in Whyteboard.__init__
         assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
 
-        self.canvas.change_current_tool(1)
+        self.canvas.change_tool(1)
         assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
 
-        self.canvas.change_current_tool()
+        self.canvas.change_tool()
         assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
-        self.canvas.change_current_tool(2)
+        self.canvas.change_tool(2)
         assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
 
-        self.canvas.change_current_tool()
+        self.canvas.change_tool()
         assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
 
 

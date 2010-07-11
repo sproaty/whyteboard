@@ -117,7 +117,7 @@ class Canvas(wx.ScrolledWindow):
 
         img = wx.Image(get_image_path(u"cursors", u"rotate"))
         self.rotate_cursor = wx.CursorFromImage(img)
-        self.change_current_tool()
+        self.gui.change_tool(canvas=self)
         self.redraw_all()
 
         self.Bind(wx.EVT_SIZE, self.on_size)
@@ -197,7 +197,7 @@ class Canvas(wx.ScrolledWindow):
             self.shape.left_up(*self.convert_coords(event))
             if not isinstance(self.shape, Media):
                 if len(self.shapes) - before:
-                    self.change_current_tool()
+                    self.change_tool()
                     pub.sendMessage('thumbs.update_current')
             self.drawing = False
 
@@ -378,29 +378,10 @@ class Canvas(wx.ScrolledWindow):
             pub.sendMessage('thumbs.update_current')
 
 
-    def change_current_tool(self, new=None):
-        """
-        Changes the users' tool (and cursor) they are drawing with. new is an
-        int, corresponding to new - 1 = Tool ID in Utility.items
-        Can be called with no new ID to reset itself with the current tool
-        """
+    def change_tool(self):
         if self.HasCapture():
             self.ReleaseMouse()
-        if not new:
-            new = self.gui.util.tool
-        else:
-            self.gui.util.tool = new
-
-        colour = self.gui.util.colour
-        thickness = self.gui.util.thickness
-        params = [self, colour, thickness]  # Object constructor parameters
-
-        if not self.gui.util.transparent:
-            params.append(self.gui.util.background)
-
-        self.shape = self.gui.util.items[new - 1](*params)  # create new Tool
         self.change_cursor()
-        pub.sendMessage('gui.preview.refresh')
 
 
     def change_cursor(self):
@@ -695,7 +676,7 @@ class Canvas(wx.ScrolledWindow):
         self.shape.left_down(x, y)
         self.shape.left_up(x, y)
         self.text = None
-        self.change_current_tool()
+        self.change_tool()
         self.redraw_all(True)
 
 
