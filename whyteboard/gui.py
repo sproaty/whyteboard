@@ -940,7 +940,7 @@ class GUI(wx.Frame):
 
 
     def load_recent_files(self, event):
-        if event.GetEventObject() == self._file:
+        if event.GetMenu() == self._file:
             for x in self.recent.GetMenuItems():
                 self.recent.RemoveItem(x)
 
