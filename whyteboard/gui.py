@@ -488,13 +488,9 @@ class GUI(wx.Frame):
         Shape getting selected (by Select tool)
         """
         self.canvas.select_shape(shape)
-
-        ctrl, menu = True, True
-        if not shape.background == wx.TRANSPARENT:
-            ctrl, menu = False, False
-
-        self.control.transparent.SetValue(ctrl)
-        self.menu.Check(ID_TRANSPARENT, menu)
+        change = shape.background == wx.TRANSPARENT
+        self.control.transparent.SetValue(change)
+        self.menu.Check(ID_TRANSPARENT, change)
 
 
     def release_mouse(self):
@@ -527,15 +523,8 @@ class GUI(wx.Frame):
         Prompts for the filename and location to save to.
         """
         wildcard = _("Whyteboard file ") + u"(*.wtbd)|*.wtbd"
-        _dir = ""
-        _file = time.localtime(time.time())
-        _file = time.strftime(u"%Y-%m-%d-%H-%M-%S")
-
-        if self.util.filename:
-            _file = self.util.filename
-
-        if self.util.config.get('last_opened_dir'):
-            _dir = self.util.config['last_opened_dir']
+        _dir = self.util.config.get('last_opened_dir') or u""
+        _file = self.util.filename or time.strftime(u"%Y-%m-%d-%H-%M-%S")
 
         name = file_dialog(self, _("Save Whyteboard As..."),
                            wx.SAVE | wx.OVERWRITE_PROMPT, wildcard, _dir, _file)
@@ -563,9 +552,7 @@ class GUI(wx.Frame):
             wildcard = wildcard[wildcard.find(u"PDF/PS/SVG") :
                                 wildcard.find(u"*.SVG|")]  # page descriptions
 
-        _dir = u""
-        if self.util.config.get('last_opened_dir'):
-            _dir = self.util.config['last_opened_dir']
+        _dir = self.util.config.get('last_opened_dir') or u""
 
         self.open_file(file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir))
 
@@ -940,13 +927,16 @@ class GUI(wx.Frame):
 
 
     def load_recent_files(self, event):
+        """
+        Re-creates the Recent Files menu by reloading the config file.
+        """
         if event.GetMenu() == self._file:
             for x in self.recent.GetMenuItems():
                 self.recent.RemoveItem(x)
 
             self.load_history_file()
             self.filehistory.Load(self.config)
-        event.Skip()
+        event.Skip()  # otherwise interferes with EVT_UPDATE_UI
 
 
     def update_menus(self, event):

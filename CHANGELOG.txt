@@ -19,6 +19,8 @@ xx May 2010 -- 0.40.2
 - Removed version number from application title (see About Dialog for it)
 - Little "*" shown in program title when application has unsaved data
 - Removed shortcut key information from popup menus
+- Shape viewer dialog handles delete key. Deleting shape from dialog selects the
+  previous shape; not the first shape in the list.
 
 - Bugfix: possible permissions error on Linux when saving a file
 - Bugfix with removing a file that's been deleted from recent file list not

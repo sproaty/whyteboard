@@ -991,7 +991,7 @@ class ShapeViewer(wx.Dialog):
         """
         wx.Dialog.__init__(self, gui, title=_("Shape Viewer"), size=(550, 400),
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
-                           wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
+                           wx.MINIMIZE_BOX | wx.RESIZE_BORDER | wx.WANTS_CHARS)
         self.gui = gui
         self.count = 0
         #self.SetExtraStyle(wx.WS_EX_PROCESS_IDLE)
@@ -1059,6 +1059,11 @@ class ShapeViewer(wx.Dialog):
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_delete)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
+
+        ac = [(wx.ACCEL_NORMAL, wx.WXK_DELETE, self.deleteBtn.GetId())]
+        tbl = wx.AcceleratorTable(ac)
+        self.list.SetAcceleratorTable(tbl)
+        self.Bind(wx.EVT_CHAR_HOOK, self.delete_key)
 
         pub.subscribe(self.shape_add, 'shape.add')
         pub.subscribe(self.sheet_rename, 'sheet.rename')
@@ -1150,6 +1155,10 @@ class ShapeViewer(wx.Dialog):
             count += 1
 
     def move_shape(fn):
+        """
+        Passes the selected shape and its index to the decorated function, which
+        handles moving the shape. function returns the list index to select
+        """
         def wrapper(self, event, index=None, item=None):
             index, item = self.find_shape()
             self.shapes.pop(index)
@@ -1181,12 +1190,17 @@ class ShapeViewer(wx.Dialog):
 
     @move_shape
     def on_delete(self, event, index=None, item=None):
-        self.gui.canvas.selected = item
-        self.gui.canvas.delete_selected()
+        #self.gui.canvas.selected = item
+        #self.gui.canvas.delete_selected()
         if self.list.GetFirstSelected() - 1 <= 0:
             return 0
         return self.list.GetFirstSelected() - 1
 
+    def delete_key(self, event):
+        if event.GetKeyCode() == wx.WXK_DELETE and self.shapes:
+            self.on_delete(None)
+        event.Skip()
+        
 
     def change(self, selection):
         """Change the sheet, repopulate"""
