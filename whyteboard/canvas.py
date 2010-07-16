@@ -40,8 +40,8 @@ from lib.dragscroller import DragScroller
 from lib.pubsub import pub
 
 from functions import get_image_path
-from tools import (Image, Text, Line, Note, Select, OverlayShape, Media,
-                   Highlighter, Polygon, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT,
+from tools import (Highlighter, Image, Line, Media, Note, OverlayShape, Polygon,
+                   Select, Text, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT,
                    BOTTOM_RIGHT, CENTER_TOP, CENTER_RIGHT, CENTER_BOTTOM,
                    CENTER_LEFT, HANDLE_ROTATE, EDGE_TOP, EDGE_RIGHT, EDGE_LEFT,
                    EDGE_BOTTOM)
@@ -79,7 +79,7 @@ class Canvas(wx.ScrolledWindow):
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
         self.SetDropTarget(CanvasDropTarget())
-        
+
         if os.name == "nt":
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
         else:
@@ -713,6 +713,13 @@ class Canvas(wx.ScrolledWindow):
         else:
             shape.draw(dc)
         self.redraw_dirty(dc)
+
+    def can_swap_transparency(self):
+        return self.selected and not isinstance(self.selected, (Media, Image, Text))
+
+    def can_swap_colours(self):
+        return (self.selected and not self.selected.background == wx.TRANSPARENT
+                and not isinstance(self.selected, (Media, Image, Text)))
 
     def swap_colours(self):
         self.selected.colour, self.selected.background = self.selected.background, self.selected.colour

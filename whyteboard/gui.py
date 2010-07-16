@@ -50,7 +50,7 @@ import lib.icon as icon
 import meta
 #import topic_tree
 from canvas import Canvas, CanvasDropTarget
-from tools import Image, Note, Text, Media, Highlighter, EDGE_LEFT, EDGE_TOP
+from tools import Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
 
 from functions import (get_home_dir, is_exe, get_clipboard, download_help_files,
@@ -981,8 +981,7 @@ class GUI(wx.Frame):
                 do = True
             elif _id == ID_PREV and self.current_tab:
                 do = True
-            elif (_id == ID_NEXT and self.tab_count > 1 and
-                  self.current_tab + 1 < self.tab_count):
+            elif (_id == ID_NEXT and self.can_change_next_sheet()):
                 do = True
             elif _id in [wx.ID_CLOSE, ID_CLOSE_ALL] and self.tab_count > 1:
                 do = True
@@ -998,19 +997,18 @@ class GUI(wx.Frame):
                 do = True
             elif _id == ID_MOVE_TO_BOTTOM and canvas.check_move(u"bottom"):
                 do = True
-            elif (_id == ID_TRANSPARENT and canvas.selected
-                  and not isinstance(canvas.selected, (Media, Image, Text))):
+            elif (_id == ID_TRANSPARENT and canvas.can_swap_transparency()):
                 do = True
-            elif (_id == ID_SWAP_COLOURS and canvas.selected
-                  and not self.canvas.selected.background == wx.TRANSPARENT
-                  and not isinstance(canvas.selected, (Media, Image, Text))):
+            elif (_id == ID_SWAP_COLOURS and canvas.can_swap_colours()):
                 do = True
         elif self.canvas:
             if self.canvas.copy:
                 do = True
         event.Enable(do)
 
-
+    def can_change_next_sheet(self):
+        return self.tab_count > 1 and self.current_tab + 1 < self.tab_count
+    
     def on_copy(self, event):
         """
         If a rectangle selection is made, copy the selection as a bitmap.
