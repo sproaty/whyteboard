@@ -918,14 +918,6 @@ class GUI(wx.Frame):
                 pub.sendMessage('sheet.rename', _id=sheet, text=val)
 
 
-    def on_delete_shape(self, event=None):
-        self.canvas.delete_selected()
-        self.update_shape_viewer()
-
-    def on_deselect_shape(self, event=None):
-        self.canvas.deselect_shape()
-
-
     def load_recent_files(self, event):
         """
         Re-creates the Recent Files menu by reloading the config file.
@@ -955,11 +947,7 @@ class GUI(wx.Frame):
                 self.can_paste = False
 
             if not wx.TheClipboard.IsOpened():
-                wx.TheClipboard.Open()
-                success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
-                success2 = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_TEXT))
-                wx.TheClipboard.Close()
-                if success or success2:
+                if self.check_clipboard():
                     self.can_paste = True
                     self.count = 0
                     try:
@@ -1006,37 +994,35 @@ class GUI(wx.Frame):
                 do = True
         event.Enable(do)
 
+
+    def check_clipboard(self):
+        wx.TheClipboard.Open()
+        success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
+        success2 = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_TEXT))
+        wx.TheClipboard.Close()
+        return success or success2
+
     def can_change_next_sheet(self):
         return self.tab_count > 1 and self.current_tab + 1 < self.tab_count
-    
-    def on_copy(self, event):
-        """
-        If a rectangle selection is made, copy the selection as a bitmap.
-        NOTE: The bitmap selection can be larger than the actual canvas bitmap,
-        so we must only selection the region of the selection that is on the
-        canvas
-        """
-        self.canvas.copy.update_rect()  # ensure w, h are correct
-        bmp = self.canvas.copy
-
-        if bmp.x + bmp.width > self.canvas.area[0]:
-            bmp.rect.SetWidth(self.canvas.area[0] - bmp.x)
-
-        if bmp.y + bmp.height > self.canvas.area[1]:
-            bmp.rect.SetHeight(self.canvas.area[1] - bmp.y)
-
-        self.canvas.copy = None
-        self.canvas.redraw_all()
-        self.util.set_clipboard(bmp.rect)
-        self.count = 4
-        self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)
-
 
     def paste_image(self, bitmap, x, y, ignore=False):
         self.canvas.paste_image(bitmap, x, y, ignore)
 
     def paste_text(self, text, x, y):
         self.canvas.paste_text(text, x, y, self.util.colour)
+
+    def on_paste_new(self, event):
+        """ Pastes the text/image into a new tab """
+        self.on_new_tab()
+        self.on_paste(ignore=True)
+
+
+    def on_delete_shape(self, event=None):
+        self.canvas.delete_selected()
+        self.update_shape_viewer()
+
+    def on_deselect_shape(self, event=None):
+        self.canvas.deselect_shape()
 
 
     def on_paste(self, event=None, ignore=False):
@@ -1062,10 +1048,28 @@ class GUI(wx.Frame):
             self.paste_image(data.GetBitmap(), x, y, ignore)
 
 
-    def on_paste_new(self, event):
-        """ Pastes the text/image into a new tab """
-        self.on_new_tab()
-        self.on_paste(ignore=True)
+    def on_copy(self, event):
+        """
+        If a rectangle selection is made, copy the selection as a bitmap.
+        NOTE: The bitmap selection can be larger than the actual canvas bitmap,
+        so we must only selection the region of the selection that is on the
+        canvas
+        """
+        self.canvas.copy.update_rect()  # ensure w, h are correct
+        bmp = self.canvas.copy
+
+        if bmp.x + bmp.width > self.canvas.area[0]:
+            bmp.rect.SetWidth(self.canvas.area[0] - bmp.x)
+
+        if bmp.y + bmp.height > self.canvas.area[1]:
+            bmp.rect.SetHeight(self.canvas.area[1] - bmp.y)
+
+        self.canvas.copy = None
+        self.canvas.redraw_all()
+        self.util.set_clipboard(bmp.rect)
+        self.count = 4
+        self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)
+
 
     def on_change_tool(self, event, _id):
         """ Change tool -- used when being used as a hotkey """
@@ -1205,12 +1209,8 @@ class GUI(wx.Frame):
     def on_tool_preview(self, event=None, force=None):
         self.toggle_view(self.showprevious, self.control.preview, force)
 
-
     def on_statusbar(self, event=None, force=None):
-        self.bar_shown = False
-        if self.showstat.IsChecked() or force:
-            self.bar_shown = True
-
+        self.bar_shown = False or (self.showstat.IsChecked() or force)
         self.toggle_view(self.showstat, self.statusbar, force)
 
 
@@ -1277,7 +1277,6 @@ class GUI(wx.Frame):
         """ Ask to save, quit or cancel if the user hasn't saved. """
         self.util.prompt_for_save(self.Destroy)
 
-
     def tab_popup(self, event):
         """ Pops up the tab context menu. """
         self.PopupMenu(SheetsPopup(self, self, event.GetSelection()))
@@ -1317,7 +1316,7 @@ class GUI(wx.Frame):
 
     def on_next(self, event=None):
         """ Changes to the next sheet """
-        if self.tab_count < 1 and self.current_tab + 1 > self.tab_count:
+        if not self.can_change_next_sheet():
             return
         self.tabs.SetSelection(self.current_tab + 1)
         self.on_change_tab()
@@ -1578,7 +1577,7 @@ class WhyteboardApp(wx.App):
         else:
             path = get_path()
             for f in os.listdir(path):
-                if f.find(self.frame.util.backup_ext) is not - 1:
+                if f.find(self.frame.util.backup_ext) is not -1:
                     os.remove(os.path.join(path, f))
 
 
