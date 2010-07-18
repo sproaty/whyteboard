@@ -463,60 +463,60 @@ class Utility(object):
         An attempt at randomising the temp. file name is made using alphanumeric
         characters to help minimise conflict.
         """
+        #if _file is None:
+        #    _file = self.temp_file
+        #path = '/' + os.path.abspath(_file).replace('\\', '/')
+        #self.document = poppler.document_new_from_file("file://" + path, None)
+        #self.n_pages = self.document.get_n_pages()
+        #self.gui.canvas.current_page = self.document.get_page(0)
+        #self.gui.canvas.resize_if_large_image(self.gui.canvas.current_page.get_size())
+        #self.pdf = True
+        if not self.im_location:
+            self.prompt_for_im()
+
+        if not self.im_location:  # above will have changed this if IM exists
+            return
+
         if _file is None:
             _file = self.temp_file
-        path = '/' + os.path.abspath(_file).replace('\\', '/')
-        self.document = poppler.document_new_from_file("file://" + path, None)
-        self.n_pages = self.document.get_n_pages()
-        self.gui.canvas.current_page = self.document.get_page(0)
-        self.gui.canvas.resize_if_large_image(self.gui.canvas.current_page.get_size())
-        self.pdf = True
-#        if not self.im_location:
-#            self.prompt_for_im()
-#
-#        if not self.im_location:  # above will have changed this if IM exists
-#            return
-#
-#        if _file is None:
-#            _file = self.temp_file
-#
-#        quality = self.config['convert_quality']
-#        cached = self.library.lookup(_file, quality)
-#        if cached:
-#            self.display_converted(_file, cached)
-#        else:
-#            path = get_home_dir(u"wtbd-tmp")  # directory to store the images
-#            tmp_file = make_filename()
-#            before = os.walk(path).next()[2]  # file count before convert
-#            full_path = path + tmp_file + u".png"
-#
-#            cmd = convert_quality(quality, self.im_location, _file, full_path)
-#            self.gui.convert_dialog(cmd)  # show progress bar, kick off convert
-#
-#            if self.gui.convert_cancelled:
-#                return
-#            after = os.walk(path).next()[2]
-#            count = len(after) - len(before)
-#            images = []
-#            ignore = False
-#
-#            if not count:
-#                wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
-#                wx.BeginBusyCursor()
-#                webbrowser.open_new_tab(u"http://pages.cs.wisc.edu/~ghost/")
-#                wx.CallAfter(wx.EndBusyCursor)
-#                return
-#
-#            if count == 1:
-#                images.append(path + tmp_file + u".png")
-#                ignore = True
-#            else:
-#                for x in range(count):
-#                    # store the temp file path for this file in the dictionary
-#                    images.append(u"%s%s-%i.png" % (path, tmp_file, x))
-#
-#            self.display_converted(_file, images, ignore)
-#            self.library.write(_file, images, quality)
+
+        quality = self.config['convert_quality']
+        cached = self.library.lookup(_file, quality)
+        if cached:
+            self.display_converted(_file, cached)
+        else:
+            path = get_home_dir(u"wtbd-tmp")  # directory to store the images
+            tmp_file = make_filename()
+            before = os.walk(path).next()[2]  # file count before convert
+            full_path = path + tmp_file + u".png"
+
+            cmd = convert_quality(quality, self.im_location, _file, full_path)
+            self.gui.convert_dialog(cmd)  # show progress bar, kick off convert
+
+            if self.gui.convert_cancelled:
+                return
+            after = os.walk(path).next()[2]
+            count = len(after) - len(before)
+            images = []
+            ignore = False
+
+            if not count:
+                wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
+                wx.BeginBusyCursor()
+                webbrowser.open_new_tab(u"http://pages.cs.wisc.edu/~ghost/")
+                wx.CallAfter(wx.EndBusyCursor)
+                return
+
+            if count == 1:
+                images.append(path + tmp_file + u".png")
+                ignore = True
+            else:
+                for x in range(count):
+                    # store the temp file path for this file in the dictionary
+                    images.append(u"%s%s-%i.png" % (path, tmp_file, x))
+
+            self.display_converted(_file, images, ignore)
+            self.library.write(_file, images, quality)
 
         # Just in case it's a file with many pages
         self.gui.show_progress_dialog(_("Loading..."))
@@ -636,15 +636,12 @@ class PDFCache(object):
         self.path = os.path.join(get_home_dir(), filename)
 
         if not os.path.exists(self.path):
-            with open(self.path, "w") as f:
-                f.write(u"")
-                pickle.dump({}, f)
+            self.write_dict(dict())
 
 
     def lookup(self, _file, quality):
         """Check whether a file is inside our known file library"""
-        with open(self.path) as f:
-            files = pickle.load(f)
+        files = self.entries()
 
         for x, key in files.items():
             if files[x]['file'] == _file and files[x]['quality'] == quality:
