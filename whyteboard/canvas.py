@@ -265,7 +265,7 @@ class Canvas(wx.ScrolledWindow):
             if not self.shape.drawing:
                 if not self.resize_direction:
                     self.resize_direction = direction
-                if(not self.cursor_control or direction != self.resize_direction):
+                if not self.cursor_control or direction != self.resize_direction:
                     self.resize_direction = direction
                     self.cursor_control = True
                     self.set_resize_cursor(direction) # change cursor
@@ -435,6 +435,30 @@ class Canvas(wx.ScrolledWindow):
                 pub.sendMessage('note.add', note=x)
         pub.sendMessage('gui.mark_unsaved')
 
+
+    def restore_sheet(self, shapes, undo_list, redo_list, size, medias, viewport):
+        """
+        Restores itself (e.g. from undoing closing a sheet.)
+        """
+        self.shapes = shapes
+        self.undo_list = undo_list
+        self.redo_list = redo_list
+        self.medias = medias
+
+        for media in medias:
+            media.canvas = self
+            media.make_panel()
+
+        for shape in shapes:
+            shape.canvas = self
+            if isinstance(shape, Note):
+                pub.sendMessage('note.add', note=shape)
+
+        wx.Yield()
+        self.resize(size)
+        self.Scroll(viewport[0], viewport[1])
+        pub.sendMessage('thumbs.update_current')
+        
 
     def toggle_transparent(self):
         """Toggles the selected item's transparency"""
@@ -696,6 +720,14 @@ class Canvas(wx.ScrolledWindow):
         self.redraw_all()  # hide 'original'
         self.shapes.insert(x, shape)
         shape.draw(self.get_dc(), False)  # draw 'new'
+
+
+    def get_mouse_position(self):
+        x, y = self.ScreenToClient(wx.GetMousePosition())
+        if x < 0 or y < 0 or x > self.area[0] or y > self.area[1]:
+            x, y = 0, 0
+
+        return self.CalcUnscrolledPosition(x, y)
 
 
     def get_dc(self):

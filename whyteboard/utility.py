@@ -76,7 +76,7 @@ except ImportError:
 
 from lib.pubsub import pub
 
-from dialogs import ProgressDialog, FindIM, PromptForSave
+from dialogs import FindIM, PromptForSave
 from functions import (get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type, version_is_greater)
 
@@ -144,8 +144,7 @@ class Utility(object):
         if not self.filename:
             return
 
-        self.gui.dialog = ProgressDialog(self.gui, _("Saving..."))
-        self.gui.dialog.Show()
+        self.gui.show_progress_dialog(_("Saving..."))
 
         tmp_file = os.path.join(os.path.dirname(self.filename), u'whyteboard_temp_new.wtbd')
         _zip = zipfile.ZipFile(tmp_file, 'w')
@@ -391,9 +390,8 @@ class Utility(object):
         Recreates the saved .wtbd file's state
         """
         self.filename = filename
-        self.gui.dialog = ProgressDialog(self.gui, _("Loading..."))
-        self.gui.dialog.Show()
-        self.remove_all_sheets()
+        self.gui.show_progress_dialog(_("Loading..."))
+        self.gui.remove_all_sheets()
 
         # change program settings and update the Preview window
         self.colour = temp[0][0]
@@ -521,8 +519,7 @@ class Utility(object):
 #            self.library.write(_file, images, quality)
 
         # Just in case it's a file with many pages
-        self.gui.dialog = ProgressDialog(self.gui, _("Loading..."))
-        self.gui.dialog.Show()
+        self.gui.show_progress_dialog(_("Loading..."))
         self.gui.on_done_load()
 
 
@@ -531,7 +528,7 @@ class Utility(object):
         Display converted items. _file: PDF/PS name. Images: list of files
         """
         if not ignore_close and self.gui.tab_count == 1 and not self.gui.canvas.shapes:
-            self.remove_all_sheets()
+            self.gui.remove_all_sheets()
 
         for x in range(len(images)):
             name = u"%s - %s" % (os.path.basename(_file)[:15], x + 1)
@@ -558,16 +555,6 @@ class Utility(object):
         memory.SelectObject(wx.NullBitmap)
         bitmap.SaveFile(filename, const)  # write to disk
 
-
-    def remove_all_sheets(self):
-        """  Remove all tabs, thumbnails and tree note items """
-        self.gui.canvas.shapes = []
-        self.gui.canvas.redraw_all()
-        self.gui.tabs.DeleteAllPages()
-        self.gui.thumbs.remove_all()
-        self.gui.notes.remove_all()
-        self.gui.tab_count = 0
-        self.gui.tab_total = 0
 
 
     def prompt_for_save(self, method, style=wx.YES_NO | wx.CANCEL, args=None):

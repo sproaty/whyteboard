@@ -475,7 +475,7 @@ class GUI(wx.Frame):
 
         for x, tab in enumerate(reversed(self.closed_tabs)):
             _id = wx.NewId()
-            name = tab[4]
+            name = tab['name']
             self.closed_tabs_id[_id] = tab
             self.closed_tabs_menu.Append(_id, u"&%i: %s" % (x + 1, name),
                                          _('Restore sheet "%s"') % name)
@@ -620,8 +620,7 @@ class GUI(wx.Frame):
 
             cmd = u'%s -define pdf:use-trimbox=true %s"%s"' % (self.util.im_location, files, filename)
             self.pid = wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
-            self.dialog = ProgressDialog(self, _("Converting..."))
-            self.dialog.ShowModal()
+            self.show_progress_dialog(_("Converting..."))
 
             [os.remove(x) for x in names]
 
@@ -794,7 +793,7 @@ class GUI(wx.Frame):
         if event.GetSelection() == event.GetOldSelection():
             return
 
-        self.dialog = ProgressDialog(self, _("Loading..."))
+        self.show_progress_dialog(_("Loading..."))
         self.dialog.Show()
         self.on_change_tab()
 
@@ -841,9 +840,13 @@ class GUI(wx.Frame):
         if len(self.closed_tabs) == self.util.config['undo_sheets']:
             del self.closed_tabs[0]
 
-        item = [canvas.shapes, canvas.undo_list, canvas.redo_list, canvas.area,
-                self.tabs.GetPageText(tab_number), canvas.medias,
-                canvas.GetViewStart()[0], canvas.GetViewStart()[1]]
+        item = {'shapes': canvas.shapes,
+                'undo': canvas.undo_list,
+                'redo': canvas.redo_list,
+                'size': canvas.area,
+                'name': self.tabs.GetPageText(tab_number),
+                'medias': canvas.medias,
+                'viewport': canvas.GetViewStart()}
 
         self.closed_tabs.append(item)
         self.make_closed_tabs_menu()
@@ -859,13 +862,18 @@ class GUI(wx.Frame):
         for x in reversed(range(self.tab_count)):
             self.create_sheet_undo_point(self.tabs.GetPage(x), x)
 
+        self.remove_all_sheets()
+        self.on_new_tab()
+
+
+    def remove_all_sheets(self):
+        self.gui.canvas.shapes = []
+        self.gui.canvas.redraw_all()
         self.tabs.DeleteAllPages()
         self.thumbs.remove_all()
         self.notes.remove_all()
         self.tab_count = 0
         self.tab_total = 0
-
-        self.on_new_tab()
 
 
     def on_undo_tab(self, event=None, tab=None):
@@ -876,29 +884,13 @@ class GUI(wx.Frame):
         if not self.closed_tabs:
             return
         if not tab:
-            canvas = self.closed_tabs.pop()
+            tab = self.closed_tabs.pop()
         else:
-            canvas = self.closed_tabs.pop(self.closed_tabs.index(tab))
+            tab = self.closed_tabs.pop(self.closed_tabs.index(tab))
 
-        self.on_new_tab(name=canvas[4], wb=True)
-        self.canvas.shapes = canvas[0]
-        self.canvas.undo_list = canvas[1]
-        self.canvas.redo_list = canvas[2]
-        self.canvas.medias = canvas[5]
-
-        for x in self.canvas.medias:
-            x.canvas = self.canvas
-            x.make_panel()
-
-        for shape in self.canvas.shapes:
-            shape.canvas = self.canvas
-            if isinstance(shape, Note):
-                pub.sendMessage('note.add', note=shape)
-
-        wx.Yield()  # doesn't draw thumbnail otherwise...
-        self.canvas.resize(canvas[3])
-        self.canvas.Scroll(canvas[6], canvas[7])
-        self.canvas.redraw_all(True)
+        self.on_new_tab(name=tab['name'], wb=True)
+        self.canvas.restore_sheet(tab['shapes'], tab['undo'], tab['redo'],
+                                  tab['size'], tab['medias'], tab['viewport'])
         self.update_shape_viewer()
         self.make_closed_tabs_menu()
 
@@ -959,10 +951,8 @@ class GUI(wx.Frame):
             return
 
         do = False
+        canvas = self.canvas
         if not _id == wx.ID_COPY:
-            # update the GUI to the inverse of the bool value if the button
-            # should be enabled
-            canvas = self.canvas
             if _id == wx.ID_REDO and canvas.redo_list:
                 do = True
             elif _id == wx.ID_UNDO and canvas.undo_list:
@@ -985,12 +975,12 @@ class GUI(wx.Frame):
                 do = True
             elif _id == ID_MOVE_TO_BOTTOM and canvas.check_move(u"bottom"):
                 do = True
-            elif (_id == ID_TRANSPARENT and canvas.can_swap_transparency()):
+            elif _id == ID_TRANSPARENT and canvas.can_swap_transparency():
                 do = True
-            elif (_id == ID_SWAP_COLOURS and canvas.can_swap_colours()):
+            elif _id == ID_SWAP_COLOURS and canvas.can_swap_colours():
                 do = True
-        elif self.canvas:
-            if self.canvas.copy:
+        elif canvas:
+            if canvas.copy:
                 do = True
         event.Enable(do)
 
@@ -1036,11 +1026,7 @@ class GUI(wx.Frame):
 
         x, y = 0, 0
         if not ignore:
-            x, y = self.canvas.ScreenToClient(wx.GetMousePosition())
-            if x < 0 or y < 0 or x > self.canvas.area[0] or y > self.canvas.area[1]:
-                x, y = 0, 0
-
-            x, y = self.canvas.CalcUnscrolledPosition(x, y)
+            x, y = self.canvas.get_mouse_position()
 
         if isinstance(data, wx.TextDataObject):
             self.paste_text(data.GetText(), x, y)
@@ -1052,17 +1038,18 @@ class GUI(wx.Frame):
         """
         If a rectangle selection is made, copy the selection as a bitmap.
         NOTE: The bitmap selection can be larger than the actual canvas bitmap,
-        so we must only selection the region of the selection that is on the
-        canvas
+        so we must only selection the region of the selection that is visible
+        on the canvas
         """
         self.canvas.copy.update_rect()  # ensure w, h are correct
         bmp = self.canvas.copy
+        area = self.canvas.area
 
-        if bmp.x + bmp.width > self.canvas.area[0]:
-            bmp.rect.SetWidth(self.canvas.area[0] - bmp.x)
+        if bmp.x + bmp.width > area[0]:
+            bmp.rect.SetWidth(area[0] - bmp.x)
 
-        if bmp.y + bmp.height > self.canvas.area[1]:
-            bmp.rect.SetHeight(self.canvas.area[1] - bmp.y)
+        if bmp.y + bmp.height > area[1]:
+            bmp.rect.SetHeight(area[1] - bmp.y)
 
         self.canvas.copy = None
         self.canvas.redraw_all()
@@ -1237,8 +1224,7 @@ class GUI(wx.Frame):
         """
         self.process = wx.Process(self)
         self.pid = wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
-        self.dialog = ProgressDialog(self, _("Converting..."), True)
-        self.dialog.ShowModal()
+        self.show_progress_dialog(_("Converting..."), True, True)
 
 
     def on_end_process(self, event):
@@ -1247,6 +1233,14 @@ class GUI(wx.Frame):
         self.dialog.Destroy()
         del self.process
         self.pid = None
+
+
+    def show_progress_dialog(self, title, cancellable=False, modal=False):
+        self.dialog = ProgressDialog(self, title, cancellable)
+        if modal:
+            self.dialog.ShowModal()
+        else:
+            self.dialog.Show()
 
 
     def on_done_load(self, event=None):
