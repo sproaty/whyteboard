@@ -76,7 +76,7 @@ except ImportError:
 
 from lib.pubsub import pub
 
-from dialogs import FindIM, PromptForSave
+from dialogs import FindIM
 from functions import (get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type, version_is_greater)
 
@@ -554,32 +554,6 @@ class Utility(object):
         memory.Blit(0, 0, x, y, context, 0, 0)
         memory.SelectObject(wx.NullBitmap)
         bitmap.SaveFile(filename, const)  # write to disk
-
-
-
-    def prompt_for_save(self, method, style=wx.YES_NO | wx.CANCEL, args=None):
-        """
-        Ask the user to save, quit or cancel (quitting) if they haven't saved.
-        Can be called through "Update", "Open (.wtbd)", or "Exit". If updating,
-        don't show a cancel button, and explicitly restart if the user cancels
-        out of the "save file" dialog
-        method(*args) specifies the action to perform if user selects yes or no
-        """
-        if not args:
-            args = []
-
-        if not self.saved:
-            name = _("Untitled")
-            if self.filename:
-                name = os.path.basename(self.filename)
-
-            dialog = PromptForSave(self.gui, name, method, style, args)
-            dialog.ShowModal()
-
-        else:
-            method(*args)
-            if method == self.gui.Destroy:
-                sys.exit()
 
 
     def prompt_for_im(self):

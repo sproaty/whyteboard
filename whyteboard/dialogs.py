@@ -385,7 +385,7 @@ class UpdateDialog(wx.Dialog):
             name = u'"%s"' % self.gui.util.filename  # gotta escape for Windows
             args[1].append(u"-f")
             args[1].append(name)  # restart, load .wtbd
-        self.gui.util.prompt_for_save(os.execvp, wx.YES_NO, args)
+        self.gui.prompt_for_save(os.execvp, wx.YES_NO, args)
 
 
     def reporter(self, count, block, total):
@@ -914,7 +914,7 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
         self.gui = wx.GetTopLevelWindows()[0]
 
     def Abort(self):
-        self.gui.util.prompt_for_save(self.gui.Destroy)
+        self.gui.prompt_for_save(self.gui.Destroy)
 
     def GetEnvironmentInfo(self):
         """
@@ -945,7 +945,7 @@ class ErrorDialog(lib.errdlg.ErrorDialog):
                             'email': self._panel.email.GetValue()})
         f = urlopen(u"http://www.whyteboard.org/bug_submit.php", params)
 
-        self.gui.util.prompt_for_save(self.gui.Destroy)
+        self.gui.prompt_for_save(self.gui.Destroy)
 
 
  #----------------------------------------------------------------------

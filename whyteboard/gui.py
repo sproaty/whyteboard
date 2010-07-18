@@ -56,7 +56,8 @@ from utility import Utility
 from functions import (get_home_dir, is_exe, get_clipboard, download_help_files,
                        file_dialog, get_path, get_image_path)
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
-                     ExceptionHook, ShapeViewer, Feedback, PDFCacheDialog)
+                     ExceptionHook, ShapeViewer, Feedback, PDFCacheDialog,
+                     PromptForSave)
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
@@ -560,7 +561,7 @@ class GUI(wx.Frame):
     def open_file(self, filename):
         if filename:
             if filename.lower().endswith(u".wtbd"):
-                self.util.prompt_for_save(self.do_open, args=[filename])
+                self.prompt_for_save(self.do_open, args=[filename])
             else:
                 self.do_open(filename)
 
@@ -620,7 +621,7 @@ class GUI(wx.Frame):
 
             cmd = u'%s -define pdf:use-trimbox=true %s"%s"' % (self.util.im_location, files, filename)
             self.pid = wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
-            self.show_progress_dialog(_("Converting..."))
+            self.show_progress_dialog(_("Converting..."), True, True)
 
             [os.remove(x) for x in names]
 
@@ -785,6 +786,32 @@ class GUI(wx.Frame):
         self.update_shape_viewer()
 
 
+
+    def prompt_for_save(self, method, style=wx.YES_NO | wx.CANCEL, args=None):
+        """
+        Ask the user to save, quit or cancel (quitting) if they haven't saved.
+        Can be called through "Update", "Open (.wtbd)", or "Exit". If updating,
+        don't show a cancel button, and explicitly restart if the user cancels
+        out of the "save file" dialog
+        method(*args) specifies the action to perform if user selects yes or no
+        """
+        if not args:
+            args = []
+
+        if not self.util.saved:
+            name = _("Untitled")
+            if self.util.filename:
+                name = os.path.basename(self.util.filename)
+
+            dialog = PromptForSave(self, name, method, style, args)
+            dialog.ShowModal()
+
+        else:
+            method(*args)
+            if method == self.Destroy:
+                sys.exit()
+                
+
     def on_drop_tab(self, event):
         """
         Update the thumbs/notes so that they're poiting to the new tab position.
@@ -867,8 +894,8 @@ class GUI(wx.Frame):
 
 
     def remove_all_sheets(self):
-        self.gui.canvas.shapes = []
-        self.gui.canvas.redraw_all()
+        self.canvas.shapes = []
+        self.canvas.redraw_all()
         self.tabs.DeleteAllPages()
         self.thumbs.remove_all()
         self.notes.remove_all()
@@ -1269,7 +1296,7 @@ class GUI(wx.Frame):
 
     def on_exit(self, event=None):
         """ Ask to save, quit or cancel if the user hasn't saved. """
-        self.util.prompt_for_save(self.Destroy)
+        self.prompt_for_save(self.Destroy)
 
     def tab_popup(self, event):
         """ Pops up the tab context menu. """
