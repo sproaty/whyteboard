@@ -810,7 +810,7 @@ class GUI(wx.Frame):
             method(*args)
             if method == self.Destroy:
                 sys.exit()
-                
+
 
     def on_drop_tab(self, event):
         """
@@ -1203,6 +1203,13 @@ class GUI(wx.Frame):
         self.update_shape_viewer()
 
 
+    def get_canvases(self):
+        return [self.tabs.GetPage(x) for x in range(self.tab_count)]
+
+    def get_tab_names(self):
+        return [self.tabs.GetPageText(x) for x in range(self.tab_count)]
+
+
     def toggle_view(self, menu, view, force=None):
         """Menu: MenuItem to check/enable/disable, view: Control to show/hide"""
         if menu.IsChecked() or force:
@@ -1254,7 +1261,7 @@ class GUI(wx.Frame):
         self.show_progress_dialog(_("Converting..."), True, True)
 
 
-    def on_end_process(self, event):
+    def on_end_process(self, event=None):
         """ Destroy the progress process after convert returns """
         self.process.Destroy()
         self.dialog.Destroy()

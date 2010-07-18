@@ -134,73 +134,53 @@ class Utility(object):
 
     def save_file(self):
         """
-        Saves the file if there is any drawn data to save. Any loaded Image
-        objects must be removed - they will be converted to an Image loading
-        a saved file.
-
-        An existing .wtbd zip must be re-created by copying all files except
-        the pickled file, otherwise it gets added twice
+        Saves the file by wrapping a pickled dictionary into a .data file and
+        added any images into a zip archive along with the .data file.
         """
         if not self.filename:
             return
-
-        self.gui.show_progress_dialog(_("Saving..."))
-
-        tmp_file = os.path.join(os.path.dirname(self.filename), u'whyteboard_temp_new.wtbd')
-        _zip = zipfile.ZipFile(tmp_file, 'w')
-        self.save_bitmap_data(_zip)
-
-        temp = {}
-        names, medias, canvas_sizes = [], [], []
-        tree_ids = []  # every note's tree ID to restore to
-
-        # load in every shape from every tab
-        for x in range(self.gui.tab_count):
-            canvas = self.gui.tabs.GetPage(x)
-
-            for m in canvas.medias:
-                m.save()
-
-            temp[x] = list(canvas.shapes)
-            canvas_sizes.append(canvas.area)
-            medias.append(canvas.medias)
-            names.append(self.gui.tabs.GetPageText(x))
-
-
-        if not temp:
-            self.gui.dialog.Destroy()
+        
+        canvases = self.gui.get_canvases()
+        save = SaveObject(self, canvases, self.gui.get_tab_names())
+        
+        if not save.items:
             return
 
-        for x in temp:
-            for shape in temp[x]:
-                if isinstance(shape, tools.Note):
-                    tree_ids.append(shape.tree_id)
-                    shape.tree_id = None
-                try:
-                    shape.save()  # need to unlink unpickleable items
-                except Exception:
-                    break
+        save.save_items()
 
         version = meta.version
         if not self.update_version:
             version = self.saved_version
 
-        # Now the unpickleable objects are gone, build the save file
-        tab = self.gui.tabs.GetSelection()
-        font = None
-        if self.font:
-            font = self.font.GetNativeFontInfoDesc()
-        _file = { 0: [self.colour, self.thickness, self.tool, tab,
-                      version, font],
-                  1: temp,
-                  2: None, # was self.to_convert, but wasn't used.
-                  3: names,
-                  4: canvas_sizes,
-                  5: medias }
+        self.gui.show_progress_dialog(_("Saving..."))
+        data = save.create_save_list(self.gui.current_tab, version, font)
+        self.write_save_file(data)
+        
+        self.zip = zipfile.ZipFile(self.filename, "r")
+        self.is_zipped = True
+        self.save_time = time.time()
+        
+        save.restore_items(canvases)
 
+        self.zip.close()
+        self.gui.dialog.Destroy()
+        self.gui.SetTitle(u"%s - %s" % (os.path.basename(self.filename), self.gui.title))
+        self.saved = True
+        self.save_last_path(self.filename)
+
+
+    def write_save_file(self, data):
+        """
+        An existing .wtbd zip must be re-created by copying all files except
+        the pickled file, otherwise it gets added twice
+        """
+        tmp_file = os.path.join(os.path.dirname(self.filename), u'whyteboard_temp_new.wtbd')
+        _zip = zipfile.ZipFile(tmp_file, 'w')
+        self.save_bitmap_data(_zip)
+        
         with open("save.data", 'wb') as f:
             try:
-                pickle.dump(_file, f)
+                pickle.dump(data, f)
             except pickle.PickleError:
                 wx.MessageBox(_("Error saving file data"), u"Whyteboard")
                 self.saved = False
@@ -213,34 +193,8 @@ class Utility(object):
         if os.path.exists(self.filename):
             os.remove(self.filename)
         shutil.move(tmp_file, self.filename)
-
-        self.zip = zipfile.ZipFile(self.filename, "r")
-        self.is_zipped = True
-        self.save_time = time.time()
-
-        # Fix bug in Windows where the current shapes get reset above
-        count = 0
-        for x in temp:
-            canvas = self.gui.tabs.GetPage(x)
-            for shape in temp[x]:
-                shape.canvas = canvas
-                if isinstance(shape, tools.Note):
-                    shape.load(False)
-                    shape.tree_id = tree_ids[count]
-                    count += 1
-                else:
-                    shape.load()
-            for m in canvas.medias:
-                m.canvas = canvas
-                m.load()
-
-        self.zip.close()
-        self.gui.dialog.Destroy()
-        self.gui.SetTitle(u"%s - %s" % (os.path.basename(self.filename), self.gui.title))
-        self.saved = True
-        self.save_last_path(self.filename)
-
-
+        
+        
 
     def save_bitmap_data(self, _zip):
         """
@@ -626,6 +580,7 @@ class Utility(object):
         wx.TheClipboard.SetData(bmp)
         wx.TheClipboard.Close()
 
+
 #----------------------------------------------------------------------
 
 class PDFCache(object):
@@ -665,3 +620,81 @@ class PDFCache(object):
     def entries(self):
         with open(self.path) as f:
             return pickle.load(f)
+
+
+#----------------------------------------------------------------------
+
+
+class SaveObject(object):
+    """
+    Stores the data required to save a file.
+    """
+    def __init__(self, util, canvases, names):
+        self.util = util
+        self.names = names
+        self.medias = []
+        self.canvas_sizes = []
+        self.tree_ids = []
+        self.items = {}
+
+        for x, canvas in enumerate(canvases):
+            for media in canvas.medias:
+                media.save()
+
+            self.items[x] = list(canvas.shapes)
+            self.canvas_sizes.append(canvas.area)
+            self.medias.append(canvas.medias)
+
+
+    def save_items(self):
+        """
+        Removed any unpickleable items from the list of shapes
+        """
+        for x in self.items:
+            for shape in self.items[x]:
+                if isinstance(shape, tools.Note):
+                    tree_ids.append(shape.tree_id)
+                    shape.tree_id = None
+                try:
+                    shape.save()
+                except Exception:
+                    break
+
+
+    def create_save_list(self, tab, version, font):
+        """
+        Creates the save list. This *really* needs to be revised, using ints
+        as dictionary keys! ugh.
+        """
+        font = None
+        if self.utilfont:
+            font = self.util.font.GetNativeFontInfoDesc()
+                    
+        return { 0: [self.util.colour, self.util.thickness, self.util.tool, tab,
+                      version, font],
+                  1: self.items,
+                  2: None, # was self.to_convert, but wasn't used.
+                  3: self.names,
+                  4: self.canvas_sizes,
+                  5: self.medias }
+
+
+    def restore_items(self, canvases):
+        """
+        Fixes a bug with Windows, where the save_items() fuction unlinks each
+        shape's canvas'
+        """
+        count = 0
+        for x in self.items:
+            canvas = canvases[x]
+            for shape in self.items[x]:
+                shape.canvas = canvas
+                if isinstance(shape, tools.Note):
+                    shape.load(False)
+                    shape.tree_id = self.tree_ids[count]
+                    count += 1
+                else:
+                    shape.load()
+            for m in canvas.medias:
+                m.canvas = canvas
+                m.load()

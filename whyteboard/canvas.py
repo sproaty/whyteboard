@@ -254,6 +254,7 @@ class Canvas(wx.ScrolledWindow):
     def set_cursor(self, cursor):
         self.SetCursor(wx.StockCursor(cursor))
 
+
     def check_mouse_for_resize(self, x, y):
         """
         Sees if the user's mouse is outside of the canvas, and updates the
@@ -261,15 +262,14 @@ class Canvas(wx.ScrolledWindow):
         Returns the cursor to its normal state if it's moved back in
         """
         direction = self.check_resize_direction(x, y)
-        if not self.drawing and direction:
-            if not self.shape.drawing:
-                if not self.resize_direction:
-                    self.resize_direction = direction
-                if not self.cursor_control or direction != self.resize_direction:
-                    self.resize_direction = direction
-                    self.cursor_control = True
-                    self.set_resize_cursor(direction) # change cursor
-                return False
+        if not self.drawing and direction and not self.shape.drawing:
+            if not self.resize_direction:
+                self.resize_direction = direction
+            if not self.cursor_control or direction != self.resize_direction:
+                self.resize_direction = direction
+                self.cursor_control = True
+                self.set_resize_cursor(direction) # change cursor
+            return False
         else:
             if self.cursor_control:
                 self.change_cursor()
@@ -458,7 +458,7 @@ class Canvas(wx.ScrolledWindow):
         self.resize(size)
         self.Scroll(viewport[0], viewport[1])
         pub.sendMessage('thumbs.update_current')
-        
+
 
     def toggle_transparent(self):
         """Toggles the selected item's transparency"""
