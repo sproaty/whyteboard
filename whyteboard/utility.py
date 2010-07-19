@@ -139,33 +139,29 @@ class Utility(object):
         """
         if not self.filename:
             return
-        
+
         canvases = self.gui.get_canvases()
         save = SaveObject(self, canvases, self.gui.get_tab_names())
-        
-        if not save.items:
-            return
-
         save.save_items()
 
         version = meta.version
         if not self.update_version:
             version = self.saved_version
 
+        self.is_zipped = True
+        self.saved = True
+        self.save_time = time.time()
+
         self.gui.show_progress_dialog(_("Saving..."))
         data = save.create_save_list(self.gui.current_tab, version, font)
         self.write_save_file(data)
-        
-        self.zip = zipfile.ZipFile(self.filename, "r")
-        self.is_zipped = True
-        self.save_time = time.time()
-        
-        save.restore_items(canvases)
 
+        self.zip = zipfile.ZipFile(self.filename, "r")
+        save.restore_items(canvases)
         self.zip.close()
+
         self.gui.dialog.Destroy()
         self.gui.SetTitle(u"%s - %s" % (os.path.basename(self.filename), self.gui.title))
-        self.saved = True
         self.save_last_path(self.filename)
 
 
@@ -177,7 +173,7 @@ class Utility(object):
         tmp_file = os.path.join(os.path.dirname(self.filename), u'whyteboard_temp_new.wtbd')
         _zip = zipfile.ZipFile(tmp_file, 'w')
         self.save_bitmap_data(_zip)
-        
+
         with open("save.data", 'wb') as f:
             try:
                 pickle.dump(data, f)
@@ -193,8 +189,8 @@ class Utility(object):
         if os.path.exists(self.filename):
             os.remove(self.filename)
         shutil.move(tmp_file, self.filename)
-        
-        
+
+
 
     def save_bitmap_data(self, _zip):
         """
@@ -667,9 +663,9 @@ class SaveObject(object):
         as dictionary keys! ugh.
         """
         font = None
-        if self.utilfont:
+        if self.util.font:
             font = self.util.font.GetNativeFontInfoDesc()
-                    
+
         return { 0: [self.util.colour, self.util.thickness, self.util.tool, tab,
                       version, font],
                   1: self.items,
