@@ -140,10 +140,6 @@ class Utility(object):
         if not self.filename:
             return
 
-        canvases = self.gui.get_canvases()
-        save = SaveObject(self, canvases, self.gui.get_tab_names())
-        save.save_items()
-
         version = meta.version
         if not self.update_version:
             version = self.saved_version
@@ -151,9 +147,13 @@ class Utility(object):
         self.is_zipped = True
         self.saved = True
         self.save_time = time.time()
-
         self.gui.show_progress_dialog(_("Saving..."))
-        data = save.create_save_list(self.gui.current_tab, version, font)
+
+        canvases = self.gui.get_canvases()
+        save = Save(self, canvases, self.gui.get_tab_names())
+        save.save_items()
+
+        data = save.create_save_list(self.gui.current_tab, version)
         self.write_save_file(data)
 
         self.zip = zipfile.ZipFile(self.filename, "r")
@@ -621,7 +621,7 @@ class PDFCache(object):
 #----------------------------------------------------------------------
 
 
-class SaveObject(object):
+class Save(object):
     """
     Stores the data required to save a file.
     """
@@ -644,7 +644,7 @@ class SaveObject(object):
 
     def save_items(self):
         """
-        Removed any unpickleable items from the list of shapes
+        Remove any unpickleable items from the list of shapes
         """
         for x in self.items:
             for shape in self.items[x]:
@@ -657,7 +657,7 @@ class SaveObject(object):
                     break
 
 
-    def create_save_list(self, tab, version, font):
+    def create_save_list(self, tab, version):
         """
         Creates the save list. This *really* needs to be revised, using ints
         as dictionary keys! ugh.
