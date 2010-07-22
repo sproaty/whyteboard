@@ -147,6 +147,7 @@ class Utility(object):
         self.is_zipped = True
         self.saved = True
         self.save_time = time.time()
+        self.save_last_path(self.filename)
         self.gui.show_progress_dialog(_("Saving..."))
 
         canvases = self.gui.get_canvases()
@@ -162,7 +163,6 @@ class Utility(object):
 
         self.gui.dialog.Destroy()
         self.gui.SetTitle(u"%s - %s" % (os.path.basename(self.filename), self.gui.title))
-        self.save_last_path(self.filename)
 
 
     def write_save_file(self, data):

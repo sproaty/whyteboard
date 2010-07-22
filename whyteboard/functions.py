@@ -169,7 +169,7 @@ def make_filename():
 
 def get_clipboard():
     """
-    Checks the clipboard for any valid image or text data to paste
+    Gets the clipboard's contents, or False for any valid image/text data
     """
     bmp = wx.BitmapDataObject()
     wx.TheClipboard.Open()
@@ -184,6 +184,17 @@ def get_clipboard():
     if success:
         return text
     return False
+
+
+def check_clipboard():
+    """
+    Checks whether supported data is on the clipboard
+    """
+    wx.TheClipboard.Open()
+    success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
+    success2 = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_TEXT))
+    wx.TheClipboard.Close()
+    return success or success2
 
 
 def transparent_supported():

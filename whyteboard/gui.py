@@ -54,8 +54,8 @@ from menu import Menu
 from tools import Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
 
-from functions import (get_home_dir, is_exe, get_clipboard, download_help_files,
-                       file_dialog, get_path, get_image_path)
+from functions import (get_home_dir, is_exe, get_clipboard, check_clipboard,
+                       download_help_files, file_dialog, get_path, get_image_path)
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
                      ExceptionHook, ShapeViewer, Feedback, PDFCacheDialog,
                      PromptForSave)
@@ -89,21 +89,11 @@ class GUI(wx.Frame):
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
         wx.Frame.__init__(self, parent, title=_("Untitled") + u" - %s" % self.title)
-        self.SetIcon(icon.whyteboard.getIcon())
-        self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
-        self.SetDropTarget(CanvasDropTarget())
-        self.statusbar = self.CreateStatusBar()
-        self.printData = wx.PrintData()
-        self.printData.SetPaperId(wx.PAPER_LETTER)
-        self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
-
         self.util = Utility(self, config)
-        self.filehistory = wx.FileHistory(8)
-        self.load_history_file()
-        self.filehistory.Load(self.config)
-
+        
         self._oldhook = sys.excepthook
         sys.excepthook = ExceptionHook
+
         meta.find_transparent()  # important
         if meta.transparent:
             try:
@@ -111,9 +101,7 @@ class GUI(wx.Frame):
             except ValueError:
                 self.util.items.insert(1, Highlighter)
 
-        self.can_paste = False
-        if get_clipboard():
-            self.can_paste = True
+        self.can_paste = check_clipboard()
         self.toolbar = None
         self.process = None
         self.pid = None
@@ -121,22 +109,21 @@ class GUI(wx.Frame):
         self.convert_cancelled = False
         self.viewer = False  # Shape Viewer dialog open?
         self.help = None
-        self.make_toolbar()
         self.bar_shown = True  # slight ? performance optimisation
         self.hotkey_pressed = False  # for hotkey timer
         self.hotkey_timer = None
-        self.find_help()
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.tab_total = 1
         self.current_tab = 0
+        self.count = 5  # used to update menu timings
         self.closed_tabs = []  # [shapes: undo, redo, canvas_size, view_x, view_y] per tab
-        self.closed_tabs_id = {}  # wx.Menu IDs for undo closed tab list
         self.hotkeys = []
-        self.control = ControlPanel(self)
 
         style = (fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8 |
                  fnb.FNB_DROPDOWN_TABS_LIST | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS |
                  fnb.FNB_NO_NAV_BUTTONS)
+        
+        self.control = ControlPanel(self)
         self.tabs = fnb.FlatNotebook(self, style=style)
         self.canvas = Canvas(self.tabs, self, (config['default_width'], config['default_height']))
         self.panel = SidePanel(self)
@@ -144,6 +131,7 @@ class GUI(wx.Frame):
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
         self.tabs.AddPage(self.canvas, _("Sheet") + u" 1")
+        
         box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         box.Add(self.control, 0, wx.EXPAND)
         box.Add(self.tabs, 1, wx.EXPAND)
@@ -156,33 +144,35 @@ class GUI(wx.Frame):
         if 'mac' != os.name:
             self.Maximize(True)
 
-        self.count = 5  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(50)
         #wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
-        pub.sendMessage('thumbs.update_current')
-        #self.make_menu()
+        
+        self.SetIcon(icon.whyteboard.getIcon())
+        self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
+        self.SetDropTarget(CanvasDropTarget())
+        self.statusbar = self.CreateStatusBar()
+        self.printData = wx.PrintData()
+        self.printData.SetPaperId(wx.PAPER_LETTER)
+        self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
+        
+        self.filehistory = wx.FileHistory(8)
+        self.load_history_file()
+        self.filehistory.Load(self.config)
+        
         self.menu = Menu(self)
+        self.make_toolbar()
         self.SetMenuBar(self.menu.menu)
         self.set_menu_from_config()
         self.do_bindings()
-        self.update_panels(True)  # bold first items
-
+        self.find_help()
+        
+        pub.sendMessage('thumbs.update_current')
+        self.update_panels(True)  # bold first items      
         wx.CallAfter(self.UpdateWindowUI)
 
 
     def __del__(self):
         sys.excepthook = self._oldhook
-
-
-    def set_menu_from_config(self):
-        keys = [u'toolbar', u'statusbar', u'tool_preview', u'colour_grid']
-        ids = [ID_TOOLBAR, ID_STATUSBAR, ID_TOOL_PREVIEW, ID_COLOUR_GRID]
-        for x, _id in zip(keys, ids):
-            if self.util.config[x]:
-                self.menu.check(_id, True)
-            else:
-                getattr(self, u"on_" + x)(None, False)
-
 
     def do_bindings(self):
         """
@@ -276,6 +266,16 @@ class GUI(wx.Frame):
         self.toolbar.Realize()
 
 
+    def set_menu_from_config(self):
+        keys = [u'toolbar', u'statusbar', u'tool_preview', u'colour_grid']
+        ids = [ID_TOOLBAR, ID_STATUSBAR, ID_TOOL_PREVIEW, ID_COLOUR_GRID]
+        for x, _id in zip(keys, ids):
+            if self.util.config[x]:
+                self.menu.check(_id, True)
+            else:
+                getattr(self, u"on_" + x)(None, False)
+                
+                
     def shape_selected(self, shape):
         """
         Shape getting selected (by Select tool)
@@ -756,7 +756,7 @@ class GUI(wx.Frame):
                 self.can_paste = False
 
             if not wx.TheClipboard.IsOpened():
-                if self.check_clipboard():
+                if check_clipboard():
                     self.can_paste = True
                     self.count = 0
                     try:
@@ -802,12 +802,7 @@ class GUI(wx.Frame):
         event.Enable(do)
 
 
-    def check_clipboard(self):
-        wx.TheClipboard.Open()
-        success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
-        success2 = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_TEXT))
-        wx.TheClipboard.Close()
-        return success or success2
+
 
     def can_change_next_sheet(self):
         return self.tab_count > 1 and self.current_tab + 1 < self.tab_count

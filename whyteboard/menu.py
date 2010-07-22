@@ -43,7 +43,7 @@ class Menu(object):
     """
     def __init__(self, gui):
         self.gui = gui
-
+        self.closed_tabs_id = {}  # of wx.Menu IDs
         self.menu = wx.MenuBar()
         self.closed_tabs_menu = wx.Menu()
         self.recent = wx.Menu()
@@ -237,7 +237,7 @@ class Menu(object):
         Recreates the undo tab menu
         """
         gui = self.gui
-        for key, value in gui.closed_tabs_id.items():
+        for key, value in self.closed_tabs_id.items():
             self.closed_tabs_menu.Remove(key)
             gui.Unbind(wx.EVT_MENU, id=key)
 
@@ -246,7 +246,7 @@ class Menu(object):
         for x, tab in enumerate(reversed(gui.closed_tabs)):
             _id = wx.NewId()
             name = tab['name']
-            gui.closed_tabs_id[_id] = tab
+            self.closed_tabs_id[_id] = tab
             self.closed_tabs_menu.Append(_id, u"&%i: %s" % (x + 1, name),
                                          _('Restore sheet "%s"') % name)
             gui.Bind(wx.EVT_MENU, id=_id,
