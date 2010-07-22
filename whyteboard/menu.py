@@ -167,11 +167,20 @@ class Menu(object):
         self.gui.Bind(wx.EVT_MENU_RANGE, self.gui.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
         self.gui.Bind(wx.EVT_MENU_OPEN, self.gui.load_recent_files)
 
-        # Import sub-menu's bindings
+        # "Import" sub-menu
         ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
         [self.gui.Bind(wx.EVT_MENU, lambda evt, text=key: self.gui.on_open(evt, text),
                     id=ids[key]) for key in ids]
 
+
+        # idle event handlers
+        ids = [ID_CLOSE_ALL, ID_DESELECT, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP,
+               ID_MOVE_UP, ID_NEXT, ID_PREV, ID_RECENTLY_CLOSED, ID_SWAP_COLOURS,
+               ID_TRANSPARENT, ID_UNDO_SHEET, wx.ID_CLOSE, wx.ID_COPY, wx.ID_DELETE,
+               wx.ID_PASTE, wx.ID_REDO, wx.ID_UNDO]
+        [self.gui.Bind(wx.EVT_UPDATE_UI, self.gui.update_menus, id=x) for x in ids]
+        
+        # menu items
         bindings = { ID_CLEAR_ALL: "clear_all",
                      ID_CLEAR_ALL_SHEETS: "clear_all_sheets",
                      ID_CLEAR_SHEETS: "clear_sheets",
@@ -228,7 +237,7 @@ class Menu(object):
                      wx.ID_UNDO: "undo" }
 
         for _id, name in bindings.items():
-            method = getattr(self.gui, u"on_" + name)  # self.on_*
+            method = getattr(self.gui, u"on_" + name)
             self.gui.Bind(wx.EVT_MENU, method, id=_id)
 
 

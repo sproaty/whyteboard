@@ -45,22 +45,23 @@ from wx.html import HtmlHelpController
 from lib.pubsub import pub
 from lib.configobj import ConfigObj
 from lib.validate import Validator
-
 import lib.icon as icon
+
 import meta
-#import topic_tree
 from canvas import Canvas, CanvasDropTarget
 from menu import Menu
+from panels import ControlPanel, SidePanel, SheetsPopup
+from preferences import Preferences
 from tools import Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
 
 from functions import (get_home_dir, is_exe, get_clipboard, check_clipboard,
-                       download_help_files, file_dialog, get_path, get_image_path)
+                       download_help_files, file_dialog, get_path, set_clipboard,
+                       get_image_path)
+
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
                      ExceptionHook, ShapeViewer, Feedback, PDFCacheDialog,
                      PromptForSave)
-from panels import ControlPanel, SidePanel, SheetsPopup
-from preferences import Preferences
 
 from event_ids import (ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT, ID_MOVE_UP,
                        ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_NEXT,
@@ -69,7 +70,7 @@ from event_ids import (ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT, ID_MOVE_UP,
                        ID_TRANSPARENT, ID_UNDO_SHEET)
 
 
-_ = wx.GetTranslation  # Define a translation string
+_ = wx.GetTranslation
 SCROLL_AMOUNT = 3
 
 #----------------------------------------------------------------------
@@ -84,13 +85,13 @@ class GUI(wx.Frame):
     title = u"Whyteboard"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
-    def __init__(self, parent, config):
+    def __init__(self, config):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
-        wx.Frame.__init__(self, parent, title=_("Untitled") + u" - %s" % self.title)
+        wx.Frame.__init__(self, None, title=_("Untitled") + u" - %s" % self.title)
         self.util = Utility(self, config)
-        
+
         self._oldhook = sys.excepthook
         sys.excepthook = ExceptionHook
 
@@ -109,20 +110,19 @@ class GUI(wx.Frame):
         self.convert_cancelled = False
         self.viewer = False  # Shape Viewer dialog open?
         self.help = None
-        self.bar_shown = True  # slight ? performance optimisation
         self.hotkey_pressed = False  # for hotkey timer
         self.hotkey_timer = None
         self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
         self.tab_total = 1
         self.current_tab = 0
-        self.count = 5  # used to update menu timings
         self.closed_tabs = []  # [shapes: undo, redo, canvas_size, view_x, view_y] per tab
+        self.count = 5  # used to update menu timings
         self.hotkeys = []
 
         style = (fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8 |
                  fnb.FNB_DROPDOWN_TABS_LIST | fnb.FNB_MOUSE_MIDDLE_CLOSES_TABS |
                  fnb.FNB_NO_NAV_BUTTONS)
-        
+
         self.control = ControlPanel(self)
         self.tabs = fnb.FlatNotebook(self, style=style)
         self.canvas = Canvas(self.tabs, self, (config['default_width'], config['default_height']))
@@ -131,7 +131,7 @@ class GUI(wx.Frame):
         self.thumbs = self.panel.thumbs
         self.notes = self.panel.notes
         self.tabs.AddPage(self.canvas, _("Sheet") + u" 1")
-        
+
         box = wx.BoxSizer(wx.HORIZONTAL)  # position windows side-by-side
         box.Add(self.control, 0, wx.EXPAND)
         box.Add(self.tabs, 1, wx.EXPAND)
@@ -146,7 +146,7 @@ class GUI(wx.Frame):
 
         wx.UpdateUIEvent.SetUpdateInterval(50)
         #wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
-        
+
         self.SetIcon(icon.whyteboard.getIcon())
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
         self.SetDropTarget(CanvasDropTarget())
@@ -154,20 +154,20 @@ class GUI(wx.Frame):
         self.printData = wx.PrintData()
         self.printData.SetPaperId(wx.PAPER_LETTER)
         self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
-        
+
         self.filehistory = wx.FileHistory(8)
         self.load_history_file()
         self.filehistory.Load(self.config)
-        
+
         self.menu = Menu(self)
         self.make_toolbar()
         self.SetMenuBar(self.menu.menu)
         self.set_menu_from_config()
         self.do_bindings()
         self.find_help()
-        
+
         pub.sendMessage('thumbs.update_current')
-        self.update_panels(True)  # bold first items      
+        self.update_panels(True)  # bold first items
         wx.CallAfter(self.UpdateWindowUI)
 
 
@@ -199,14 +199,6 @@ class GUI(wx.Frame):
                   'gui.mark_unsaved': self.mark_unsaved}
         [pub.subscribe(value, key) for key, value in topics.items()]
 
-        # idle event handlers
-        ids = [ID_CLOSE_ALL, ID_DESELECT, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP,
-               ID_MOVE_UP, ID_NEXT, ID_PREV, ID_RECENTLY_CLOSED, ID_SWAP_COLOURS,
-               ID_TRANSPARENT, ID_UNDO_SHEET, wx.ID_CLOSE, wx.ID_COPY, wx.ID_DELETE,
-               wx.ID_PASTE, wx.ID_REDO, wx.ID_UNDO]
-        [self.Bind(wx.EVT_UPDATE_UI, self.update_menus, id=x) for x in ids]
-
-
         self.hotkeys = [x.hotkey for x in self.util.items]
         ac = []
         if os.name == "nt":
@@ -221,8 +213,6 @@ class GUI(wx.Frame):
 
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
-
-
 
 
     def make_toolbar(self):
@@ -274,8 +264,8 @@ class GUI(wx.Frame):
                 self.menu.check(_id, True)
             else:
                 getattr(self, u"on_" + x)(None, False)
-                
-                
+
+
     def shape_selected(self, shape):
         """
         Shape getting selected (by Select tool)
@@ -847,25 +837,7 @@ class GUI(wx.Frame):
 
 
     def on_copy(self, event):
-        """
-        If a rectangle selection is made, copy the selection as a bitmap.
-        NOTE: The bitmap selection can be larger than the actual canvas bitmap,
-        so we must only selection the region of the selection that is visible
-        on the canvas
-        """
-        self.canvas.copy.update_rect()  # ensure w, h are correct
-        bmp = self.canvas.copy
-        area = self.canvas.area
-
-        if bmp.x + bmp.width > area[0]:
-            bmp.rect.SetWidth(area[0] - bmp.x)
-
-        if bmp.y + bmp.height > area[1]:
-            bmp.rect.SetHeight(area[1] - bmp.y)
-
-        self.canvas.copy = None
-        self.canvas.redraw_all()
-        self.util.set_clipboard(bmp.rect)
+        set_clipboard(self.canvas.get_selection_bitmap())
         self.count = 4
         self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)
 
@@ -1015,7 +987,6 @@ class GUI(wx.Frame):
         self.toggle_view(ID_TOOL_PREVIEW, self.control.preview, force)
 
     def on_statusbar(self, event=None, force=None):
-        self.bar_shown = False or (self.menu.is_checked(ID_STATUSBAR) or force)
         self.toggle_view(ID_STATUSBAR, self.statusbar, force)
 
 
@@ -1303,7 +1274,7 @@ class GUI(wx.Frame):
         inf = wx.AboutDialogInfo()
         inf.Name = u"Whyteboard"
         inf.Version = meta.version
-        inf.Copyright = u"(C) 2010 Steven Sproat"
+        inf.Copyright = u"© 2009-2010 Steven Sproat"
         inf.Description = _("A simple whiteboard and PDF annotator")
         inf.Developers = [u"Steven Sproat <sproaty@gmail.com>"]
         inf.Translators = meta.translators
@@ -1346,7 +1317,7 @@ class WhyteboardApp(wx.App):
         config.validate(Validator())
 
         self.set_language(config, options.lang)
-        self.frame = GUI(None, config)
+        self.frame = GUI(config)
         self.frame.Show(True)
 
         try:

@@ -197,6 +197,18 @@ def check_clipboard():
     return success or success2
 
 
+def set_clipboard(bitmap):
+    """
+    Sets the clipboard with bitmap image data
+    """
+    bmp = wx.BitmapDataObject()
+    bmp.SetBitmap(bitmap)
+
+    wx.TheClipboard.Open()
+    wx.TheClipboard.SetData(bmp)
+    wx.TheClipboard.Close()
+
+
 def transparent_supported():
     """
     Does this wxPython build support transparency?

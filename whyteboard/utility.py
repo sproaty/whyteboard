@@ -562,21 +562,6 @@ class Utility(object):
         canvas.shape = self.items[new - 1](*params)  # create new Tool
 
 
-    def set_clipboard(self, rect):
-        """Sets the clipboard with a bitmap image data of a selection"""
-        if rect.x < 0:
-            rect.SetX(0)
-        if rect.y < 0:
-            rect.SetY(0)
-        temp = self.gui.canvas.buffer.GetSubBitmap(rect)
-        bmp = wx.BitmapDataObject()
-        bmp.SetBitmap(temp)
-
-        wx.TheClipboard.Open()
-        wx.TheClipboard.SetData(bmp)
-        wx.TheClipboard.Close()
-
-
 #----------------------------------------------------------------------
 
 class PDFCache(object):
@@ -649,7 +634,7 @@ class Save(object):
         for x in self.items:
             for shape in self.items[x]:
                 if isinstance(shape, tools.Note):
-                    tree_ids.append(shape.tree_id)
+                    self.tree_ids.append(shape.tree_id)
                     shape.tree_id = None
                 try:
                     shape.save()

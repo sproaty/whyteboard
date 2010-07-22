@@ -161,8 +161,7 @@ class Canvas(wx.ScrolledWindow):
             if not self.check_mouse_for_resize(x, y):
                 return
 
-        if self.gui.bar_shown:
-            self.gui.SetStatusText(u" %s, %s" % (x, y))
+        self.gui.SetStatusText(u" %s, %s" % (x, y))
 
         if self.drawing or self.shape.drawing:
             self.shape.motion(x, y)
@@ -695,6 +694,29 @@ class Canvas(wx.ScrolledWindow):
         self.text = None
         pub.sendMessage('canvas.change_tool')
         self.redraw_all(True)
+
+
+    def get_selection_bitmap(self):
+        """
+        If a rectangle selection is made, copy the selection as a bitmap.
+        NOTE: The bitmap selection can be larger than the actual canvas bitmap,
+        so we must only selection the region of the selection that is visible
+        on the canvas
+        """
+        self.copy.update_rect()  # ensure w, h are correct
+        bmp = self.copy
+        area = self.area
+
+        if bmp.x + bmp.width > area[0]:
+            bmp.rect.SetWidth(area[0] - bmp.x)
+
+        if bmp.y + bmp.height > area[1]:
+            bmp.rect.SetHeight(area[1] - bmp.y)
+
+        self.copy = None
+        self.redraw_all()
+            
+        return self.buffer.GetSubBitmap(bmp.rect)
 
 
     def deselect_shape(self):

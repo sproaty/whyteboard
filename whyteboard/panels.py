@@ -964,7 +964,7 @@ class ShapePopup(Popup):
 
 class ThumbsPopup(SheetsPopup):
     """
-    Just need to set the item to the current tab number, parent: thumb panel
+    Just need to set the item to the current tab number. parent: thumb panel
     """
     def bleh(self,):
         self.parent.gui.tabs.SetSelection(self.item)
