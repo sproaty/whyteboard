@@ -50,6 +50,7 @@ import lib.icon as icon
 import meta
 #import topic_tree
 from canvas import Canvas, CanvasDropTarget
+from menu import Menu
 from tools import Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
 
@@ -61,18 +62,11 @@ from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
 from panels import ControlPanel, SidePanel, SheetsPopup
 from preferences import Preferences
 
-# phew!
-from event_ids import (ID_CLEAR_ALL, ID_CLEAR_ALL_SHEETS, ID_CLEAR_SHEETS,
-                       ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT, ID_EXPORT,
-                       ID_EXPORT_ALL, ID_EXPORT_PDF, ID_FEEDBACK, ID_EXPORT_PREF,
-                       ID_FULLSCREEN, ID_HISTORY, ID_IMPORT_IMAGE, ID_IMPORT_PDF,
-                       ID_IMPORT_PREF, ID_IMPORT_PS, ID_MOVE_UP, ID_MOVE_DOWN,
-                       ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_NEW, ID_NEXT,
-                       ID_PASTE_NEW, ID_PDF_CACHE, ID_PREV, ID_RECENTLY_CLOSED,
-                       ID_RELOAD_PREF, ID_RENAME, ID_REPORT_BUG, ID_RESIZE,
-                       ID_SHAPE_VIEWER, ID_STATUSBAR, ID_SWAP_COLOURS,
-                       ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT, ID_TRANSLATE,
-                       ID_UNDO_SHEET, ID_UPDATE)
+from event_ids import (ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT, ID_MOVE_UP,
+                       ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_NEXT,
+                       ID_PASTE_NEW, ID_PREV, ID_RECENTLY_CLOSED, ID_STATUSBAR,
+                       ID_SWAP_COLOURS, ID_TOOL_PREVIEW, ID_TOOLBAR,
+                       ID_TRANSPARENT, ID_UNDO_SHEET)
 
 
 _ = wx.GetTranslation  # Define a translation string
@@ -97,13 +91,13 @@ class GUI(wx.Frame):
         wx.Frame.__init__(self, parent, title=_("Untitled") + u" - %s" % self.title)
         self.SetIcon(icon.whyteboard.getIcon())
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
-        self.util = Utility(self, config)
         self.SetDropTarget(CanvasDropTarget())
         self.statusbar = self.CreateStatusBar()
         self.printData = wx.PrintData()
         self.printData.SetPaperId(wx.PAPER_LETTER)
         self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
 
+        self.util = Utility(self, config)
         self.filehistory = wx.FileHistory(8)
         self.load_history_file()
         self.filehistory.Load(self.config)
@@ -121,7 +115,6 @@ class GUI(wx.Frame):
         if get_clipboard():
             self.can_paste = True
         self.toolbar = None
-        self.menu = None
         self.process = None
         self.pid = None
         self.dialog = None
@@ -139,9 +132,6 @@ class GUI(wx.Frame):
         self.closed_tabs = []  # [shapes: undo, redo, canvas_size, view_x, view_y] per tab
         self.closed_tabs_id = {}  # wx.Menu IDs for undo closed tab list
         self.hotkeys = []
-        self.showcolour, self.showtool, self.next = None, None, None
-        self.showstat, self.showprevious, self.prev = None, None, None
-        self.closed_tabs_menu = wx.Menu()
         self.control = ControlPanel(self)
 
         style = (fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8 |
@@ -170,7 +160,10 @@ class GUI(wx.Frame):
         wx.UpdateUIEvent.SetUpdateInterval(50)
         #wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
         pub.sendMessage('thumbs.update_current')
-        self.make_menu()
+        #self.make_menu()
+        self.menu = Menu(self)
+        self.SetMenuBar(self.menu.menu)
+        self.set_menu_from_config()
         self.do_bindings()
         self.update_panels(True)  # bold first items
 
@@ -181,131 +174,12 @@ class GUI(wx.Frame):
         sys.excepthook = self._oldhook
 
 
-    def make_menu(self):
-        """
-        Creates the menu...pretty damn messy, may give this a cleanup like the
-        do_bindings/make_toolbar. I hate this method - made worse by i8n!
-        """
-        self.menu = wx.MenuBar()
-        self._file = wx.Menu()
-        edit = wx.Menu()
-        view = wx.Menu()
-        shapes = wx.Menu()
-        sheets = wx.Menu()
-        _help = wx.Menu()
-        _import = wx.Menu()
-        _export = wx.Menu()
-        self.recent = wx.Menu()
-        self.filehistory.UseMenu(self.recent)
-        self.filehistory.AddFilesToMenu()
-        self.make_closed_tabs_menu()
-
-        _import.Append(ID_IMPORT_IMAGE, _('&Image...'))
-        _import.Append(ID_IMPORT_PDF, '&PDF...')
-        _import.Append(ID_IMPORT_PS, 'Post&Script...')
-        _import.Append(ID_IMPORT_PREF, _('P&references...'), _("Load in a Whyteboard preferences file"))
-        _export.Append(ID_EXPORT, _("&Export Sheet...") + "\tCtrl+E", _("Export the current sheet to an image file"))
-        _export.Append(ID_EXPORT_ALL, _("Export &All Sheets...") + "\tCtrl+Shift+E", _("Export every sheet to a series of image files"))
-        _export.Append(ID_EXPORT_PDF, _('As &PDF...'), _("Export every sheet into a PDF file"))
-        _export.Append(ID_EXPORT_PREF, _('P&references...'), _("Export your Whyteboard preferences file"))
-
-        new = wx.MenuItem(self._file, ID_NEW, _("New &Window") + "\tCtrl-N", _("Opens a new Whyteboard instance"))
-        pnew = wx.MenuItem(edit, ID_PASTE_NEW, _("Paste to a &New Sheet") + "\tCtrl+Shift-V", _("Paste from your clipboard into a new sheet"))
-        undo_sheet = wx.MenuItem(edit, ID_UNDO_SHEET, _("&Undo Last Closed Sheet") + "\tCtrl+Shift-T", _("Undo the last closed sheet"))
-
-        if os.name != "nt":
-            new.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_MENU))
-            pnew.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_PASTE, wx.ART_MENU))
-            undo_sheet.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_UNDO, wx.ART_MENU))
-
-        self._file.AppendItem(new)
-        self._file.Append(wx.ID_NEW, _("&New Sheet") + "\tCtrl-T", _("Add a new sheet"))
-        self._file.Append(wx.ID_OPEN, _("&Open...") + "\tCtrl-O", _("Load a Whyteboard save file, an image or convert a PDF/PS document"))
-        self._file.AppendMenu(-1, _('Open &Recent'), self.recent, _("Recently Opened Files"))
-        self._file.AppendSeparator()
-        self._file.Append(wx.ID_SAVE, _("&Save") + "\tCtrl+S", _("Save the Whyteboard data"))
-        self._file.Append(wx.ID_SAVEAS, _("Save &As...") + "\tCtrl+Shift+S", _("Save the Whyteboard data in a new file"))
-        self._file.AppendSeparator()
-        self._file.AppendMenu(-1, _('&Import File'), _import, _("Import various file types"))
-        self._file.AppendMenu(-1, _('&Export File'), _export, _("Export your data files as images/PDFs"))
-        self._file.Append(ID_RELOAD_PREF, _('Re&load Preferences'), _("Reload your preferences file"))
-        self._file.AppendSeparator()
-        self._file.Append(wx.ID_PRINT_SETUP, _("Page Set&up"), _("Set up the page for printing"))
-        self._file.Append(wx.ID_PREVIEW_PRINT, _("Print Pre&view"), _("View a preview of the page to be printed"))
-        self._file.Append(wx.ID_PRINT, _("&Print...") + "\tCtrl+P", _("Print the current page"))
-        self._file.AppendSeparator()
-        self._file.Append(wx.ID_EXIT, _("&Quit") + "\tAlt+F4", _("Quit Whyteboard"))
-
-        edit.Append(wx.ID_UNDO, _("&Undo") + "\tCtrl+Z", _("Undo the last operation"))
-        edit.Append(wx.ID_REDO, _("&Redo") + "\tCtrl+Y", _("Redo the last undone operation"))
-        edit.AppendSeparator()
-        edit.Append(wx.ID_COPY, _("&Copy") + "\tCtrl+C", _("Copy a Bitmap Selection region"))
-        edit.Append(wx.ID_PASTE, _("&Paste") + "\tCtrl+V", _("Paste text or an image from your clipboard into Whyteboard"))
-        edit.AppendItem(pnew)
-        edit.AppendSeparator()
-        edit.Append(wx.ID_PREFERENCES, _("Prefere&nces"), _("Change your preferences"))
-
-        view.Append(ID_SHAPE_VIEWER, _("&Shape Viewer...") + "\tF3", _("View and edit the shapes' drawing order"))
-        view.Append(ID_HISTORY, _("&History Viewer...") + "\tCtrl+H", _("View and replay your drawing history"))
-        view.Append(ID_PDF_CACHE, _("&PDF Cache...") + "\tF4", _("View and modify Whyteboard's PDF Cache"))
-        view.AppendSeparator()
-        self.showtool = view.Append(ID_TOOLBAR, u" " + _("&Toolbar"), _("Show and hide the toolbar"), kind=wx.ITEM_CHECK)
-        self.showstat = view.Append(ID_STATUSBAR, u" " + _("&Status Bar"), _("Show and hide the status bar"), kind=wx.ITEM_CHECK)
-        self.showprevious = view.Append(ID_TOOL_PREVIEW, u" " + _("Tool &Preview"), _("Show and hide the tool preview"), kind=wx.ITEM_CHECK)
-        self.showcolour = view.Append(ID_COLOUR_GRID, u" " + _("&Color Grid"), _("Show and hide the color grid"), kind=wx.ITEM_CHECK)
-        view.AppendSeparator()
-        view.Append(ID_FULLSCREEN, u" " + _("&Full Screen") + "\tF11", _("View Whyteboard in full-screen mode"), kind=wx.ITEM_CHECK)
-
-        shapes.Append(ID_MOVE_UP, _("Move Shape &Up") + "\tCtrl-Up", _("Moves the currently selected shape up"))
-        shapes.Append(ID_MOVE_DOWN, _("Move Shape &Down") + "\tCtrl-Down", _("Moves the currently selected shape down"))
-        shapes.Append(ID_MOVE_TO_TOP, _("Move Shape To &Top") + "\tCtrl-Shift-Up", _("Moves the currently selected shape to the top"))
-        shapes.Append(ID_MOVE_TO_BOTTOM, _("Move Shape To &Bottom") + "\tCtrl-Shift-Down", _("Moves the currently selected shape to the bottom"))
-        shapes.AppendSeparator()
-        shapes.Append(wx.ID_DELETE, _("&Delete Shape") + "\tDelete", _("Delete the currently selected shape"))
-        shapes.Append(ID_DESELECT, _("&Deselect Shape") + "\tCtrl-D", _("Deselects the currently selected shape"))
-        shapes.AppendSeparator()
-        shapes.Append(ID_SWAP_COLOURS, _("Swap &Colors"), _("Swaps the foreground and background colors"))
-        shapes.AppendCheckItem(ID_TRANSPARENT, " " + _("T&ransparent"), _("Toggles the selected shape's transparency"))
-
-        sheets.Append(wx.ID_CLOSE, _("Re&move Sheet") + "\tCtrl+W", _("Close the current sheet"))
-        sheets.Append(ID_CLOSE_ALL, _("&Close All Sheets") + "\tCtrl+Shift+W", _("Close every sheet"))
-        sheets.Append(ID_RENAME, _("&Rename Sheet...") + "\tF2", _("Rename the current sheet"))
-        sheets.Append(ID_RESIZE, _("Resi&ze Canvas...") + "\tCtrl+R", _("Change the canvas' size"))
-        sheets.AppendSeparator()
-        self.next = sheets.Append(ID_NEXT, _("&Next Sheet") + "\tCtrl+Tab", _("Go to the next sheet"))#
-        self.prev = sheets.Append(ID_PREV, _("&Previous Sheet") + "\tCtrl+Shift+Tab", _("Go to the previous sheet"))
-        sheets.AppendItem(undo_sheet)
-        sheets.AppendMenu(ID_RECENTLY_CLOSED, _("Recently &Closed Sheets"), self.closed_tabs_menu, _("View all recently closed sheets"))
-        sheets.AppendSeparator()
-        sheets.Append(wx.ID_CLEAR, _("&Clear Sheets' Drawings"), _("Clear drawings on the current sheet (keep images)"))
-        sheets.Append(ID_CLEAR_ALL, _("Clear &Sheet"), _("Clear the current sheet"))
-        sheets.AppendSeparator()
-        sheets.Append(ID_CLEAR_SHEETS, _("Clear All Sheets' &Drawings"), _("Clear all sheets' drawings (keep images)"))
-        sheets.Append(ID_CLEAR_ALL_SHEETS, _("Clear &All Sheets"), _("Clear all sheets"))
-
-        _help.Append(wx.ID_HELP, _("&Contents") + "\tF1", _("View Whyteboard's help documents"))
-        _help.AppendSeparator()
-        _help.Append(ID_UPDATE, _("Check for &Updates...") + "\tF12", _("Search for updates to Whyteboard"))
-        _help.Append(ID_REPORT_BUG, _("&Report a Problem"), _("Report any bugs or issues with Whyteboard"))
-        _help.Append(ID_TRANSLATE, _("&Translate Whyteboard"), _("Translate Whyteboard to your language"))
-        _help.Append(ID_FEEDBACK, _("Send &Feedback"), _("Send feedback directly to Whyteboard's developer"))
-        _help.AppendSeparator()
-        _help.Append(wx.ID_ABOUT, _("&About"), _("View information about Whyteboard"))
-        self.menu.Append(self._file, _("&File"))
-        self.menu.Append(edit, _("&Edit"))
-        self.menu.Append(view, _("&View"))
-        self.menu.Append(shapes, _("Sha&pes"))
-        self.menu.Append(sheets, _("&Sheets"))
-        self.menu.Append(_help, _("&Help"))
-        self.SetMenuBar(self.menu)
-        self.menu.Enable(wx.ID_PASTE, self.can_paste)
-        self.menu.Enable(ID_PASTE_NEW, self.can_paste)
-
+    def set_menu_from_config(self):
         keys = [u'toolbar', u'statusbar', u'tool_preview', u'colour_grid']
         ids = [ID_TOOLBAR, ID_STATUSBAR, ID_TOOL_PREVIEW, ID_COLOUR_GRID]
         for x, _id in zip(keys, ids):
             if self.util.config[x]:
-                view.Check(_id, True)
+                self.menu.check(_id, True)
             else:
                 getattr(self, u"on_" + x)(None, False)
 
@@ -321,8 +195,7 @@ class GUI(wx.Frame):
         self.Bind(wx.EVT_CHAR_HOOK, self.hotkey)
         self.Bind(wx.EVT_CLOSE, self.on_exit)
         self.Bind(wx.EVT_END_PROCESS, self.on_end_process)  # end pdf conversion
-        self.Bind(wx.EVT_MENU_RANGE, self.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
-        self.Bind(wx.EVT_MENU_OPEN, self.load_recent_files)
+        self.menu.bindings()
 
         topics = {'shape.add': self.shape_add,
                   'shape.selected': self.shape_selected,
@@ -353,77 +226,13 @@ class GUI(wx.Frame):
                 ac.append((wx.ACCEL_NORMAL, ord(item.hotkey.upper()), _id))
                 self.Bind(wx.EVT_MENU, blah, id=_id)
         else:
-            ac = [(wx.ACCEL_CTRL, ord(u'\t'), self.next.GetId()),
-                  (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord(u'\t'), self.prev.GetId()) ]
+            ac = [(wx.ACCEL_CTRL, ord(u'\t'), ID_NEXT),
+                  (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord(u'\t'), ID_PREV) ]
 
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
 
-        # Import sub-menu's bindings
-        ids = {'pdf': ID_IMPORT_PDF, 'ps': ID_IMPORT_PS, 'img': ID_IMPORT_IMAGE}
-        [self.Bind(wx.EVT_MENU, lambda evt, text=key: self.on_open(evt, text),
-                    id=ids[key]) for key in ids]
 
-
-        # menu bindings
-        bindings = { ID_CLEAR_ALL: "clear_all",
-                     ID_CLEAR_ALL_SHEETS: "clear_all_sheets",
-                     ID_CLEAR_SHEETS: "clear_sheets",
-                     ID_CLOSE_ALL: "close_all_sheets",
-                     ID_COLOUR_GRID: "colour_grid",
-                     ID_DESELECT: "deselect_shape",
-                     ID_EXPORT: "export",
-                     ID_EXPORT_ALL: "export_all",
-                     ID_EXPORT_PDF: "export_pdf",
-                     ID_EXPORT_PREF: "export_pref",
-                     ID_FEEDBACK: "feedback",
-                     ID_FULLSCREEN: "fullscreen",
-                     ID_HISTORY: "history",
-                     ID_IMPORT_PREF: "import_pref",
-                     ID_MOVE_DOWN: "move_down",
-                     ID_MOVE_TO_BOTTOM: "move_bottom",
-                     ID_MOVE_TO_TOP: "move_top",
-                     ID_MOVE_UP: "move_up",
-                     ID_NEW: "new_win",
-                     ID_NEXT: "next",
-                     ID_PASTE_NEW: "paste_new",
-                     ID_PDF_CACHE: "pdf_cache",
-                     ID_PREV: "prev",
-                     ID_RELOAD_PREF: "reload_preferences",
-                     ID_RENAME: "rename",
-                     ID_REPORT_BUG: "report_bug",
-                     ID_RESIZE: "resize",
-                     ID_SHAPE_VIEWER: "shape_viewer",
-                     ID_STATUSBAR: "statusbar",
-                     ID_SWAP_COLOURS: "swap_colours",
-                     ID_TOOL_PREVIEW: "tool_preview",
-                     ID_TOOLBAR: "toolbar",
-                     ID_TRANSLATE: "translate",
-                     ID_TRANSPARENT: "transparent",
-                     ID_UNDO_SHEET: "undo_tab",
-                     ID_UPDATE: "update",
-                     wx.ID_ABOUT: "about",
-                     wx.ID_CLEAR: "clear",
-                     wx.ID_CLOSE: "close_tab",
-                     wx.ID_COPY: "copy",
-                     wx.ID_DELETE: "delete_shape",
-                     wx.ID_EXIT: "exit",
-                     wx.ID_HELP: "help",
-                     wx.ID_NEW : "new_tab",
-                     wx.ID_OPEN: "open",
-                     wx.ID_PASTE: "paste",
-                     wx.ID_PREFERENCES: "preferences",
-                     wx.ID_PREVIEW_PRINT: "print_preview",
-                     wx.ID_PRINT: "print",
-                     wx.ID_PRINT_SETUP: "page_setup",
-                     wx.ID_REDO: "redo",
-                     wx.ID_SAVE: "save",
-                     wx.ID_SAVEAS: "save_as",
-                     wx.ID_UNDO: "undo" }
-
-        for _id, name in bindings.items():
-            method = getattr(self, u"on_" + name)  # self.on_*
-            self.Bind(wx.EVT_MENU, method, id=_id)
 
 
     def make_toolbar(self):
@@ -467,23 +276,6 @@ class GUI(wx.Frame):
         self.toolbar.Realize()
 
 
-    def make_closed_tabs_menu(self):
-        for key, value in self.closed_tabs_id.items():
-            self.closed_tabs_menu.Remove(key)
-            self.Unbind(wx.EVT_MENU, id=key)
-
-        self.closed_tabs_id = dict()
-
-        for x, tab in enumerate(reversed(self.closed_tabs)):
-            _id = wx.NewId()
-            name = tab['name']
-            self.closed_tabs_id[_id] = tab
-            self.closed_tabs_menu.Append(_id, u"&%i: %s" % (x + 1, name),
-                                         _('Restore sheet "%s"') % name)
-            self.Bind(wx.EVT_MENU, lambda evt, tab=tab: self.on_undo_tab(tab=tab),
-                      id=_id)
-
-
     def shape_selected(self, shape):
         """
         Shape getting selected (by Select tool)
@@ -491,7 +283,7 @@ class GUI(wx.Frame):
         self.canvas.select_shape(shape)
         change = shape.background == wx.TRANSPARENT
         self.control.transparent.SetValue(change)
-        self.menu.Check(ID_TRANSPARENT, change)
+        self.menu.check(wx.TRANSPARENT, change)
 
 
     def release_mouse(self):
@@ -876,7 +668,7 @@ class GUI(wx.Frame):
                 'viewport': canvas.GetViewStart()}
 
         self.closed_tabs.append(item)
-        self.make_closed_tabs_menu()
+        self.menu.make_closed_tabs_menu()
 
 
     def on_close_all_sheets(self, event=None):
@@ -919,7 +711,7 @@ class GUI(wx.Frame):
         self.canvas.restore_sheet(tab['shapes'], tab['undo'], tab['redo'],
                                   tab['size'], tab['medias'], tab['viewport'])
         self.update_shape_viewer()
-        self.make_closed_tabs_menu()
+        self.menu.make_closed_tabs_menu()
 
 
     def on_rename(self, event=None, sheet=None):
@@ -941,10 +733,8 @@ class GUI(wx.Frame):
         """
         Re-creates the Recent Files menu by reloading the config file.
         """
-        if event.GetMenu() == self._file:
-            for x in self.recent.GetMenuItems():
-                self.recent.RemoveItem(x)
-
+        if self.menu.is_file_menu(event.GetMenu()):
+            self.menu.remove_all_recent()
             self.load_history_file()
             self.filehistory.Load(self.config)
         event.Skip()  # otherwise interferes with EVT_UPDATE_UI
@@ -971,8 +761,8 @@ class GUI(wx.Frame):
                     self.count = 0
                     try:
                         event.Enable(self.can_paste)
-                        self.menu.Enable(ID_PASTE_NEW, self.can_paste)
-                        self.menu.Enable(wx.ID_PASTE, self.can_paste)
+                        self.menu.enable(ID_PASTE_NEW, self.can_paste)
+                        self.menu.enable(wx.ID_PASTE, self.can_paste)
                     except wx.PyDeadObjectError:
                         pass
             return
@@ -1111,9 +901,8 @@ class GUI(wx.Frame):
         if not val:
             val = not self.IsFullScreen()
 
-        menu = self.menu.FindItemById(ID_FULLSCREEN)
         self.ShowFullScreen(val, flag)
-        menu.Check(val)
+        self.menu.toggle_fullscreen(val)
 
 
     def hotkey(self, event=None):
@@ -1212,40 +1001,40 @@ class GUI(wx.Frame):
 
     def toggle_view(self, menu, view, force=None):
         """Menu: MenuItem to check/enable/disable, view: Control to show/hide"""
-        if menu.IsChecked() or force:
+        if self.menu.is_checked(menu) or force:
             view.Show()
-            menu.Check(True)
+            self.menu.check(menu, True)
         else:
             view.Hide()
-            menu.Check(False)
+            self.menu.check(menu, False)
         if force is False:
             view.Hide()
-            menu.Check(False)
+            self.menu.check(menu, False)
         self.SendSizeEvent()
 
 
     def on_toolbar(self, event=None, force=None):
-        self.toggle_view(self.showtool, self.toolbar, force)
+        self.toggle_view(ID_TOOLBAR, self.toolbar, force)
 
     def on_tool_preview(self, event=None, force=None):
-        self.toggle_view(self.showprevious, self.control.preview, force)
+        self.toggle_view(ID_TOOL_PREVIEW, self.control.preview, force)
 
     def on_statusbar(self, event=None, force=None):
-        self.bar_shown = False or (self.showstat.IsChecked() or force)
-        self.toggle_view(self.showstat, self.statusbar, force)
+        self.bar_shown = False or (self.menu.is_checked(ID_STATUSBAR) or force)
+        self.toggle_view(ID_STATUSBAR, self.statusbar, force)
 
 
     def on_colour_grid(self, event=None, force=None):
         """ugly, has to show/hide an item from a sizer, not a panel"""
-        if self.showcolour.IsChecked() or force:
+        if self.menu.is_checked(ID_COLOUR_GRID) or force:
             self.control.control_sizer.Show(self.control.grid, True)
-            self.showcolour.Check(True)
+            self.menu.check(ID_COLOUR_GRID, True)
         else:
             self.control.control_sizer.Hide(self.control.grid)
-            self.showcolour.Check(False)
+            self.menu.check(ID_COLOUR_GRID, False)
         if force is False:
             self.control.control_sizer.Hide(self.control.grid)
-            self.showcolour.Check(False)
+            self.menu.check(ID_COLOUR_GRID, False)
 
         self.control.pane.Layout()
         pub.sendMessage('gui.preview.refresh')
@@ -1611,7 +1400,7 @@ class WhyteboardApp(wx.App):
 
     def set_language(self, config, option_lang=None):
         """
-        Sets the user's language'
+        Sets the user's language.
         """
         set_lang = False
         lang_name = config.get('language', '')
