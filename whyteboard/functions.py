@@ -190,11 +190,13 @@ def check_clipboard():
     """
     Checks whether supported data is on the clipboard
     """
-    wx.TheClipboard.Open()
-    success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
-    success2 = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_TEXT))
-    wx.TheClipboard.Close()
-    return success or success2
+    if not wx.TheClipboard.IsOpened():
+        wx.TheClipboard.Open()
+        success = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_BITMAP))
+        success2 = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_TEXT))
+        wx.TheClipboard.Close()
+        return success or success2
+    return False
 
 
 def set_clipboard(bitmap):

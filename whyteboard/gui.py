@@ -42,8 +42,8 @@ import wx.lib.newevent
 import lib.flatnotebook as fnb
 from wx.html import HtmlHelpController
 
-from lib.pubsub import pub
 from lib.configobj import ConfigObj
+from lib.pubsub import pub
 from lib.validate import Validator
 import lib.icon as icon
 
@@ -116,7 +116,6 @@ class GUI(wx.Frame):
         self.tab_total = 1
         self.current_tab = 0
         self.closed_tabs = []  # [shapes: undo, redo, canvas_size, view_x, view_y] per tab
-        self.count = 5  # used to update menu timings
         self.hotkeys = []
 
         style = (fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8 |
@@ -741,20 +740,16 @@ class GUI(wx.Frame):
         _id = event.GetId()
 
         if _id == wx.ID_PASTE:  # check this less frequently, possibly expensive
-            self.count += 1
-            if self.count == 6:
+            if check_clipboard():
+                self.can_paste = True
+                try:
+                    self.menu.enable(ID_PASTE_NEW, self.can_paste)
+                    self.menu.enable(wx.ID_PASTE, self.can_paste)
+                except wx.PyDeadObjectError:
+                    pass
+            else:
                 self.can_paste = False
-
-            if not wx.TheClipboard.IsOpened():
-                if check_clipboard():
-                    self.can_paste = True
-                    self.count = 0
-                    try:
-                        event.Enable(self.can_paste)
-                        self.menu.enable(ID_PASTE_NEW, self.can_paste)
-                        self.menu.enable(wx.ID_PASTE, self.can_paste)
-                    except wx.PyDeadObjectError:
-                        pass
+            event.Enable(self.can_paste)
             return
 
         do = False
@@ -790,7 +785,6 @@ class GUI(wx.Frame):
             if canvas.copy:
                 do = True
         event.Enable(do)
-
 
 
 
@@ -838,8 +832,6 @@ class GUI(wx.Frame):
 
     def on_copy(self, event):
         set_clipboard(self.canvas.get_selection_bitmap())
-        self.count = 4
-        self.UpdateWindowUI()  # force paste buttons to enable (it counts to 4)
 
 
     def on_change_tool(self, event, _id):
@@ -965,44 +957,41 @@ class GUI(wx.Frame):
     def get_tab_names(self):
         return [self.tabs.GetPageText(x) for x in range(self.tab_count)]
 
+    def get_background_colour(self):
+        return self.control.get_background_colour()
 
-    def toggle_view(self, menu, view, force=None):
-        """Menu: MenuItem to check/enable/disable, view: Control to show/hide"""
-        if self.menu.is_checked(menu) or force:
-            view.Show()
-            self.menu.check(menu, True)
-        else:
-            view.Hide()
-            self.menu.check(menu, False)
-        if force is False:
-            view.Hide()
-            self.menu.check(menu, False)
+    def get_colour(self):
+        return self.control.get_colour()
+
+    def toggle_control(self, menu, control, force=None):
+        """Menu ID to check, enable/disable; view: Control to show/hide"""
+        val = self.get_toggle_value(menu, force)
+
+        control.Show(val)
+        self.menu.check(menu, val)
         self.SendSizeEvent()
 
+    def get_toggle_value(self, menu, force):
+        if self.menu.is_checked(menu) or force:
+            val = True
+        if force is False:
+            val = False
+        return val
 
     def on_toolbar(self, event=None, force=None):
-        self.toggle_view(ID_TOOLBAR, self.toolbar, force)
+        self.toggle_control(ID_TOOLBAR, self.toolbar, force)
 
     def on_tool_preview(self, event=None, force=None):
-        self.toggle_view(ID_TOOL_PREVIEW, self.control.preview, force)
+        self.toggle_control(ID_TOOL_PREVIEW, self.control.preview, force)
 
     def on_statusbar(self, event=None, force=None):
-        self.toggle_view(ID_STATUSBAR, self.statusbar, force)
+        self.toggle_control(ID_STATUSBAR, self.statusbar, force)
 
 
     def on_colour_grid(self, event=None, force=None):
-        """ugly, has to show/hide an item from a sizer, not a panel"""
-        if self.menu.is_checked(ID_COLOUR_GRID) or force:
-            self.control.control_sizer.Show(self.control.grid, True)
-            self.menu.check(ID_COLOUR_GRID, True)
-        else:
-            self.control.control_sizer.Hide(self.control.grid)
-            self.menu.check(ID_COLOUR_GRID, False)
-        if force is False:
-            self.control.control_sizer.Hide(self.control.grid)
-            self.menu.check(ID_COLOUR_GRID, False)
-
-        self.control.pane.Layout()
+        val = self.get_toggle_value(ID_COLOUR_GRID, force)
+        self.control.toggle_colour_grid(val)
+        self.menu.check(ID_COLOUR_GRID, val)
         pub.sendMessage('gui.preview.refresh')
 
 

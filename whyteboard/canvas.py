@@ -467,7 +467,7 @@ class Canvas(wx.ScrolledWindow):
         val = wx.TRANSPARENT
 
         if self.selected.background == wx.TRANSPARENT:
-            val = self.gui.control.background.GetColour()
+            val = self.gui.get_background_colour()
 
         self.selected.background = val
         self.selected.make_pen()

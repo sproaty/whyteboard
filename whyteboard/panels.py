@@ -148,6 +148,12 @@ class ControlPanel(wx.Panel):
         swap_sizer.Add(swap, flag=wx.ALIGN_RIGHT)
         return panel
 
+    def get_background_colour(self):
+        return self.background.GetColour()
+
+    def get_colour(self):
+        return self.colour.GetColour()
+
 
     def make_toolbox(self, _type=u"text"):
         """Creates a toolbox made from toggleable text or icon buttons"""
@@ -201,6 +207,10 @@ class ControlPanel(wx.Panel):
         self.gui.canvas.redraw_all()  # fixes a windows redraw bug
 
 
+    def toggle_colour_grid(self, value):
+        self.control_sizer.Show(self.grid, value)
+        self.pane.Layout()
+        
     def scroll(self, event):
         """Scrolls the thickness drop-down box (for Windows)"""
         val = self.thickness.GetSelection()
@@ -248,7 +258,7 @@ class ControlPanel(wx.Panel):
 
     def on_swap(self, event):
         """Swaps foreground/background colours"""
-        a, b = self.background.GetColour(), self.colour.GetColour()
+        a, b = self.get_background_colour(), self.get_colour()
         self.background.SetColour(b)
         self.colour.SetColour(a)
 
