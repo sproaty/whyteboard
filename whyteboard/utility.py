@@ -145,8 +145,7 @@ class Utility(object):
             version = self.saved_version
 
         self.is_zipped = True
-        self.saved = True
-        self.save_time = time.time()
+        self.mark_saved()
         self.save_last_path(self.filename)
         self.gui.show_progress_dialog(_("Saving..."))
 
@@ -376,7 +375,7 @@ class Utility(object):
 
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
-        self.saved = True
+        self.mark_saved()
         self.saved_version = temp[0][4]
         pub.sendMessage('canvas.change_tool')
         self.gui.tabs.SetSelection(temp[0][3])
@@ -400,7 +399,10 @@ class Utility(object):
         self.config['last_opened_dir'] = os.path.dirname(path)
         self.config.write()
 
-
+    def mark_saved(self):
+        self.saved = True
+        self.save_time = time.time()
+        
     def convert(self, _file=None):
         """
         If the filetype is PDF/PS, convert to a (temporary) series of images and

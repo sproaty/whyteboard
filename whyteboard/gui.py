@@ -297,7 +297,6 @@ class GUI(wx.Frame):
             self.on_save_as()
         else:
             self.util.save_file()
-            self.util.save_last_path(self.util.filename)
 
 
     def on_save_as(self, event=None):
