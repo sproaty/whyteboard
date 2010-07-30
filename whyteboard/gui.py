@@ -757,8 +757,9 @@ class GUI(wx.Frame):
                     event.Check(True)
                 else:
                     event.Check(False)
-                return
-            event.Enable(False)
+                event.Enable(True)
+            else:
+                event.Enable(False)
             return
         
         do = False

@@ -793,8 +793,7 @@ class Canvas(wx.ScrolledWindow):
         return self.selected and not isinstance(self.selected, (Media, Image, Text))
 
     def can_swap_colours(self):
-        return (self.selected and not self.is_transparent()
-                and not isinstance(self.selected, (Media, Image, Text)))
+        return self.can_swap_transparency() and not self.is_transparent()
     
     def is_transparent(self):
         return self.selected.background == wx.TRANSPARENT
