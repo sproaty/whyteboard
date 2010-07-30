@@ -48,7 +48,8 @@ import lib.icon as icon
 import meta
 from canvas import Canvas, CanvasDropTarget
 from menu import Menu
-from panels import ControlPanel, SidePanel, SheetsPopup
+from panels import ControlPanel, SidePanel
+from popups import SheetsPopup
 from preferences import Preferences
 from tools import Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility

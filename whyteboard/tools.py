@@ -38,7 +38,8 @@ from lib.pubsub import pub
 
 import meta
 from dialogs import TextInput
-from panels import MediaPanel, ShapePopup
+from panels import MediaPanel
+from popups import ShapePopup
 from functions import get_image_path
 
 _ = wx.GetTranslation
