@@ -62,7 +62,6 @@ from __future__ import with_statement
 
 import os
 import sys
-import webbrowser
 #import poppler
 import time
 import zipfile
@@ -78,7 +77,7 @@ from lib.pubsub import pub
 
 from dialogs import FindIM
 from functions import (get_home_dir, load_image, convert_quality, make_filename,
-                       get_wx_image_type, version_is_greater)
+                       get_wx_image_type, version_is_greater, open_url)
 
 import meta
 import tools
@@ -402,7 +401,7 @@ class Utility(object):
     def mark_saved(self):
         self.saved = True
         self.save_time = time.time()
-        
+
     def convert(self, _file=None):
         """
         If the filetype is PDF/PS, convert to a (temporary) series of images and
@@ -454,9 +453,7 @@ class Utility(object):
 
             if not count:
                 wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
-                wx.BeginBusyCursor()
-                webbrowser.open_new_tab(u"http://pages.cs.wisc.edu/~ghost/")
-                wx.CallAfter(wx.EndBusyCursor)
+                open_url(u"http://pages.cs.wisc.edu/~ghost/")
                 return
 
             if count == 1:

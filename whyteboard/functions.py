@@ -28,6 +28,7 @@ import sys
 import random
 import tarfile
 import urllib
+import webbrowser
 
 import distutils.dir_util
 import wx
@@ -229,6 +230,27 @@ def is_exe():
     Determine if Whyteboard is being run as an exe
     """
     return hasattr(sys, u"frozen")
+
+
+def show_dialog(_class, modal=True):
+    if modal:
+        _class.ShowModal()
+    else:
+        _class.Show()
+
+
+def open_url(url):
+    wx.BeginBusyCursor()
+    webbrowser.open_new_tab(url)
+    wx.CallAfter(wx.EndBusyCursor)
+
+
+def new_instance():
+    program = (u'python', os.path.abspath(sys.argv[0]))
+    if is_exe():
+        program = os.path.abspath(sys.argv[0])
+
+    subprocess.Popen(program)
 
 
 def fix_std_sizer_tab_order(sizer):

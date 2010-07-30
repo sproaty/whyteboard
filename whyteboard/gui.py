@@ -32,8 +32,6 @@ import os
 import sys
 import time
 import locale
-import webbrowser
-import subprocess
 import shutil
 from optparse import OptionParser
 
@@ -57,7 +55,7 @@ from utility import Utility
 
 from functions import (get_home_dir, is_exe, get_clipboard, check_clipboard,
                        download_help_files, file_dialog, get_path, set_clipboard,
-                       get_image_path)
+                       get_image_path, show_dialog, open_url, new_instance)
 
 from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
                      ExceptionHook, ShapeViewer, Feedback, PDFCacheDialog,
@@ -516,12 +514,7 @@ class GUI(wx.Frame):
 
 
     def on_new_win(self, event=None):
-        """Fires up a new Whyteboard window"""
-        program = (u'python', os.path.abspath(sys.argv[0]))
-        if is_exe():
-            program = os.path.abspath(sys.argv[0])
-
-        subprocess.Popen(program)
+        new_instance()
 
 
     def on_new_tab(self, event=None, name=None, wb=None):
@@ -1170,46 +1163,37 @@ class GUI(wx.Frame):
         printout.Destroy()
 
 
-    def open_url(self, url):
-        wx.BeginBusyCursor()
-        webbrowser.open_new_tab(url)
-        wx.CallAfter(wx.EndBusyCursor)
 
-    def show_dialog(self, _class, modal=True):
-        if modal:
-            _class.ShowModal()
-        else:
-            _class.Show()
 
     def on_translate(self, event):
-        self.open_url(u"https://translations.launchpad.net/whyteboard")
+        open_url(u"https://translations.launchpad.net/whyteboard")
 
     def on_report_bug(self, event):
-        self.open_url(u"https://bugs.launchpad.net/whyteboard")
+        open_url(u"https://bugs.launchpad.net/whyteboard")
 
     def on_resize(self, event=None):
-        self.show_dialog(Resize(self))
+        show_dialog(Resize(self))
 
     def on_shape_viewer(self, event=None):
         if not self.viewer:
             dlg = ShapeViewer(self)
-            self.show_dialog(dlg, False)
+            show_dialog(dlg, False)
             self.viewer = dlg
 
     def on_preferences(self, event=None):
-        self.show_dialog(Preferences(self))
+        show_dialog(Preferences(self))
 
     def on_update(self, event=None):
-        self.show_dialog(UpdateDialog(self))
+        show_dialog(UpdateDialog(self))
 
     def on_history(self, event=None):
-        self.show_dialog(History(self))
+        show_dialog(History(self))
 
     def on_pdf_cache(self, event=None):
-        self.show_dialog(PDFCacheDialog(self, self.util.library))
+        show_dialog(PDFCacheDialog(self, self.util.library))
 
     def on_feedback(self, event):
-        self.show_dialog(Feedback(self), False)
+        show_dialog(Feedback(self), False)
 
     def load_history_file(self):
         self.config = wx.Config(u"Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
