@@ -141,6 +141,7 @@ class GUI(wx.Frame):
         if 'mac' != os.name:
             self.Maximize(True)
 
+        self.count = 5  # used to update menu timings
         wx.UpdateUIEvent.SetUpdateInterval(50)
         #wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
 
@@ -268,9 +269,9 @@ class GUI(wx.Frame):
         Shape getting selected (by Select tool)
         """
         self.canvas.select_shape(shape)
-        change = shape.background == wx.TRANSPARENT
+        change = (shape.background == wx.TRANSPARENT)
+        self.util.transparent = change
         self.control.transparent.SetValue(change)
-        self.menu.check(wx.TRANSPARENT, change)
 
 
     def release_mouse(self):
@@ -732,20 +733,34 @@ class GUI(wx.Frame):
         _id = event.GetId()
 
         if _id == wx.ID_PASTE:  # check this less frequently, possibly expensive
-            if check_clipboard():
-                self.can_paste = True
-                try:
-                    self.menu.enable(ID_PASTE_NEW, self.can_paste)
-                    self.menu.enable(wx.ID_PASTE, self.can_paste)
-                except wx.PyDeadObjectError:
-                    pass
-            else:
-                self.can_paste = False
-            event.Enable(self.can_paste)
-            return
-
-        do = False
+            self.count += 1
+            if self.count == 6:
+                self.can_paste = False            
+                if check_clipboard():
+                    self.can_paste = True
+                    try:
+                        self.menu.enable(ID_PASTE_NEW, self.can_paste)
+                        self.menu.enable(wx.ID_PASTE, self.can_paste)
+                    except wx.PyDeadObjectError:
+                        pass
+                else:
+                    self.can_paste = False
+                event.Enable(self.can_paste)
+                return
+            
         canvas = self.canvas
+        
+        if _id == ID_TRANSPARENT:
+            if canvas.can_swap_transparency():
+                if canvas.is_transparent():
+                    event.Check(True)
+                else:
+                    event.Check(False)
+                return
+            event.Enable(False)
+            return
+        
+        do = False
         if not _id == wx.ID_COPY:
             if _id == wx.ID_REDO and canvas.redo_list:
                 do = True
@@ -759,7 +774,7 @@ class GUI(wx.Frame):
                 do = True
             elif _id in [ID_UNDO_SHEET, ID_RECENTLY_CLOSED] and self.closed_tabs:
                 do = True
-            elif _id in [wx.ID_DELETE, ID_DESELECT] and canvas.selected:
+            elif _id in [wx.ID_DELETE, ID_DESELECT, ID_FOREGROUND] and canvas.selected:
                 do = True
             elif _id == ID_MOVE_UP and canvas.check_move(u"up"):
                 do = True
@@ -769,11 +784,7 @@ class GUI(wx.Frame):
                 do = True
             elif _id == ID_MOVE_TO_BOTTOM and canvas.check_move(u"bottom"):
                 do = True
-            elif _id == ID_TRANSPARENT and canvas.can_swap_transparency():
-                do = True
             elif _id in [ID_SWAP_COLOURS, ID_BACKGROUND] and canvas.can_swap_colours():
-                do = True
-            elif _id == ID_FOREGROUND and canvas.selected:
                 do = True
         elif canvas:
             if canvas.copy:
@@ -1113,24 +1124,10 @@ class GUI(wx.Frame):
         self.thumbs.update_all()
 
     def on_foreground(self, event):
-        self.item.colour = self.colour_data(self.item.colour)
-        self.gui.canvas.redraw_all(True)
+        self.canvas.change_colour()
 
     def on_background(self, event):
-        self.item.background = self.colour_data(self.item.background)
-        self.gui.canvas.redraw_all(True)
-
-    def colour_data(self, colour):
-        data = wx.ColourData()
-        data.SetChooseFull(True)
-        data.SetColour(colour)
-
-        dlg = wx.ColourDialog(self.gui, data)
-        if dlg.ShowModal() == wx.ID_OK:
-            x = dlg.GetColourData()
-            self.gui.canvas.add_undo()
-            return x.GetColour().Get()
-
+        self.canvas.change_background()
 
     def on_refresh(self):
         self.thumbs.update_all()

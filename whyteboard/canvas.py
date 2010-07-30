@@ -744,6 +744,27 @@ class Canvas(wx.ScrolledWindow):
         shape.draw(self.get_dc(), False)  # draw 'new'
 
 
+    def change_colour(self):
+        self.selected.colour = self.colour_data(self.selected.colour)
+        self.redraw_all(True)
+
+    def change_background(self,):
+        self.selected.background = self.colour_data(self.selected.background)
+        self.redraw_all(True)
+
+    def colour_data(self, colour):
+        """Shows a colour info box"""
+        data = wx.ColourData()
+        data.SetChooseFull(True)
+        data.SetColour(colour)
+
+        dlg = wx.ColourDialog(self.gui, data)
+        if dlg.ShowModal() == wx.ID_OK:
+            x = dlg.GetColourData()
+            self.add_undo()
+            return x.GetColour().Get()
+
+
     def get_mouse_position(self):
         x, y = self.ScreenToClient(wx.GetMousePosition())
         if x < 0 or y < 0 or x > self.area[0] or y > self.area[1]:
@@ -772,9 +793,12 @@ class Canvas(wx.ScrolledWindow):
         return self.selected and not isinstance(self.selected, (Media, Image, Text))
 
     def can_swap_colours(self):
-        return (self.selected and not self.selected.background == wx.TRANSPARENT
+        return (self.selected and not self.is_transparent()
                 and not isinstance(self.selected, (Media, Image, Text)))
-
+    
+    def is_transparent(self):
+        return self.selected.background == wx.TRANSPARENT
+    
     def swap_colours(self):
         self.selected.colour, self.selected.background = self.selected.background, self.selected.colour
         self.redraw_all()

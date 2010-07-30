@@ -1,40 +1,50 @@
 Whyteboard 0.40.2 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Mon 17 May 2010
+Mon 17 August 2010
 
 ---- VERSION HISTORY ----
 
 ----------------------------------------------------------------------
 
-xx July 2010 -- 0.40.2
+xx August 2010 -- 0.40.2
 
-- "Recent Files" list under the File menu is synchronised across all Whyteboard
+* "Recent Files" list under the File menu is synchronised across all Whyteboard
   instances
-- Improved program updating; removed a dependency on an external library
-- Fixed Unicode errors on saving/loading/opening PDFs with certain filepaths
-- Program language defaults to the system language if possible
+* Improved program updating; removed a dependency on an external library
+* Fixed possible Unicode errors on any saving operation to a filepath containing
+  unicode characters >255 (e.g. ø)
 
-- Removed code that was handling loading older .wtbd save files from around a
+* Program language defaults to the system language if possible
+* Change Foreground / Background options added to Shapes menu and to a shape's 
+  right-click pop-up menu. Background's changeable when shape is not transparent
+
+* Removed code that was handling loading older .wtbd save files from around a
   year back, as it's no longer needed
-- Removed version number from application title (see About Dialog for it)
-- Little "*" shown in program title when application has unsaved data
-- Removed shortcut key information from popup menus
-- Shape viewer dialog handles delete key.
-- Deleting shape from shape viewer selects the previous shape; not the first
+* Removed version number from application title (see About Dialog for it)
+* Little "*" shown in program title when application has unsaved data
+* Removed shortcut key information from popup menus
+* Shape viewer dialog handles delete key.
+* Deleting shape from shape viewer selects the previous shape; not the first
   shape in the list.
 
-- Bugfix: possible permissions error on Linux when saving a file
-- Bugfix with removing a file that's been deleted from recent file list not
+* Bugfix: possible permissions error on Linux when saving a file
+* Bugfix with removing a file that's been deleted from recent file list not
   saving the file list
-- Fix bug on Mac where wrong version of wxPython was being used
-- Fix bug where program was writing the Language preference as the translated
+* Fix bug on Mac where wrong version of wxPython was being used
+* Fix bug where program was writing the Language preference as the translated
   language; the program was expecting the language in English
 
-- Fix tab ordering on many dialogs
-- Fix cancelling the Save As dialog in save changes prompt closing the dialog
-- Fix the eraser tool appearing as a black square
-- Fix undo/redo not making the "sure you want to quit" prompt appear
-- Fix preference dialog "view" tab always scrolling to the bottom of the dialog
+* Fix "transparent" checkbox under Shape menu and on the toolbox displaying
+  wrong values at times.
+* Fix possible "division by zero" bug with Ellipse tool
+* Fix tab ordering on many dialogs
+* Fix cancelling the Save As dialog in save changes prompt closing the dialog
+* Fix the eraser tool appearing as a black square
+* Fix undo/redo not making the "sure you want to quit" prompt appear
+* Fix preference dialog "view" tab always scrolling to the bottom of the dialog
+
+* Fix "Gdk-CRITICAL **: gdk_gc_set_foreground: assertion `color != NULL' failed"
+  GTK bug when drawing with a Pen
 
 ----------------------------------------------------------------------
 

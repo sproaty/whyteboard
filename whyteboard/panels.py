@@ -899,7 +899,7 @@ class ShapePopup(Popup):
     Brought up by right-clicking on a shape with the Select tool
     """
     def make_menu(self, extra):
-        SELECT, EDIT, DELETE, POINT, SWAP = wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId(), wx.NewId()
+        SELECT, EDIT, POINT = wx.NewId(), wx.NewId(), wx.NewId()
 
         self.SetTitle(_(self.item.name))
         text, _help = _("&Select"), _("Selects this shape")
@@ -926,52 +926,13 @@ class ShapePopup(Popup):
         if not self.item.name == u"Polygon":
             self.Enable(POINT, False)
 
-        if not self.item.name in [u"Image", u"Text", u"Note"]:
-            if self.item.background == wx.TRANSPARENT:
-                self.Check(ID_TRANSPARENT, True)
-                #self.Enable(ID_SWAP_COLOURS, False)
-                #self.Enable(ID_BACKGROUND, False)
-        else:
-            self.Enable(ID_TRANSPARENT, False)
-            self.Enable(ID_SWAP_COLOURS, False)
-
         self.Bind(wx.EVT_MENU, lambda x: self.select(), id=SELECT)
         self.Bind(wx.EVT_MENU, lambda x: self.edit(), id=EDIT)
-        self.Bind(wx.EVT_MENU, lambda x: self.delete(), id=DELETE)
         self.Bind(wx.EVT_MENU, lambda x: self.add_point(), id=POINT)
-        self.Bind(wx.EVT_MENU, lambda x: self.swap(), id=SWAP)
-        self.Bind(wx.EVT_MENU, self.background, id=ID_BACKGROUND)
-        self.Bind(wx.EVT_MENU, self.foreground, id=ID_FOREGROUND)
 
 
     def edit(self):
         self.item.edit()
-
-    def delete(self):
-        self.select(False)
-        self.gui.canvas.delete_selected()
-
-    def swap(self):
-        self.gui.on_swap_colour()
-
-    def foreground(self, event):
-        self.item.colour = self.colour_data(self.item.colour)
-        self.gui.canvas.redraw_all(True)
-
-    def background(self, event):
-        self.item.background = self.colour_data(self.item.background)
-        self.gui.canvas.redraw_all(True)
-
-    def colour_data(self, colour):
-        data = wx.ColourData()
-        data.SetChooseFull(True)
-        data.SetColour(colour)
-
-        dlg = wx.ColourDialog(self.gui, data)
-        if dlg.ShowModal() == wx.ID_OK:
-            x = dlg.GetColourData()
-            self.gui.canvas.add_undo()
-            return x.GetColour().Get()
 
     def select(self, draw=True):
         if not self.item.selected:

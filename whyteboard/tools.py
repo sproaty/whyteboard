@@ -525,7 +525,7 @@ class Pen(Polygon):
         Polygon.__init__(self, canvas, colour, thickness, background, cursor,
                          join)
         self.time = []  # list of times for each point, for redrawing
-        self.background = None
+        self.background = wx.TRANSPARENT
         self.x_tmp = 0
         self.y_tmp = 0
 
@@ -817,8 +817,14 @@ class Ellipse(Rectangle):
     def hit_test(self, x, y):
         """ http://www.conandalton.net/2009/01/how-to-draw-ellipse.html """
         center = self.find_center()
-        dx = int((x - center[0]) / (self.width / 2))
-        dy = int((y - center[1]) / (self.height / 2))
+        try:
+            dx = int((x - center[0]) / (self.width / 2))
+        except ZeroDivisionError:
+            dx = 0
+        try:
+            dy = int((y - center[1]) / (self.height / 2))
+        except ZeroDivisionError:
+            dy = 0
 
         if dx * dx + dy * dy < 1:
             return True
