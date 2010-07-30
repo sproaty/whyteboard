@@ -33,7 +33,7 @@ from event_ids import (ID_CLEAR_ALL, ID_CLEAR_ALL_SHEETS, ID_CLEAR_SHEETS,
        ID_PASTE_NEW, ID_PDF_CACHE, ID_PREV, ID_RECENTLY_CLOSED, ID_RELOAD_PREF,
        ID_RENAME, ID_REPORT_BUG, ID_RESIZE, ID_SHAPE_VIEWER, ID_STATUSBAR,
        ID_SWAP_COLOURS, ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT,
-       ID_TRANSLATE, ID_UNDO_SHEET, ID_UPDATE)
+       ID_TRANSLATE, ID_UNDO_SHEET, ID_UPDATE, ID_BACKGROUND, ID_FOREGROUND)
 
 _ = wx.GetTranslation
 
@@ -124,8 +124,10 @@ class Menu(object):
         shapes.Append(wx.ID_DELETE, _("&Delete Shape") + "\tDelete", _("Delete the currently selected shape"))
         shapes.Append(ID_DESELECT, _("&Deselect Shape") + "\tCtrl-D", _("Deselects the currently selected shape"))
         shapes.AppendSeparator()
-        shapes.Append(ID_SWAP_COLOURS, _("Swap &Colors"), _("Swaps the foreground and background colors"))
         shapes.AppendCheckItem(ID_TRANSPARENT, " " + _("T&ransparent"), _("Toggles the selected shape's transparency"))
+        shapes.Append(ID_SWAP_COLOURS, _("Swap &Colors"), _("Swaps the foreground and background colors"))
+        shapes.Append(ID_FOREGROUND, _("Foreground &Color..."), _("Change the select shape's color"))
+        shapes.Append(ID_BACKGROUND, _("&Background &Color..."), _("Change the select shape's background color"))
 
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet") + "\tCtrl+W", _("Close the current sheet"))
         sheets.Append(ID_CLOSE_ALL, _("&Close All Sheets") + "\tCtrl+Shift+W", _("Close every sheet"))
@@ -174,14 +176,15 @@ class Menu(object):
 
 
         # idle event handlers
-        ids = [ID_CLOSE_ALL, ID_DESELECT, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP,
-               ID_MOVE_UP, ID_NEXT, ID_PREV, ID_RECENTLY_CLOSED, ID_SWAP_COLOURS,
-               ID_TRANSPARENT, ID_UNDO_SHEET, wx.ID_CLOSE, wx.ID_COPY, wx.ID_DELETE,
-               wx.ID_PASTE, wx.ID_REDO, wx.ID_UNDO]
+        ids = [ID_BACKGROUND, ID_CLOSE_ALL, ID_DESELECT, ID_FOREGROUND, ID_MOVE_DOWN,
+               ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP, ID_MOVE_UP, ID_NEXT, ID_PREV,
+               ID_RECENTLY_CLOSED, ID_SWAP_COLOURS, ID_TRANSPARENT, ID_UNDO_SHEET,
+               wx.ID_CLOSE, wx.ID_COPY, wx.ID_DELETE, wx.ID_PASTE, wx.ID_REDO, wx.ID_UNDO]
         [self.gui.Bind(wx.EVT_UPDATE_UI, self.gui.update_menus, id=x) for x in ids]
-        
+
         # menu items
-        bindings = { ID_CLEAR_ALL: "clear_all",
+        bindings = { ID_BACKGROUND: "background",
+                     ID_CLEAR_ALL: "clear_all",
                      ID_CLEAR_ALL_SHEETS: "clear_all_sheets",
                      ID_CLEAR_SHEETS: "clear_sheets",
                      ID_CLOSE_ALL: "close_all_sheets",
@@ -192,6 +195,7 @@ class Menu(object):
                      ID_EXPORT_PDF: "export_pdf",
                      ID_EXPORT_PREF: "export_pref",
                      ID_FEEDBACK: "feedback",
+                     ID_FOREGROUND: "foreground",
                      ID_FULLSCREEN: "fullscreen",
                      ID_HISTORY: "history",
                      ID_IMPORT_PREF: "import_pref",

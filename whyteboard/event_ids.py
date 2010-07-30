@@ -26,6 +26,7 @@ to be used for multiple events (menu/toolbar/idle)
 import wx
 
 
+ID_BACKGROUND = wx.NewId()        # change shape's background
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab
 ID_CLEAR_ALL_SHEETS = wx.NewId()  # remove everything from all tabs
 ID_CLEAR_SHEETS = wx.NewId()      # remove all drawings from all tabs, keep imgs
@@ -36,6 +37,7 @@ ID_EXPORT = wx.NewId()            # export sheet to image file
 ID_EXPORT_ALL = wx.NewId()        # export every sheet to numbered image files
 ID_EXPORT_PDF = wx.NewId()        # export->PDF
 ID_FEEDBACK = wx.NewId()          # help->feedback
+ID_FOREGROUND = wx.NewId()        # change shape's foreground colour
 ID_EXPORT_PREF = wx.NewId()       # export->preferences
 ID_FULLSCREEN = wx.NewId()        # toggle fullscreen
 ID_HISTORY = wx.NewId()           # history viewer

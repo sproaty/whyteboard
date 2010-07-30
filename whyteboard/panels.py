@@ -37,7 +37,7 @@ from lib.pubsub import pub
 
 import meta
 from event_ids import (ID_TRANSPARENT, ID_SWAP_COLOURS, ID_MOVE_UP, ID_MOVE_DOWN,
-                       ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_CLOSE_ALL)
+                       ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_CLOSE_ALL, ID_FOREGROUND, ID_BACKGROUND)
 from functions import create_colour_bitmap, get_time, file_dialog, get_image_path
 
 _ = wx.GetTranslation
@@ -210,7 +210,7 @@ class ControlPanel(wx.Panel):
     def toggle_colour_grid(self, value):
         self.control_sizer.Show(self.grid, value)
         self.pane.Layout()
-        
+
     def scroll(self, event):
         """Scrolls the thickness drop-down box (for Windows)"""
         val = self.thickness.GetSelection()
@@ -913,6 +913,8 @@ class ShapePopup(Popup):
         self.AppendSeparator()
         self.AppendCheckItem(ID_TRANSPARENT, _("T&ransparent"))
         self.Append(ID_SWAP_COLOURS, _("Swap &Colors"))
+        self.Append(ID_FOREGROUND, _("Foreground &Color..."))
+        self.Append(ID_BACKGROUND, _("&Background &Color..."))
         self.AppendSeparator()
         self.Append(ID_MOVE_UP, _("Move &Up"))
         self.Append(ID_MOVE_DOWN, _("Move &Down"))
@@ -927,7 +929,8 @@ class ShapePopup(Popup):
         if not self.item.name in [u"Image", u"Text", u"Note"]:
             if self.item.background == wx.TRANSPARENT:
                 self.Check(ID_TRANSPARENT, True)
-                self.Enable(ID_SWAP_COLOURS, False)
+                #self.Enable(ID_SWAP_COLOURS, False)
+                #self.Enable(ID_BACKGROUND, False)
         else:
             self.Enable(ID_TRANSPARENT, False)
             self.Enable(ID_SWAP_COLOURS, False)
@@ -937,6 +940,8 @@ class ShapePopup(Popup):
         self.Bind(wx.EVT_MENU, lambda x: self.delete(), id=DELETE)
         self.Bind(wx.EVT_MENU, lambda x: self.add_point(), id=POINT)
         self.Bind(wx.EVT_MENU, lambda x: self.swap(), id=SWAP)
+        self.Bind(wx.EVT_MENU, self.background, id=ID_BACKGROUND)
+        self.Bind(wx.EVT_MENU, self.foreground, id=ID_FOREGROUND)
 
 
     def edit(self):
@@ -949,6 +954,24 @@ class ShapePopup(Popup):
     def swap(self):
         self.gui.on_swap_colour()
 
+    def foreground(self, event):
+        self.item.colour = self.colour_data(self.item.colour)
+        self.gui.canvas.redraw_all(True)
+
+    def background(self, event):
+        self.item.background = self.colour_data(self.item.background)
+        self.gui.canvas.redraw_all(True)
+
+    def colour_data(self, colour):
+        data = wx.ColourData()
+        data.SetChooseFull(True)
+        data.SetColour(colour)
+
+        dlg = wx.ColourDialog(self.gui, data)
+        if dlg.ShowModal() == wx.ID_OK:
+            x = dlg.GetColourData()
+            self.gui.canvas.add_undo()
+            return x.GetColour().Get()
 
     def select(self, draw=True):
         if not self.item.selected:

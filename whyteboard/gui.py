@@ -61,11 +61,11 @@ from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
                      ExceptionHook, ShapeViewer, Feedback, PDFCacheDialog,
                      PromptForSave)
 
-from event_ids import (ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT, ID_MOVE_UP,
-                       ID_MOVE_DOWN, ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_NEXT,
-                       ID_PASTE_NEW, ID_PREV, ID_RECENTLY_CLOSED, ID_STATUSBAR,
-                       ID_SWAP_COLOURS, ID_TOOL_PREVIEW, ID_TOOLBAR,
-                       ID_TRANSPARENT, ID_UNDO_SHEET)
+from event_ids import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT,
+                       ID_FOREGROUND, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP,
+                       ID_MOVE_TO_BOTTOM, ID_NEXT, ID_PASTE_NEW, ID_PREV,
+                       ID_RECENTLY_CLOSED, ID_STATUSBAR, ID_SWAP_COLOURS,
+                       ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT, ID_UNDO_SHEET)
 
 
 _ = wx.GetTranslation
@@ -771,7 +771,9 @@ class GUI(wx.Frame):
                 do = True
             elif _id == ID_TRANSPARENT and canvas.can_swap_transparency():
                 do = True
-            elif _id == ID_SWAP_COLOURS and canvas.can_swap_colours():
+            elif _id in [ID_SWAP_COLOURS, ID_BACKGROUND] and canvas.can_swap_colours():
+                do = True
+            elif _id == ID_FOREGROUND and canvas.selected:
                 do = True
         elif canvas:
             if canvas.copy:
@@ -1110,6 +1112,25 @@ class GUI(wx.Frame):
         self.update_shape_viewer()
         self.thumbs.update_all()
 
+    def on_foreground(self, event):
+        self.item.colour = self.colour_data(self.item.colour)
+        self.gui.canvas.redraw_all(True)
+
+    def on_background(self, event):
+        self.item.background = self.colour_data(self.item.background)
+        self.gui.canvas.redraw_all(True)
+
+    def colour_data(self, colour):
+        data = wx.ColourData()
+        data.SetChooseFull(True)
+        data.SetColour(colour)
+
+        dlg = wx.ColourDialog(self.gui, data)
+        if dlg.ShowModal() == wx.ID_OK:
+            x = dlg.GetColourData()
+            self.gui.canvas.add_undo()
+            return x.GetColour().Get()
+
 
     def on_refresh(self):
         self.thumbs.update_all()
@@ -1332,7 +1353,7 @@ class WhyteboardApp(wx.App):
         else:
             path = get_path()
             for f in os.listdir(path):
-                if f.find(self.frame.util.backup_ext) is not -1:
+                if f.find(self.frame.util.backup_ext) is not - 1:
                     os.remove(os.path.join(path, f))
 
 
