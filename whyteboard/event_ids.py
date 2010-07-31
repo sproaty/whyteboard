@@ -25,6 +25,7 @@ to be used for multiple events (menu/toolbar/idle)
 
 import wx
 
+#----------------------------------------------------------------------
 
 ID_BACKGROUND = wx.NewId()        # change shape's background
 ID_CLEAR_ALL = wx.NewId()         # remove everything from current tab

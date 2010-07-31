@@ -45,6 +45,7 @@ from lib.configobj import ConfigObj
 from lib.pubsub import pub
 from lib.validate import Validator
 
+#----------------------------------------------------------------------
 
 def make_shapes(canvas):
     """
@@ -72,6 +73,7 @@ def make_canvas():
 
     return Canvas(wx.Notebook(frame), frame, (800, 600))
 
+#----------------------------------------------------------------------
 
 class SimpleApp(fakewidgets.core.PySimpleApp):
     """
@@ -81,7 +83,6 @@ class SimpleApp(fakewidgets.core.PySimpleApp):
         fakewidgets.core.PySimpleApp.__init__(self)
         g = gui.GUI(None, make_config())  # mock the GUI with fake wxPython classes
         self.canvas = g.canvas
-
 
 #----------------------------------------------------------------------
 

@@ -29,6 +29,9 @@ being passed into the message broadcasts.
 from lib.pubsub import pub
 from lib.pubsub.utils import TopicTreeDefnSimple
 
+_ = wx.GetTranslation
+
+#----------------------------------------------------------------------
 
 class WhyteboardTopicTree(TopicTreeDefnSimple):
     class sheet:

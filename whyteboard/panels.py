@@ -43,9 +43,7 @@ from popups import NotesPopup, ThumbsPopup
 
 _ = wx.GetTranslation
 
-
 #----------------------------------------------------------------------
-
 
 class ControlPanel(wx.Panel):
     """
@@ -1003,6 +1001,3 @@ class ThumbButton(wx.BitmapButton):
 
         dc.SelectObject(wx.NullBitmap)
         self.SetBitmapLabel(self.buffer)
-
-
-#----------------------------------------------------------------------

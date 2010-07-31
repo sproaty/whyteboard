@@ -46,8 +46,6 @@ from tools import (Highlighter, Image, Line, Media, Note, OverlayShape, Polygon,
                    CENTER_LEFT, HANDLE_ROTATE, EDGE_TOP, EDGE_RIGHT, EDGE_LEFT,
                    EDGE_BOTTOM)
 
-#----------------------------------------------------------------------
-
 EDGE = 15    # distance from canvas edge before shape will scroll canvas
 TO_MOVE = 5  # pixels shape will cause canvas to scroll
 
@@ -61,7 +59,9 @@ DRAG_RIGHT = 2
 DRAG_UP = 3
 DRAG_DOWN = 4
 
+_ = wx.GetTranslation
 
+#----------------------------------------------------------------------
 
 class Canvas(wx.ScrolledWindow):
     """
@@ -715,7 +715,7 @@ class Canvas(wx.ScrolledWindow):
 
         self.copy = None
         self.redraw_all()
-            
+
         return self.buffer.GetSubBitmap(bmp.rect)
 
 
@@ -794,10 +794,10 @@ class Canvas(wx.ScrolledWindow):
 
     def can_swap_colours(self):
         return self.can_swap_transparency() and not self.is_transparent()
-    
+
     def is_transparent(self):
         return self.selected.background == wx.TRANSPARENT
-    
+
     def swap_colours(self):
         self.selected.colour, self.selected.background = self.selected.background, self.selected.colour
         self.redraw_all()

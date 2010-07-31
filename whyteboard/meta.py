@@ -34,7 +34,7 @@ from functions import transparent_supported
 
 _ = wx.GetTranslation
 
-
+#----------------------------------------------------------------------
 
 # Creates a wxPython wildcard filter from a list of known/supported filetypes.
 _all = [ (_('PDF/PS/SVG'), [u'ps', u'pdf', u'svg']),

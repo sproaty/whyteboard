@@ -834,79 +834,6 @@ class Resize(wx.Dialog):
 #----------------------------------------------------------------------
 
 
-class MyPrintout(wx.Printout):
-    def __init__(self, gui):
-        title = _("Untitled")
-        if gui.util.filename:
-            title = gui.util.filename
-        wx.Printout.__init__(self, title)
-        self.gui = gui
-
-    def OnBeginDocument(self, start, end):
-        return super(MyPrintout, self).OnBeginDocument(start, end)
-
-    def OnEndDocument(self):
-        super(MyPrintout, self).OnEndDocument()
-
-    def OnBeginPrinting(self):
-        super(MyPrintout, self).OnBeginPrinting()
-
-    def OnEndPrinting(self):
-        super(MyPrintout, self).OnEndPrinting()
-
-    def OnPreparePrinting(self):
-        super(MyPrintout, self).OnPreparePrinting()
-
-    def HasPage(self, page):
-        return page <= self.gui.tab_count
-
-    def GetPageInfo(self):
-        return (1, self.gui.tab_count, 1, self.gui.tab_count)
-
-    def OnPrintPage(self, page):
-        dc = self.GetDC()
-        canvas = self.gui.tabs.GetPage(page - 1)
-        canvas.deselect_shape()
-
-        maxX = canvas.buffer.GetWidth()
-        maxY = canvas.buffer.GetHeight()
-
-        marginX = 50
-        marginY = 50
-        maxX = maxX + (2 * marginX)
-        maxY = maxY + (2 * marginY)
-
-        (w, h) = dc.GetSizeTuple()
-        scaleX = float(w) / maxX
-        scaleY = float(h) / maxY
-        actualScale = min(scaleX, scaleY)
-        posX = (w - (canvas.buffer.GetWidth() * actualScale)) / 2.0
-        posY = (h - (canvas.buffer.GetHeight() * actualScale)) / 2.0
-
-        dc.SetUserScale(actualScale, actualScale)
-        dc.SetDeviceOrigin(int(posX), int(posY))
-        dc.DrawText(_("Page:") + u" %d" % page, marginX / 2, maxY - marginY + 100)
-
-        if self.gui.util.config['print_title']:
-            filename = _("Untitled")
-            if self.gui.util.filename:
-                filename = self.gui.util.filename
-            font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
-
-            dc2 = wx.WindowDC(self.gui)
-            x = dc2.GetMultiLineTextExtent(filename, font)
-            extent = x[0], x[1]
-            dc.SetFont(font)
-            dc.DrawText(_(filename), marginX / 2, -120)
-
-        dc.SetDeviceOrigin(int(posX), int(posY))
-        canvas.redraw_all(dc=dc)
-        return True
-
-
-#----------------------------------------------------------------------
-
-
 class ErrorDialog(lib.errdlg.ErrorDialog):
     def __init__(self, msg):
         lib.errdlg.ErrorDialog.__init__(self, None, title=_("Error Report"), message=msg)
@@ -1200,7 +1127,7 @@ class ShapeViewer(wx.Dialog):
         if event.GetKeyCode() == wx.WXK_DELETE and self.shapes:
             self.on_delete(None)
         event.Skip()
-        
+
 
     def change(self, selection):
         """Change the sheet, repopulate"""

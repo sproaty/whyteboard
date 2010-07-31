@@ -41,7 +41,6 @@ path = os.path.split(os.path.abspath(sys.argv[0]))
 
 #----------------------------------------------------------------------
 
-
 def get_home_dir(extra_path=None):
     """
     Returns the home directory for Whyteboard in a cross-platform way

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 # Copyright (c) 2009, 2010 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
@@ -50,6 +49,7 @@ from canvas import Canvas, CanvasDropTarget
 from menu import Menu
 from panels import ControlPanel, SidePanel
 from popups import SheetsPopup
+from printing import Print
 from preferences import Preferences
 from tools import Highlighter, EDGE_LEFT, EDGE_TOP
 from utility import Utility
@@ -58,9 +58,8 @@ from functions import (get_home_dir, is_exe, get_clipboard, check_clipboard,
                        download_help_files, file_dialog, get_path, set_clipboard,
                        get_image_path, show_dialog, open_url, new_instance)
 
-from dialogs import (History, ProgressDialog, Resize, UpdateDialog, MyPrintout,
-                     ExceptionHook, ShapeViewer, Feedback, PDFCacheDialog,
-                     PromptForSave)
+from dialogs import (ExceptionHook, Feedback, History, PDFCacheDialog, ProgressDialog, 
+                     PromptForSave, Resize, ShapeViewer, UpdateDialog)
 
 from event_ids import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT,
                        ID_FOREGROUND, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP,
@@ -73,7 +72,6 @@ _ = wx.GetTranslation
 SCROLL_AMOUNT = 3
 
 #----------------------------------------------------------------------
-
 
 class GUI(wx.Frame):
     """
@@ -150,9 +148,7 @@ class GUI(wx.Frame):
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
         self.SetDropTarget(CanvasDropTarget())
         self.statusbar = self.CreateStatusBar()
-        self.printData = wx.PrintData()
-        self.printData.SetPaperId(wx.PAPER_LETTER)
-        self.printData.SetPrintMode(wx.PRINT_MODE_PRINTER)
+        self._print = Print(self)
 
         self.filehistory = wx.FileHistory(8)
         self.load_history_file()
@@ -256,6 +252,9 @@ class GUI(wx.Frame):
 
 
     def set_menu_from_config(self):
+        """
+        Sets up the program's initialmenu state from the config parameters
+        """
         keys = [u'toolbar', u'statusbar', u'tool_preview', u'colour_grid']
         ids = [ID_TOOLBAR, ID_STATUSBAR, ID_TOOL_PREVIEW, ID_COLOUR_GRID]
         for x, _id in zip(keys, ids):
@@ -490,7 +489,9 @@ class GUI(wx.Frame):
 
 
     def export_prompt(self):
-        """Find out the filename to save to"""
+        """
+        Find out the filename to save to
+        """
         val = None  # return value
         wildcard = (u"PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
                     u"BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
@@ -513,10 +514,6 @@ class GUI(wx.Frame):
                 val = filename
         dlg.Destroy()
         return val
-
-
-    def on_new_win(self, event=None):
-        new_instance()
 
 
     def on_new_tab(self, event=None, name=None, wb=None):
@@ -736,7 +733,7 @@ class GUI(wx.Frame):
         if _id == wx.ID_PASTE:  # check this less frequently, possibly expensive
             self.count += 1
             if self.count == 6:
-                self.can_paste = False            
+                self.can_paste = False
                 if check_clipboard():
                     self.can_paste = True
                     try:
@@ -748,9 +745,9 @@ class GUI(wx.Frame):
                     self.can_paste = False
                 event.Enable(self.can_paste)
                 return
-            
+
         canvas = self.canvas
-        
+
         if _id == ID_TRANSPARENT:
             if canvas.can_swap_transparency():
                 if canvas.is_transparent():
@@ -761,7 +758,7 @@ class GUI(wx.Frame):
             else:
                 event.Enable(False)
             return
-        
+
         do = False
         if not _id == wx.ID_COPY:
             if _id == wx.ID_REDO and canvas.redo_list:
@@ -1061,12 +1058,10 @@ class GUI(wx.Frame):
         self.PopupMenu(SheetsPopup(self, self, event.GetSelection()))
 
     def on_undo(self, event=None):
-        """ Calls undo on the active tab and updates the menus """
         self.canvas.undo()
         self.update_shape_viewer()
 
     def on_redo(self, event=None):
-        """ Calls redo on the active tab and updates the menus """
         self.canvas.redo()
         self.update_shape_viewer()
 
@@ -1125,6 +1120,7 @@ class GUI(wx.Frame):
         self.update_shape_viewer()
         self.thumbs.update_all()
 
+
     def on_foreground(self, event):
         self.canvas.change_colour()
 
@@ -1140,50 +1136,17 @@ class GUI(wx.Frame):
     def on_swap_colours(self, event=None):
         self.canvas.swap_colours()
 
-
     def on_page_setup(self, evt):
-        psdd = wx.PageSetupDialogData(self.printData)
-        psdd.CalculatePaperSizeFromId()
-        dlg = wx.PageSetupDialog(self, psdd)
-        dlg.ShowModal()
-        self.printData = wx.PrintData(dlg.GetPageSetupData().GetPrintData())
-        dlg.Destroy()
-
+        self._print.page_setup()
 
     def on_print_preview(self, event):
-        data = wx.PrintDialogData(self.printData)
-        printout = MyPrintout(self)
-        printout2 = MyPrintout(self)
-        preview = wx.PrintPreview(printout, printout2, data)
-
-        if not preview.Ok():
-            wx.MessageBox(_("There was a problem printing.\nPerhaps your current printer is not set correctly?"),
-              _("Printing Error"))
-            return
-
-        pfrm = wx.PreviewFrame(preview, self, _("Print Preview"))
-        pfrm.Initialize()
-        pfrm.SetPosition(self.GetPosition())
-        pfrm.SetSize(self.GetSize())
-        pfrm.Show(True)
-
+        self._print.print_preview()
 
     def on_print(self, event):
-        pdd = wx.PrintDialogData(self.printData)
-        pdd.SetToPage(2)
-        printer = wx.Printer(pdd)
-        printout = MyPrintout(self)
+        self._print.do_print()
 
-        if not printer.Print(self.canvas, printout, True):
-            if printer.GetLastError() is not wx.PRINTER_CANCELLED:
-                wx.MessageBox(_("There was a problem printing.\nPerhaps your current printer is not set correctly?"),
-                              _("Printing Error"), wx.OK)
-        else:
-            self.printData = wx.PrintData(printer.GetPrintDialogData().GetPrintData())
-        printout.Destroy()
-
-
-
+    def on_new_win(self, event=None):
+        new_instance()
 
     def on_translate(self, event):
         open_url(u"https://translations.launchpad.net/whyteboard")
@@ -1193,12 +1156,6 @@ class GUI(wx.Frame):
 
     def on_resize(self, event=None):
         show_dialog(Resize(self))
-
-    def on_shape_viewer(self, event=None):
-        if not self.viewer:
-            dlg = ShapeViewer(self)
-            show_dialog(dlg, False)
-            self.viewer = dlg
 
     def on_preferences(self, event=None):
         show_dialog(Preferences(self))
@@ -1219,10 +1176,18 @@ class GUI(wx.Frame):
         self.config = wx.Config(u"Whyteboard", style=wx.CONFIG_USE_LOCAL_FILE)
 
 
+    def on_shape_viewer(self, event=None):
+        if not self.viewer:
+            dlg = ShapeViewer(self)
+            show_dialog(dlg, False)
+            self.viewer = dlg
+
+
     def mark_unsaved(self):
         if self.util.saved:
             self.util.saved = False
             self.SetTitle(u"*" + self.GetTitle())
+
 
     def find_help(self):
         """Locate the help files, update self.help var"""

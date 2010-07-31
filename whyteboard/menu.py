@@ -37,6 +37,8 @@ from event_ids import (ID_CLEAR_ALL, ID_CLEAR_ALL_SHEETS, ID_CLEAR_SHEETS,
 
 _ = wx.GetTranslation
 
+#----------------------------------------------------------------------
+
 class Menu(object):
     """
     Menu bar and its bindings.

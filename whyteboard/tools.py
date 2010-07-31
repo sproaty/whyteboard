@@ -44,8 +44,6 @@ from functions import get_image_path
 
 _ = wx.GetTranslation
 
-#----------------------------------------------------------------------
-
 # constants for selection handles
 HANDLE_SIZE   = 6  # square pixels
 HANDLE_ROTATE = -1
@@ -68,6 +66,8 @@ def set_handle_size(handle_size):
     HANDLE_SIZE = handle_size
 
 pub.subscribe(set_handle_size, 'tools.set_handle_size')
+
+#----------------------------------------------------------------------
 
 class Tool(object):
     """ Abstract class representing a tool: Drawing canvas/colour/thickness """

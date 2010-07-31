@@ -46,7 +46,6 @@ _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
 
-
 class Preferences(wx.Dialog):
     """
     Contains a tabbed bar corresponding to each "page" of different options
