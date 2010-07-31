@@ -1028,8 +1028,8 @@ class GUI(wx.Frame):
             return False
 
         dlg.transfer_data(self)  # grab font and text data
-        
-        
+
+
     def show_text_edit_dialog(self, text_shape):
         dlg = TextInput(self, text_shape)
         if dlg.ShowModal() == wx.ID_CANCEL:
@@ -1037,7 +1037,7 @@ class GUI(wx.Frame):
         dlg.transfer_data(text_shape)  # grab font and text data
         return True
 
-        
+
     def show_progress_dialog(self, title, cancellable=False, modal=False):
         self.dialog = ProgressDialog(self, title, cancellable)
         if modal:

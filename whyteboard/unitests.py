@@ -30,20 +30,20 @@ which is an expensive operation. This also makes the tests run quicker
 import os
 import wx
 
-import fakewidgets
-import gui
-import meta
+import whyteboard.fakewidgets as fakewidgets
+import whyteboard.gui.gui as gui
+import whyteboard.meta as meta
 import whyteboard.tools
-import lib.mock as mock
+import whyteboard.lib.mock as mock
 
-from canvas import Canvas, RIGHT, DIAGONAL, BOTTOM
-from fakewidgets.core import Bitmap, Event, Colour
-from functions import (get_version_int, version_is_greater, get_wx_image_type,
+from whyteboard.gui.canvas import Canvas, RIGHT, DIAGONAL, BOTTOM
+from whyteboard.fakewidgets.core import Bitmap, Event, Colour
+from whyteboard.functions import (get_version_int, version_is_greater, get_wx_image_type,
                        get_time, get_image_path, format_bytes, convert_quality)
 
-from lib.configobj import ConfigObj
-from lib.pubsub import pub
-from lib.validate import Validator
+from whyteboard.lib.configobj import ConfigObj
+from whyteboard.lib.pubsub import pub
+from whyteboard.lib.validate import Validator
 
 #----------------------------------------------------------------------
 

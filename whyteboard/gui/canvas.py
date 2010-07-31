@@ -733,12 +733,16 @@ class Canvas(wx.ScrolledWindow):
 
 
     def change_colour(self):
-        self.selected.colour = self.colour_data(self.selected.colour)
-        self.redraw_all(True)
+        x = self.colour_data(self.selected.colour)
+        if x:
+            self.selected.colour = self.colour_data(self.selected.colour)
+            self.redraw_all(True)
 
     def change_background(self,):
-        self.selected.background = self.colour_data(self.selected.background)
-        self.redraw_all(True)
+        x = self.colour_data(self.selected.background)
+        if x:
+            self.selected.background = x
+            self.redraw_all(True)
 
     def colour_data(self, colour):
         """Shows a colour info box"""
@@ -751,6 +755,7 @@ class Canvas(wx.ScrolledWindow):
             x = dlg.GetColourData()
             self.add_undo()
             return x.GetColour().Get()
+        return False
 
 
     def get_mouse_position(self):
@@ -792,7 +797,7 @@ class Canvas(wx.ScrolledWindow):
 
     def show_text_edit_dialog(self, text_shape):
         return self.gui.show_text_edit_dialog(text_shape)
-    
+
     def capture_mouse(self):
         if not self.HasCapture():
             self.CaptureMouse()
