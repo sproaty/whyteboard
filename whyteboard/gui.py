@@ -1297,7 +1297,7 @@ class WhyteboardApp(wx.App):
         else:
             path = get_path()
             for f in os.listdir(path):
-                if f.find(self.frame.util.backup_ext) is not - 1:
+                if f.find(meta.backup_extension) is not - 1:
                     os.remove(os.path.join(path, f))
 
 

@@ -116,12 +116,10 @@ class Utility(object):
         self.items = tools.items  # shortcut
         self.update_version = True
         self.saved_version = u""
-        self.backup_ext = u".blah5bl8ah123bla6h"  # backup file extension
         self.im_location = None  # location of ImageMagick on windows
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
         self.library = PDFCache(u"library.known")
         self.config = config
-        self.pdf = False
 
         tools.HANDLE_SIZE = self.config['handle_size']
         pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
@@ -414,14 +412,6 @@ class Utility(object):
         An attempt at randomising the temp. file name is made using alphanumeric
         characters to help minimise conflict.
         """
-        #if _file is None:
-        #    _file = self.temp_file
-        #path = '/' + os.path.abspath(_file).replace('\\', '/')
-        #self.document = poppler.document_new_from_file("file://" + path, None)
-        #self.n_pages = self.document.get_n_pages()
-        #self.gui.canvas.current_page = self.document.get_page(0)
-        #self.gui.canvas.resize_if_large_image(self.gui.canvas.current_page.get_size())
-        #self.pdf = True
         if not self.im_location:
             self.prompt_for_im()
 

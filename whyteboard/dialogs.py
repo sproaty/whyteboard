@@ -377,7 +377,7 @@ class UpdateDialog(wx.Dialog):
                 os.system(u"tar -xf %s --strip-components=1" % tmp[0])
             else:
                 extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]),
-                            self.new_version, self.gui.util.backup_ext)
+                            self.new_version)
             os.remove(tmp[0])
             args = [u'python', [u'python', sys.argv[0]]]  # for os.execvp
 

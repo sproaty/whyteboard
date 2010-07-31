@@ -649,19 +649,6 @@ class Canvas(wx.ScrolledWindow):
         region, remove the buffer rectangle then clear it with grey.
         """
         wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
-        #dc.SetUserScale(self.scale[0], self.scale[1])
-
-#        if self.current_page:
-#            dc = wx.PaintDC(self)
-#            cr = wxcairo.ContextFromDC(dc)
-#            cr.set_source_rgb(1, 1, 1)  # White background
-#            if self.scale != 1:
-#                cr.scale(self.scale[0], self.scale[1])
-#            cr.rectangle(0, 0, self.area[0], self.area[1])
-#            cr.fill()
-#            self.current_page.render(cr)
-        #else:
-        #    dc = wx.BufferedPaintDC(self, self.buffer, wx.BUFFER_VIRTUAL_AREA)
 
         if os.name == "nt":
             relbuf = self.CalcScrolledPosition(self.area)

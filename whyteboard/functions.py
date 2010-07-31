@@ -35,6 +35,7 @@ import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 
 from lib.pubsub import pub
+import meta 
 
 _ = wx.GetTranslation
 path = os.path.split(os.path.abspath(sys.argv[0]))
@@ -324,7 +325,7 @@ def download_help_files(path):
     os.remove(tmp[0])
 
 
-def extract_tar(path, _file, version, backup_ext):
+def extract_tar(path, _file, version):
     """
     Extract a .tar.gz source file on Windows, without needing to use the
     'tar' command, and with no other downloads!
@@ -342,7 +343,7 @@ def extract_tar(path, _file, version, backup_ext):
             _type = os.path.splitext(f)
 
             if _type[1] in [u".py", u".txt"]:
-                new_file = os.path.join(path, _type[0]) + backup_ext
+                new_file = os.path.join(path, _type[0]) + backup_extension
                 os.rename(location, new_file)
 
     # move extracted file to current dir, remove tar, remove extracted dir
