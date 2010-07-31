@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # replicates the wxversion.Select()
 
 def select(versions, optionsRequired=False):

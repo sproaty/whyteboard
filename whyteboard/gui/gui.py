@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 # Copyright (c) 2009, 2010 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
@@ -47,10 +48,10 @@ import whyteboard.lib.icon as icon
 import whyteboard.meta as meta
 from whyteboard.gui.canvas import Canvas, CanvasDropTarget
 from whyteboard.gui.menu import Menu
-from whyteboard.gui.panels import ControlPanel, SidePanel
-from whyteboard.gui.popups import SheetsPopup
-from whyteboard.gui.printing import Print
+from whyteboard.gui.panels import ControlPanel, MediaPanel, SidePanel
+from whyteboard.gui.popups import SheetsPopup, ShapePopup
 from whyteboard.gui.preferences import Preferences
+from whyteboard.gui.printing import Print
 from whyteboard.tools import Highlighter, EDGE_LEFT, EDGE_TOP
 from whyteboard.utility import Utility
 
@@ -59,7 +60,7 @@ from whyteboard.functions import (get_home_dir, is_exe, get_clipboard, check_cli
                        get_image_path, show_dialog, open_url, new_instance)
 
 from whyteboard.gui.dialogs import (ExceptionHook, Feedback, History, PDFCacheDialog, ProgressDialog,
-                     PromptForSave, Resize, ShapeViewer, UpdateDialog)
+                     PromptForSave, Resize, ShapeViewer, TextInput, UpdateDialog)
 
 from whyteboard.event_ids import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT,
                        ID_FOREGROUND, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP,
@@ -184,15 +185,18 @@ class GUI(wx.Frame):
         self.menu.bindings()
 
         topics = {'shape.add': self.shape_add,
+                  'shape.popup': self.shape_popup,
                   'shape.selected': self.shape_selected,
                   'shape_viewer.update': self.update_shape_viewer,
                   'canvas.capture_mouse': self.capture_mouse,
                   'canvas.change_tool': self.pubsub_change_tool,
-                  'canvas.paste_text': self.paste_text,
                   'canvas.paste_image': self.paste_image,
+                  'canvas.paste_text': self.paste_text,
                   'canvas.release_mouse': self.release_mouse,
+                  'gui.mark_unsaved': self.mark_unsaved,
                   'gui.open_file': self.open_file,
-                  'gui.mark_unsaved': self.mark_unsaved}
+                  'media.create_panel': self.make_media_panel,
+                  'text.show_dialog': self.show_text_dialog}
         [pub.subscribe(value, key) for key, value in topics.items()]
 
         self.hotkeys = [x.hotkey for x in self.util.items]
@@ -274,9 +278,14 @@ class GUI(wx.Frame):
         self.util.transparent = change
         self.control.transparent.SetValue(change)
 
+    def make_media_panel(self, size, media):
+        media.mc = MediaPanel(self.canvas, size, media)
 
     def release_mouse(self):
         self.canvas.release_mouse()
+
+    def shape_popup(self, shape):
+        self.PopupMenu(ShapePopup(self.canvas, self, shape))
 
     def capture_mouse(self):
         self.canvas.capture_mouse()
@@ -1010,6 +1019,25 @@ class GUI(wx.Frame):
         self.pid = None
 
 
+    def show_text_dialog(self, text):
+        dlg = TextInput(self, text=text)
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            self.canvas.text = None
+            self.canvas.redraw_all()
+            self.pubsub_change_tool()
+            return False
+
+        dlg.transfer_data(self)  # grab font and text data
+        
+        
+    def show_text_edit_dialog(self, text_shape):
+        dlg = TextInput(self, text_shape)
+        if dlg.ShowModal() == wx.ID_CANCEL:
+            return False
+        dlg.transfer_data(text_shape)  # grab font and text data
+        return True
+
+        
     def show_progress_dialog(self, title, cancellable=False, modal=False):
         self.dialog = ProgressDialog(self, title, cancellable)
         if modal:

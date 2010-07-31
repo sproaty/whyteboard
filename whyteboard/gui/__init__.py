@@ -1,8 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from gui import WhyteboardApp
 import canvas
 import dialogs
-import gui
 import menu
 import popups
+
+from gui import WhyteboardApp

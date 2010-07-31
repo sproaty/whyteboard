@@ -37,9 +37,6 @@ import wx
 from whyteboard.lib.pubsub import pub
 
 import whyteboard.meta as meta
-from whyteboard.gui.dialogs import TextInput
-from whyteboard.gui.panels import MediaPanel
-from whyteboard.gui.popups import ShapePopup
 from whyteboard.functions import get_image_path
 
 _ = wx.GetTranslation
@@ -1065,7 +1062,7 @@ class Media(Tool):
 
     def make_panel(self):
         if not self.mc:
-            self.mc = MediaPanel(self.canvas, (self.x, self.y), self)
+            pub.sendMessage('media.create_panel', size=(self.x, self.y), media=self)
             if self.filename:
                 self.mc.do_load_file(self.filename)
 
@@ -1213,16 +1210,11 @@ class Text(OverlayShape):
         """
         self.x = x
         self.y = y
-        dlg = TextInput(self.canvas.gui, text=self.text)
+        pub.sendMessage('text.show_dialog', text=self.text)
 
-        if dlg.ShowModal() == wx.ID_CANCEL:
-            dlg.Destroy()
-            self.canvas.text = None
-            self.canvas.redraw_all()
-            pub.sendMessage('canvas.change_tool')
+        if not self.canvas.text:
             return False
 
-        dlg.transfer_data(self)  # grab font and text data
         self.font_data = self.font.GetNativeFontInfoDesc()
 
         if self.text:
@@ -1233,16 +1225,16 @@ class Text(OverlayShape):
 
 
     def edit(self, event=None):
-        """Pops up the TextInput box to edit itself"""
+        """
+        Pops up the TextInput box to edit itself
+        """
         text = self.text  # restore to these if cancelled/blank
         font = self.font
         font_data = self.font_data
         colour = self.colour
         self.canvas.add_undo()
 
-        dlg = TextInput(self.canvas.gui, self)
-        if dlg.ShowModal() == wx.ID_CANCEL:
-            dlg.Destroy()
+        if not self.canvas.show_text_edit_dialog(self):
             self.text = text  # restore attributes
             self.font = font
             self.colour = colour
@@ -1251,8 +1243,6 @@ class Text(OverlayShape):
             self.canvas.undo_list.pop()  # undo "undo point" :)
             self.canvas.redraw_all()  # get rid of any text
         else:
-
-            dlg.transfer_data(self)  # grab font and text data
             self.font_data = self.font.GetNativeFontInfoDesc()
 
             if not self.text:
@@ -1713,7 +1703,7 @@ class Select(Tool):
         if self.canvas.selected:
             selected = self.canvas.selected
         self.canvas.selected = found
-        self.canvas.gui.PopupMenu(ShapePopup(self.canvas, self.canvas.gui, found))
+        pub.sendMessage('shape.popup', shape=found)
 
         if selected:
             self.canvas.selected = selected

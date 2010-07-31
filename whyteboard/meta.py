@@ -30,7 +30,7 @@ App object before allowing DC operations
 """
 
 import wx
-from functions import transparent_supported
+from whyteboard.functions import transparent_supported
 
 _ = wx.GetTranslation
 

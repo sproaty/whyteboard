@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, 2010 by Steven Sproat
@@ -377,7 +377,7 @@ class UpdateDialog(wx.Dialog):
                 os.system(u"tar -xf %s --strip-components=1" % tmp[0])
             else:
                 extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]),
-                            self.new_version)
+                            self.new_version, meta.backup_extension)
             os.remove(tmp[0])
             args = [u'python', [u'python', sys.argv[0]]]  # for os.execvp
 

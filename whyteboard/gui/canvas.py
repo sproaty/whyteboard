@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, 2010 by Steven Sproat
@@ -789,6 +790,9 @@ class Canvas(wx.ScrolledWindow):
         self.selected.colour, self.selected.background = self.selected.background, self.selected.colour
         self.redraw_all()
 
+    def show_text_edit_dialog(self, text_shape):
+        return self.gui.show_text_edit_dialog(text_shape)
+    
     def capture_mouse(self):
         if not self.HasCapture():
             self.CaptureMouse()
