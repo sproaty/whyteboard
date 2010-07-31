@@ -34,12 +34,12 @@ import wx.lib.mixins.listctrl as listmix
 
 from urllib import urlopen, urlretrieve, urlencode
 
-import lib.errdlg
-from lib.pubsub import pub
+from whyteboard.lib.errdlg import ErrorDialog as BaseErrorDialog
+from whyteboard.lib.pubsub import pub
 
-import meta
-import tools
-from functions import (get_home_dir, bitmap_button, is_exe, extract_tar,
+import whyteboard.meta as meta
+import whyteboard.tools
+from whyteboard.functions import (get_home_dir, bitmap_button, is_exe, extract_tar,
                        fix_std_sizer_tab_order, format_bytes, version_is_greater,
                        get_image_path)
 _ = wx.GetTranslation
@@ -834,9 +834,9 @@ class Resize(wx.Dialog):
 #----------------------------------------------------------------------
 
 
-class ErrorDialog(lib.errdlg.ErrorDialog):
+class ErrorDialog(BaseErrorDialog):
     def __init__(self, msg):
-        lib.errdlg.ErrorDialog.__init__(self, None, title=_("Error Report"), message=msg)
+        BaseErrorDialog.__init__(self, None, title=_("Error Report"), message=msg)
         self.SetDescriptionLabel(_("An error has occured - please report it"))
         self.gui = wx.GetTopLevelWindows()[0]
 
@@ -994,8 +994,7 @@ class ShapeViewer(wx.Dialog):
 
         pub.subscribe(self.shape_add, 'shape.add')
         pub.subscribe(self.sheet_rename, 'sheet.rename')
-        pub.subscribe(self.sheet_rename, 'sheet.rename')
-        
+
         ids = [self.moveUp.GetId(), self.moveTop.GetId(), self.moveDown.GetId(),
                self.moveBottom.GetId(), self.deleteBtn.GetId(), self.prev.GetId(), self.next.GetId()]
 

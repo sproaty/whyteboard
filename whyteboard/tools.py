@@ -34,13 +34,13 @@ import cStringIO
 import ntpath
 import wx
 
-from lib.pubsub import pub
+from whyteboard.lib.pubsub import pub
 
-import meta
-from dialogs import TextInput
-from panels import MediaPanel
-from popups import ShapePopup
-from functions import get_image_path
+import whyteboard.meta as meta
+from whyteboard.gui.dialogs import TextInput
+from whyteboard.gui.panels import MediaPanel
+from whyteboard.gui.popups import ShapePopup
+from whyteboard.functions import get_image_path
 
 _ = wx.GetTranslation
 

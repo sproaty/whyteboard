@@ -24,7 +24,7 @@ Popup menu items.
 
 import wx
 
-from event_ids import (ID_BACKGROUND, ID_CLOSE_ALL, ID_FOREGROUND, ID_MOVE_DOWN,
+from whyteboard.event_ids import (ID_BACKGROUND, ID_CLOSE_ALL, ID_FOREGROUND, ID_MOVE_DOWN,
                        ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP, ID_MOVE_UP, ID_SWAP_COLOURS,
                        ID_TRANSPARENT)
 

@@ -36,11 +36,11 @@ import copy
 import wx
 #import wx.lib.wxcairo as wxcairo
 
-from lib.dragscroller import DragScroller
-from lib.pubsub import pub
+from whyteboard.lib.dragscroller import DragScroller
+from whyteboard.lib.pubsub import pub
 
-from functions import get_image_path
-from tools import (Highlighter, Image, Line, Media, Note, OverlayShape, Polygon,
+from whyteboard.functions import get_image_path
+from whyteboard.tools import (Highlighter, Image, Line, Media, Note, OverlayShape, Polygon,
                    Select, Text, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT,
                    BOTTOM_RIGHT, CENTER_TOP, CENTER_RIGHT, CENTER_BOTTOM,
                    CENTER_LEFT, HANDLE_ROTATE, EDGE_TOP, EDGE_RIGHT, EDGE_LEFT,

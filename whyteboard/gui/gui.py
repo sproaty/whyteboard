@@ -36,32 +36,32 @@ from optparse import OptionParser
 
 import wx
 import wx.lib.newevent
-import lib.flatnotebook as fnb
+import whyteboard.lib.flatnotebook as fnb
 from wx.html import HtmlHelpController
 
-from lib.configobj import ConfigObj
-from lib.pubsub import pub
-from lib.validate import Validator
-import lib.icon as icon
+from whyteboard.lib.configobj import ConfigObj
+from whyteboard.lib.pubsub import pub
+from whyteboard.lib.validate import Validator
+import whyteboard.lib.icon as icon
 
-import meta
-from canvas import Canvas, CanvasDropTarget
-from menu import Menu
-from panels import ControlPanel, SidePanel
-from popups import SheetsPopup
-from printing import Print
-from preferences import Preferences
-from tools import Highlighter, EDGE_LEFT, EDGE_TOP
-from utility import Utility
+import whyteboard.meta as meta
+from whyteboard.gui.canvas import Canvas, CanvasDropTarget
+from whyteboard.gui.menu import Menu
+from whyteboard.gui.panels import ControlPanel, SidePanel
+from whyteboard.gui.popups import SheetsPopup
+from whyteboard.gui.printing import Print
+from whyteboard.gui.preferences import Preferences
+from whyteboard.tools import Highlighter, EDGE_LEFT, EDGE_TOP
+from whyteboard.utility import Utility
 
-from functions import (get_home_dir, is_exe, get_clipboard, check_clipboard,
+from whyteboard.functions import (get_home_dir, is_exe, get_clipboard, check_clipboard,
                        download_help_files, file_dialog, get_path, set_clipboard,
                        get_image_path, show_dialog, open_url, new_instance)
 
-from dialogs import (ExceptionHook, Feedback, History, PDFCacheDialog, ProgressDialog,
+from whyteboard.gui.dialogs import (ExceptionHook, Feedback, History, PDFCacheDialog, ProgressDialog,
                      PromptForSave, Resize, ShapeViewer, UpdateDialog)
 
-from event_ids import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT,
+from whyteboard.event_ids import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT,
                        ID_FOREGROUND, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP,
                        ID_MOVE_TO_BOTTOM, ID_NEXT, ID_PASTE_NEW, ID_PREV,
                        ID_RECENTLY_CLOSED, ID_STATUSBAR, ID_SWAP_COLOURS,

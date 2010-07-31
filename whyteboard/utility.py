@@ -75,12 +75,12 @@ except ImportError:
 
 from lib.pubsub import pub
 
-from dialogs import FindIM
-from functions import (get_home_dir, load_image, convert_quality, make_filename,
+from whyteboard.gui.dialogs import FindIM
+from whyteboard.functions import (get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type, version_is_greater, open_url)
 
-import meta
-import tools
+import whyteboard.meta as meta
+import whyteboard.tools as tools
 
 _ = wx.GetTranslation
 
