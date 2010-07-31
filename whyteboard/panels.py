@@ -36,8 +36,6 @@ from wx.lib.wordwrap import wordwrap as wordwrap
 from lib.pubsub import pub
 
 import meta
-from event_ids import (ID_TRANSPARENT, ID_SWAP_COLOURS, ID_MOVE_UP, ID_MOVE_DOWN,
-                       ID_MOVE_TO_TOP, ID_MOVE_TO_BOTTOM, ID_CLOSE_ALL, ID_FOREGROUND, ID_BACKGROUND)
 from functions import create_colour_bitmap, get_time, file_dialog, get_image_path
 from popups import NotesPopup, ThumbsPopup
 

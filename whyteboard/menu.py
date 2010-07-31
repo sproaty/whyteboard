@@ -264,8 +264,8 @@ class Menu(object):
             self.closed_tabs_id[_id] = tab
             self.closed_tabs_menu.Append(_id, u"&%i: %s" % (x + 1, name),
                                          _('Restore sheet "%s"') % name)
-            gui.Bind(wx.EVT_MENU, id=_id,
-                     handler=lambda evt, tab=tab: self.gui.on_undo_tab(tab=tab))
+            func = lambda evt, tab=tab: self.gui.on_undo_tab(tab=tab)
+            gui.Bind(wx.EVT_MENU, func, id=_id)
 
 
     def toggle_fullscreen(self, value):
@@ -276,15 +276,15 @@ class Menu(object):
         for x in self.recent.GetMenuItems():
             self.recent.RemoveItem(x)
 
-    def is_checked(self, id):
-        menu = self.menu.FindItemById(id)
+    def is_checked(self, _id):
+        menu = self.menu.FindItemById(_id)
         return menu.IsChecked()
 
     def is_file_menu(self, menu):
         return menu == self.file
 
-    def check(self, id, value):
-        self.menu.Check(id, value)
+    def check(self, _id, value):
+        self.menu.Check(_id, value)
 
-    def enable(self, id, value):
-        self.menu.Enable(id, value)
+    def enable(self, _id, value):
+        self.menu.Enable(_id, value)

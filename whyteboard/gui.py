@@ -760,40 +760,50 @@ class GUI(wx.Frame):
             return
 
         do = False
-        if not _id == wx.ID_COPY:
-            if _id == wx.ID_REDO and canvas.redo_list:
-                do = True
-            elif _id == wx.ID_UNDO and canvas.undo_list:
-                do = True
-            elif _id == ID_PREV and self.current_tab:
-                do = True
-            elif (_id == ID_NEXT and self.can_change_next_sheet()):
-                do = True
-            elif _id in [wx.ID_CLOSE, ID_CLOSE_ALL] and self.tab_count > 1:
-                do = True
-            elif _id in [ID_UNDO_SHEET, ID_RECENTLY_CLOSED] and self.closed_tabs:
-                do = True
-            elif _id in [wx.ID_DELETE, ID_DESELECT, ID_FOREGROUND] and canvas.selected:
-                do = True
-            elif _id == ID_MOVE_UP and canvas.check_move(u"up"):
-                do = True
-            elif _id == ID_MOVE_DOWN and canvas.check_move(u"down"):
-                do = True
-            elif _id == ID_MOVE_TO_TOP and canvas.check_move(u"top"):
-                do = True
-            elif _id == ID_MOVE_TO_BOTTOM and canvas.check_move(u"bottom"):
-                do = True
-            elif _id in [ID_SWAP_COLOURS, ID_BACKGROUND] and canvas.can_swap_colours():
-                do = True
-        elif canvas:
-            if canvas.copy:
-                do = True
+        if _id == wx.ID_REDO and canvas.redo_list:
+            do = True
+        elif _id == wx.ID_UNDO and canvas.undo_list:
+            do = True
+        elif _id == ID_PREV and self.current_tab:
+            do = True
+        elif (_id == ID_NEXT and self.can_change_next_sheet()):
+            do = True
+        elif _id in [wx.ID_CLOSE, ID_CLOSE_ALL] and self.tab_count > 1:
+            do = True
+        elif _id in [ID_UNDO_SHEET, ID_RECENTLY_CLOSED] and self.closed_tabs:
+            do = True
+        elif _id in [wx.ID_DELETE, ID_DESELECT, ID_FOREGROUND] and canvas.selected:
+            do = True
+        elif _id == ID_MOVE_UP and canvas.check_move(u"up"):
+            do = True
+        elif _id == ID_MOVE_DOWN and canvas.check_move(u"down"):
+            do = True
+        elif _id == ID_MOVE_TO_TOP and canvas.check_move(u"top"):
+            do = True
+        elif _id == ID_MOVE_TO_BOTTOM and canvas.check_move(u"bottom"):
+            do = True
+        elif _id in [ID_SWAP_COLOURS, ID_BACKGROUND] and canvas.can_swap_colours():
+            do = True
+        elif _id == wx.ID_COPY:
+            if canvas:
+                if canvas.copy:
+                    do = True
         event.Enable(do)
 
 
 
     def can_change_next_sheet(self):
         return self.tab_count > 1 and self.current_tab + 1 < self.tab_count
+
+    def on_delete_shape(self, event=None):
+        self.canvas.delete_selected()
+        self.update_shape_viewer()
+
+    def on_deselect_shape(self, event=None):
+        self.canvas.deselect_shape()
+
+    def on_copy(self, event):
+        set_clipboard(self.canvas.get_selection_bitmap())
 
     def paste_image(self, bitmap, x, y, ignore=False):
         self.canvas.paste_image(bitmap, x, y, ignore)
@@ -805,15 +815,6 @@ class GUI(wx.Frame):
         """ Pastes the text/image into a new tab """
         self.on_new_tab()
         self.on_paste(ignore=True)
-
-
-    def on_delete_shape(self, event=None):
-        self.canvas.delete_selected()
-        self.update_shape_viewer()
-
-    def on_deselect_shape(self, event=None):
-        self.canvas.deselect_shape()
-
 
     def on_paste(self, event=None, ignore=False):
         """
@@ -834,15 +835,10 @@ class GUI(wx.Frame):
             self.paste_image(data.GetBitmap(), x, y, ignore)
 
 
-    def on_copy(self, event):
-        set_clipboard(self.canvas.get_selection_bitmap())
-
-
     def on_change_tool(self, event, _id):
         """ Change tool -- used when being used as a hotkey """
         if not self.canvas.shape.drawing and not self.canvas.drawing:
             self.control.change_tool(_id=_id)
-
 
     def pubsub_change_tool(self, new=None):
         if self.canvas:
@@ -970,12 +966,12 @@ class GUI(wx.Frame):
     def toggle_control(self, menu, control, force=None):
         """Menu ID to check, enable/disable; view: Control to show/hide"""
         val = self.get_toggle_value(menu, force)
-
         control.Show(val)
         self.menu.check(menu, val)
         self.SendSizeEvent()
 
     def get_toggle_value(self, menu, force):
+        val = False
         if self.menu.is_checked(menu) or force:
             val = True
         if force is False:
@@ -1000,17 +996,14 @@ class GUI(wx.Frame):
 
 
     def convert_dialog(self, cmd):
-        """
-        Called when the convert process begins, executes the process call and
-        shows the convert dialog
-        """
+        """Called when the PDF convert process begins"""
         self.process = wx.Process(self)
         self.pid = wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
         self.show_progress_dialog(_("Converting..."), True, True)
 
 
     def on_end_process(self, event=None):
-        """ Destroy the progress process after convert returns """
+        """ Destroy the progress process after Convert finishes """
         self.process.Destroy()
         self.dialog.Destroy()
         del self.process
@@ -1265,45 +1258,32 @@ class WhyteboardApp(wx.App):
         parser.add_option("-u", "--update", action="store_true", help="check for a newer version of whyteboard")
         parser.add_option("-l", "--lang", help="set language. can be a country code or language (e.g. fr, french; nl, dutch)")
 
-        path = os.path.join(get_home_dir(), u"user.pref")
         (options, args) = parser.parse_args()
-        if options.conf:
-            path = options.conf
+        path = options.conf or os.path.join(get_home_dir(), u"user.pref")
 
         config = ConfigObj(path, configspec=meta.config_scheme.split("\n"), encoding=u"utf-8")
         config.validate(Validator())
-
         self.set_language(config, options.lang)
         self.frame = GUI(config)
         self.frame.Show(True)
 
         try:
-            _file = os.path.abspath(sys.argv[1])
-            if _file.lower().endswith(u".wtbd"):
-
-                if os.path.exists(_file):
-                    self.frame.do_open(_file)
-            elif options.file:
-                self.load_file(options.file)
+            _file = options.file or sys.argv[1]
+            _file = os.path.abspath(_file)
+            if os.path.exists(_file):
+                self.frame.do_open(_file)
         except IndexError:
             pass
 
-        if options.width:
-            self.frame.canvas.resize((options.width, self.frame.canvas.area[1]))
-        if options.height:
-            self.frame.canvas.resize((self.frame.canvas.area[0], options.height))
+        x = options.width or self.frame.canvas.area[0]
+        y = options.height or self.frame.canvas.area[1]
+        self.frame.canvas.resize((x, y))
 
+        self.delete_temp_files()
         if options.update:
             self.frame.on_update()
 
-        self.delete_temp_files()
         return True
-
-
-    def load_file(self, _file):
-        _file = os.path.abspath(_file)
-        if os.path.exists(_file):
-            self.frame.do_open(_file)
 
 
     def delete_temp_files(self):

@@ -994,7 +994,8 @@ class ShapeViewer(wx.Dialog):
 
         pub.subscribe(self.shape_add, 'shape.add')
         pub.subscribe(self.sheet_rename, 'sheet.rename')
-
+        pub.subscribe(self.sheet_rename, 'sheet.rename')
+        
         ids = [self.moveUp.GetId(), self.moveTop.GetId(), self.moveDown.GetId(),
                self.moveBottom.GetId(), self.deleteBtn.GetId(), self.prev.GetId(), self.next.GetId()]
 
