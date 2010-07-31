@@ -1,0 +1,4 @@
+include *.txt
+include whyteboard/lib/pubsub/*.py
+include whyteboard/lib/pubsub/*/*.py
+recursive-include *.txt
