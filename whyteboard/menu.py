@@ -127,9 +127,9 @@ class Menu(object):
         shapes.Append(ID_DESELECT, _("&Deselect Shape") + "\tCtrl-D", _("Deselects the currently selected shape"))
         shapes.AppendSeparator()
         shapes.AppendCheckItem(ID_TRANSPARENT, " " + _("T&ransparent"), _("Toggles the selected shape's transparency"))
+        shapes.Append(ID_FOREGROUND, _("&Color..."), _("Change the selected shape's color"))
+        shapes.Append(ID_BACKGROUND, _("&Background &Color..."), _("Change the selected shape's background color"))
         shapes.Append(ID_SWAP_COLOURS, _("Swap &Colors"), _("Swaps the foreground and background colors"))
-        shapes.Append(ID_FOREGROUND, _("Foreground &Color..."), _("Change the select shape's color"))
-        shapes.Append(ID_BACKGROUND, _("&Background &Color..."), _("Change the select shape's background color"))
 
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet") + "\tCtrl+W", _("Close the current sheet"))
         sheets.Append(ID_CLOSE_ALL, _("&Close All Sheets") + "\tCtrl+Shift+W", _("Close every sheet"))

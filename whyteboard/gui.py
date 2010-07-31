@@ -58,7 +58,7 @@ from functions import (get_home_dir, is_exe, get_clipboard, check_clipboard,
                        download_help_files, file_dialog, get_path, set_clipboard,
                        get_image_path, show_dialog, open_url, new_instance)
 
-from dialogs import (ExceptionHook, Feedback, History, PDFCacheDialog, ProgressDialog, 
+from dialogs import (ExceptionHook, Feedback, History, PDFCacheDialog, ProgressDialog,
                      PromptForSave, Resize, ShapeViewer, UpdateDialog)
 
 from event_ids import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT,
@@ -69,6 +69,7 @@ from event_ids import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT,
 
 
 _ = wx.GetTranslation
+PASTE_CHECK_COUNT = 7  # only check clipboard every x value of EVT_UPDATE_MENU
 SCROLL_AMOUNT = 3
 
 #----------------------------------------------------------------------
@@ -140,8 +141,8 @@ class GUI(wx.Frame):
         if 'mac' != os.name:
             self.Maximize(True)
 
-        self.count = 5  # used to update menu timings
-        wx.UpdateUIEvent.SetUpdateInterval(50)
+        self.paste_check_count = PASTE_CHECK_COUNT - 1
+        wx.UpdateUIEvent.SetUpdateInterval(75)
         #wx.UpdateUIEvent.SetMode(wx.UPDATE_UI_PROCESS_SPECIFIED)
 
         self.SetIcon(icon.whyteboard.getIcon())
@@ -722,29 +723,28 @@ class GUI(wx.Frame):
 
     def update_menus(self, event):
         """
-        Enables/disables the undo/redo/next/prev button as appropriate.
-        It is called every 65ms and uses a counter to update the clipboard check
-        less often than the 65ms, as it's too performance intense
+        Enables/disables GUI menus and toolbar items.
+        It uses a counter for the clipboard check as it can be too performance
+        intense and cause segmentation faults
         """
         if not self.canvas:
             return
         _id = event.GetId()
 
         if _id == wx.ID_PASTE:  # check this less frequently, possibly expensive
-            self.count += 1
-            if self.count == 6:
+            self.paste_check_count += 1
+            if self.paste_check_count == PASTE_CHECK_COUNT:
                 self.can_paste = False
-                if check_clipboard():
-                    self.can_paste = True
-                    try:
-                        self.menu.enable(ID_PASTE_NEW, self.can_paste)
-                        self.menu.enable(wx.ID_PASTE, self.can_paste)
-                    except wx.PyDeadObjectError:
-                        pass
-                else:
-                    self.can_paste = False
-                event.Enable(self.can_paste)
-                return
+
+            if check_clipboard():
+                self.can_paste = True
+                self.paste_check_count = 0
+                try:
+                    self.menu.enable(ID_PASTE_NEW, self.can_paste)
+                    self.menu.enable(wx.ID_PASTE, self.can_paste)
+                except wx.PyDeadObjectError:
+                    pass
+            return
 
         canvas = self.canvas
 
