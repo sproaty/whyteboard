@@ -1,6 +1,6 @@
 Whyteboard 0.40.2 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Mon 17 August 2010
+xx xxx August 2010
 
 ---- VERSION HISTORY ----
 
@@ -15,7 +15,7 @@ xx August 2010 -- 0.40.2
   unicode characters >255 (e.g. ø)
 
 * Program language defaults to the system language if possible
-* Change Foreground / Background options added to Shapes menu and to a shape's 
+* Change Foreground / Background options added to Shapes menu and to a shape's
   right-click pop-up menu. Background's changeable when shape is not transparent
 
 * Removed code that was handling loading older .wtbd save files from around a
@@ -45,6 +45,8 @@ xx August 2010 -- 0.40.2
 
 * Fix "Gdk-CRITICAL **: gdk_gc_set_foreground: assertion `color != NULL' failed"
   GTK bug when drawing with a Pen
+* Major changes to the program's file structure. Lots of code cleanup and
+  refactorings
 
 ----------------------------------------------------------------------
 

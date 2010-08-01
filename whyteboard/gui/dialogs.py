@@ -329,11 +329,11 @@ class UpdateDialog(wx.Dialog):
             return
 
         self._file, size = html[3], html[4]
-        self._type = u".tar.gz"
+        self._type = ".tar.gz"
 
         if os.name == "nt" and is_exe():
             self._file, size = html[1], html[2]
-            self._type = u".zip"
+            self._type = ".zip"
 
         s = (_("There is a new version available, %(version)s\nFile: %(filename)s\nSize: %(filesize)s")
              % {'version': html[0], 'filename': self._file, 'filesize': format_bytes(size)} )
@@ -354,7 +354,7 @@ class UpdateDialog(wx.Dialog):
         path = self.gui.util.path
         args = []  # args to reload running program, may include filename
         tmp = None
-        tmp_file = os.path.join(path[0], u'tmp-wb-' + self._type)
+        tmp_file = os.path.join(path[0], 'tmp-wb-' + self._type)
 
         try:
             tmp = urlretrieve(self._file, tmp_file, self.reporter)
@@ -373,7 +373,7 @@ class UpdateDialog(wx.Dialog):
             args = [wb, [wb]]
         else:
             if os.name == "posix":
-                os.system(u"tar -xf %s --strip-components=1" % tmp[0])
+                os.system("tar -xf \"%s\" --strip-components=1" % tmp[0])
             else:
                 extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]),
                             self.new_version, meta.backup_extension)

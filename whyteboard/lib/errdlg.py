@@ -232,8 +232,8 @@ class ErrorDialog(wx.Dialog):
 
         """
         exc = traceback.format_exception(exctype, value, trace)
-        exc.insert(0, u"*** %s ***%s" % (TimeStamp(), os.linesep))
-        ftrace = u"".join(exc)
+        exc.insert(0, "*** %s ***%s" % (TimeStamp(), os.linesep))
+        ftrace = "".join(exc)
         return ftrace
 
     def SetDescriptionLabel(self, label):

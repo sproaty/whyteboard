@@ -35,10 +35,9 @@ import shutil
 
 import wx
 import wx.lib.newevent
-import whyteboard.lib.flatnotebook as fnb
 from wx.html import HtmlHelpController
 
-from whyteboard.lib import ConfigObj, Validator, icon, pub
+from whyteboard.lib import ConfigObj, Validator, icon, fnb, pub
 from whyteboard.misc import Utility, meta
 from whyteboard.tools import Highlighter, EDGE_LEFT, EDGE_TOP
 
