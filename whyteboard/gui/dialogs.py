@@ -34,12 +34,11 @@ import wx.lib.mixins.listctrl as listmix
 
 from urllib import urlopen, urlretrieve, urlencode
 
-from whyteboard.lib.errdlg import ErrorDialog as BaseErrorDialog
-from whyteboard.lib.pubsub import pub
-
-import whyteboard.meta as meta
+from whyteboard.lib import BaseErrorDialog, pub
 import whyteboard.tools as tools
-from whyteboard.functions import (get_home_dir, bitmap_button, is_exe, extract_tar,
+
+from whyteboard.misc import meta
+from whyteboard.misc import (get_home_dir, bitmap_button, is_exe, extract_tar,
                        fix_std_sizer_tab_order, format_bytes, version_is_greater,
                        get_image_path)
 _ = wx.GetTranslation

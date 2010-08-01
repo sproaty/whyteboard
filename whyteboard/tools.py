@@ -34,10 +34,9 @@ import cStringIO
 import ntpath
 import wx
 
-from whyteboard.lib.pubsub import pub
+from whyteboard.lib import pub
 
-import whyteboard.meta as meta
-from whyteboard.functions import get_image_path
+from whyteboard.misc import meta, get_image_path
 
 _ = wx.GetTranslation
 
@@ -67,7 +66,9 @@ pub.subscribe(set_handle_size, 'tools.set_handle_size')
 #----------------------------------------------------------------------
 
 class Tool(object):
-    """ Abstract class representing a tool: Drawing canvas/colour/thickness """
+    """
+    Abstract class representing a tool
+    """
     tooltip = u""
     name = u""
     icon = u""

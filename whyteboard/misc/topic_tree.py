@@ -26,8 +26,8 @@ being passed into the message broadcasts.
 """
 
 
-from lib.pubsub import pub
-from lib.pubsub.utils import TopicTreeDefnSimple
+from whyteboard.lib import pub
+from pub.utils import TopicTreeDefnSimple
 
 _ = wx.GetTranslation
 

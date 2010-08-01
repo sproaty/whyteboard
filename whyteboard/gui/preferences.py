@@ -36,11 +36,9 @@ from copy import copy
 from wx.lib.wordwrap import wordwrap as wordwrap
 from wx.lib import scrolledpanel as scrolled
 
-from whyteboard.lib.pubsub import pub
-
-import whyteboard.meta as meta
-from whyteboard.gui.dialogs import FindIM
-from whyteboard.functions import create_colour_bitmap
+from whyteboard.gui import FindIM
+from whyteboard.lib import pub
+from whyteboard.misc import meta, create_colour_bitmap
 
 _ = wx.GetTranslation
 

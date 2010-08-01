@@ -73,13 +73,11 @@ try:
 except ImportError:
     import pickle
 
-from lib.pubsub import pub
+from whyteboard.lib import pub
 
-from whyteboard.gui.dialogs import FindIM
-from whyteboard.functions import (get_home_dir, load_image, convert_quality, make_filename,
+from whyteboard.misc import (meta, get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type, version_is_greater, open_url)
 
-import whyteboard.meta as meta
 import whyteboard.tools as tools
 
 _ = wx.GetTranslation
@@ -509,8 +507,7 @@ class Utility(object):
                 self.im_location = u"convert"
         elif os.name == "nt":
             if not 'imagemagick_path' in self.config:
-                dlg = FindIM(self, self.gui, self.check_im_path)
-                dlg.ShowModal()
+                self.gui.prompt_for_im()
                 if self.im_location:
                     self.config['imagemagick_path'] = os.path.dirname(self.im_location)
                     self.config.write()

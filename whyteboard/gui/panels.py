@@ -33,11 +33,11 @@ from wx.lib import scrolledpanel as scrolled
 from wx.lib.buttons import GenBitmapToggleButton
 from wx.lib.wordwrap import wordwrap as wordwrap
 
-from whyteboard.lib.pubsub import pub
+from whyteboard.lib import pub
 
-import whyteboard.meta as meta
-from whyteboard.functions import create_colour_bitmap, get_time, file_dialog, get_image_path
-from whyteboard.gui.popups import NotesPopup, ThumbsPopup
+from whyteboard.misc import (meta, create_colour_bitmap, get_time, file_dialog, 
+                             get_image_path)
+from whyteboard.gui import NotesPopup, ThumbsPopup
 
 _ = wx.GetTranslation
 

@@ -1,9 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import canvas
-import dialogs
-import menu
-import popups
+from event_ids import *
+from menu import Menu
 
-from gui import WhyteboardApp
+from canvas import Canvas, CanvasDropTarget
+from dialogs import (ExceptionHook, Feedback, FindIM, History, PDFCacheDialog, 
+                     ProgressDialog, PromptForSave, Resize, ShapeViewer, 
+                     TextInput, UpdateDialog)
+
+from popups import NotesPopup, ThumbsPopup, ShapePopup, SheetsPopup
+from panels import ControlPanel, MediaPanel, SidePanel
+from preferences import Preferences
+from printing import Print
+
+from frame import GUI
+from app import WhyteboardApp

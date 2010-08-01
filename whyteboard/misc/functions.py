@@ -34,7 +34,7 @@ import distutils.dir_util
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 
-from whyteboard.lib.pubsub import pub
+from whyteboard.lib import pub
 
 _ = wx.GetTranslation
 path = os.path.split(os.path.abspath(sys.argv[0]))
