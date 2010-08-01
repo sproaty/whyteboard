@@ -39,7 +39,7 @@ setup(
     description = 'A simple drawing program that can be used to annotate PDF files',
     long_description = text,
 
-    package_dir = {'whyteboard': 'whyteboard/',
+    package_dir = {'whyteboard': 'whyteboard',
                    'whyteboard.gui': 'whyteboard/gui',
                    'whyteboard.lib': 'whyteboard/lib',
                    'whyteboard.lib.pubsub': 'whyteboard/lib/pubsub',
@@ -59,9 +59,19 @@ setup(
           'Intended Audience :: End Users/Desktop',
           'Intended Audience :: Education',
           'License :: OSI Approved :: GNU General Public License (GPL)',
-          'Operating System :: MacOS :: MacOS X',
-          'Operating System :: Microsoft :: Windows',
-          'Operating System :: POSIX',
+          'Natural Language :: Arabic',
+          'Natural Language :: Chinese (Traditional)',
+          'Natural Language :: Czech',
+          'Natural Language :: Dutch',
+          'Natural Language :: French',
+          'Natural Language :: German',
+          'Natural Language :: Hindi',
+          'Natural Language :: Italian',
+          'Natural Language :: Japanese',
+          'Natural Language :: Portuguese',
+          'Natural Language :: Russian',
+          'Natural Language :: Spanish',
+          'Operating System :: OS Independent',
           'Programming Language :: Python',
           'Programming Language :: Python :: 2.5',
           'Programming Language :: Python :: 2.6',
@@ -69,7 +79,9 @@ setup(
           'Topic :: Multimedia',
           'Topic :: Multimedia :: Graphics',
           'Topic :: Multimedia :: Graphics :: Editors',
-          'Topic :: Multimedia :: Graphics :: Editors :: Raster-Based'
+          'Topic :: Multimedia :: Graphics :: Editors :: Raster-Based',
+          'Topic :: Multimedia :: Graphics :: Presentation',
+          'Topic :: Multimedia :: Graphics :: Viewers'
           ],
 
 )
