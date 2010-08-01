@@ -44,10 +44,11 @@ setup(
                    'whyteboard.lib': 'whyteboard/lib',
                    'whyteboard.lib.pubsub': 'whyteboard/lib/pubsub',
                    'whyteboard.lib.pubsub.core': 'whyteboard/lib/pubsub/core',
-                   'whyteboard.lib.pubsub.utils': 'whyteboard/lib/pubsub/utils'},
+                   'whyteboard.lib.pubsub.utils': 'whyteboard/lib/pubsub/utils',
+                   'whyteboard.misc': 'whyteboard/misc'},
 
     packages = ['whyteboard', 'whyteboard.gui', 'whyteboard.lib', 'whyteboard.lib.pubsub',
-                'whyteboard.lib.pubsub.core', 'whyteboard.lib.pubsub.utils'],
+                'whyteboard.lib.pubsub.core', 'whyteboard.lib.pubsub.utils', 'whyteboard.misc'],
     py_modules = ['whyteboard'],
     scripts = ['whyteboard.py'],
 
@@ -83,5 +84,4 @@ setup(
           'Topic :: Multimedia :: Graphics :: Presentation',
           'Topic :: Multimedia :: Graphics :: Viewers'
           ],
-
 )

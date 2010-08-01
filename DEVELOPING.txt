@@ -137,7 +137,7 @@ CODING PRACTICES
 
 * Translate every string like _("so"). Make sure to use variable placeholders
   instead of string concatination as this gives translators more context
-  
+
   _("The value is %i and its name is %s") % (x, name)
-  is better than 
-  _("The value is") + x + _(" and its name is ") + name
+  is better than
+  _("The value is ") + x + _(" and its name is ") + name
