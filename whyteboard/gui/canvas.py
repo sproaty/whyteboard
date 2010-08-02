@@ -74,7 +74,7 @@ class Canvas(wx.ScrolledWindow):
         """
         Initalise the window, class variables and bind mouse/paint events
         """
-        wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN)
+        super(Canvas, self).__init__(tab, style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN)
         self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
@@ -89,10 +89,6 @@ class Canvas(wx.ScrolledWindow):
         self.scroller = DragScroller(self)
         self.overlay = wx.Overlay()
         self.buffer = wx.EmptyBitmap(*self.area)
-        #self.hit_buffer = wx.EmptyBitmap(*self.area)  # used by pen for hit test
-        #dc = wx.BufferedDC(None, self.hit_buffer, wx.BUFFER_VIRTUAL_AREA)
-        #dc.SetBackground(wx.WHITE_BRUSH)
-        #dc.Clear()
 
         self.gui = gui
         self.scale = (1.0, 1.0)
@@ -315,26 +311,6 @@ class Canvas(wx.ScrolledWindow):
         self.SetVirtualSize(size)
         self.redraw_all(resizing=True)
 
-#        self.buffer, self.oldbuffer = wx.EmptyBitmap(*size), self.buffer
-#        dc = wx.BufferedDC(None, self.buffer)
-#        dc.DrawBitmap(self.oldbuffer, 0, 0)
-#
-#        self.area = size
-#        size = (size[0] + CANVAS_BORDER, size[1] + CANVAS_BORDER)# + 20)
-#        self.SetVirtualSize(size)
-#
-#        x1, y1 = self.oldbuffer.GetSize()
-#        x2, y2 = self.buffer.GetSize()
-#        if x1 > x2 and y1 > y2:
-#            self.Refresh()
-#        else:
-#            clip = wx.Region(0, 0, *size)
-#            bufrect = wx.Rect(0, 0, *self.oldbuffer.GetSize())
-#            clip.SubtractRect(bufrect)
-#            dc.SetClippingRegionAsRegion(clip)
-#            dc.Clear()
-#            self.redraw_all(dc=dc)
-
 
     def redraw_dirty(self, dc):
         """ Figure out what part of the window to refresh. """
@@ -398,6 +374,7 @@ class Canvas(wx.ScrolledWindow):
         if self.copy:
             self.copy = None
             self.redraw_all()
+        pub.sendMessage('update_shape_viewer')
 
 
     def add_undo(self):
@@ -433,6 +410,7 @@ class Canvas(wx.ScrolledWindow):
             if isinstance(x, Note):
                 pub.sendMessage('note.add', note=x)
         pub.sendMessage('gui.mark_unsaved')
+        pub.sendMessage('update_shape_viewer')
 
 
     def restore_sheet(self, shapes, undo_list, redo_list, size, medias, viewport):
@@ -486,7 +464,7 @@ class Canvas(wx.ScrolledWindow):
                 self.gui.notes.tree.Delete(self.selected.tree_id)
             self.add_undo()
             self.shapes.remove(self.selected)
-
+        pub.sendMessage('update_shape_viewer')
         self.selected = None
         self.redraw_all(True)
 
@@ -509,6 +487,7 @@ class Canvas(wx.ScrolledWindow):
                         images.append(x)
 
         self.shapes = images
+        pub.sendMessage('update_shape_viewer')
         self.redraw_all(update_thumb=True)
 
 
@@ -609,6 +588,7 @@ class Canvas(wx.ScrolledWindow):
         def wrapper(self, shape, x=None, item=None):
             x, item = self.do_move(shape)
             fn(self, shape, x, item)
+            pub.sendMessage('update_shape_viewer')
             self.redraw_all(True)
         return wrapper
 

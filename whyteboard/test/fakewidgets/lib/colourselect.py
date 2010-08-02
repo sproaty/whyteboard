@@ -8,5 +8,5 @@ class ColourSelect(core.BitmapButton):
     def SetValue(self, attr):
         pass
 
-import wx.lib.colourselect
-wx.lib.colourselect.__dict__.update(locals())
+from wx.lib import colourselect
+colourselect.__dict__.update(locals())

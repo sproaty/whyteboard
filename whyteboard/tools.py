@@ -1749,7 +1749,7 @@ class Select(Tool):
         if self.dragging:
             self.shape.end_select_action(self.handle)
 
-        pub.sendMessage('shape_viewer.update')
+        pub.sendMessage('update_shape_viewer')
         pub.sendMessage('thumbs.update_current')
         pub.sendMessage('canvas.change_tool')
 

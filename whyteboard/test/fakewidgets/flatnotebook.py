@@ -10,5 +10,5 @@ import core
 class FlatNotebook(core.Notebook):
     pass
 
-from ..lib import flatnotebook as flatnotebook  # phew!
+from whyteboard.lib import flatnotebook  # phew!
 flatnotebook.__dict__.update(locals())

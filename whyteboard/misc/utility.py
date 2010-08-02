@@ -74,7 +74,7 @@ except ImportError:
     import pickle
 
 from whyteboard.lib import pub
-
+from whyteboard.gui import printing
 from whyteboard.misc import (meta, get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type, version_is_greater, open_url)
 

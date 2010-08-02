@@ -41,11 +41,11 @@ from whyteboard.lib import ConfigObj, Validator, icon, fnb, pub
 from whyteboard.misc import Utility, meta
 from whyteboard.tools import Highlighter, EDGE_LEFT, EDGE_TOP
 
-from whyteboard.gui import (Canvas, CanvasDropTarget, ControlPanel, MediaPanel, 
+from whyteboard.gui import (Canvas, CanvasDropTarget, ControlPanel, MediaPanel,
                             Menu, Preferences, Print, SidePanel, SheetsPopup, ShapePopup)
 
-from whyteboard.gui import (ExceptionHook, Feedback, FindIM, History, 
-                            PDFCacheDialog, ProgressDialog, PromptForSave, 
+from whyteboard.gui import (ExceptionHook, Feedback, FindIM, History,
+                            PDFCacheDialog, ProgressDialog, PromptForSave,
                             Resize, ShapeViewer, TextInput, UpdateDialog)
 
 from whyteboard.gui import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT,
@@ -97,14 +97,14 @@ class GUI(wx.Frame):
         self.pid = None
         self.dialog = None
         self.convert_cancelled = False
-        self.viewer = False  # Shape Viewer dialog open?
+        self.shape_viewer_open = False
         self.help = None
         self.hotkey_pressed = False  # for hotkey timer
         self.hotkey_timer = None
-        self.tab_count = 1  # instead of typing self.tabs.GetPageCount()
+        self.tab_count = 1
         self.tab_total = 1
         self.current_tab = 0
-        self.closed_tabs = []  # [shapes: undo, redo, canvas_size, view_x, view_y] per tab
+        self.closed_tabs = []
         self.hotkeys = []
 
         style = (fnb.FNB_X_ON_TAB | fnb.FNB_NO_X_BUTTON | fnb.FNB_VC8 |
@@ -154,7 +154,7 @@ class GUI(wx.Frame):
         self.find_help()
 
         pub.sendMessage('thumbs.update_current')
-        self.update_panels(True)  # bold first items
+        self.update_panels(True)
         wx.CallAfter(self.UpdateWindowUI)
 
 
@@ -177,7 +177,6 @@ class GUI(wx.Frame):
         topics = {'shape.add': self.shape_add,
                   'shape.popup': self.shape_popup,
                   'shape.selected': self.shape_selected,
-                  'shape_viewer.update': self.update_shape_viewer,
                   'canvas.capture_mouse': self.capture_mouse,
                   'canvas.change_tool': self.pubsub_change_tool,
                   'canvas.paste_image': self.paste_image,
@@ -282,11 +281,6 @@ class GUI(wx.Frame):
 
     def shape_add(self, shape):
         self.canvas.add_shape(shape)
-
-    def update_shape_viewer(self):
-        if self.viewer:
-            self.viewer.shapes = list(self.canvas.shapes)
-            self.viewer.populate()
 
     def on_save(self, event=None):
         """
@@ -555,7 +549,7 @@ class GUI(wx.Frame):
         if self.notes.tabs:
             tree_id = self.notes.tabs[self.current_tab]
             self.notes.tree.SelectItem(tree_id, True)
-        self.update_shape_viewer()
+        pub.sendMessage('update_shape_viewer')
 
 
 
@@ -587,8 +581,8 @@ class GUI(wx.Frame):
     def prompt_for_im(self):
         dlg = FindIM(self.util, self, self.util.check_im_path)
         dlg.ShowModal()
-        
-        
+
+
     def on_drop_tab(self, event):
         """
         Update the thumbs/notes so that they're poiting to the new tab position.
@@ -605,7 +599,7 @@ class GUI(wx.Frame):
         self.on_done_load()
         wx.MilliSleep(100)  # try and stop user dragging too many tabs quickly
         wx.SafeYield()
-        self.update_shape_viewer()
+        pub.sendMessage('update_shape_viewer')
 
 
     def update_panels(self, select):
@@ -695,7 +689,7 @@ class GUI(wx.Frame):
         self.on_new_tab(name=tab['name'], wb=True)
         self.canvas.restore_sheet(tab['shapes'], tab['undo'], tab['redo'],
                                   tab['size'], tab['medias'], tab['viewport'])
-        self.update_shape_viewer()
+        pub.sendMessage('update_shape_viewer')
         self.menu.make_closed_tabs_menu()
 
 
@@ -801,7 +795,6 @@ class GUI(wx.Frame):
 
     def on_delete_shape(self, event=None):
         self.canvas.delete_selected()
-        self.update_shape_viewer()
 
     def on_deselect_shape(self, event=None):
         self.canvas.deselect_shape()
@@ -952,7 +945,7 @@ class GUI(wx.Frame):
         if not self.canvas.selected:
             return
         self.canvas.selected.end_select_action(0)
-        self.update_shape_viewer()
+        pub.sendMessage('update_shape_viewer')
 
 
     def get_canvases(self):
@@ -1070,42 +1063,33 @@ class GUI(wx.Frame):
         self.prompt_for_save(self.Destroy)
 
     def tab_popup(self, event):
-        """ Pops up the tab context menu. """
         self.PopupMenu(SheetsPopup(self, self, event.GetSelection()))
 
     def on_undo(self, event=None):
         self.canvas.undo()
-        self.update_shape_viewer()
 
     def on_redo(self, event=None):
         self.canvas.redo()
-        self.update_shape_viewer()
 
     def on_move_top(self, event=None):
         self.canvas.move_top(self.canvas.selected)
-        self.update_shape_viewer()
 
     def on_move_bottom(self, event=None):
         self.canvas.move_bottom(self.canvas.selected)
-        self.update_shape_viewer()
 
     def on_move_up(self, event=None):
         self.canvas.move_up(self.canvas.selected)
-        self.update_shape_viewer()
 
     def on_move_down(self, event=None):
         self.canvas.move_down(self.canvas.selected)
-        self.update_shape_viewer()
 
-    def on_prev(self, event=None):
-        """ Changes to the previous sheet """
+    def on_previous_sheet(self, event=None):
         if not self.current_tab:
             return
         self.tabs.SetSelection(self.current_tab - 1)
         self.on_change_tab()
 
-    def on_next(self, event=None):
-        """ Changes to the next sheet """
+    def on_next_sheet(self, event=None):
         if not self.can_change_next_sheet():
             return
         self.tabs.SetSelection(self.current_tab + 1)
@@ -1114,26 +1098,22 @@ class GUI(wx.Frame):
     def on_clear(self, event=None):
         """ Clears current sheet's drawings, except images. """
         self.canvas.clear(keep_images=True)
-        self.update_shape_viewer()
 
     def on_clear_all(self, event=None):
         """ Clears current sheet """
         self.canvas.clear()
-        self.update_shape_viewer()
         self.thumbs.update_all()
 
     def on_clear_sheets(self, event=None):
         """ Clears all sheets' drawings, except images. """
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear(keep_images=True)
-        self.update_shape_viewer()
 
 
     def on_clear_all_sheets(self, event=None):
         """ Clears all sheets ***"""
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear()
-        self.update_shape_viewer()
         self.thumbs.update_all()
 
 
@@ -1193,10 +1173,9 @@ class GUI(wx.Frame):
 
 
     def on_shape_viewer(self, event=None):
-        if not self.viewer:
-            dlg = ShapeViewer(self)
-            show_dialog(dlg, False)
-            self.viewer = dlg
+        if not self.shape_viewer_open:
+            self.shape_viewer_open = True
+            show_dialog(ShapeViewer(self), False)
 
 
     def mark_unsaved(self):

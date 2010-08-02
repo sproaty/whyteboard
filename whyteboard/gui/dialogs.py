@@ -991,8 +991,8 @@ class ShapeViewer(wx.Dialog):
         self.list.SetAcceleratorTable(tbl)
         self.Bind(wx.EVT_CHAR_HOOK, self.delete_key)
 
-        pub.subscribe(self.shape_add, 'shape.add')
         pub.subscribe(self.sheet_rename, 'sheet.rename')
+        pub.subscribe(self.update, 'update_shape_viewer')
 
         ids = [self.moveUp.GetId(), self.moveTop.GetId(), self.moveDown.GetId(),
                self.moveBottom.GetId(), self.deleteBtn.GetId(), self.prev.GetId(), self.next.GetId()]
@@ -1005,11 +1005,11 @@ class ShapeViewer(wx.Dialog):
         btn.SetToolTipString(tooltip)
         return btn
 
-    def shape_add(self, shape):
-        self.shapes.append(shape)
+    def sheet_rename(self, _id, text):
         self.populate()
 
-    def sheet_rename(self, _id, text):
+    def update(self):
+        self.shapes = list(self.gui.canvas.shapes)
         self.populate()
 
     def populate(self):
@@ -1154,7 +1154,7 @@ class ShapeViewer(wx.Dialog):
         self.Close()
 
     def on_close(self, event):
-        self.gui.viewer = False
+        self.gui.shape_viewer_open = False
         event.Skip()
 
     def apply(self, event=None):

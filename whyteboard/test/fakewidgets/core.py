@@ -423,6 +423,9 @@ class Window(object):
 
 
 class ScrolledWindow(Window):
+    def __init__(self, *args, **kwds):
+        Window.__init__(self, *args, **kwds)
+
     def SetVirtualSize(self, *size):
         pass
 
@@ -461,6 +464,8 @@ class Panel(Window):
         return lambda *args, **kwds: None
 
 class ScrolledPanel(Panel):
+    def __init__(self, *args, **kwds):
+        Panel.__init__(self, *args, **kwds)
     def SetVirtualSize(self, *size):
         pass
 

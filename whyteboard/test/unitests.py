@@ -30,20 +30,17 @@ which is an expensive operation. This also makes the tests run quicker
 import os
 import wx
 
-import whyteboard.fakewidgets as fakewidgets
-import whyteboard.gui.gui as gui
-import whyteboard.meta as meta
+import whyteboard.test.fakewidgets
+import whyteboard.gui.frame as gui
+from whyteboard.misc import meta
 import whyteboard.tools
-import whyteboard.lib.mock as mock
 
+from whyteboard.lib import ConfigObj, mock, pub, Validator
 from whyteboard.gui.canvas import Canvas, RIGHT, DIAGONAL, BOTTOM
-from whyteboard.fakewidgets.core import Bitmap, Event, Colour
-from whyteboard.functions import (get_version_int, version_is_greater, get_wx_image_type,
+from whyteboard.test.fakewidgets.core import Bitmap, Event, Colour, PySimpleApp
+from whyteboard.misc import (get_version_int, version_is_greater, get_wx_image_type,
                        get_time, get_image_path, format_bytes, convert_quality)
 
-from whyteboard.lib.configobj import ConfigObj
-from whyteboard.lib.pubsub import pub
-from whyteboard.lib.validate import Validator
 
 #----------------------------------------------------------------------
 
@@ -75,13 +72,13 @@ def make_canvas():
 
 #----------------------------------------------------------------------
 
-class SimpleApp(fakewidgets.core.PySimpleApp):
+class SimpleApp(PySimpleApp):
     """
     Create a GUI instance and create a new canvas reference
     """
     def __init__(self):
-        fakewidgets.core.PySimpleApp.__init__(self)
-        g = gui.GUI(None, make_config())  # mock the GUI with fake wxPython classes
+        PySimpleApp.__init__(self)
+        g = gui.GUI(make_config())  # mock the GUI with fake wxPython classes
         self.canvas = g.canvas
 
 #----------------------------------------------------------------------

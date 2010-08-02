@@ -19,11 +19,11 @@ Example:
 """
 
 import core
+import flatnotebook
 import html
-import sized
 import lib.scrolledpanel
 import lib.colourselect
 import lib.buttons
 import media.mediactrl
+import sized
 import version
-import flatnotebook
