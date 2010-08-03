@@ -118,7 +118,9 @@ class Utility(object):
         self.path = os.path.split(os.path.abspath(sys.argv[0]))
         self.library = PDFCache(u"library.known")
         self.config = config
-
+        pub.subscribe(self.set_colour, 'change_colour')
+        pub.subscribe(self.set_background, 'change_background')
+        
         tools.HANDLE_SIZE = self.config['handle_size']
         pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
         if 'default_font' in self.config:
@@ -546,7 +548,12 @@ class Utility(object):
         if not self.transparent:
             params.append(self.background)
         canvas.shape = self.items[new - 1](*params)  # create new Tool
-
+        
+    def set_colour(self, colour):
+        self.colour = colour
+    
+    def set_background(self, colour):
+        self.background = colour
 
 #----------------------------------------------------------------------
 

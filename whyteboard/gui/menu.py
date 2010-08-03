@@ -25,6 +25,8 @@ Creates the menu bar for the GUI
 import os
 import wx
 
+from whyteboard.misc import get_image_path
+
 from whyteboard.gui import (ID_CLEAR_ALL, ID_CLEAR_ALL_SHEETS, ID_CLEAR_SHEETS,
        ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESELECT, ID_EXPORT, ID_EXPORT_ALL,
        ID_EXPORT_PDF, ID_FEEDBACK, ID_EXPORT_PREF, ID_FULLSCREEN, ID_HISTORY,
@@ -288,3 +290,48 @@ class Menu(object):
 
     def enable(self, _id, value):
         self.menu.Enable(_id, value)
+
+#----------------------------------------------------------------------
+
+class Toolbar(object):
+    @staticmethod
+    def create(gui):
+        """
+        Creates a toolbar, Pythonically :D
+        Move to top/up/down/bottom must be created with a custom bitmap.
+        """
+        toolbar = gui.CreateToolBar()
+        _move = [ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP]
+
+        ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_COPY, wx.ID_PASTE,
+               wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE]
+
+        arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_COPY,
+                wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO, wx.ART_DELETE]
+        tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"),
+                _("Paste an Image/Text"), _("Undo the Last Action"), _("Redo the Last Undone Action"),
+                _("Delete the currently selected shape"), ("Move Shape Up"), ("Move Shape Down"),
+                _("Move Shape To Top"), ("Move Shape To Bottom")]
+
+        ids.extend(_move)
+        arts.extend(_move)
+        icons = [u"up", u"down", u"top", u"bottom"]
+
+        bmps = {}
+        for icon, _id in zip(icons, _move):
+            bmps[_id] = wx.Bitmap(get_image_path(u"icons", u"move-%s-small" % icon))
+
+        # add tools, add a separator and bind paste/undo/redo for UI updating
+        for x, (_id, art_id, tip) in enumerate(zip(ids, arts, tips)):
+            if _id in _move:
+                art = bmps[_id]
+            else:
+                art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
+
+            toolbar.AddSimpleTool(_id, art, tip)
+            if x == 2 or x == 6:
+                toolbar.AddSeparator()
+
+        toolbar.EnableTool(wx.ID_PASTE, gui.can_paste)
+        toolbar.Realize()
+        return toolbar

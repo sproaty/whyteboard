@@ -111,6 +111,8 @@ class ControlPanel(wx.Panel):
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
         self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.Bind(wx.EVT_COMBOBOX, self.change_thickness, self.thickness)
+        pub.subscribe(self.set_colour, 'change_colour')
+        pub.subscribe(self.set_background, 'change_background')
 
 
     def colour_buttons(self):
@@ -151,7 +153,14 @@ class ControlPanel(wx.Panel):
     def get_colour(self):
         return self.colour.GetColour()
 
-
+    def set_colour(self, colour):
+        self.colour.SetColour(colour)
+        self.preview.Refresh()
+        
+    def set_background(self, colour):
+        self.background.SetColour(colour)
+        self.preview.Refresh()
+                
     def make_toolbox(self, _type=u"text"):
         """Creates a toolbox made from toggleable text or icon buttons"""
         items = [_(i.name) for i in self.gui.util.items]

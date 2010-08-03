@@ -231,6 +231,9 @@ def is_exe():
     return hasattr(sys, u"frozen")
 
 
+def is_save_file(name):
+    return name.lower().endswith(u".wtbd")
+
 def show_dialog(_class, modal=True):
     if modal:
         _class.ShowModal()

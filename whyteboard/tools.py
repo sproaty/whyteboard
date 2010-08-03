@@ -1150,23 +1150,17 @@ class Eyedrop(Tool):
         Tool.__init__(self, canvas, colour, thickness, background, wx.CURSOR_CROSS)
 
     def left_down(self, x, y):
-        dc = wx.BufferedDC(None, self.canvas.buffer)  # create tmp DC
-        colour = dc.GetPixel(x, y)  # get colour
-        gui = self.canvas.gui
-        gui.control.colour.SetColour(colour)
-        gui.util.colour = colour
-        pub.sendMessage('gui.preview.refresh')
+        dc = wx.BufferedDC(None, self.canvas.buffer)
+        pub.sendMessage('change_colour', colour=dc.GetPixel(x, y))
+        pub.sendMessage('canvas.change_tool')
 
     def right_up(self, x, y):
-        dc = wx.BufferedDC(None, self.canvas.buffer)  # create tmp DC
-        colour = dc.GetPixel(x, y)  # get colour
-        gui = self.canvas.gui
-        gui.control.background.SetColour(colour)
-        gui.util.background = colour
-        pub.sendMessage('gui.preview.refresh')
+        dc = wx.BufferedDC(None, self.canvas.buffer)
+        pub.sendMessage('change_background', colour=dc.GetPixel(x, y))
+        pub.sendMessage('canvas.change_tool')
 
     def preview(self, dc, width, height):
-        dc.SetBrush(wx.Brush(self.canvas.gui.util.colour))
+        dc.SetBrush(wx.Brush(self.canvas.gui.get_colour()))
         dc.DrawRectangle(20, 20, 5, 5)
 
 
@@ -1569,8 +1563,8 @@ class Image(OverlayShape):
 
     def get_handles(self):
         d = lambda x, y: (x - 2, y - 2)
-        img = self.image
-        x, y, w, h = self.x, self.y, img.GetWidth(), img.GetHeight()
+        x, y, w, h = self.x, self.y, self.image.GetWidth(), self.image.GetHeight()
+
         return d(x, y), d(x + w, y), d(x, y + h), d(x + w, y + h)
 
 

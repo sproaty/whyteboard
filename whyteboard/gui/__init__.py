@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from event_ids import *
-from menu import Menu
+from menu import Menu, Toolbar
 
 from canvas import Canvas, CanvasDropTarget
-from dialogs import (ExceptionHook, Feedback, FindIM, History, PDFCacheDialog, 
-                     ProgressDialog, PromptForSave, Resize, ShapeViewer, 
+from dialogs import (ExceptionHook, Feedback, FindIM, History, PDFCacheDialog,
+                     ProgressDialog, PromptForSave, Resize, ShapeViewer,
                      TextInput, UpdateDialog)
 
 from popups import NotesPopup, ThumbsPopup, ShapePopup, SheetsPopup

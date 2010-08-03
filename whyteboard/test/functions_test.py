@@ -22,7 +22,7 @@ import os
 import wx
 
 from whyteboard.misc import (get_version_int, version_is_greater, get_wx_image_type,
-                       get_time, format_bytes, convert_quality)
+                       get_time, format_bytes, convert_quality, is_save_file)
 import whyteboard.misc.functions as functions
 
 #----------------------------------------------------------------------
@@ -96,3 +96,11 @@ class TestFunctions:
         assert get_wx_image_type("blah.TifF") == wx.BITMAP_TYPE_TIF
         assert get_wx_image_type("/blah.JPG") == wx.BITMAP_TYPE_JPEG
         assert get_wx_image_type("/blah.jpeg") == wx.BITMAP_TYPE_JPEG
+
+    def test_is_save_file(self):
+        """Filename indicates Whyteboard save type"""
+        assert is_save_file("blahwtbd") == False
+        assert is_save_file("blah.WTbd") == True
+        assert is_save_file("blah.wtbd") == True
+        assert is_save_file("/blah.png") == False
+        assert is_save_file("wtbd") == False

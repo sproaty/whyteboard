@@ -42,7 +42,8 @@ from whyteboard.misc import Utility, meta
 from whyteboard.tools import Highlighter, EDGE_LEFT, EDGE_TOP
 
 from whyteboard.gui import (Canvas, CanvasDropTarget, ControlPanel, MediaPanel,
-                            Menu, Preferences, Print, SidePanel, SheetsPopup, ShapePopup)
+                            Menu, Preferences, Print, SidePanel, ShapePopup,
+                            SheetsPopup, Toolbar)
 
 from whyteboard.gui import (ExceptionHook, Feedback, FindIM, History,
                             PDFCacheDialog, ProgressDialog, PromptForSave,
@@ -54,9 +55,10 @@ from whyteboard.gui import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESE
                        ID_RECENTLY_CLOSED, ID_STATUSBAR, ID_SWAP_COLOURS,
                        ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT, ID_UNDO_SHEET)
 
-from whyteboard.misc import (get_home_dir, is_exe, get_clipboard, check_clipboard,
-                       download_help_files, file_dialog, get_path, set_clipboard,
-                       get_image_path, show_dialog, open_url, new_instance)
+from whyteboard.misc import (get_home_dir, is_exe, is_save_file, get_clipboard, 
+                             check_clipboard, download_help_files, file_dialog, 
+                             get_path, set_clipboard, show_dialog, open_url, 
+                             new_instance)
 
 
 _ = wx.GetTranslation
@@ -92,7 +94,6 @@ class GUI(wx.Frame):
                 self.util.items.insert(1, Highlighter)
 
         self.can_paste = check_clipboard()
-        self.toolbar = None
         self.process = None
         self.pid = None
         self.dialog = None
@@ -147,7 +148,7 @@ class GUI(wx.Frame):
         self.filehistory.Load(self.config)
 
         self.menu = Menu(self)
-        self.make_toolbar()
+        self.toolbar = Toolbar.create(self)
         self.SetMenuBar(self.menu.menu)
         self.set_menu_from_config()
         self.do_bindings()
@@ -204,47 +205,6 @@ class GUI(wx.Frame):
         self.SetAcceleratorTable(tbl)
 
 
-    def make_toolbar(self):
-        """
-        Creates a toolbar, Pythonically :D
-        Move to top/up/down/bottom must be created with a custom bitmap.
-        """
-        self.toolbar = self.CreateToolBar()
-        _move = [ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP]
-
-        ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_COPY, wx.ID_PASTE,
-               wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE]
-
-        arts = [wx.ART_NEW, wx.ART_FILE_OPEN, wx.ART_FILE_SAVE, wx.ART_COPY,
-                wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO, wx.ART_DELETE]
-        tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"),
-                _("Paste an Image/Text"), _("Undo the Last Action"), _("Redo the Last Undone Action"),
-                _("Delete the currently selected shape"), ("Move Shape Up"), ("Move Shape Down"),
-                _("Move Shape To Top"), ("Move Shape To Bottom")]
-
-        ids.extend(_move)
-        arts.extend(_move)
-        icons = [u"up", u"down", u"top", u"bottom"]
-
-        bmps = {}
-        for icon, _id in zip(icons, _move):
-            bmps[_id] = wx.Bitmap(get_image_path(u"icons", u"move-%s-small" % icon))
-
-        # add tools, add a separator and bind paste/undo/redo for UI updating
-        for x, (_id, art_id, tip) in enumerate(zip(ids, arts, tips)):
-            if _id in _move:
-                art = bmps[_id]
-            else:
-                art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
-
-            self.toolbar.AddSimpleTool(_id, art, tip)
-            if x == 2 or x == 6:
-                self.toolbar.AddSeparator()
-
-        self.toolbar.EnableTool(wx.ID_PASTE, self.can_paste)
-        self.toolbar.Realize()
-
-
     def set_menu_from_config(self):
         """
         Sets up the program's initialmenu state from the config parameters
@@ -286,7 +246,7 @@ class GUI(wx.Frame):
         """
         Saves file if filename is set, otherwise calls 'save as'.
         """
-        if not self.util.filename:  # if no wtbd file is active, prompt for one
+        if not self.util.filename:  # no wtbd file active, prompt for location
             self.on_save_as()
         else:
             self.util.save_file()
@@ -306,8 +266,7 @@ class GUI(wx.Frame):
             if not os.path.splitext(name)[1]:  # no file extension
                 name += u'.wtbd'
 
-            # only store whyteboard files, not an image as the current file
-            if name.lower().endswith(u".wtbd"):
+            if is_save_file(name):
                 self.util.filename = name
                 self.on_save()
 
@@ -333,7 +292,7 @@ class GUI(wx.Frame):
 
     def open_file(self, filename):
         if filename:
-            if filename.lower().endswith(u".wtbd"):
+            if is_save_file(filename):
                 self.prompt_for_save(self.do_open, args=[filename])
             else:
                 self.do_open(filename)
@@ -349,7 +308,7 @@ class GUI(wx.Frame):
         self.config.Flush()
         self.util.save_last_path(path)
 
-        if path.lower().endswith(u".wtbd"):
+        if is_save_file(path):
             self.util.load_wtbd(path)
         else:
             self.util.temp_file = path
@@ -1059,7 +1018,6 @@ class GUI(wx.Frame):
 
 
     def on_exit(self, event=None):
-        """ Ask to save, quit or cancel if the user hasn't saved. """
         self.prompt_for_save(self.Destroy)
 
     def tab_popup(self, event):
@@ -1083,6 +1041,7 @@ class GUI(wx.Frame):
     def on_move_down(self, event=None):
         self.canvas.move_down(self.canvas.selected)
 
+
     def on_previous_sheet(self, event=None):
         if not self.current_tab:
             return
@@ -1095,23 +1054,20 @@ class GUI(wx.Frame):
         self.tabs.SetSelection(self.current_tab + 1)
         self.on_change_tab()
 
+
     def on_clear(self, event=None):
-        """ Clears current sheet's drawings, except images. """
         self.canvas.clear(keep_images=True)
 
     def on_clear_all(self, event=None):
-        """ Clears current sheet """
         self.canvas.clear()
         self.thumbs.update_all()
 
     def on_clear_sheets(self, event=None):
-        """ Clears all sheets' drawings, except images. """
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear(keep_images=True)
 
 
     def on_clear_all_sheets(self, event=None):
-        """ Clears all sheets ***"""
         for tab in range(self.tab_count):
             self.tabs.GetPage(tab).clear()
         self.thumbs.update_all()
