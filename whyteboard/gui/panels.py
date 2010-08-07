@@ -305,6 +305,7 @@ class ControlPanel(wx.Panel):
             elif var_name != u"background":
                 setattr(self.gui.canvas.selected, var_name, value)
             self.gui.canvas.redraw_all(True)
+            pub.sendMessage('update_shape_viewer')
 
         pub.sendMessage('canvas.change_tool')
         self.preview.Refresh()

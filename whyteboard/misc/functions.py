@@ -75,11 +75,9 @@ def file_dialog(gui, title, style, wildcard, defaultDir="", defaultFile=""):
     """
     dlg = wx.FileDialog(gui, title, style=style, wildcard=wildcard,
                         defaultDir=defaultDir, defaultFile=defaultFile)
-    result = False
     if dlg.ShowModal() == wx.ID_OK:
-        result = dlg.GetPath()
-    dlg.Destroy()
-    return result
+        return dlg.GetPath()
+    return False
 
 
 def load_image(path, canvas, image_class):

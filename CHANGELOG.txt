@@ -43,6 +43,9 @@ xx August 2010 -- 0.40.2
 * Fix undo/redo not making the "sure you want to quit" prompt appear
 * Fix preference dialog "view" tab always scrolling to the bottom of the dialog
 
+* Fix "Delete" in Shape Viewer actually deleting the shape; and not on "okay"
+* Fix the selected item being de-selected in the Shape Viewer, and overriding
+  any resized columns headers after performing an action
 * Fix "Gdk-CRITICAL **: gdk_gc_set_foreground: assertion `color != NULL' failed"
   GTK bug when drawing with a Pen
 * Major changes to the program's file structure. Lots of code cleanup and

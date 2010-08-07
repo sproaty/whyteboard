@@ -893,12 +893,13 @@ def ExceptionHook(exctype, value, trace):
 #----------------------------------------------------------------------
 
 
-class WhyteboardList(wx.ListCtrl, listmix.ListRowHighlighter):
+class WhyteboardList(wx.ListCtrl, listmix.ListRowHighlighter, listmix.ListCtrlAutoWidthMixin):
 
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, style=wx.DEFAULT_CONTROL_BORDER |
                              wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.LC_HRULES)
         listmix.ListRowHighlighter.__init__(self, (206, 218, 255))
+        listmix.ListCtrlAutoWidthMixin.__init__(self)
 
 
 #----------------------------------------------------------------------
@@ -939,6 +940,11 @@ class ShapeViewer(wx.Dialog):
 
         self.pages = wx.ComboBox(self, size=(125, 25), style=wx.CB_READONLY)
         self.list = WhyteboardList(self)
+        self.list.InsertColumn(0, _("Position"))
+        self.list.InsertColumn(1, _("Type"))
+        self.list.InsertColumn(2, _("Thickness"))
+        self.list.InsertColumn(3, _("Color"))
+        self.list.InsertColumn(4, _("Properties"))
 
         bsizer.AddMany([(self.moveUp, 0, wx.RIGHT, 5), (self.moveDown, 0, wx.RIGHT, 5),
                         (self.moveTop, 0, wx.RIGHT, 5), (self.moveBottom, 0, wx.RIGHT, 5),
@@ -983,8 +989,8 @@ class ShapeViewer(wx.Dialog):
         self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
         self.next.Bind(wx.EVT_BUTTON, self.on_next)
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_delete)
-        self.Bind(wx.EVT_CLOSE, self.on_close)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
 
         ac = [(wx.ACCEL_NORMAL, wx.WXK_DELETE, self.deleteBtn.GetId())]
         tbl = wx.AcceleratorTable(ac)
@@ -1005,6 +1011,7 @@ class ShapeViewer(wx.Dialog):
         btn.SetToolTipString(tooltip)
         return btn
 
+
     def sheet_rename(self, _id, text):
         self.populate()
 
@@ -1016,21 +1023,14 @@ class ShapeViewer(wx.Dialog):
         """
         Creates all columns and populates with the current sheets' data
         """
-        choices = [self.gui.tabs.GetPageText(x) for x in range(self.gui.tab_count)]
-        self.pages.SetItems(choices)
+        self.pages.SetItems(self.gui.get_tab_names())
         self.pages.SetSelection(self.gui.current_tab)
-
-        self.list.ClearAll()
-        self.list.InsertColumn(0, _("Position"))
-        self.list.InsertColumn(1, _("Type"))
-        self.list.InsertColumn(2, _("Thickness"))
-        self.list.InsertColumn(3, _("Color"))
-        self.list.InsertColumn(4, _("Properties"))
+        selection = self.list.GetFirstSelected()
+        self.list.DeleteAllItems()
 
         if not self.shapes:
             index = self.list.InsertStringItem(sys.maxint, "")
             self.list.SetStringItem(index, 3, _("No shapes drawn"))
-            self.list.SetColumnWidth(4, 70)
         else:
             for x, shape in enumerate(reversed(self.shapes)):
                 index = self.list.InsertStringItem(sys.maxint, str(x + 1))
@@ -1039,12 +1039,9 @@ class ShapeViewer(wx.Dialog):
                 self.list.SetStringItem(index, 2, str(shape.thickness))
                 self.list.SetStringItem(index, 3, str(shape.colour))
                 self.list.SetStringItem(index, 4, shape.properties())
-            self.list.SetColumnWidth(4, wx.LIST_AUTOSIZE)
+            self.list.Select(selection)
+            self.list.EnsureVisible(selection)
 
-        self.list.SetColumnWidth(0, 60)
-        self.list.SetColumnWidth(1, 70)
-        self.list.SetColumnWidth(2, 70)
-        self.list.SetColumnWidth(3, wx.LIST_AUTOSIZE)
 
 
     def update_buttons(self, event):
@@ -1059,17 +1056,13 @@ class ShapeViewer(wx.Dialog):
             do = True
         elif _id in [self.moveUp.GetId(), self.moveTop.GetId()] and self.list.GetFirstSelected() > 0:
             do = True
-        elif (_id in [self.moveDown.GetId(), self.moveBottom.GetId()] and
-            self.list.GetFirstSelected() != len(self.shapes) - 1  and self.shapes
-            and self.list.GetFirstSelected() >= 0):
+        elif _id in [self.moveDown.GetId(), self.moveBottom.GetId()] and self.is_not_last_item():
             do = True
-
         event.Enable(do)
-        #self.Refresh()
-        #self.count += 1
-        #if self.count == 5:
-        #    self.Refresh()
-        #    self.count = 0
+
+    def is_not_last_item(self):
+        return (self.list.GetFirstSelected() != len(self.shapes) - 1  and self.shapes
+            and self.list.GetFirstSelected() >= 0)
 
 
     def find_shape(self):
@@ -1116,8 +1109,6 @@ class ShapeViewer(wx.Dialog):
 
     @move_shape
     def on_delete(self, event, index=None, item=None):
-        #self.gui.canvas.selected = item
-        #self.gui.canvas.delete_selected()
         if self.list.GetFirstSelected() - 1 <= 0:
             return 0
         return self.list.GetFirstSelected() - 1
@@ -1133,8 +1124,7 @@ class ShapeViewer(wx.Dialog):
         self.gui.tabs.SetSelection(selection)
         self.pages.SetSelection(selection)
         self.gui.on_change_tab()
-        self.shapes = list(self.gui.canvas.shapes)
-        self.populate()
+        self.update()
 
 
     def on_change_sheet(self, event):

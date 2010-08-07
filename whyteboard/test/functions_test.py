@@ -97,6 +97,7 @@ class TestFunctions:
         assert get_wx_image_type("/blah.JPG") == wx.BITMAP_TYPE_JPEG
         assert get_wx_image_type("/blah.jpeg") == wx.BITMAP_TYPE_JPEG
 
+
     def test_is_save_file(self):
         """Filename indicates Whyteboard save type"""
         assert is_save_file("blahwtbd") == False
