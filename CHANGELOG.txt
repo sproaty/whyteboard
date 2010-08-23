@@ -27,10 +27,11 @@ xx August 2010 -- 0.40.2
 * Deleting shape from shape viewer selects the previous shape; not the first
   shape in the list.
 
-* Bugfix: possible permissions error on Linux when saving a file
-* Bugfix with removing a file that's been deleted from recent file list not
-  saving the file list
+* Bugfix: possible permission error on Linux when saving a file
+* Bugfix - trying to load a file that's been deleted from the Recent Files list
+  didn't save the file list, so the file would still be shown
 * Fix bug on Mac where wrong version of wxPython was being used
+* Fix bug with crash on startup with an older install of wxPython
 * Fix bug where program was writing the Language preference as the translated
   language; the program was expecting the language in English
 
