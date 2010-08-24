@@ -44,6 +44,8 @@ xx August 2010 -- 0.40.2
 * Fix undo/redo not making the "sure you want to quit" prompt appear
 * Fix preference dialog "view" tab always scrolling to the bottom of the dialog
 
+* Fix bug in opening help files if they had been removed after the program had
+  been run
 * Fix opening a save file not clearing the undo tab list
 * Fix "Delete" in Shape Viewer actually deleting the shape; and not on "okay"
 * Fix the selected item being de-selected in the Shape Viewer, and overriding

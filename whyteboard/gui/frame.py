@@ -55,10 +55,10 @@ from whyteboard.gui import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESE
                        ID_RECENTLY_CLOSED, ID_STATUSBAR, ID_SWAP_COLOURS,
                        ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT, ID_UNDO_SHEET)
 
-from whyteboard.misc import (get_home_dir, is_exe, is_save_file, get_clipboard, 
-                             check_clipboard, download_help_files, file_dialog, 
-                             get_path, set_clipboard, show_dialog, open_url, 
-                             new_instance)
+from whyteboard.misc import (get_home_dir, is_exe, is_save_file, get_clipboard,
+                             check_clipboard, download_help_files, file_dialog,
+                             get_path, set_clipboard, show_dialog, open_url,
+                             new_instance, help_file_path)
 
 
 _ = wx.GetTranslation
@@ -1142,12 +1142,11 @@ class GUI(wx.Frame):
 
     def find_help(self):
         """Locate the help files, update self.help var"""
-        _file = os.path.join(get_path(), u'whyteboard-help', u'whyteboard.hhp')
         self.help = None
 
-        if os.path.exists(_file):
+        if os.path.exists(help_file_path()):
             self.help = HtmlHelpController()
-            self.help.AddBook(_file)
+            self.help.AddBook(help_file_path())
 
 
     def on_help(self, event=None, page=None):
@@ -1155,7 +1154,7 @@ class GUI(wx.Frame):
         Shows the help file, if it exists, otherwise prompts the user to
         download it.
         """
-        if self.help:
+        if self.help and os.path.exists(help_file_path()):
             if page:
                 self.help.Display(page)
             else:

@@ -351,6 +351,9 @@ def extract_tar(path, _file, version, backup_extension):
     distutils.dir_util.remove_tree(src)
 
 
+def help_file_path():
+    return os.path.join(get_path(), u'whyteboard-help', u'whyteboard.hhp')
+
 def get_path():
     """
     Root directory from wherever the application is installed to
