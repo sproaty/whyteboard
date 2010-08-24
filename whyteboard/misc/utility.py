@@ -378,6 +378,7 @@ class Utility(object):
         self.gui.tabs.SetSelection(temp[0][3])
         self.gui.on_change_tab()
         self.gui.SetTitle(u"%s - %s" % (os.path.basename(filename), self.gui.title))
+        self.gui.closed_tabs = list()
 
         try:
             if temp[0][5]:
