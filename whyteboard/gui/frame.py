@@ -207,15 +207,15 @@ class GUI(wx.Frame):
 
     def set_menu_from_config(self):
         """
-        Sets up the program's initialmenu state from the config parameters
+        Sets up the program's initial menu state from the config parameters
         """
-        keys = [u'toolbar', u'statusbar', u'tool_preview', u'colour_grid']
-        ids = [ID_TOOLBAR, ID_STATUSBAR, ID_TOOL_PREVIEW, ID_COLOUR_GRID]
-        for x, _id in zip(keys, ids):
-            if self.util.config[x]:
+        values = {ID_TOOLBAR: u'toolbar', ID_STATUSBAR: u'statusbar',
+                ID_TOOL_PREVIEW: u'tool_preview', ID_COLOUR_GRID: u'colour_grid'}
+        for _id, config_key in values.items():
+            if self.util.config[config_key]:
                 self.menu.check(_id, True)
             else:
-                getattr(self, u"on_" + x)(None, False)
+                getattr(self, u"on_" + config_key)(None, False)
 
 
     def shape_selected(self, shape):

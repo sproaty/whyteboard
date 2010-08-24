@@ -223,7 +223,7 @@ class ControlPanel(wx.Panel):
         if event.GetWheelRotation() > 0:  # mousewheel down
             val -= 1
             if val <= 0:
-                val = 0
+                val = 06
         else:
             val += 1
 
@@ -290,10 +290,6 @@ class ControlPanel(wx.Panel):
         self.update(colour, u"background")
 
 
-    def change_thickness(self, event=None):
-        self.update(self.thickness.GetSelection(), u"thickness")
-
-
     def update(self, value, var_name):
         """Updates the given utility variable and the selected shape"""
         setattr(self.gui.util, var_name, value)
@@ -310,6 +306,12 @@ class ControlPanel(wx.Panel):
         pub.sendMessage('canvas.change_tool')
         self.preview.Refresh()
 
+
+    def change_thickness(self, event=None):
+        """
+        This uses a timer to know when a series of scroll events beig
+        """
+        self.update(self.thickness.GetSelection(), u"thickness")
 
 #----------------------------------------------------------------------
 
