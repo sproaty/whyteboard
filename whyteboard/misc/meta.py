@@ -110,6 +110,8 @@ toolbox_columns = option(2, 3, default=2)
 undo_sheets = integer(min=5, max=50, default=10)
 """
 
+config_scheme = config_scheme.split("\n")
+
 translators = [
      u'A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
      u'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',

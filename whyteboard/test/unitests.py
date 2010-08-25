@@ -57,7 +57,7 @@ def make_shapes(canvas):
 
 
 def make_config():
-    config = ConfigObj(configspec=meta.config_scheme.split("\n"))
+    config = ConfigObj(configspec=meta.config_scheme)
     config.validate(Validator())
     return config
 

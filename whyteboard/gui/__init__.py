@@ -3,6 +3,7 @@
 
 from event_ids import *
 from menu import Menu, Toolbar
+from sheets import UndoSheetManager
 
 from canvas import Canvas, CanvasDropTarget
 from dialogs import (ExceptionHook, Feedback, FindIM, History, PDFCacheDialog,

@@ -56,7 +56,7 @@ class WhyteboardApp(wx.App):
         (options, args) = parser.parse_args()
         path = options.conf or os.path.join(get_home_dir(), u"user.pref")
 
-        config = ConfigObj(path, configspec=meta.config_scheme.split("\n"), encoding=u"utf-8")
+        config = ConfigObj(path, configspec=meta.config_scheme, encoding=u"utf-8")
         config.validate(Validator())
         self.set_language(config, options.lang)
         self.frame = GUI(config)
@@ -126,9 +126,8 @@ class WhyteboardApp(wx.App):
             config.write()
 
         if not wx.Locale.IsOk(self.locale):
-
-            wx.MessageBox(u"Error setting language to %s - reverting to English" % lang_name,
-                          u"Whyteboard")
+            wx.MessageBox(u"Error setting language to %s - reverting to English" 
+                          % lang_name, u"Whyteboard")
             if not set_lang:
                 config['language'] = 'English'
                 config.write()

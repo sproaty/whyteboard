@@ -113,7 +113,7 @@ class GUI(wx.Frame):
                  fnb.FNB_NO_NAV_BUTTONS)
 
         self.control = ControlPanel(self)
-        self.tabs = fnb.FlatNotebook(self, style=style)
+        self.tabs = fnb.FlatNotebook(self, agwStyle=style)
         self.canvas = Canvas(self.tabs, self, (config['default_width'], config['default_height']))
         self.panel = SidePanel(self)
 
@@ -409,7 +409,7 @@ class GUI(wx.Frame):
                                wildcard, get_home_dir())
 
         if filename:
-            config = ConfigObj(filename, configspec=meta.config_scheme.split(u"\n"))
+            config = ConfigObj(filename, configspec=meta.config_scheme)
             validator = Validator()
             config.validate(validator)
             _dir = os.path.join(get_home_dir(), u"pref-bkup")
@@ -432,7 +432,7 @@ class GUI(wx.Frame):
     def on_reload_preferences(self, event):
         home = os.path.join(get_home_dir(), u"user.pref")
         if os.path.exists(home):
-            config = ConfigObj(home, configspec=meta.config_scheme.split("\n"))
+            config = ConfigObj(home, configspec=meta.config_scheme)
             validator = Validator()
             config.validate(validator)
             pref = Preferences(self)
