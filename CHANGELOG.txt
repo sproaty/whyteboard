@@ -35,6 +35,9 @@ xx August 2010 -- 0.40.2
 * Fix bug where program was writing the Language preference as the translated
   language; the program was expecting the language in English
 
+* Bugfix: Using the mouse wheel on the "thickness" selection drop-down with a
+  shape selected would create an undo point for each "scroll" of the mousewheel.
+  Now it creates an undo point after you have finished scrolling.
 * Fix "transparent" checkbox under Shape menu and on the toolbox displaying
   wrong values at times.
 * Fix possible "division by zero" bug with Ellipse tool

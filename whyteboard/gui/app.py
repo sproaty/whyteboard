@@ -126,7 +126,7 @@ class WhyteboardApp(wx.App):
             config.write()
 
         if not wx.Locale.IsOk(self.locale):
-            wx.MessageBox(u"Error setting language to %s - reverting to English" 
+            wx.MessageBox(u"Error setting language to %s - reverting to English"
                           % lang_name, u"Whyteboard")
             if not set_lang:
                 config['language'] = 'English'

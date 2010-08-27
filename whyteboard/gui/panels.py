@@ -35,7 +35,7 @@ from wx.lib.wordwrap import wordwrap as wordwrap
 
 from whyteboard.lib import pub
 
-from whyteboard.misc import (meta, create_colour_bitmap, get_time, file_dialog, 
+from whyteboard.misc import (meta, create_colour_bitmap, get_time, file_dialog,
                              get_image_path)
 from whyteboard.gui import NotesPopup, ThumbsPopup
 
@@ -64,6 +64,8 @@ class ControlPanel(wx.Panel):
         self.gui = gui
         self.toggled = 1  # Pen, initallly
         self.tools = {}
+        self.thickness_timer = None
+        self.thickness_scrolling = False
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         csizer = wx.BoxSizer(wx.VERTICAL)
@@ -109,7 +111,7 @@ class ControlPanel(wx.Panel):
             box.Hide(self.grid)
 
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
+        #self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.Bind(wx.EVT_COMBOBOX, self.change_thickness, self.thickness)
         pub.subscribe(self.set_colour, 'change_colour')
         pub.subscribe(self.set_background, 'change_background')
@@ -147,6 +149,7 @@ class ControlPanel(wx.Panel):
         swap_sizer.Add(swap, flag=wx.ALIGN_RIGHT)
         return panel
 
+
     def get_background_colour(self):
         return self.background.GetColour()
 
@@ -156,11 +159,11 @@ class ControlPanel(wx.Panel):
     def set_colour(self, colour):
         self.colour.SetColour(colour)
         self.preview.Refresh()
-        
+
     def set_background(self, colour):
         self.background.SetColour(colour)
         self.preview.Refresh()
-                
+
     def make_toolbox(self, _type=u"text"):
         """Creates a toolbox made from toggleable text or icon buttons"""
         items = [_(i.name) for i in self.gui.util.items]
@@ -223,12 +226,11 @@ class ControlPanel(wx.Panel):
         if event.GetWheelRotation() > 0:  # mousewheel down
             val -= 1
             if val <= 0:
-                val = 06
+                val = 0
         else:
             val += 1
 
         self.thickness.SetSelection(val)
-        self.change_thickness()
 
 
     def change_tool(self, event=None, _id=None):
@@ -290,12 +292,13 @@ class ControlPanel(wx.Panel):
         self.update(colour, u"background")
 
 
-    def update(self, value, var_name):
+    def update(self, value, var_name, add_undo=True):
         """Updates the given utility variable and the selected shape"""
         setattr(self.gui.util, var_name, value)
 
         if self.gui.canvas.selected:
-            self.gui.canvas.add_undo()
+            if add_undo:
+                self.gui.canvas.add_undo()
             if var_name == u"background" and not self.transparent.IsChecked():
                 setattr(self.gui.canvas.selected, var_name, value)
             elif var_name != u"background":
@@ -309,9 +312,23 @@ class ControlPanel(wx.Panel):
 
     def change_thickness(self, event=None):
         """
-        This uses a timer to know when a series of scroll events beig
+        This uses a timer to know when a series of scroll events begin so we
+        don't add many
         """
-        self.update(self.thickness.GetSelection(), u"thickness")
+        if not self.thickness_scrolling:
+            print 'starting.'
+            self.thickness_scrolling = True
+            self.thickness_timer = wx.CallLater(250, self.reset_hotkey)
+            self.update(self.thickness.GetSelection(), u"thickness")
+        else:
+            self.thickness_timer.Restart(250)
+            self.update(self.thickness.GetSelection(), u"thickness", False)
+
+
+    def reset_hotkey(self):
+        """Reset the system for the next stream of hotkey up/down events"""
+        print 'ending.'
+        self.thickness_scrolling = False
 
 #----------------------------------------------------------------------
 
@@ -511,7 +528,7 @@ class MediaPanel(wx.Panel):
 
 
     def media_stopped(self, evt):
-        self.on_stop(None, True)
+        self.on_stop(ignore=True)
 
     def on_timer(self, evt):
         """Keep updating the timer label/scrollbar..."""
@@ -536,7 +553,7 @@ class MediaPanel(wx.Panel):
         self.play.Enable()
         self.pause.Disable()
 
-    def on_stop(self, evt, ignore=False):
+    def on_stop(self, evt=None, ignore=False):
         if not ignore:
             self.mc.Stop()
         self.slider.SetValue(0)

@@ -994,9 +994,7 @@ class Line(OverlayShape):
                 return False
 
         val = self.point_distance((self.x, self.y), (self.x2, self.y2), (x, y))
-        if val < 3 + round(self.thickness / 2):
-            return True
-        return False
+        return (val < 3 + round(self.thickness / 2))
 
 
 #---------------------------------------------------------------------
