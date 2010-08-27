@@ -111,7 +111,7 @@ class ControlPanel(wx.Panel):
             box.Hide(self.grid)
 
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
-        #self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
+        self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.Bind(wx.EVT_COMBOBOX, self.change_thickness, self.thickness)
         pub.subscribe(self.set_colour, 'change_colour')
         pub.subscribe(self.set_background, 'change_background')
@@ -313,10 +313,9 @@ class ControlPanel(wx.Panel):
     def change_thickness(self, event=None):
         """
         This uses a timer to know when a series of scroll events begin so we
-        don't add many
+        don't add many undo points
         """
         if not self.thickness_scrolling:
-            print 'starting.'
             self.thickness_scrolling = True
             self.thickness_timer = wx.CallLater(250, self.reset_hotkey)
             self.update(self.thickness.GetSelection(), u"thickness")
@@ -326,8 +325,6 @@ class ControlPanel(wx.Panel):
 
 
     def reset_hotkey(self):
-        """Reset the system for the next stream of hotkey up/down events"""
-        print 'ending.'
         self.thickness_scrolling = False
 
 #----------------------------------------------------------------------
