@@ -120,7 +120,7 @@ class Utility(object):
         self.config = config
         pub.subscribe(self.set_colour, 'change_colour')
         pub.subscribe(self.set_background, 'change_background')
-        
+
         tools.HANDLE_SIZE = self.config['handle_size']
         pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
         if 'default_font' in self.config:
@@ -148,10 +148,8 @@ class Utility(object):
 
         canvases = self.gui.get_canvases()
         save = Save(self, canvases, self.gui.get_tab_names())
-        save.save_items()
 
-        data = save.create_save_list(self.gui.current_tab, version)
-        self.write_save_file(data)
+        self.write_save_file(save, version)
 
         self.zip = zipfile.ZipFile(self.filename, "r")
         save.restore_items(canvases)
@@ -161,7 +159,7 @@ class Utility(object):
         self.gui.SetTitle(u"%s - %s" % (os.path.basename(self.filename), self.gui.title))
 
 
-    def write_save_file(self, data):
+    def write_save_file(self, save, version):
         """
         An existing .wtbd zip must be re-created by copying all files except
         the pickled file, otherwise it gets added twice
@@ -169,6 +167,8 @@ class Utility(object):
         tmp_file = os.path.join(os.path.dirname(self.filename), u'whyteboard_temp_new.wtbd')
         _zip = zipfile.ZipFile(tmp_file, 'w')
         self.save_bitmap_data(_zip)
+        save.save_items()
+        data = save.create_save_list(self.gui.current_tab, version)
 
         with open("save.data", 'wb') as f:
             try:
@@ -230,7 +230,6 @@ class Utility(object):
                             data[name] = img_data
                             img.SaveFile(name, get_wx_image_type(name))
                             _zip.write(name, os.path.join("data", name))
-                            to_remove.append(name)
 
         [os.remove(x) for x in to_remove]
 
@@ -549,10 +548,10 @@ class Utility(object):
         if not self.transparent:
             params.append(self.background)
         canvas.shape = self.items[new - 1](*params)  # create new Tool
-        
+
     def set_colour(self, colour):
         self.colour = colour
-    
+
     def set_background(self, colour):
         self.background = colour
 
