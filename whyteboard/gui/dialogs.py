@@ -848,13 +848,13 @@ class ErrorDialog(BaseErrorDialog):
         """
         info = super(ErrorDialog, self).GetEnvironmentInfo()
 
-        info = info.split(os.linesep)
         path = os.path.join(get_home_dir(), u"user.pref")
         if os.path.exists(path):
             info.append(u"#---- Preferences ----#")
             with open(path) as f:
-                for x in f:
-                    info.append(x.rstrip())
+                for preference in f:
+                    preference = preference.rstrip()
+                    info.append(unicode(preference, "utf-8"))
             info.append(u"")
             info.append(u"")
         return os.linesep.join(info)

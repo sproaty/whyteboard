@@ -145,9 +145,9 @@ class ErrorDialog(wx.Dialog):
 
         # Attributes
         self.err_msg = os.linesep.join((self.GetEnvironmentInfo(),
-                                        "#---- Traceback Info ----#\n",
-                                        ErrorReporter().GetErrorStack(),
-                                        "#---- End Traceback Info ----#\n"))
+                                        u"#---- Traceback Info ----#\n",
+                                        unicode(ErrorReporter().GetErrorStack(), "utf-8"),
+                                        u"#---- End Traceback Info ----#\n"))
 
         # Layout
         self._panel = ErrorPanel(self, self.err_msg)
@@ -189,25 +189,25 @@ class ErrorDialog(wx.Dialog):
         res = wx.Display().GetGeometry()
         info = list()
         info.append(self.GetProgramName())
-        info.append("Operating System: %s" % wx.GetOsDescription())
+        info.append(u"Operating System: %s" % wx.GetOsDescription())
         if sys.platform == 'darwin':
-            info.append("Mac OSX: %s" % platform.mac_ver()[0])
-        info.append("Screen Resolution: %ix%i" % (res[2], res[3]))
-        info.append("Python Version: %s" % sys.version)
-        info.append("wxPython Version: %s" % wx.version())
-        info.append("wxPython Info: (%s)" % ", ".join(wx.PlatformInfo))
-        info.append("Python Encoding: Default=%s  File=%s" % \
+            info.append(u"Mac OSX: %s" % platform.mac_ver()[0])
+        info.append(u"Screen Resolution: %ix%i" % (res[2], res[3]))
+        info.append(u"Python Version: %s" % sys.version)
+        info.append(u"wxPython Version: %s" % wx.version())
+        info.append(u"wxPython Info: (%s)" % ", ".join(wx.PlatformInfo))
+        info.append(u"Python Encoding: Default=%s  File=%s" % \
                     (sys.getdefaultencoding(), sys.getfilesystemencoding()))
-        info.append("wxPython Encoding: %s" % wx.GetDefaultPyEncoding())
-        info.append("System Architecture: %s %s" % (platform.architecture()[0], \
+        info.append(u"wxPython Encoding: %s" % wx.GetDefaultPyEncoding())
+        info.append(u"System Architecture: %s %s" % (platform.architecture()[0], \
                                                     platform.machine()))
-        info.append("Byte order: %s" % sys.byteorder)
-        info.append("Frozen: %s" % str(getattr(sys, 'frozen', 'False')))
-        info.append("#---- End System Information ----#")
-        info.append("")
-        info.append("")
+        info.append(u"Byte order: %s" % sys.byteorder)
+        info.append(u"Frozen: %s" % str(getattr(sys, 'frozen', 'False')))
+        info.append(u"#---- End System Information ----#")
+        info.append(u"")
+        info.append(u"")
 
-        return os.linesep.join(info)
+        return info#os.linesep.join(info)
 
     def GetProgramName(self):
         """Get the program name/version info to include in error report
