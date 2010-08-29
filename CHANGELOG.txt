@@ -1,4 +1,4 @@
-Whyteboard 0.40.2 - A simple image, PDF and postscript file annotator
+Whyteboard 0.41 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 xx xxx August 2010
 
@@ -6,7 +6,7 @@ xx xxx August 2010
 
 ----------------------------------------------------------------------
 
-xx August 2010 -- 0.40.2
+xx August 2010 -- 0.41
 
 * "Recent Files" list under the File menu is synchronised across all Whyteboard
   instances

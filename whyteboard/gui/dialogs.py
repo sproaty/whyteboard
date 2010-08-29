@@ -55,15 +55,6 @@ class History(wx.Dialog):
         self.gui = gui
         self.looping = False
         self.paused = False
-        #count = 0
-        #for x in gui.canvas.shapes:
-        #    if isinstance(x, tools.Pen):
-        #        count += len(x.points)
-        #_max = len(gui.canvas.shapes) + count
-
-        #self.slider = wx.Slider(self, minValue=1, maxValue=_max,
-        #                        style=wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
-        #self.slider.SetTickFreq(5, 1)
 
         self.playButton = bitmap_button(self, get_image_path(u"icons", u"play"), True, toggle=True)
         self.pauseButton = bitmap_button(self, get_image_path(u"icons", u"pause"), True, toggle=True)
@@ -76,7 +67,6 @@ class History(wx.Dialog):
         historySizer.Add(self.pauseButton, 0,  wx.ALL, 2)
         historySizer.Add(self.stopButton, 0,  wx.ALL, 2)
 
-        #sizer.Add(self.slider, 0, wx.EXPAND | wx.ALL, 10)
         sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 13)
         sizer.Add((10, 5))
         sizer.Add(closeButton, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 13)
@@ -90,7 +80,6 @@ class History(wx.Dialog):
         self.stopButton.Bind(wx.EVT_BUTTON, self.stop)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         closeButton.Bind(wx.EVT_BUTTON, self.on_close)
-        #self.slider.Bind(wx.EVT_SCROLL, self.scroll)
 
 
     def play(self, event):
@@ -201,9 +190,6 @@ class History(wx.Dialog):
         """
         self.stop()
         self.EndModal(1)
-
-    def scroll(self, event):
-        self.pause()
 
 
     def toggle_buttons(self, play=False, pause=False, stop=True):

@@ -191,22 +191,21 @@ class Utility(object):
     def save_bitmap_data(self, _zip):
         """
         Will save all Image tools to disk as temporary files, and then removes
-        them. This function is length because it will not save two idential
+        them. This function is lengthy because it will not save two idential
         images twice.
         """
         data = {}  # list of bitmap data, check if image has been pasted
         to_remove = []
-        for x in range(self.gui.tab_count):
-            canvas = self.gui.tabs.GetPage(x)
+        for canvas in self.gui.get_canvases():
             for shape in canvas.shapes:
                 if isinstance(shape, tools.Image):
                     img = shape.image.ConvertToImage()
                     img_data = img.GetData()
 
-                    for k, v in data.items():
-                        if v == img_data:
+                    for key, value in data.items():
+                        if value == img_data:
                             if not shape.filename:
-                                shape.filename = k
+                                shape.filename = key
                             break
 
                     #  the above iteration didn't find any common pastes

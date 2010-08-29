@@ -105,6 +105,7 @@ class Canvas(wx.ScrolledWindow):
         self.redo_list = []
         self.drawing = False
         self.prev_drag = (0, 0)
+        self.SetScrollRate(3, 3)
 
         img = wx.Image(get_image_path(u"cursors", u"rotate"))
         self.rotate_cursor = wx.CursorFromImage(img)

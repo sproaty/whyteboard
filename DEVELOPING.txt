@@ -1,5 +1,5 @@
 Whyteboard - Help for developers
-Version 0.40.2 - document last updated: 1 May 2010
+Version 0.41 - document last updated: 1 May 2010
 ---------------------------------
 
 This document serves to help a developer who wishes to contribute / understand

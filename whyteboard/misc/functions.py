@@ -356,12 +356,14 @@ def help_file_path():
 
 def get_path():
     """
-    Root directory from wherever the application is installed to
+    Root directory from wherever the application is installed to. We must follow
+    through any symlinks to find the actual install directory for Unix.
     """
-    path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    _file = os.path.abspath(sys.argv[0])
+    path = os.path.dirname(_file)
+    if os.path.islink(_file):
+        path = os.path.dirname(os.path.abspath(os.readlink(_file)))
 
-    if path == "/usr/bin":
-        return u"/usr/lib/whyteboard"
     return path.decode("utf-8")
 
 
