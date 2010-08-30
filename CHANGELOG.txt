@@ -1,12 +1,12 @@
 Whyteboard 0.41 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-xx xxx August 2010
+Mon 30 August 2010
 
 ---- VERSION HISTORY ----
 
 ----------------------------------------------------------------------
 
-xx August 2010 -- 0.41
+30 August 2010 -- 0.41
 
 * "Recent Files" list under the File menu is synchronised across all Whyteboard
   instances
@@ -26,6 +26,7 @@ xx August 2010 -- 0.41
 * Shape viewer dialog handles delete key.
 * Deleting shape from shape viewer selects the previous shape; not the first
   shape in the list.
+* Removed "focus" rectangle from the currently selected Tab 
 
 * Bugfix: possible permission error on Linux when saving a file
 * Bugfix - trying to load a file that's been deleted from the Recent Files list

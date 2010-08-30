@@ -7,9 +7,9 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{518C11F9-3A78-455B-B8A1-C1148E949DA6}
 AppName=Whyteboard
-AppVerName=Whyteboard 0.39.3
+AppVerName=Whyteboard 0.41
 AppPublisher=Steven Sproat
-AppPublisherURL=https://launchpad.net/whyteboard
+AppPublisherURL=https://whyteboard.org
 AppSupportURL=https://launchpad.net/whyteboard
 AppUpdatesURL=https://launchpad.net/whyteboard
 DefaultDirName={pf}\Whyteboard
@@ -41,14 +41,14 @@ Source: "E:\Downloads\whyteboard\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreve
 Source: "E:\Downloads\whyteboard\DEVELOPING.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 Source: "E:\Downloads\whyteboard\dist\whyteboard-help\*.*"; DestDir: "{app}\whyteboard-help"; Flags: ignoreversion recursesubdirs
-Source: "E:\Downloads\whyteboard\dist\whyteboard\*.*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs
+Source: "E:\Downloads\whyteboard\whyteboard\*.py"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs
 Source: "E:\Downloads\whyteboard\dist\locale\*.*"; DestDir: "{app}\locale"; Flags: ignoreversion recursesubdirs
 Source: "E:\Downloads\whyteboard\dist\images\*.*"; DestDir: "{app}\images"; Flags: ignoreversion recursesubdirs
 
 source: "E:\Downloads\whyteboard\dist\whyteboard.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "E:\Downloads\whyteboard\dist\Whyteboard.exe"; DestDir: "{app}"; Flags: ignoreversion
 
-Source: "E:\Downloads\whyteboard\dist\whyteboard.py"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Downloads\whyteboard\whyteboard.py"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -113,4 +113,3 @@ begin
     UnloadDLL(ExpandConstant('{app}\IssSurvey.dll'));
 
 end;
-

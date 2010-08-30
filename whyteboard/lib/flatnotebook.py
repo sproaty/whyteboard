@@ -5181,6 +5181,7 @@ class PageContainer(wx.Panel):
 
             self.PopupTabsMenu()
 
+        self._pParent.Parent.SetFocus()
         event.Skip()
 
 

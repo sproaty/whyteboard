@@ -1,6 +1,6 @@
 Whyteboard 0.41 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-xxx xx August 2010
+Mon 30 August 2010
 
 ---- TO RUN WHYTEBOARD ----
 
