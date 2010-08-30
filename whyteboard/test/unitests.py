@@ -35,7 +35,7 @@ import whyteboard.gui.frame as gui
 from whyteboard.misc import meta
 import whyteboard.tools
 
-from whyteboard.lib import ConfigObj, mock, pub, Validator
+from whyteboard.lib import ConfigObj, Mock, pub, Validator
 from whyteboard.gui.canvas import Canvas, RIGHT, DIAGONAL, BOTTOM
 from whyteboard.test.fakewidgets.core import Bitmap, Event, Colour, PySimpleApp
 from whyteboard.misc import (get_version_int, version_is_greater, get_wx_image_type,
@@ -63,8 +63,8 @@ def make_config():
 
 
 def make_canvas():
-    frame = mock.Mock()
-    frame.util = mock.Mock()
+    frame = Mock()
+    frame.util = Mock()
     frame.util.tool, frame.util.thickness = 1, 1
     frame.util.items = whyteboard.tools.items
 
@@ -498,7 +498,7 @@ class TestShapes:
         self.canvas = None
 
     def setup(self):
-        self.canvas = mock.Mock()
+        self.canvas = Mock()
         self.rect, self.circle, self.text = None, None, None
 
     def create_canvas(self):

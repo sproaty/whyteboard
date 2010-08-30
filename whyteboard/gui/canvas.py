@@ -638,7 +638,7 @@ class Canvas(wx.ScrolledWindow):
             if cli.x > relbuf[0] or cli.y > relbuf[1]:
                 bkgregion = wx.Region(0, 0, cli.x, cli.y)
                 bkgregion.SubtractRect(wx.Rect(0, 0, relbuf[0], relbuf[1]))
-                dc = wx.PaintDC(self)
+                dc = wx.ClientDC(self)
                 dc.SetClippingRegionAsRegion(bkgregion)
                 dc.SetBrush(wx.GREY_BRUSH)
                 dc.Clear()
@@ -715,7 +715,7 @@ class Canvas(wx.ScrolledWindow):
     def change_colour(self):
         x = self.colour_data(self.selected.colour)
         if x:
-            self.selected.colour = self.colour_data(self.selected.colour)
+            self.selected.colour = x
             self.redraw_all(True)
 
     def change_background(self,):

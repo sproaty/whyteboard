@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
-from whyteboard import meta
+from whyteboard.misc import meta
 
 text = """
 ===========
@@ -39,17 +39,10 @@ setup(
     description = 'A simple drawing program that can be used to annotate PDF files',
     long_description = text,
 
-    package_dir = {'whyteboard': 'whyteboard',
-                   'whyteboard.gui': 'whyteboard/gui',
-                   'whyteboard.lib': 'whyteboard/lib',
-                   'whyteboard.lib.pubsub': 'whyteboard/lib/pubsub',
-                   'whyteboard.lib.pubsub.core': 'whyteboard/lib/pubsub/core',
-                   'whyteboard.lib.pubsub.utils': 'whyteboard/lib/pubsub/utils',
-                   'whyteboard.misc': 'whyteboard/misc'},
-
     packages = ['whyteboard', 'whyteboard.gui', 'whyteboard.lib', 'whyteboard.lib.pubsub',
                 'whyteboard.lib.pubsub.core', 'whyteboard.lib.pubsub.utils', 'whyteboard.misc'],
-    py_modules = ['whyteboard'],
+
+    include_package_data = True,
     scripts = ['whyteboard.py'],
 
     classifiers=[

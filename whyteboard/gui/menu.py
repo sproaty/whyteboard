@@ -47,8 +47,6 @@ class Menu(object):
     """
     def __init__(self, gui):
         self.gui = gui
-        self.closed_tabs_id = {}  # of wx.Menu IDs
-        
         self.menu = wx.MenuBar()
         self.closed_tabs_menu = wx.Menu()
         self.recent = wx.Menu()
@@ -184,7 +182,7 @@ class Menu(object):
 
         # idle event handlers
         ids = [ID_BACKGROUND, ID_CLOSE_ALL, ID_DESELECT, ID_FOREGROUND, ID_MOVE_DOWN,
-               ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP, ID_MOVE_UP, ID_NEXT, ID_PREV,
+               ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP, ID_MOVE_UP, ID_NEXT, ID_PASTE_NEW, ID_PREV,
                ID_RECENTLY_CLOSED, ID_SWAP_COLOURS, ID_TRANSPARENT, ID_UNDO_SHEET,
                wx.ID_CLOSE, wx.ID_COPY, wx.ID_DELETE, wx.ID_PASTE, wx.ID_REDO, wx.ID_UNDO]
         [self.gui.Bind(wx.EVT_UPDATE_UI, self.gui.update_menus, id=x) for x in ids]
@@ -257,16 +255,13 @@ class Menu(object):
         Recreates the undo tab menu
         """
         gui = self.gui
-        for key, value in self.closed_tabs_id.items():
-            self.closed_tabs_menu.Remove(key)
-            gui.Unbind(wx.EVT_MENU, id=key)
-
-        gui.closed_tabs_id = dict()
+        for menu in self.closed_tabs_menu.GetMenuItems():
+            self.closed_tabs_menu.Remove(menu.GetId())
+            gui.Unbind(wx.EVT_MENU, id=menu.GetId())
 
         for x, tab in enumerate(reversed(gui.closed_tabs)):
             _id = wx.NewId()
             name = tab['name']
-            self.closed_tabs_id[_id] = tab
             self.closed_tabs_menu.Append(_id, u"&%i: %s" % (x + 1, name),
                                          _('Restore sheet "%s"') % name)
             func = lambda evt, tab=tab: self.gui.on_undo_tab(tab=tab)

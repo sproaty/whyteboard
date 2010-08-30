@@ -24,15 +24,17 @@ classes, only Python and wx functionality.
 """
 
 import os
+import subprocess
 import sys
 import random
 import tarfile
 import urllib
 import webbrowser
 
-import distutils.dir_util
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
+
+from distutils.dir_util import copy_tree, remove_tree
 
 from whyteboard.lib import pub
 
@@ -347,8 +349,8 @@ def extract_tar(path, _file, version, backup_extension):
                 os.rename(location, new_file)
 
     # move extracted file to current dir, remove tar, remove extracted dir
-    distutils.dir_util.copy_tree(src, path)
-    distutils.dir_util.remove_tree(src)
+    copy_tree(src, path)
+    remove_tree(src)
 
 
 def help_file_path():

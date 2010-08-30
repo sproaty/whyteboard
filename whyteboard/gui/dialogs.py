@@ -907,7 +907,6 @@ class ShapeViewer(wx.Dialog):
                            wx.MINIMIZE_BOX | wx.RESIZE_BORDER | wx.WANTS_CHARS)
         self.gui = gui
         self.count = 0
-        #self.SetExtraStyle(wx.WS_EX_PROCESS_IDLE)
         self.shapes = list(self.gui.canvas.shapes)
         self.SetSizeHints(550, 400)
 
@@ -1045,6 +1044,8 @@ class ShapeViewer(wx.Dialog):
         elif _id in [self.moveDown.GetId(), self.moveBottom.GetId()] and self.is_not_last_item():
             do = True
         event.Enable(do)
+        for x in [self.moveBottom, self.moveDown, self.moveUp, self.moveTop, self.deleteBtn, self.prev, self.next]:
+            x.Refresh()
 
     def is_not_last_item(self):
         return (self.list.GetFirstSelected() != len(self.shapes) - 1  and self.shapes

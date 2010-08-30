@@ -590,7 +590,7 @@ class GUI(wx.Frame):
         self.on_change_tab()  # updates self.canvas
 
 
-    def create_sheet_undo_point(self, canvas, tab_number):
+    def create_sheet_undo_point(self, canvas, tab_number, recreate_menu=True):
         """
         Creates an undo entry for a tab that's being closed
         """
@@ -606,7 +606,8 @@ class GUI(wx.Frame):
                 'viewport': canvas.GetViewStart()}
 
         self.closed_tabs.append(item)
-        self.menu.make_closed_tabs_menu()
+        if recreate_menu:
+            self.menu.make_closed_tabs_menu()
 
 
     def on_close_all_sheets(self, event=None):
@@ -617,8 +618,9 @@ class GUI(wx.Frame):
             return
 
         for x in reversed(range(self.tab_count)):
-            self.create_sheet_undo_point(self.tabs.GetPage(x), x)
+            self.create_sheet_undo_point(self.tabs.GetPage(x), x, False)
 
+        self.menu.make_closed_tabs_menu()
         self.remove_all_sheets()
         self.on_new_tab()
 
@@ -688,7 +690,7 @@ class GUI(wx.Frame):
             return
         _id = event.GetId()
 
-        if _id == wx.ID_PASTE:  # check this less frequently, possibly expensive
+        if _id in [wx.ID_PASTE, ID_PASTE_NEW]:  # check this less frequently, possibly expensive
             self.paste_check_count += 1
             if self.paste_check_count == PASTE_CHECK_COUNT:
                 self.can_paste = False
