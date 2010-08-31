@@ -364,8 +364,7 @@ def get_path():
     _file = os.path.abspath(sys.argv[0])
     path = os.path.dirname(_file)
     if os.path.islink(_file):
-        path = os.path.dirname(os.path.abspath(os.readlink(_file)))
-
+        path = os.path.dirname(os.path.join(os.path.dirname(_file), os.readlink(_file)))
     return path.decode("utf-8")
 
 

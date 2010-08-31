@@ -24,7 +24,7 @@ file
 """
 
 import os
-from whyteboard import meta
+from whyteboard.misc import meta
 
 files = ["zip", "tar.gz",]
 

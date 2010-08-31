@@ -1,10 +1,7 @@
-whyteboard (0.40-2) jaunty; urgency=high
+whyteboard (0.41) jaunty; urgency=high
 
-  * Fix shape viewer buttons being enabled when they should be
-  * Fix possible crash with deleting shape
-  * (LP: #581499) - Opening a .wtbd file from a file browser doesn't work
-  * (LP: #581484) - Windows: function key shortcuts don't work
-  * (LP: #581483) - shape viewer doesn't redraw correctly
+  * Many bugfixes
+  * Some new features to improve overall UI and user experience
 
- -- Steven Sproat <sproaty@gmail.com>  Sun, 16 May 2010 01:38:38 +0100
+ -- Steven Sproat <sproaty@gmail.com>  Mon, 30 Aug 2010 21:27:00 +0100
 
