@@ -126,7 +126,7 @@ class Preferences(wx.Dialog):
         if x < old['undo_sheets']:
             del self.gui.closed_tabs[0:x]
         if x != old['undo_sheets']:
-            self.gui.make_closed_tabs_menu()
+            self.gui.menu.make_closed_tabs_menu()
 
         if self.config['bmp_select_transparent'] != old['bmp_select_transparent']:
             self.gui.canvas.copy = None
