@@ -66,7 +66,8 @@ class WhyteboardApp(wx.App):
             _file = options.file or sys.argv[1]
             _file = os.path.abspath(_file)
             if os.path.exists(_file):
-                self.frame.do_open(_file)
+                print _file.__repr__()
+                self.frame.do_open(_file.decode("utf-8"))
         except IndexError:
             pass
 

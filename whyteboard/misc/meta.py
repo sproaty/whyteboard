@@ -58,7 +58,7 @@ wc_list.insert(0, u'%s|%s' % (_("All suppported files"), u';'.join(tmp)))
 
 dialog_wildcard = u'|'.join(wc_list)
 transparent = True
-version = u"0.41"
+version = u"0.41.1"
 backup_extension = u".blah5bl8ah123bla6h"
 languages = ( (u"English", _("English"), wx.LANGUAGE_ENGLISH),
               (u"English (U.K.)", _("English (U.K.)"), wx.LANGUAGE_ENGLISH_UK),

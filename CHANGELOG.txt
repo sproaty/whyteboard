@@ -1,8 +1,19 @@
-Whyteboard 0.41 - A simple image, PDF and postscript file annotator
+Whyteboard 0.41.1 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-Mon 30 August 2010
+xxx xx September 2010
 
 ---- VERSION HISTORY ----
+
+----------------------------------------------------------------------
+
+xx September 2010 - 0.41.1
+
+* Bugfix with the close button on a sheet allowing the first sheet to be closed,
+  causing crashes
+
+* Bugfix: unicode error on loading a file from the operating system "explorer"
+* Bugfix: crash when pressing "okay" in Preferences dialog after changing number
+  of closed sheets to remember
 
 ----------------------------------------------------------------------
 
@@ -26,7 +37,7 @@ Mon 30 August 2010
 * Shape viewer dialog handles delete key.
 * Deleting shape from shape viewer selects the previous shape; not the first
   shape in the list.
-* Removed "focus" rectangle from the currently selected Tab 
+* Removed "focus" rectangle from the currently selected Tab
 
 * Bugfix: possible permission error on Linux when saving a file
 * Bugfix - trying to load a file that's been deleted from the Recent Files list

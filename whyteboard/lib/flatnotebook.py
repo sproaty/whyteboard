@@ -5164,7 +5164,11 @@ class PageContainer(wx.Panel):
 
             self._nTabXButtonStatus = FNB_BTN_HOVER
 
-            self.DeletePage(self._iActivePage)
+            #self.DeletePage(self._iActivePage)
+            # hack specific to Whyteboard, here.
+            self.Parent.Parent.current_tab = tabIdx
+            self.Parent.Parent.canvas = self.Parent.GetPage(tabIdx)
+            self.Parent.Parent.on_close_tab()
 
         elif where == FNB_DROP_DOWN_ARROW:
 
