@@ -25,7 +25,6 @@ line arguments/parsing and setting the program's locale/language.
 
 import os
 import sys
-import locale
 import wx
 from optparse import OptionParser
 
@@ -135,7 +134,6 @@ class WhyteboardApp(wx.App):
             self.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
 
         langdir = os.path.join(get_path(), u'locale')
-        locale.setlocale(locale.LC_ALL, u'')
         self.locale.AddCatalogLookupPathPrefix(langdir)
         self.locale.AddCatalog(u"whyteboard")
 

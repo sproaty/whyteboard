@@ -258,7 +258,7 @@ class GUI(wx.Frame):
         """
         wildcard = _("Whyteboard file ") + u"(*.wtbd)|*.wtbd"
         _dir = self.util.config.get('last_opened_dir') or u""
-        _file = self.util.filename or time.strftime(u"%Y-%m-%d-%H-%M-%S")
+        _file = self.util.filename or time.strftime(u"%x-%X")
 
         name = file_dialog(self, _("Save Whyteboard As..."),
                            wx.SAVE | wx.OVERWRITE_PROMPT, wildcard, _dir, _file)
@@ -280,14 +280,15 @@ class GUI(wx.Frame):
         wildcard = meta.dialog_wildcard
         if text == u"img":
             wildcard = wildcard[wildcard.find(_(u"Image Files")) :
-                                wildcard.find(_(u'Whyteboard files')) ]  # image to page
+                                wildcard.find(_(u'Whyteboard files|')) ]  # image to page
         elif text:
             wildcard = wildcard[wildcard.find(u"PDF/PS/SVG") :
                                 wildcard.find(u"*.SVG|")]  # page descriptions
 
         _dir = self.util.config.get('last_opened_dir') or u""
 
-        self.open_file(file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir))
+        filename = file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir)
+        self.open_file(filename)
 
 
     def open_file(self, filename):
