@@ -122,7 +122,7 @@ translators = [
      u'Billy Robshaw https://launchpad.net/~billyrobshaw (Spanish)',
      u'"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
      u'Cristian Asenjo https://launchpad.net/~apu2009 (Spanish)',
-     u"David https://launchpad.net/~3-admin-dav1d-de",
+     u"David https://launchpad.net/~3-admin-dav1d-de (German)",
      u'David Aller https://launchpad.net/~niclamus (Italian)',
      u'"Dennis" https://launchpad.net/~dlinn83 (German)',
      u'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',

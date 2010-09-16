@@ -31,10 +31,11 @@ import zipfile
 import time
 import wx
 import wx.lib.mixins.listctrl as listmix
+from wx.lib.agw.hyperlink import HyperLinkCtrl
 
 from urllib import urlopen, urlretrieve, urlencode
 
-from whyteboard.lib import BaseErrorDialog, pub
+from whyteboard.lib import BaseErrorDialog, icon, pub
 import whyteboard.tools as tools
 
 from whyteboard.misc import meta
@@ -1148,7 +1149,7 @@ class PDFCacheDialog(wx.Dialog):
     conversion quality and date saved. Has options to remove items to re-convert
     """
     def __init__(self, gui, cache):
-        wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"), size=(450, 300),
+        wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"), size=(650, 300),
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
                            wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
         self.cache = cache
@@ -1184,13 +1185,17 @@ class PDFCacheDialog(wx.Dialog):
         self.SetSizer(sizer)
         self.populate()
         self.check_buttons()
-        self.Fit()
 
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_remove)
         cancelButton.Bind(wx.EVT_BUTTON, lambda x: self.Close())
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda x: self.check_buttons())
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda x: self.check_buttons())
+
+        ac = [(wx.ACCEL_NORMAL, wx.WXK_DELETE, self.deleteBtn.GetId())]
+        tbl = wx.AcceleratorTable(ac)
+        self.list.SetAcceleratorTable(tbl)
+        self.Bind(wx.EVT_CHAR_HOOK, self.delete_key)
 
 
     def populate(self):
@@ -1235,6 +1240,13 @@ class PDFCacheDialog(wx.Dialog):
         self.cache.write_dict(self.files)
         self.Close()
 
+
+    def delete_key(self, event):
+        if event.GetKeyCode() == wx.WXK_DELETE and self.files.items():
+            self.on_remove(None)
+        event.Skip()
+
+
     def on_remove(self, event):
         """Remove the dictionary item that matches the selected item's path"""
         item = self.list.GetFirstSelected()
@@ -1253,5 +1265,122 @@ class PDFCacheDialog(wx.Dialog):
         self.files = files
         self.populate()
 
+
+#----------------------------------------------------------------------
+
+class AboutDialog(wx.Dialog):
+    """
+    A replacement About Dialog for Windows, as it uses a generic frame that
+    well...sucks.
+    """
+    def __init__(self, parent, info):
+        wx.Dialog.__init__(self, parent, title=_("About Whyteboard"))
+        self.info = info
+
+        image = wx.StaticBitmap(self, bitmap=icon.GetBitmap())
+        name = wx.StaticText(self, label="%s %s" % (info.Name, info.Version))
+        description = wx.StaticText(self, label=info.Description)
+        copyright = wx.StaticText(self, label=info.Copyright)
+        url = HyperLinkCtrl(self, label=info.WebSite[0], URL=info.WebSite[1])
+
+        font = name.GetClassDefaultAttributes().font
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font.SetPointSize(18)
+        name.SetFont(font)
+
+        credits = wx.Button(self, id=wx.ID_ABOUT, label=_("C&redits"))
+        license = wx.Button(self, label=_("&License"))
+        close = wx.Button(self, id=wx.ID_CLOSE, label=_("&Close"))
+
+        btnSizer = wx.BoxSizer(wx.HORIZONTAL)
+        btnSizer.Add(credits, flag=wx.CENTER | wx.LEFT | wx.RIGHT, border=5)
+        btnSizer.Add(license, flag=wx.CENTER | wx.RIGHT, border=5)
+        btnSizer.Add(close, flag=wx.CENTER | wx.RIGHT, border=5)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(image, flag=wx.CENTER | wx.TOP | wx.BOTTOM, border=5)
+        sizer.Add(name, flag=wx.CENTER | wx.BOTTOM, border=10)
+        sizer.Add(description, flag=wx.CENTER | wx.BOTTOM, border=10)
+        sizer.Add(copyright, flag=wx.CENTER | wx.BOTTOM, border=10)
+        sizer.Add(url, flag=wx.CENTER | wx.BOTTOM, border=15)
+        sizer.Add(btnSizer, flag=wx.CENTER | wx.BOTTOM, border=5)
+
+        container = wx.BoxSizer(wx.VERTICAL)
+        container.Add(sizer, flag=wx.ALL, border=10)
+        self.SetSizer(container)
+        self.Layout()
+        self.Fit()
+        self.Centre()
+        self.Show(True)
+
+        credits.Bind(wx.EVT_BUTTON, self.on_credits)
+        license.Bind(wx.EVT_BUTTON, self.on_license)
+        close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
+
+    def on_license(self, event):
+        LicenseDialog(self, self.info.License)
+
+    def on_credits(self, event):
+        CreditsDialog(self, self.info)
+
+
+#----------------------------------------------------------------------
+
+class CreditsDialog(wx.Dialog):
+    def __init__(self, parent, info):
+        wx.Dialog.__init__(self, parent, title=_("Credits"), size=(575, 320),
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.SetIcon(icon.GetIcon())
+        self.SetMinSize((300, 200))
+        notebook = wx.Notebook(self)
+        close = wx.Button(self, id=wx.ID_CLOSE, label=_("&Close"))
+        close.SetDefault()
+
+        developer = wx.TextCtrl(notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
+        translators = wx.TextCtrl(notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
+
+        developer.SetValue(u'\n'.join(info.Developers))
+        translators.SetValue(u'\n'.join(info.Translators))
+
+        notebook.AddPage(developer, text=_("Written by"))
+        notebook.AddPage(translators, text=_("Translated by"))
+
+        btnSizer = wx.BoxSizer(wx.HORIZONTAL)
+        btnSizer.Add(close)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(notebook, 1, wx.EXPAND | wx.ALL, 10)
+        sizer.Add(btnSizer, flag=wx.ALIGN_RIGHT | wx.RIGHT | wx.BOTTOM, border=10)
+        self.SetSizer(sizer)
+        self.Layout()
+        self.Show()
+
+        close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
+
+
+#----------------------------------------------------------------------
+
+class LicenseDialog(wx.Dialog):
+    def __init__(self, parent, license):
+        wx.Dialog.__init__(self, parent, title=_("License"), size=(540, 400),
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.SetMinSize((400, 300))
+        self.SetIcon(icon.GetIcon())
+        close = wx.Button(self, id=wx.ID_CLOSE, label=_("&Close"))
+
+        ctrl = wx.TextCtrl(self, style=wx.TE_READONLY | wx.TE_MULTILINE)
+        ctrl.SetValue(license)
+
+        btnSizer = wx.BoxSizer(wx.HORIZONTAL)
+        btnSizer.Add(close)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(ctrl, 1, wx.EXPAND | wx.ALL, 10)
+        sizer.Add(btnSizer, flag=wx.ALIGN_RIGHT | wx.RIGHT | wx.BOTTOM, border=10)
+        self.SetSizer(sizer)
+        self.Layout()
+        self.Show()
+
+        close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
 
 #----------------------------------------------------------------------

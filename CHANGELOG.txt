@@ -8,12 +8,21 @@ xxx xx September 2010
 
 xx September 2010 - 0.41.1
 
-* Bugfix with the close button on a sheet allowing the first sheet to be closed,
+* New icon
+* Windows Vista and 7 - icon now shown in Explorer and the taskbar
+* New About Dialog for Windows: looks like GTK, and less crappy than before
+* Program translated into Portuguese, latest translations applied
+* PDF Cache viewer's width increased; delete key also removes the selected item
+
+* Bugfix: close button on a sheet allowing the first sheet to be closed,
   causing crashes
+* Bugfix with closing the "import image" dialog
 
 * Bugfix: unicode error on loading a file from the operating system "explorer"
 * Bugfix: crash when pressing "okay" in Preferences dialog after changing number
   of closed sheets to remember
+* Bugfix: file types in the "open" dialog not being translated
+* Bugfix: languages in the preference dialog not being translated
 
 ----------------------------------------------------------------------
 

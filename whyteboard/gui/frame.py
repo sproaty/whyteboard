@@ -45,7 +45,7 @@ from whyteboard.gui import (Canvas, CanvasDropTarget, ControlPanel, MediaPanel,
                             Menu, Preferences, Print, SidePanel, ShapePopup,
                             SheetsPopup, Toolbar)
 
-from whyteboard.gui import (ExceptionHook, Feedback, FindIM, History,
+from whyteboard.gui import (ExceptionHook, AboutDialog, Feedback, FindIM, History,
                             PDFCacheDialog, ProgressDialog, PromptForSave,
                             Resize, ShapeViewer, TextInput, UpdateDialog)
 
@@ -55,7 +55,7 @@ from whyteboard.gui import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESE
                        ID_RECENTLY_CLOSED, ID_STATUSBAR, ID_SWAP_COLOURS,
                        ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT, ID_UNDO_SHEET)
 
-from whyteboard.misc import (get_home_dir, is_exe, is_save_file, get_clipboard,
+from whyteboard.misc import (get_home_dir, is_save_file, get_clipboard,
                              check_clipboard, download_help_files, file_dialog,
                              get_path, set_clipboard, show_dialog, open_url,
                              new_instance, help_file_path)
@@ -258,7 +258,10 @@ class GUI(wx.Frame):
         """
         wildcard = _("Whyteboard file ") + u"(*.wtbd)|*.wtbd"
         _dir = self.util.config.get('last_opened_dir') or u""
-        _file = self.util.filename or time.strftime(u"%x-%X")
+        _file = self.util.filename
+        if not _file:
+            _file = time.strftime(u"%x %X")
+            _file = _file.replace(u":", u"-").replace(u"/", u"-")
 
         name = file_dialog(self, _("Save Whyteboard As..."),
                            wx.SAVE | wx.OVERWRITE_PROMPT, wildcard, _dir, _file)
@@ -280,7 +283,7 @@ class GUI(wx.Frame):
         wildcard = meta.dialog_wildcard
         if text == u"img":
             wildcard = wildcard[wildcard.find(_(u"Image Files")) :
-                                wildcard.find(_(u'Whyteboard files|')) ]  # image to page
+                                wildcard.find(u"|" + _(u'Whyteboard files')) ]  # image to page
         elif text:
             wildcard = wildcard[wildcard.find(u"PDF/PS/SVG") :
                                 wildcard.find(u"*.SVG|")]  # page descriptions
@@ -1195,4 +1198,7 @@ class GUI(wx.Frame):
             with open(license) as f:
                 inf.Licence = f.read()
 
-        wx.AboutBox(inf)
+        if os.name == "nt":
+            AboutDialog(self, inf)
+        else:
+            wx.AboutBox(inf)
