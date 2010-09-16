@@ -111,8 +111,8 @@ class ControlPanel(wx.Panel):
             box.Hide(self.grid)
 
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
-        self.Bind(wx.EVT_COMBOBOX, self.change_thickness, self.thickness)
+        #self.thickness.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
+        self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
         pub.subscribe(self.set_colour, 'change_colour')
         pub.subscribe(self.set_background, 'change_background')
 
@@ -300,7 +300,7 @@ class ControlPanel(wx.Panel):
             if add_undo:
                 self.gui.canvas.add_undo()
             if var_name == u"background" and not self.transparent.IsChecked():
-                setattr(self.gui.canvas.selected, var_name, value)
+                self.gui.canvas.selected.background = value
             elif var_name != u"background":
                 setattr(self.gui.canvas.selected, var_name, value)
             self.gui.canvas.redraw_all(True)
