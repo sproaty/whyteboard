@@ -1198,7 +1198,7 @@ class GUI(wx.Frame):
             with open(license) as f:
                 inf.Licence = f.read()
 
-        #if os.name == "nt":
-        AboutDialog(self, inf)
-       # else:
-       #     wx.AboutBox(inf)
+        if os.name == "nt":
+            AboutDialog(self, inf)
+        else:
+            wx.AboutBox(inf)

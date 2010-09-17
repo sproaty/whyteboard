@@ -73,7 +73,7 @@ class History(wx.Dialog):
         sizer.Add(closeButton, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 13)
         self.SetSizer(sizer)
         sizer.Fit(self)
-        self.SetFocus()
+        self.SetEscapeId(closeButton.GetId())
         self.toggle_buttons()
 
         self.playButton.Bind(wx.EVT_BUTTON, self.play)
@@ -792,7 +792,8 @@ class Resize(wx.Dialog):
         sizer.Add((10, 5))
         self.SetSizer(sizer)
         self.SetFocus()
-        sizer.Fit(self)
+        self.SetEscapeId(cancelButton.GetId())
+        self.Fit()
 
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
@@ -964,6 +965,7 @@ class ShapeViewer(wx.Dialog):
         self.populate()
         self.Fit()
         self.SetFocus()
+        self.SetEscapeId(cancelButton.GetId())
 
         cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
         okButton.Bind(wx.EVT_BUTTON, self.ok)
@@ -1185,6 +1187,7 @@ class PDFCacheDialog(wx.Dialog):
         self.SetSizer(sizer)
         self.populate()
         self.check_buttons()
+        self.SetEscapeId(cancelButton.GetId())
 
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_remove)
@@ -1233,7 +1236,6 @@ class PDFCacheDialog(wx.Dialog):
             self.deleteBtn.Disable()
         else:
             self.deleteBtn.Enable()
-        self.SetFocus()
 
 
     def ok(self, event):
@@ -1312,6 +1314,7 @@ class AboutDialog(wx.Dialog):
         self.Fit()
         self.Centre()
         self.Show(True)
+        self.SetEscapeId(close.GetId())
 
         credits.Bind(wx.EVT_BUTTON, self.on_credits)
         license.Bind(wx.EVT_BUTTON, self.on_license)
@@ -1328,7 +1331,7 @@ class AboutDialog(wx.Dialog):
 
 class CreditsDialog(wx.Dialog):
     def __init__(self, parent, info):
-        wx.Dialog.__init__(self, parent, title=_("Credits"), size=(575, 320),
+        wx.Dialog.__init__(self, parent, title=_("Credits"), size=(475, 320),
                            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.SetIcon(icon.GetIcon())
         self.SetMinSize((300, 200))
@@ -1354,7 +1357,8 @@ class CreditsDialog(wx.Dialog):
         self.SetSizer(sizer)
         self.Layout()
         self.Show()
-
+        self.SetEscapeId(close.GetId())
+        
         close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
 
 
@@ -1362,7 +1366,7 @@ class CreditsDialog(wx.Dialog):
 
 class LicenseDialog(wx.Dialog):
     def __init__(self, parent, license):
-        wx.Dialog.__init__(self, parent, title=_("License"), size=(540, 400),
+        wx.Dialog.__init__(self, parent, title=_("License"), size=(500, 400),
                            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.SetMinSize((400, 300))
         self.SetIcon(icon.GetIcon())
@@ -1380,6 +1384,7 @@ class LicenseDialog(wx.Dialog):
         self.SetSizer(sizer)
         self.Layout()
         self.Show()
+        self.SetEscapeId(close.GetId())
 
         close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
 
