@@ -58,7 +58,7 @@ class Menu(object):
         _help = wx.Menu()
         _import = wx.Menu()
         _export = wx.Menu()
-        
+
         gui.filehistory.UseMenu(self.recent)
         gui.filehistory.AddFilesToMenu()
         self.make_closed_tabs_menu()
@@ -129,7 +129,7 @@ class Menu(object):
         shapes.AppendSeparator()
         shapes.AppendCheckItem(ID_TRANSPARENT, " " + _("T&ransparent"), _("Toggles the selected shape's transparency"))
         shapes.Append(ID_FOREGROUND, _("&Color..."), _("Change the selected shape's color"))
-        shapes.Append(ID_BACKGROUND, _("&Background &Color..."), _("Change the selected shape's background color"))
+        shapes.Append(ID_BACKGROUND, _("&Background Color..."), _("Change the selected shape's background color"))
         shapes.Append(ID_SWAP_COLOURS, _("Swap &Colors"), _("Swaps the foreground and background colors"))
 
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet") + "\tCtrl+W", _("Close the current sheet"))
@@ -163,7 +163,7 @@ class Menu(object):
         self.menu.Append(shapes, _("Sha&pes"))
         self.menu.Append(sheets, _("&Sheets"))
         self.menu.Append(_help, _("&Help"))
-        
+
         self.gui.SetMenuBar(self.menu)
 
 
