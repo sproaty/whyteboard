@@ -1,17 +1,17 @@
 Whyteboard 0.41.1 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
-xxx xx September 2010
+Fri 17 September 2010
 
 ---- VERSION HISTORY ----
 
 ----------------------------------------------------------------------
 
-xx September 2010 - 0.41.1
+17 September 2010 - 0.41.1
 
 * New icon
 * Windows Vista and 7 - icon now shown in Explorer and the taskbar
 * New About Dialog for Windows: looks like GTK, and less crappy than before
-* Program translated into Portuguese, latest translations applied
+* Program translated into Portuguese, latest translations applied.
 * PDF Cache viewer's width increased; delete key also removes the selected item
 
 * Bugfix: close button on a sheet allowing the first sheet to be closed,
