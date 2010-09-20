@@ -135,5 +135,6 @@ class WhyteboardApp(wx.App):
         langdir = os.path.join(get_path(), u'locale')
         self.locale.AddCatalogLookupPathPrefix(langdir)
         self.locale.AddCatalog(u"whyteboard")
+        self.locale.AddCatalog(u'wxstd')
 
         reload(meta)  # fix for some translated strings not being applied

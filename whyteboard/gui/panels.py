@@ -62,7 +62,6 @@ class ControlPanel(wx.Panel):
         cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE | wx.CP_NO_TLW_RESIZE)
         self.pane = cp.GetPane()  # every widget's parent
         self.gui = gui
-        self.toggled = 1  # Pen, initallly
         self.tools = {}
         self.thickness_timer = None
         self.thickness_scrolling = False
@@ -85,8 +84,6 @@ class ControlPanel(wx.Panel):
         self.thickness.SetSelection(0)
         self.thickness.SetToolTipString(_("Sets the drawing thickness"))
 
-        line = wx.StaticLine(self, size=(-1, 30))
-        line.SetBackgroundColour((0, 0, 0))
         self.preview = DrawingPreview(self.pane, self.gui)
         spacing = 4
 
@@ -111,7 +108,6 @@ class ControlPanel(wx.Panel):
             box.Hide(self.grid)
 
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
-        #self.thickness.Bind(wx.EVT_MOUSEWHEEL, self.scroll)
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
         pub.subscribe(self.set_colour, 'change_colour')
         pub.subscribe(self.set_background, 'change_background')
@@ -190,7 +186,6 @@ class ControlPanel(wx.Panel):
             b.Bind(evt, self.change_tool, id=x + 1)
             self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             self.tools[x + 1] = b
-        self.tools[self.toggled].SetValue(True)
 
 
     def make_colour_grid(self):
@@ -220,18 +215,6 @@ class ControlPanel(wx.Panel):
         self.control_sizer.Show(self.grid, value)
         self.pane.Layout()
 
-    def scroll(self, event):
-        """Scrolls the thickness drop-down box (for Windows)"""
-        val = self.thickness.GetSelection()
-        if event.GetWheelRotation() > 0:  # mousewheel down
-            val -= 1
-            if val <= 0:
-                val = 0
-        else:
-            val += 1
-
-        self.thickness.SetSelection(val)
-
 
     def change_tool(self, event=None, _id=None):
         """
@@ -239,16 +222,14 @@ class ControlPanel(wx.Panel):
         """
         new = self.gui.util.tool
         if event and not _id:
-            new = int(event.GetId())  # get widget ID
+            new = int(event.GetId())
         elif _id:
             new = _id
 
-        self.tools[self.toggled].SetValue(True)
-        if new != self.toggled:  # toggle old button
-            self.tools[self.toggled].SetValue(False)
-            self.tools[new].SetValue(True)
+        for button in self.tools.values():
+            button.SetValue(False)
 
-        self.toggled = new
+        self.tools[new].SetValue(True)
         pub.sendMessage('canvas.change_tool', new=new)
 
 

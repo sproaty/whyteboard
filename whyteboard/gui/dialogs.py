@@ -51,8 +51,7 @@ class History(wx.Dialog):
     Creates a history replaying dialog and methods for its functionality
     """
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui, title=_("History Player"), size=(400, 200),
-                           style=wx.CLOSE_BOX | wx.CAPTION)
+        wx.Dialog.__init__(self, gui, title=_("History Player"))
         self.gui = gui
         self.looping = False
         self.paused = False
@@ -61,6 +60,7 @@ class History(wx.Dialog):
         self.pauseButton = bitmap_button(self, get_image_path(u"icons", u"pause"), True, toggle=True)
         self.stopButton = bitmap_button(self, get_image_path(u"icons", u"stop"), True, toggle=True)
         closeButton = wx.Button(self, wx.ID_CANCEL, _("&Close"))
+        closeButton.SetDefault()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -72,8 +72,9 @@ class History(wx.Dialog):
         sizer.Add((10, 5))
         sizer.Add(closeButton, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 13)
         self.SetSizer(sizer)
-        sizer.Fit(self)
+        self.Fit()
         self.SetEscapeId(closeButton.GetId())
+        self.SetFocus()
         self.toggle_buttons()
 
         self.playButton.Bind(wx.EVT_BUTTON, self.play)
@@ -640,7 +641,6 @@ class PromptForSave(wx.Dialog):
     after updating the program.
     """
     def __init__(self, gui, name, method, style, args):
-
         wx.Dialog.__init__(self, gui, title=_("Save File?"))
         self.gui = gui
         self.method = method
@@ -906,7 +906,7 @@ class ShapeViewer(wx.Dialog):
         """
         wx.Dialog.__init__(self, gui, title=_("Shape Viewer"), size=(550, 400),
                            style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
-                           wx.MINIMIZE_BOX | wx.RESIZE_BORDER | wx.WANTS_CHARS)
+                           wx.RESIZE_BORDER | wx.WANTS_CHARS)
         self.gui = gui
         self.count = 0
         self.shapes = list(self.gui.canvas.shapes)
@@ -1152,8 +1152,8 @@ class PDFCacheDialog(wx.Dialog):
     """
     def __init__(self, gui, cache):
         wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"), size=(650, 300),
-                           style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
-                           wx.MINIMIZE_BOX | wx.RESIZE_BORDER)
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.MINIMIZE_BOX |
+                           wx.RESIZE_BORDER)
         self.cache = cache
         self.files = cache.entries()
         self.original_files = dict(cache.entries())
@@ -1170,7 +1170,7 @@ class PDFCacheDialog(wx.Dialog):
 
         okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        okButton.SetDefault()
+        cancelButton.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okButton)
         btnSizer.AddButton(cancelButton)
@@ -1188,6 +1188,7 @@ class PDFCacheDialog(wx.Dialog):
         self.populate()
         self.check_buttons()
         self.SetEscapeId(cancelButton.GetId())
+        self.SetFocus()
 
         okButton.Bind(wx.EVT_BUTTON, self.ok)
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_remove)
@@ -1358,7 +1359,7 @@ class CreditsDialog(wx.Dialog):
         self.Layout()
         self.Show()
         self.SetEscapeId(close.GetId())
-        
+
         close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
 
 

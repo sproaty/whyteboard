@@ -1,8 +1,17 @@
-Whyteboard 0.41.1 - A simple image, PDF and postscript file annotator
+Whyteboard 0.41.2 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 Fri 17 September 2010
 
 ---- VERSION HISTORY ----
+
+----------------------------------------------------------------------
+
+xx September 2010 - 0.41.2
+
+* Removed an ugly black line being drawn across the collapsible control panel's
+  toggle button
+* Made escape key close all dialogs; added close buttons to dialogs where needed
+
 
 ----------------------------------------------------------------------
 
