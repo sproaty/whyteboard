@@ -34,7 +34,6 @@ import os
 import wx
 from copy import copy
 from wx.lib.wordwrap import wordwrap as wordwrap
-from wx.lib import scrolledpanel as scrolled
 
 from whyteboard.gui import FindIM
 from whyteboard.lib import pub
@@ -381,19 +380,18 @@ class FontAndColours(wx.Panel):
 #----------------------------------------------------------------------
 
 
-class View(scrolled.ScrolledPanel):
+class View(wx.Panel):
     """
     Select language and toolbar/status bar visiblity
     """
     def __init__(self, parent, gui, config):
-        scrolled.ScrolledPanel.__init__(self, parent)
+        wx.Panel.__init__(self, parent)
         self.config = config
         self.gui = gui
         if os.name == "posix":
             self.SetBackgroundColour("White")
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
-        self.SetupScrolling(False, True)
 
         self.width = wx.SpinCtrl(self, min=1, max=12000)
         self.height = wx.SpinCtrl(self, min=1, max=12000)
@@ -436,7 +434,6 @@ class View(scrolled.ScrolledPanel):
         sizer.Add(title, 0, wx.LEFT | wx.BOTTOM, 10)
         sizer.Add(preview, 0, wx.LEFT | wx.BOTTOM, 10)
         sizer.Add(colour, 0, wx.LEFT, 10)
-        self.Scroll(0, 0)
 
         statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
         toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)
