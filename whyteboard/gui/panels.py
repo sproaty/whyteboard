@@ -70,9 +70,9 @@ class ControlPanel(wx.Panel):
         csizer = wx.BoxSizer(wx.VERTICAL)
         box = wx.BoxSizer(wx.VERTICAL)
         self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
-        self.toolsizer = wx.GridSizer(cols=1, hgap=5, vgap=5)
+        self.toolsizer = wx.GridSizer(cols=2, hgap=5, vgap=5)
 
-        self.make_toolbox(gui.util.config['toolbox'])
+        self.make_toolbox()
         self.make_colour_grid()
         colour = self.colour_buttons()
         thickness = wx.StaticText(self.pane, label=_("Thickness:"))
@@ -160,30 +160,20 @@ class ControlPanel(wx.Panel):
         self.background.SetColour(colour)
         self.preview.Refresh()
 
-    def make_toolbox(self, _type=u"text"):
+    def make_toolbox(self):
         """Creates a toolbox made from toggleable text or icon buttons"""
-        items = [_(i.name) for i in self.gui.util.items]
-        self.toolsizer.SetCols(1)
-
-        if _type == u"icon":
-            items = [_(i.icon) for i in self.gui.util.items]
-            self.toolsizer.SetCols(int(self.gui.util.config['toolbox_columns']))
+        items = [_(i.icon) for i in self.gui.util.items]
 
         for x, val in enumerate(items):
-            if _type == u"icon":
-                path = get_image_path(u"tools", val)
-                b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
-                                          style=wx.NO_BORDER)
-                evt = wx.EVT_BUTTON
-            else:
-                b = wx.ToggleButton(self.pane, x + 1, val)
-                evt = wx.EVT_TOGGLEBUTTON
+            path = get_image_path(u"tools", val)
+            b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
+                                      style=wx.NO_BORDER)
 
             b.SetToolTipString(u"%s\n%s %s" % (_(self.gui.util.items[x].tooltip),
                                             _("Shortcut Key:"),
                                             self.gui.util.items[x].hotkey.upper()))
 
-            b.Bind(evt, self.change_tool, id=x + 1)
+            b.Bind(wx.EVT_BUTTON, self.change_tool, id=x + 1)
             self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             self.tools[x + 1] = b
 

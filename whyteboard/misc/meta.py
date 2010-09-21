@@ -105,8 +105,6 @@ print_title = boolean(default=True)
 statusbar = boolean(default=True)
 tool_preview = boolean(default=True)
 toolbar = boolean(default=True)
-toolbox = option('icon', 'text', default='icon')
-toolbox_columns = option(2, 3, default=2)
 undo_sheets = integer(min=5, max=50, default=10)
 """
 

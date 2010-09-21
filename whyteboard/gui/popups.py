@@ -167,7 +167,7 @@ class ShapePopup(Popup):
         self.AppendSeparator()
         self.AppendCheckItem(ID_TRANSPARENT, _("T&ransparent"))
         self.Append(ID_FOREGROUND, _("&Color..."))
-        self.Append(ID_BACKGROUND, _("&Background &Color..."))
+        self.Append(ID_BACKGROUND, _("&Background Color..."))
         self.Append(ID_SWAP_COLOURS, _("Swap &Colors"))
         self.AppendSeparator()
         self.Append(ID_MOVE_UP, _("Move &Up"))

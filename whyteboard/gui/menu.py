@@ -129,7 +129,7 @@ class Menu(object):
         shapes.AppendSeparator()
         shapes.AppendCheckItem(ID_TRANSPARENT, " " + _("T&ransparent"), _("Toggles the selected shape's transparency"))
         shapes.Append(ID_FOREGROUND, _("&Color..."), _("Change the selected shape's color"))
-        shapes.Append(ID_BACKGROUND, _("&Background &Color..."), _("Change the selected shape's background color"))
+        shapes.Append(ID_BACKGROUND, _("&Background Color..."), _("Change the selected shape's background color"))
         shapes.Append(ID_SWAP_COLOURS, _("Swap &Colors"), _("Swaps the foreground and background colors"))
 
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet") + "\tCtrl+W", _("Close the current sheet"))

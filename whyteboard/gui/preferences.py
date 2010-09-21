@@ -130,27 +130,11 @@ class Preferences(wx.Dialog):
         if self.config['bmp_select_transparent'] != old['bmp_select_transparent']:
             self.gui.canvas.copy = None
 
-        if self.config['toolbox_columns'] != old['toolbox_columns']:
-            ctrl.toolsizer.SetCols(self.config['toolbox_columns'])
-            ctrl.toolsizer.SetHGap(5)
-            ctrl.toolsizer.SetVGap(5)
-            wx.CallAfter(ctrl.toolsizer.Layout)
-
         if not self.config['tool_preview']:
             ctrl.preview.Hide()
         else:
             ctrl.preview.Show()
             pub.sendMessage('gui.preview.refresh')
-
-        if self.config['toolbox'] != old['toolbox']:
-            cols = 1
-            if self.config['toolbox'] != 'text':
-                cols = int(self.config['toolbox_columns'])
-
-            ctrl.toolsizer.Clear(True)
-            ctrl.toolsizer.SetCols(cols)
-            ctrl.make_toolbox(self.config['toolbox'])
-            ctrl.toolsizer.Layout()
 
         do = True
         if not self.config['colour_grid']:
@@ -411,9 +395,6 @@ class View(scrolled.ScrolledPanel):
         self.SetSizer(sizer)
         self.SetupScrolling(False, True)
 
-        radio1 = wx.RadioButton(self, label=" " + _("Icons"))
-        radio2 = wx.RadioButton(self, label=" " + _("Text"))
-        cols = wx.ComboBox(self, choices=('2', '3'), size=(60, -1), style=wx.CB_READONLY)
         self.width = wx.SpinCtrl(self, min=1, max=12000)
         self.height = wx.SpinCtrl(self, min=1, max=12000)
 
@@ -423,23 +404,14 @@ class View(scrolled.ScrolledPanel):
         preview = wx.CheckBox(self, label=_("Show the tool preview"))
         colour = wx.CheckBox(self, label=_("Show the color grid"))
 
-        label = wx.StaticText(self, label=_("Toolbox View:"))
-        cols_label = wx.StaticText(self, label=_("Number of Toolbox Columns:"))
         width = wx.StaticText(self, label=_("Default Canvas Width"))
         height = wx.StaticText(self, label=_("Default Canvas Height"))
 
-        font = label.GetFont()
+        font = width.GetFont()
         font.SetWeight(wx.FONTWEIGHT_BOLD)
-        label.SetFont(font)
         width.SetFont(font)
-        cols_label.SetFont(font)
         height.SetFont(font)
-        sizer.Add(label, 0, wx.ALL, 15)
 
-        if self.config['toolbox'] == 'icon':
-            radio1.SetValue(True)
-        else:
-            radio2.SetValue(True)
         if self.config['statusbar']:
             statusbar.SetValue(True)
         if self.config['toolbar']:
@@ -451,19 +423,9 @@ class View(scrolled.ScrolledPanel):
         if self.config['colour_grid']:
             colour.SetValue(True)
 
-        cols.SetValue(str(self.config['toolbox_columns']))
         self.width.SetValue(self.config['default_width'])
         self.height.SetValue(self.config['default_height'])
 
-        for x, btn in enumerate([radio1, radio2]):
-            sizer.Add(btn, 0, wx.LEFT, 30)
-            sizer.Add((10, 5))
-            method = lambda evt, _id = x: self.on_view(evt, _id)
-            btn.Bind(wx.EVT_RADIOBUTTON, method)
-
-        sizer.Add(cols_label, 0, wx.ALL, 15)
-        sizer.Add(cols, 0, wx.LEFT, 30)
-        sizer.Add((10, 15))
         sizer.Add(width, 0, wx.ALL, 15)
         sizer.Add(self.width, 0, wx.LEFT, 30)
         sizer.Add(height, 0, wx.ALL, 15)
@@ -476,7 +438,6 @@ class View(scrolled.ScrolledPanel):
         sizer.Add(colour, 0, wx.LEFT, 10)
         self.Scroll(0, 0)
 
-        cols.Bind(wx.EVT_COMBOBOX, self.on_columns)
         statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
         toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)
         title.Bind(wx.EVT_CHECKBOX, self.on_title)
@@ -488,9 +449,6 @@ class View(scrolled.ScrolledPanel):
 
     def on_statusbar(self, event):
         self.config['statusbar'] = event.Checked()
-
-    def on_columns(self, event):
-        self.config['toolbox_columns'] = int(event.GetEventObject().GetValue())
 
     def on_toolbar(self, event):
         self.config['toolbar'] = event.Checked()
@@ -509,13 +467,6 @@ class View(scrolled.ScrolledPanel):
 
     def on_height(self, event):
         self.config['default_height'] = self.height.GetValue()
-
-
-    def on_view(self, event, _id):
-        if _id == 0:
-            self.config['toolbox'] = 'icon'
-        else:
-            self.config['toolbox'] = 'text'
 
 
 #----------------------------------------------------------------------
