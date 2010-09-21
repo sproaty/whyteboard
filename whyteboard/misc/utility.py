@@ -121,7 +121,6 @@ class Utility(object):
         pub.subscribe(self.set_colour, 'change_colour')
         pub.subscribe(self.set_background, 'change_background')
 
-        tools.HANDLE_SIZE = self.config['handle_size']
         pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
         if 'default_font' in self.config:
             self.font = wx.FFont(1, 1)

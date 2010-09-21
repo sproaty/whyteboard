@@ -64,6 +64,7 @@ from whyteboard.misc import (get_home_dir, is_save_file, get_clipboard,
 _ = wx.GetTranslation
 PASTE_CHECK_COUNT = 7  # only check clipboard every x value of EVT_UPDATE_MENU
 SCROLL_AMOUNT = 3
+UNDO_SHEET_COUNT = 10
 
 #----------------------------------------------------------------------
 
@@ -598,7 +599,7 @@ class GUI(wx.Frame):
         """
         Creates an undo entry for a tab that's being closed
         """
-        if len(self.closed_tabs) == self.util.config['undo_sheets']:
+        if len(self.closed_tabs) == UNDO_SHEET_COUNT:
             del self.closed_tabs[0]
 
         item = {'shapes': canvas.shapes,

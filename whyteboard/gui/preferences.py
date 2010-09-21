@@ -56,7 +56,6 @@ class Preferences(wx.Dialog):
         self.tabs = wx.Notebook(self)
         params = [self.tabs, gui, self.config]
         self.tabs.AddPage(General(*params), _("General"))
-        self.tabs.AddPage(FontAndColours(*params), _("Fonts and Color"))
         self.tabs.AddPage(View(*params), _("View"))
         self.tabs.AddPage(PDF(*params), _("PDF Conversion"))
 
@@ -93,13 +92,6 @@ class Preferences(wx.Dialog):
             wx.MessageBox(_("Whyteboard will be translated into %s when restarted")
                           % _(self.config['language']), u"Whyteboard")
 
-        if self.config['handle_size'] != old['handle_size']:
-            pub.sendMessage('tools.set_handle_size', handle_size=self.config['handle_size'])
-
-        if self.config['canvas_border'] != old['canvas_border']:
-            pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
-
-
         if 'default_font' in self.config:
             if self.config['default_font'] and not self.gui.util.font:
                 self.gui.util.font = wx.FFont(1, 1)
@@ -119,12 +111,6 @@ class Preferences(wx.Dialog):
         self.config.write()
         self.gui.util.config = self.config
         ctrl = self.gui.control
-        x = self.config['undo_sheets']
-
-        if x < old['undo_sheets']:
-            del self.gui.closed_tabs[0:x]
-        if x != old['undo_sheets']:
-            self.gui.menu.make_closed_tabs_menu()
 
         if self.config['bmp_select_transparent'] != old['bmp_select_transparent']:
             self.gui.canvas.copy = None
@@ -170,83 +156,23 @@ class General(wx.Panel):
             self.SetBackgroundColour("White")
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
+        self.buttons = []
+        self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
 
         translated = [i[1] for i in meta.languages]
         translated.sort()
         self.lang = wx.ComboBox(self, choices=translated, style=wx.CB_READONLY, size=(240, 30))
         self.lang.Layout()
-
-        undo = wx.StaticText(self, label=_("Number of Recently Closed Sheets"))
-        self.undoctrl = wx.SpinCtrl(self, min=5, max=50)
-        handle = wx.StaticText(self, label=_("Selection Handle Size"))
-        self.handlectrl = wx.SpinCtrl(self, min=3, max=15)
-
-        border = wx.StaticText(self, label=_("Canvas Border"))
-        self.borderctrl = wx.SpinCtrl(self, min=10, max=35)
+        self.lang.SetValue(_(self.config['language']))
 
         langText = wx.StaticText(self, label=_("Choose Your Language:"))
+        labCol = wx.StaticText(self, label=_("Choose Your Custom Colors:"))
+        labFont = wx.StaticText(self, label=_("Default Font:"))
         font = langText.GetClassDefaultAttributes().font
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         langText.SetFont(font)
-        undo.SetFont(font)
-        handle.SetFont(font)
-        border.SetFont(font)
-
-        self.handlectrl.SetValue(self.config['handle_size'])
-        self.undoctrl.SetValue(self.config['undo_sheets'])
-        self.lang.SetValue(_(self.config['language']))
-        self.borderctrl.SetValue(self.config['canvas_border'])
-
-        self.lang.Bind(wx.EVT_COMBOBOX, self.on_lang)
-        self.undoctrl.Bind(wx.EVT_SPINCTRL, self.on_undo)
-        self.handlectrl.Bind(wx.EVT_SPINCTRL, self.on_handle)
-        self.borderctrl.Bind(wx.EVT_SPINCTRL, self.on_border)
-
-        sizer.Add(langText, 0, wx.ALL, 15)
-        sizer.Add(self.lang, 0, wx.LEFT, 30)
-        sizer.Add(undo, 0, wx.ALL, 15)
-        sizer.Add(self.undoctrl, 0, wx.LEFT, 30)
-        sizer.Add(handle, 0, wx.ALL, 15)
-        sizer.Add(self.handlectrl, 0, wx.LEFT, 30)
-        sizer.Add(border, 0, wx.ALL, 15)
-        sizer.Add(self.borderctrl, 0, wx.LEFT, 30)
-
-    def on_lang(self, event):
-        for lang in meta.languages:
-            if self.lang.GetValue() == lang[1]:
-                self.config['language'] = lang[0]  # english string
-
-
-    def on_undo(self, event):
-        self.config['undo_sheets'] = self.undoctrl.GetValue()
-
-    def on_handle(self, event):
-        self.config['handle_size'] = self.handlectrl.GetValue()
-
-    def on_border(self, event):
-        self.config['canvas_border'] = self.borderctrl.GetValue()
-
-#----------------------------------------------------------------------
-
-
-class FontAndColours(wx.Panel):
-    """
-    Allows the user to select their custom colours for the grid in the left pane
-    Their default font may be chosen, too
-
-    Pretty ugly code to  ensure that
-    """
-    def __init__(self, parent, gui, config):
-        wx.Panel.__init__(self, parent)
-        if os.name == "posix":
-            self.SetBackgroundColour("White")
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.gui = gui
-        self.parent = parent
-        self.config = config
-        self.SetSizer(sizer)
-        self.buttons = []
-        self.grid = wx.GridSizer(cols=3, hgap=2, vgap=2)
+        labCol.SetFont(font)
+        labFont.SetFont(font)
 
         colours = []
         for x in range(1, 10):
@@ -261,56 +187,47 @@ class FontAndColours(wx.Panel):
             b.Bind(wx.EVT_BUTTON, method)
             self.grid.Layout()
 
-        self.button = wx.Button(self, label=_("Select Font"))
-        self.button.Bind(wx.EVT_BUTTON, self.on_font)
+        self.fontBtn = wx.Button(self, label=_("Select Font"))
+        self.fontBtn.Bind(wx.EVT_BUTTON, self.on_font)
         font = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
         self.font = font  # the correct font, w/ right size
         self.size = font.GetPointSize()  # size to use regardless of font
-
-        labCol = wx.StaticText(self, label=_("Choose Your Custom Colors:"))
-        labFont = wx.StaticText(self, label=_("Default Font:"))
-        transparency = wx.CheckBox(self, label=wordwrap(_("Transparent Bitmap Select (may draw slowly)"), 350, wx.ClientDC(gui)))
-
-        new_font = labFont.GetClassDefaultAttributes().font
-        new_font.SetWeight(wx.FONTWEIGHT_BOLD)
-        labCol.SetFont(new_font)
-        labFont.SetFont(new_font)
-
-        if self.config['bmp_select_transparent']:
-            transparency.SetValue(True)
 
         if 'default_font' in self.config:
             f = wx.FFont(1, 1)
             f.SetNativeFontInfoFromString(self.config['default_font'])
             self.font = f
-            self.button.SetFont(f)
-            self.button.SetLabel(self.config['default_font'])
+            self.fontBtn.SetFont(f)
+            self.fontBtn.SetLabel(self.config['default_font'])
             if os.name == "nt":
                 self.font_label(f)
 
             f = wx.FFont(1, 1)
             f.SetNativeFontInfoFromString(self.config['default_font'])
             f.SetPointSize(self.size)
-            self.button.SetFont(f)
+            self.fontBtn.SetFont(f)
         else:
             if os.name == "nt":
                 self.font_label(self.font)
             else:
-                self.button.SetLabel(self.button.GetFont().GetNativeFontInfoDesc())
+                self.fontBtn.SetLabel(self.fontBtn.GetFont().GetNativeFontInfoDesc())
 
+        sizer.Add(langText, 0, wx.ALL, 15)
+        sizer.Add(self.lang, 0, wx.LEFT, 30)
+        sizer.Add((10, 15))
         sizer.Add(labCol, 0, wx.ALL, 15)
         sizer.Add(self.grid, 0, wx.LEFT | wx.BOTTOM, 30)
         sizer.Add(labFont, 0, wx.LEFT, 15)
         sizer.Add((10, 15))
-        sizer.Add(self.button, 0, wx.LEFT, 30)
-        sizer.Add((10, 25))
-        sizer.Add(transparency, 0, wx.LEFT, 15)
-        transparency.Bind(wx.EVT_CHECKBOX, self.on_transparency)
+        sizer.Add(self.fontBtn, 0, wx.LEFT, 30)
+        self.lang.Bind(wx.EVT_COMBOBOX, self.on_lang)
 
 
-    def on_transparency(self, event):
-        self.config['bmp_select_transparent'] = event.Checked()
 
+    def on_lang(self, event):
+        for lang in meta.languages:
+            if self.lang.GetValue() == lang[1]:
+                self.config['language'] = lang[0]  # english string
 
     def on_font(self, event):
         """
@@ -326,12 +243,12 @@ class FontAndColours(wx.Panel):
             if os.name == "nt":
                 self.font_label(font)
             else:
-                self.button.SetLabel(font.GetNativeFontInfoDesc())
+                self.fontBtn.SetLabel(font.GetNativeFontInfoDesc())
             self.font = font
 
             font2 = dlg.GetFontData().GetChosenFont()
             font2.SetPointSize(self.size)
-            self.button.SetFont(font2)
+            self.fontBtn.SetFont(font2)
             self.GetSizer().Layout()
 
             self.config['default_font'] = font.GetNativeFontInfoDesc()
@@ -353,7 +270,7 @@ class FontAndColours(wx.Panel):
         if style == wx.ITALIC:
             s = _("Italic")
 
-        self.button.SetLabel(u"%s %s %s %s" % (font.GetFaceName() , w, s, size))
+        self.fontBtn.SetLabel(u"%s %s %s %s" % (font.GetFaceName() , w, s, size))
 
 
     def on_colour(self, event, _id):
@@ -375,7 +292,6 @@ class FontAndColours(wx.Panel):
             self.grid.Layout()
 
         dlg.Destroy()
-
 
 #----------------------------------------------------------------------
 
@@ -401,6 +317,7 @@ class View(wx.Panel):
         title = wx.CheckBox(self, label=_("Show the title when printing"))
         preview = wx.CheckBox(self, label=_("Show the tool preview"))
         colour = wx.CheckBox(self, label=_("Show the color grid"))
+        transparency = wx.CheckBox(self, label=wordwrap(_("Transparent Bitmap Select (may draw slowly)"), 350, wx.ClientDC(gui)))
 
         width = wx.StaticText(self, label=_("Default Canvas Width"))
         height = wx.StaticText(self, label=_("Default Canvas Height"))
@@ -420,6 +337,8 @@ class View(wx.Panel):
             preview.SetValue(True)
         if self.config['colour_grid']:
             colour.SetValue(True)
+        if self.config['bmp_select_transparent']:
+            transparency.SetValue(True)
 
         self.width.SetValue(self.config['default_width'])
         self.height.SetValue(self.config['default_height'])
@@ -434,12 +353,15 @@ class View(wx.Panel):
         sizer.Add(title, 0, wx.LEFT | wx.BOTTOM, 10)
         sizer.Add(preview, 0, wx.LEFT | wx.BOTTOM, 10)
         sizer.Add(colour, 0, wx.LEFT, 10)
+        sizer.Add((10, 25))
+        sizer.Add(transparency, 0, wx.LEFT, 10)
 
         statusbar.Bind(wx.EVT_CHECKBOX, self.on_statusbar)
         toolbar.Bind(wx.EVT_CHECKBOX, self.on_toolbar)
         title.Bind(wx.EVT_CHECKBOX, self.on_title)
         preview.Bind(wx.EVT_CHECKBOX, self.on_preview)
         colour.Bind(wx.EVT_CHECKBOX, self.on_colour)
+
         self.width.Bind(wx.EVT_SPINCTRL, self.on_width)
         self.height.Bind(wx.EVT_SPINCTRL, self.on_height)
 
@@ -465,6 +387,8 @@ class View(wx.Panel):
     def on_height(self, event):
         self.config['default_height'] = self.height.GetValue()
 
+    def on_transparency(self, event):
+        self.config['bmp_select_transparent'] = event.Checked()
 
 #----------------------------------------------------------------------
 

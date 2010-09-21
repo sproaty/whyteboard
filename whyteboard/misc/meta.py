@@ -82,7 +82,6 @@ _langs = "'%s'" % "', '".join(str(x[0]) for x in languages)
 
 config_scheme = """
 bmp_select_transparent = boolean(default=False)
-canvas_border = integer(min=10, max=35, default=15)
 colour_grid = boolean(default=True)
 colour1 = list(min=3, max=3, default=list('280', '0', '0'))
 colour2 = list(min=3, max=3, default=list('255', '255', '0'))
@@ -98,14 +97,12 @@ default_font = string
 default_width = integer(min=1, max=12000, default=640)
 default_height = integer(min=1, max=12000, default=480)
 imagemagick_path = string
-handle_size = integer(min=3, max=15, default=6)
 language = option(""" + _langs + """)
 last_opened_dir = string
 print_title = boolean(default=True)
 statusbar = boolean(default=True)
 tool_preview = boolean(default=True)
 toolbar = boolean(default=True)
-undo_sheets = integer(min=5, max=50, default=10)
 """
 
 config_scheme = config_scheme.split("\n")

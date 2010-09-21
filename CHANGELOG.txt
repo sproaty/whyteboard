@@ -11,7 +11,8 @@ xx September 2010 - 0.41.2
 * Removed an ugly black line being drawn across the collapsible control panel's
   toggle button
 * Made escape key close all dialogs; added close buttons to dialogs where needed
-* Removed preferences "toolbox type" and "number of toolbox columns"
+* Removed preferences "toolbox type", "number of toolbox columns", "selection
+  handle size", "number of undo tabs" and "canvas border"
 
 
 ----------------------------------------------------------------------
