@@ -188,8 +188,8 @@ class OverlayShape(Tool):
         Avoids excess calls to make_pen - better performance
         """
         if not replay:
-            odc = wx.DCOverlay(self.canvas.overlay, dc)
-            odc.Clear()
+            overlay = wx.DCOverlay(self.canvas.overlay, dc)
+            overlay.Clear()
 
         self.make_pen(dc)  # Note object needs a DC to draw its outline here
         pen = wx.Pen(self.colour, self.thickness, wx.SOLID)
@@ -202,7 +202,7 @@ class OverlayShape(Tool):
         if self.selected:
             self.draw_selected(dc)
         if not replay:
-            del odc
+            del overlay
 
     def get_args(self):
         """The drawing arguments that this class uses to draw itself"""
@@ -229,8 +229,8 @@ class OverlayShape(Tool):
     def sort_handles(self):
         """Sets the shape's handles"""
         self.handles = []
-        for x in self.get_handles():
-            self.handles.append(wx.Rect(x[0], x[1], HANDLE_SIZE, HANDLE_SIZE))
+        for x, y in self.get_handles():
+            self.handles.append(wx.Rect(x, y, HANDLE_SIZE, HANDLE_SIZE))
 
 
     def handle_hit_test(self, x, y):
@@ -1010,8 +1010,8 @@ class Arrow(Line):
         From http://lifshitz.ucdavis.edu/~dmartin/teach_java/slope/arrows.html
         """
         if not replay:
-            odc = wx.DCOverlay(self.canvas.overlay, dc)
-            odc.Clear()
+            overlay = wx.DCOverlay(self.canvas.overlay, dc)
+            overlay.Clear()
         self.make_pen(dc)
         dc.SetPen(wx.Pen(self.colour, self.thickness))
         dc.SetBrush(self.brush)
@@ -1030,7 +1030,7 @@ class Arrow(Line):
         if self.selected:
             self.draw_selected(dc)
         if not replay:
-            del odc
+            del overlay
 
 
     def preview(self, dc, width, height):
@@ -1779,8 +1779,8 @@ class BitmapSelect(Rectangle):
 
     def draw(self, dc, replay=False):
         if not replay:
-            odc = wx.DCOverlay(self.canvas.overlay, dc)
-            odc.Clear()
+            overlay = wx.DCOverlay(self.canvas.overlay, dc)
+            overlay.Clear()
 
         if (not replay and self.canvas.gui.util.config['bmp_select_transparent']
             and meta.transparent):
@@ -1793,7 +1793,7 @@ class BitmapSelect(Rectangle):
         dc.DrawRectangle(*self.get_args())
 
         if not replay:
-            del odc
+            del overlay
 
 
     def left_up(self, x, y):

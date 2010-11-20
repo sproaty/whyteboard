@@ -36,7 +36,7 @@ from wx.lib.wordwrap import wordwrap as wordwrap
 from whyteboard.lib import pub
 
 from whyteboard.misc import (meta, create_colour_bitmap, get_time, file_dialog,
-                             get_image_path)
+                             get_image_path, create_bold_font)
 from whyteboard.gui import NotesPopup, ThumbsPopup
 
 _ = wx.GetTranslation
@@ -59,16 +59,16 @@ class ControlPanel(wx.Panel):
         """
         wx.Panel.__init__(self, gui, style=0 | wx.RAISED_BORDER)
 
-        cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE | wx.CP_NO_TLW_RESIZE)
-        self.pane = cp.GetPane()  # every widget's parent
+        pane = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE | wx.CP_NO_TLW_RESIZE)
+        self.pane = pane.GetPane()  # every widget's parent
         self.gui = gui
         self.tools = {}
         self.thickness_timer = None
         self.thickness_scrolling = False
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        csizer = wx.BoxSizer(wx.VERTICAL)
-        box = wx.BoxSizer(wx.VERTICAL)
+        collapsible_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.control_sizer = wx.BoxSizer(wx.VERTICAL)
         self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
         self.toolsizer = wx.GridSizer(cols=2, hgap=5, vgap=5)
 
@@ -83,29 +83,29 @@ class ControlPanel(wx.Panel):
 
         self.thickness.SetSelection(0)
         self.thickness.SetToolTipString(_("Sets the drawing thickness"))
-
         self.preview = DrawingPreview(self.pane, self.gui)
-        spacing = 4
 
-        box.AddMany([(self.toolsizer, 0, wx.ALIGN_CENTER | wx.ALL, spacing),
-                     ((5, 8)), (self.grid, 0, wx.EXPAND | wx.ALL, spacing),
-                     ((5, 8)), (colour, 0, wx.EXPAND | wx.ALL, spacing),
-                     ((5, 10)), (thickness, 0, wx.ALL | wx.ALIGN_CENTER, spacing),
-                     (self.thickness, 0, wx.EXPAND | wx.ALL, spacing),
-                     ((5, 5)), (self.preview, 0, wx.EXPAND | wx.ALL, spacing)])
-        csizer.Add(box, 1, wx.EXPAND)
-        sizer.Add(cp, 1, wx.EXPAND)
+        self.control_sizer.AddMany([
+                     (self.toolsizer, 0, wx.ALIGN_CENTER | wx.ALL, 4),
+                     ((5, 8)), (self.grid, 0, wx.EXPAND | wx.ALL, 4),
+                     ((5, 8)), (colour, 0, wx.EXPAND | wx.ALL, 4),
+                     ((5, 10)), (thickness, 0, wx.ALL | wx.ALIGN_CENTER, 4),
+                     (self.thickness, 0, wx.EXPAND | wx.ALL, 4),
+                     ((5, 5)), (self.preview, 0, wx.EXPAND | wx.ALL, 4)])
+        collapsible_sizer.Add(self.control_sizer, 1, wx.EXPAND)
+        sizer.Add(pane, 1, wx.EXPAND)
 
         self.SetSizer(sizer)
-        cp.GetPane().SetSizer(csizer)
-        cp.Expand()
-        self.control_sizer = box
+        self.pane.SetSizer(collapsible_sizer)
+        pane.Expand()
         self.background.Raise()
 
         if not self.gui.util.config['tool_preview']:
             self.preview.Hide()
         if not self.gui.util.config['colour_grid']:
-            box.Hide(self.grid)
+            self.control_sizer.Hide(self.grid)
+            
+        self.change_tool(_id=1)  # toggle pen
 
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
         self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
@@ -125,8 +125,8 @@ class ControlPanel(wx.Panel):
 
         self.background = csel.ColourSelect(parent, pos=(0, 30), size=(30, 30))
         self.background.SetValue("White")
-        swap = wx.BitmapButton(panel, bitmap=wx.Bitmap(get_image_path(u"icons", u"swap_colours")),
-                               pos=(70, 0), style=wx.NO_BORDER)
+        bmp = wx.Bitmap(get_image_path(u"icons", u"swap_colours"))
+        swap = wx.BitmapButton(panel, bitmap=bmp, pos=(70, 0), style=wx.NO_BORDER)
         self.transparent = wx.CheckBox(panel, label=_("Transparent"), pos=(0, 69))
         self.transparent.SetValue(True)
 
@@ -161,7 +161,7 @@ class ControlPanel(wx.Panel):
         self.preview.Refresh()
 
     def make_toolbox(self):
-        """Creates a toolbox made from toggleable text or icon buttons"""
+        """Creates a toolbox made from toggleable bitmap buttons"""
         items = [_(i.icon) for i in self.gui.util.items]
 
         for x, val in enumerate(items):
@@ -186,13 +186,13 @@ class ControlPanel(wx.Panel):
             colours.append([int(c) for c in col])
 
         for colour in colours:
-            method = lambda evt, col = colour: self.change_colour(evt, col)
-            method2 = lambda evt, col = colour: self.change_background(evt, col)
+            left_click = lambda evt, col = colour: self.change_colour(evt, col)
+            right_click = lambda evt, col = colour: self.change_background(evt, col)
 
             b = wx.BitmapButton(self.pane, bitmap=create_colour_bitmap(colour))
             self.grid.Add(b, 0)
-            b.Bind(wx.EVT_BUTTON, method)
-            b.Bind(wx.EVT_RIGHT_UP, method2)
+            b.Bind(wx.EVT_BUTTON, left_click)
+            b.Bind(wx.EVT_RIGHT_UP, right_click)
 
 
     def toggle(self, evt):
@@ -225,10 +225,10 @@ class ControlPanel(wx.Panel):
 
     def on_transparency(self, event):
         """Toggles transparency in the shapes' background"""
+        self.gui.util.transparent = False
+        
         if event.Checked() and not self.gui.canvas.selected:
             self.gui.util.transparent = True
-        else:
-            self.gui.util.transparent = False
 
         if self.gui.canvas.selected:
             self.gui.canvas.toggle_transparent()
@@ -237,13 +237,13 @@ class ControlPanel(wx.Panel):
 
     def on_swap(self, event):
         """Swaps foreground/background colours"""
-        a, b = self.get_background_colour(), self.get_colour()
-        self.background.SetColour(b)
-        self.colour.SetColour(a)
-
-        self.gui.util.colour = a
+        background, colour = self.get_background_colour(), self.get_colour()
+        self.background.SetColour(colour)
+        self.colour.SetColour(background)
+        self.gui.util.colour = background
+        
         if not self.transparent.IsChecked():
-            self.gui.util.background = a
+            self.gui.util.background = background
         pub.sendMessage('canvas.change_tool')
 
 
@@ -283,8 +283,8 @@ class ControlPanel(wx.Panel):
 
     def change_thickness(self, event=None):
         """
-        This uses a timer to know when a series of scroll events begin so we
-        don't add many undo points
+        This uses a timer to only create an undo point when the user first
+        changes the thickness and after mouse wheel scrolling has timed out
         """
         if not self.thickness_scrolling:
             self.thickness_scrolling = True
@@ -310,14 +310,13 @@ class DrawingPreview(wx.Window):
         """
         Stores gui reference to access utility colour/thickness attributes.
         """
-        wx.Window.__init__(self, pane)
+        wx.Window.__init__(self, pane, size=(45, 45))
         self.gui = gui
         self.SetBackgroundColour(wx.WHITE)
-        self.SetSize((45, 45))
         self.SetToolTipString(_("A preview of your current tool"))
-
+        
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        pub.subscribe(self.redraw, 'gui.preview.refresh')
+        pub.subscribe(self.Refresh, 'gui.preview.refresh')
 
 
     def on_paint(self, event=None):
@@ -326,23 +325,18 @@ class DrawingPreview(wx.Window):
         is changed
         """
         if self.gui.canvas:
+            width, height = self.GetClientSize()
             dc = wx.PaintDC(self)
             dc.SetPen(wx.Pen(self.gui.canvas.shape.colour, self.gui.canvas.shape.thickness, wx.SOLID))
+            dc.SetBrush(self.gui.canvas.shape.brush)
+            
             if self.gui.util.transparent:
                 dc.SetBrush(wx.TRANSPARENT_BRUSH)
-            else:
-                dc.SetBrush(self.gui.canvas.shape.brush)
 
-            width, height = self.GetClientSize()
             self.gui.canvas.shape.preview(dc, width, height)
-
             dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
-            width, height = self.GetClientSize()
             dc.DrawRectangle(0, 0, width, height)  # draw a border..
-
-    def redraw(self):
-        self.Refresh()
 
 #----------------------------------------------------------------------
 
@@ -360,12 +354,10 @@ class MediaPanel(wx.Panel):
         self.offset = (0, 0)
         self.directory = None
         self.mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
+        self.total_time = u""
         self.timer = wx.Timer(self)  # updates the slider as the file plays
         self.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
-        self.total = ""  # total time
-
-        self.file_drop = MediaDropTarget(self)
-        self.SetDropTarget(self.file_drop)
+        self.SetDropTarget(MediaDropTarget(self))
 
         self.open = wx.BitmapButton(self, bitmap=wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR))
         self.play = wx.BitmapButton(self, bitmap=wx.Bitmap(get_image_path(u"icons", u"play")))
@@ -397,9 +389,7 @@ class MediaPanel(wx.Panel):
         sizer.Add(self.volume, (5, 3), flag=wx.RIGHT, border=10)
         sizer.Add(self.slider, (6, 1), flag=wx.EXPAND)
         sizer.Add(timesizer, (7, 1), flag=wx.EXPAND | wx.BOTTOM, border=10)
-        self.SetSizer(sizer)
-        self.Layout()
-        self.Fit()
+        self.SetSizerAndFit(sizer)
 
         self.Bind(wx.media.EVT_MEDIA_LOADED, self.media_loaded)
         self.Bind(wx.media.EVT_MEDIA_STOP, self.media_stopped)
@@ -411,6 +401,7 @@ class MediaPanel(wx.Panel):
         self.Bind(wx.EVT_SLIDER, self.on_volume, self.volume)
         self.Bind(wx.EVT_LEFT_UP, self.left_up)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
+        self.slider.Bind(wx.EVT_LEFT_DOWN, self.slider_click)
         self.Bind(wx.EVT_MOTION, self.left_motion)
         self.Bind(wx.EVT_TIMER, self.on_timer)
         self.timer.Start(650)
@@ -432,6 +423,16 @@ class MediaPanel(wx.Panel):
         self.Layout()
 
 
+    def slider_click(self, event):
+        """
+        Jump the media's playing position to where the user clicked on the 
+        slider
+        """
+        print (event.X, event.Y), self.slider.HitTestXY(event.X, event.Y)
+        self.on_seek(None)
+        event.Skip()
+        
+        
     def left_motion(self, event):
         """Reposition the window with an offset"""
         if event.Dragging():
@@ -446,15 +447,13 @@ class MediaPanel(wx.Panel):
         """
         Display a file chooser window and try to load the file
         """
+        _dir = self.directory or u""
         vids = u"*.avi; *.mkv; *.mov; *.mpg; *ogg; *.wmv"
         audio = u"*.mp3; *.oga; *.ogg; *.wav"
-        wildcard = _("Media Files") + u" |%s;%s|" % (vids, audio)
-        wildcard += _("Video Files") + u" (%s)|%s|" % (vids, vids)
-        wildcard += _("Audio Files") + u" (%s)|%s" % (audio, audio)
-
-        _dir = u""
-        if self.directory:
-            _dir = self.directory
+        
+        wildcard = u"%s |%s;%s|" % (_("Media Files"), vids, audio)
+        wildcard += u"%s (%s)|%s|" % (_("Video Files"), vids, vids)
+        wildcard += u"%s (%s)|%s" % (_("Audio Files"), audio, audio)
 
         name = file_dialog(self, _("Choose a media file"), wx.OPEN, wildcard, _dir)
         if name:
@@ -464,17 +463,16 @@ class MediaPanel(wx.Panel):
     def do_load_file(self, path):
         """
         Loads a file from a given path, sets up instance variables and enables
-        and disabled buttons
+        and disables buttons
         """
         if not self.mc.Load(path):
             wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
-                         u"Whyteboard", wx.ICON_ERROR | wx.OK)
+                          u"Whyteboard", wx.ICON_ERROR | wx.OK)
             self.play.Disable()
             self.pause.Disable()
             self.stop.Disable()
-        else:
-            if os.name == "posix":
-                self.mc.Load(path)
+        elif os.name == "posix":
+            self.mc.Load(path)
         self.directory = path
         self.tool.filename = path
 
@@ -485,10 +483,10 @@ class MediaPanel(wx.Panel):
         of the file and updates the filename label
         """
         self.play.Enable()
-        self.total = get_time(self.mc.Length() / 1000)
+        self.total_time = get_time(self.mc.Length() / 1000)
         wordwrap(os.path.basename(self.tool.filename), 350, wx.ClientDC(self.gui))
         self.file.SetLabel(os.path.basename(self.tool.filename))
-        self.elapsed.SetLabel(u"00:00/" + self.total)
+        self.elapsed.SetLabel(u"00:00/" + self.total_time)
         self.mc.SetInitialSize()
         self.slider.SetRange(0, self.mc.Length())
         self.GetSizer().Layout()
@@ -503,7 +501,7 @@ class MediaPanel(wx.Panel):
         if self.mc.GetState() == wx.media.MEDIASTATE_PLAYING:
             offset = self.mc.Tell()
             self.slider.SetValue(offset)
-            self.elapsed.SetLabel(get_time(offset / 1000) + "/" + self.total)
+            self.elapsed.SetLabel(u"%s/%s" % (get_time(offset / 1000), self.total_time))
 
 
     def on_play(self, evt):
@@ -525,14 +523,14 @@ class MediaPanel(wx.Panel):
         if not ignore:
             self.mc.Stop()
         self.slider.SetValue(0)
-        self.elapsed.SetLabel(u"00:00/" + self.total)
+        self.elapsed.SetLabel(u"00:00/" + self.total_time)
         self.play.Enable()
         self.pause.Disable()
         self.stop.Disable()
 
     def on_seek(self, evt):
         self.mc.Seek(self.slider.GetValue())
-        self.elapsed.SetLabel(u"%s/%s" % (get_time(self.slider.GetValue() / 1000), self.total))
+        self.elapsed.SetLabel(u"%s/%s" % (get_time(self.slider.GetValue() / 1000), self.total_time))
 
     def on_volume(self, evt):
         self.mc.SetVolume(float(self.volume.GetValue() / 100))
@@ -559,23 +557,23 @@ class SidePanel(wx.Panel):
     """
     def __init__(self, gui):
         wx.Panel.__init__(self, gui, style=wx.RAISED_BORDER)
-        cp = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
+        collapsible = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE |
                                      wx.CP_NO_TLW_RESIZE)
 
-        self.tabs = wx.Notebook(cp.GetPane())
+        self.tabs = wx.Notebook(collapsible.GetPane())
         self.thumbs = Thumbs(self.tabs, gui)
         self.notes = Notes(self.tabs, gui)
         self.tabs.AddPage(self.thumbs, _("Thumbnails"))
         self.tabs.AddPage(self.notes, _("Notes"))
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        csizer = wx.BoxSizer(wx.VERTICAL)
-        csizer.Add(self.tabs, 1, wx.EXPAND)
-        sizer.Add(cp, 1, wx.EXPAND)
+        collapsible_pane_sizer = wx.BoxSizer(wx.VERTICAL)
+        collapsible_pane_sizer.Add(self.tabs, 1, wx.EXPAND)
+        sizer.Add(collapsible, 1, wx.EXPAND)
 
         self.SetSizer(sizer)
-        cp.GetPane().SetSizer(csizer)
-        cp.Expand()
+        collapsible.GetPane().SetSizer(collapsible_pane_sizer)
+        collapsible.Expand()
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
 
 
@@ -603,9 +601,10 @@ class Notes(wx.Panel):
         self.add_tab()
         self.tree.Expand(self.root)
 
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.tree, 1, wx.EXPAND)  # fills vert space
-        self.SetSizer(self.sizer)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.tree, 1, wx.EXPAND)  # fills vert space
+        self.SetSizer(sizer)
+        
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
         pub.subscribe(self.add_note, 'note.add')
@@ -614,17 +613,16 @@ class Notes(wx.Panel):
         pub.subscribe(self.sheet_moved, 'sheet.move')
         pub.subscribe(self.remove_current_sheet_items, 'note.delete_sheet_items')
 
+
     def add_tab(self, name=None):
         """Adds a new tab as a child to the root element"""
-        _id = len(self.tabs)
-        if not _id:
-            _id = 0
+        _id = len(self.tabs) or 0
         if not name:
-            name = _("Sheet") + u" %s" % (_id + 1)
+            name = u"%s %s" % (_("Sheet"), _id + 1)
 
         data = wx.TreeItemData(_id)
-        t = self.tree.AppendItem(self.root, name, data=data)
-        self.tabs.insert(_id, t)
+        tab = self.tree.AppendItem(self.root, name, data=data)
+        self.tabs.insert(_id, tab)
 
 
     def add_note(self, note, _id=None):
@@ -646,8 +644,8 @@ class Notes(wx.Panel):
         item = self.tabs[note]
         self.tree.DeleteChildren(item)
         self.tree.Delete(item)
-
         del self.tabs[note]
+        
         # now ensure all nodes are linked to the right tab
         for x in range(self.gui.current_tab, len(self.tabs)):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
@@ -830,7 +828,7 @@ class Thumbs(scrolled.ScrolledPanel):
                 memory.DrawRectangle(0, 0, 150, 150)
             memory.SelectObject(wx.NullBitmap)
 
-        btn = ThumbButton(self, _id, bmp, name)
+        btn = ThumbButton(self, _id, bmp)
         if not name:
             name = _("Sheet") + u" %s" % (_id + 1)
 
@@ -943,7 +941,7 @@ class ThumbButton(wx.BitmapButton):
     This class has an extra attribute, storing its related tab ID so that when
     the button is pressed, it can switch to the proper tab.
     """
-    def __init__(self, parent, _id, bitmap, name=None):
+    def __init__(self, parent, _id, bitmap):
         wx.BitmapButton.__init__(self, parent, size=(150, 150))
         self.thumb_id = _id
         self.parent = parent

@@ -41,7 +41,7 @@ import whyteboard.tools as tools
 from whyteboard.misc import meta
 from whyteboard.misc import (get_home_dir, bitmap_button, is_exe, extract_tar,
                        fix_std_sizer_tab_order, format_bytes, version_is_greater,
-                       get_image_path)
+                       get_image_path, create_bold_font)
 _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
@@ -595,8 +595,7 @@ class Feedback(wx.Dialog):
         btnSizer.AddButton(cancel_b)
         btnSizer.Realize()
 
-        font = t_lbl.GetClassDefaultAttributes().font
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font = create_bold_font()
         t_lbl.SetFont(font)
         email_label.SetFont(font)
 
@@ -657,8 +656,7 @@ class PromptForSave(wx.Dialog):
         top_message = wx.StaticText(self, label=_('Save changes to "%s" before closing?') % name)
         bottom_message = wx.StaticText(self, label=self.get_time())
 
-        font = top_message.GetClassDefaultAttributes().font
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font = create_bold_font()
         font.SetPointSize(font.GetPointSize() + 1)
         top_message.SetFont(font)
 
@@ -789,7 +787,7 @@ class Resize(wx.Dialog):
         sizer.Add(csizer, 0, gap, 7)
         sizer.Add((10, 15))
         sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
-        sizer.Add((10, 5))
+        sizer.Add((15, 5))
         self.SetSizer(sizer)
         self.SetFocus()
         self.SetEscapeId(cancelButton.GetId())
@@ -905,8 +903,8 @@ class ShapeViewer(wx.Dialog):
         Initialise and populate the listbox
         """
         wx.Dialog.__init__(self, gui, title=_("Shape Viewer"), size=(550, 400),
-                           style=wx.DEFAULT_DIALOG_STYLE | wx.MAXIMIZE_BOX |
-                           wx.RESIZE_BORDER | wx.WANTS_CHARS)
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.MINIMIZE_BOX |
+                           wx.MAXIMIZE_BOX | wx.RESIZE_BORDER | wx.WANTS_CHARS)
         self.gui = gui
         self.count = 0
         self.shapes = list(self.gui.canvas.shapes)
@@ -1152,8 +1150,7 @@ class PDFCacheDialog(wx.Dialog):
     """
     def __init__(self, gui, cache):
         wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"), size=(650, 300),
-                           style=wx.DEFAULT_DIALOG_STYLE | wx.MINIMIZE_BOX |
-                           wx.RESIZE_BORDER)
+                           style=wx.DEFAULT_DIALOG_STYLE |  wx.RESIZE_BORDER)
         self.cache = cache
         self.files = cache.entries()
         self.original_files = dict(cache.entries())
@@ -1278,7 +1275,6 @@ class AboutDialog(wx.Dialog):
     """
     def __init__(self, parent, info):
         wx.Dialog.__init__(self, parent, title=_("About Whyteboard"))
-        self.info = info
 
         image = wx.StaticBitmap(self, bitmap=icon.GetBitmap())
         name = wx.StaticText(self, label="%s %s" % (info.Name, info.Version))
@@ -1286,20 +1282,23 @@ class AboutDialog(wx.Dialog):
         copyright = wx.StaticText(self, label=info.Copyright)
         url = HyperLinkCtrl(self, label=info.WebSite[0], URL=info.WebSite[1])
 
-        font = name.GetClassDefaultAttributes().font
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font = create_bold_font()
         font.SetPointSize(18)
         name.SetFont(font)
 
-        credits = wx.Button(self, id=wx.ID_ABOUT, label=_("C&redits"))
-        license = wx.Button(self, label=_("&License"))
-        close = wx.Button(self, id=wx.ID_CLOSE, label=_("&Close"))
-
         btnSizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnSizer.Add(credits, flag=wx.CENTER | wx.LEFT | wx.RIGHT, border=5)
-        btnSizer.Add(license, flag=wx.CENTER | wx.RIGHT, border=5)
-        btnSizer.Add(close, flag=wx.CENTER | wx.RIGHT, border=5)
-
+        buttons = {_("C&redits"): (wx.ID_ABOUT, wx.LEFT | wx.RIGHT, 
+                                   lambda evt: CreditsDialog(self, info)),
+                  _("&License"): (wx.ID_ANY, wx.RIGHT, 
+                                   lambda evt: LicenseDialog(self, info.License)),
+                  _("&Close"): (wx.ID_CLOSE, wx.RIGHT, 
+                                   lambda evt: self.Destroy())}
+        
+        for label, values in buttons.items():
+            button = wx.Button(self, id=values[0], label=label)
+            button.Bind(wx.EVT_BUTTON, values[2] )
+            btnSizer.Add(button, flag=wx.CENTER | values[1], border=5)
+            
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(image, flag=wx.CENTER | wx.TOP | wx.BOTTOM, border=5)
         sizer.Add(name, flag=wx.CENTER | wx.BOTTOM, border=10)
@@ -1310,22 +1309,10 @@ class AboutDialog(wx.Dialog):
 
         container = wx.BoxSizer(wx.VERTICAL)
         container.Add(sizer, flag=wx.ALL, border=10)
-        self.SetSizer(container)
-        self.Layout()
-        self.Fit()
+        self.SetSizerAndFit(container)
         self.Centre()
         self.Show(True)
-        self.SetEscapeId(close.GetId())
-
-        credits.Bind(wx.EVT_BUTTON, self.on_credits)
-        license.Bind(wx.EVT_BUTTON, self.on_license)
-        close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
-
-    def on_license(self, event):
-        LicenseDialog(self, self.info.License)
-
-    def on_credits(self, event):
-        CreditsDialog(self, self.info)
+        self.SetEscapeId(wx.ID_CLOSE)
 
 
 #----------------------------------------------------------------------
@@ -1340,21 +1327,17 @@ class CreditsDialog(wx.Dialog):
         close = wx.Button(self, id=wx.ID_CLOSE, label=_("&Close"))
         close.SetDefault()
 
-        developer = wx.TextCtrl(notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
-        translators = wx.TextCtrl(notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
-
-        developer.SetValue(u'\n'.join(info.Developers))
-        translators.SetValue(u'\n'.join(info.Translators))
-
-        notebook.AddPage(developer, text=_("Written by"))
-        notebook.AddPage(translators, text=_("Translated by"))
-
-        btnSizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnSizer.Add(close)
+        labels = [_("Written by"), _("Translated by")]
+        texts = [info.Developers, info.Translators]
+        
+        for label, text in zip(labels, texts):
+            btn = wx.TextCtrl(notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
+            btn.SetValue(u"\n".join(text))
+            notebook.AddPage(btn, text=label)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(notebook, 1, wx.EXPAND | wx.ALL, 10)
-        sizer.Add(btnSizer, flag=wx.ALIGN_RIGHT | wx.RIGHT | wx.BOTTOM, border=10)
+        sizer.Add(close, flag=wx.ALIGN_RIGHT | wx.RIGHT | wx.BOTTOM, border=10)
         self.SetSizer(sizer)
         self.Layout()
         self.Show()
@@ -1376,12 +1359,9 @@ class LicenseDialog(wx.Dialog):
         ctrl = wx.TextCtrl(self, style=wx.TE_READONLY | wx.TE_MULTILINE)
         ctrl.SetValue(license)
 
-        btnSizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnSizer.Add(close)
-
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(ctrl, 1, wx.EXPAND | wx.ALL, 10)
-        sizer.Add(btnSizer, flag=wx.ALIGN_RIGHT | wx.RIGHT | wx.BOTTOM, border=10)
+        sizer.Add(close, flag=wx.ALIGN_RIGHT | wx.RIGHT | wx.BOTTOM, border=10)
         self.SetSizer(sizer)
         self.Layout()
         self.Show()

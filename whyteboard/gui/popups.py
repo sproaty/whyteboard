@@ -81,19 +81,18 @@ class Popup(wx.Menu):
     def close_all(self, event):
         self.gui.on_close_all_sheets()
 
+    def rename(self, event):
+        self.gui.on_rename(sheet=self.item)
+        
     def export(self, event):
         """
         Change canvas temporarily to 'trick' the gui into exporting the selected
-        tab. Then, restore the GUI to the correct one
+        tab. Then restore the GUI to the correct one
         """
-        canvas = self.gui.canvas  # reference to restore
+        canvas = self.gui.canvas
         self.gui.canvas = self.gui.tabs.GetPage(self.item)
         self.gui.on_export()
         self.gui.canvas = canvas
-
-    def rename(self, event):
-        self.gui.on_rename(sheet=self.item)
-
 
 #----------------------------------------------------------------------
 

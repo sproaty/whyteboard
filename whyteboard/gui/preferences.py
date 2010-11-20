@@ -37,7 +37,7 @@ from wx.lib.wordwrap import wordwrap as wordwrap
 
 from whyteboard.gui import FindIM
 from whyteboard.lib import pub
-from whyteboard.misc import meta, create_colour_bitmap
+from whyteboard.misc import meta, create_colour_bitmap, create_bold_font
 
 _ = wx.GetTranslation
 
@@ -97,12 +97,10 @@ class Preferences(wx.Dialog):
                 self.gui.util.font = wx.FFont(1, 1)
                 self.gui.util.font.SetNativeFontInfoFromString(self.config['default_font'])
 
-        # view toggles/menu. do the colour grid later
-        keys = ['statusbar', 'toolbar', 'tool_preview']
-
-        for x in keys:
-            method = getattr(self.gui, "on_" + x)
-            if self.config[x]:
+        # Toggles the items under "View" menu. Ignore the colour grid for now
+        for menu_item in ['statusbar', 'toolbar', 'tool_preview']:
+            method = getattr(self.gui, "on_" + menu_item)
+            if self.config[menu_item]:
                 method(None, True)
             else:
                 method(None, False)
@@ -110,27 +108,23 @@ class Preferences(wx.Dialog):
 
         self.config.write()
         self.gui.util.config = self.config
-        ctrl = self.gui.control
 
         if self.config['bmp_select_transparent'] != old['bmp_select_transparent']:
             self.gui.canvas.copy = None
 
         if not self.config['tool_preview']:
-            ctrl.preview.Hide()
+            self.gui.control.preview.Hide()
         else:
-            ctrl.preview.Show()
+            self.gui.control.preview.Show()
             pub.sendMessage('gui.preview.refresh')
 
-        do = True
-        if not self.config['colour_grid']:
-            do = False
-        wx.CallAfter(self.gui.on_colour_grid, None, do)
+        wx.CallAfter(self.gui.on_colour_grid, None, self.config['colour_grid'])
 
-        #  too lazy to check if each colour has changed - just remake it all
+        #  too lazy to check if each colour has changed - just remake it
         self.gui.canvas.redraw_all()
-        ctrl.grid.Clear(True)
-        ctrl.make_colour_grid()
-        ctrl.grid.Layout()
+        self.gui.control.grid.Clear(True)
+        self.gui.control.make_colour_grid()
+        self.gui.control.grid.Layout()
         self.Destroy()
 
 
@@ -168,15 +162,13 @@ class General(wx.Panel):
         langText = wx.StaticText(self, label=_("Choose Your Language:"))
         labCol = wx.StaticText(self, label=_("Choose Your Custom Colors:"))
         labFont = wx.StaticText(self, label=_("Default Font:"))
-        font = langText.GetClassDefaultAttributes().font
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        langText.SetFont(font)
-        labCol.SetFont(font)
-        labFont.SetFont(font)
+        langText.SetFont(create_bold_font())
+        labCol.SetFont(create_bold_font())
+        labFont.SetFont(create_bold_font())
 
         colours = []
         for x in range(1, 10):
-            col = self.config["colour" + str(x)]
+            col = self.config["colour%s" % x]
             colours.append([int(c) for c in col])
 
         for x, colour in enumerate(colours):
@@ -317,15 +309,13 @@ class View(wx.Panel):
         title = wx.CheckBox(self, label=_("Show the title when printing"))
         preview = wx.CheckBox(self, label=_("Show the tool preview"))
         colour = wx.CheckBox(self, label=_("Show the color grid"))
-        transparency = wx.CheckBox(self, label=wordwrap(_("Transparent Bitmap Select (may draw slowly)"), 350, wx.ClientDC(gui)))
+        transparency = wx.CheckBox(self, label=wordwrap(_("Transparent Bitmap Select (may draw slowly)"), 350, wx.ClientDC(self)))
 
         width = wx.StaticText(self, label=_("Default Canvas Width"))
         height = wx.StaticText(self, label=_("Default Canvas Height"))
 
-        font = width.GetFont()
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        width.SetFont(font)
-        height.SetFont(font)
+        width.SetFont(create_bold_font())
+        height.SetFont(create_bold_font())
 
         if self.config['statusbar']:
             statusbar.SetValue(True)
@@ -409,28 +399,29 @@ class PDF(wx.Panel):
 
         label = wx.StaticText(self, label=_("Conversion Quality:"))
         note = wx.StaticText(self, label=wordwrap(_("Note: Higher quality takes longer to convert"), 350, wx.ClientDC(gui)))
-
-        radio1 = wx.RadioButton(self, label=_("Highest"))
-        radio2 = wx.RadioButton(self, label=_("High"))
-        radio3 = wx.RadioButton(self, label=_("Normal"))
-
-        font = label.GetFont()
-        font.SetWeight(wx.FONTWEIGHT_BOLD)
-        label.SetFont(font)
+        label.SetFont(create_bold_font())
         sizer.Add(label, 0, wx.ALL, 15)
+        
+        buttons = {'highest': _("Highest"),
+                   'high': _("High"),
+                   'normal': _("Normal")}
 
-        for x, btn in enumerate([radio1, radio2, radio3]):
+        for key, value in buttons.items():
+            btn = wx.RadioButton(self, label=value)
             sizer.Add(btn, 0, wx.LEFT, 30)
             sizer.Add((10, 5))
-            method = lambda evt, _id = x: self.on_quality(evt, _id)
+            method = lambda evt, x=key: self.on_quality(evt, x)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
+            
+            if self.config['convert_quality'] == key:
+                btn.SetValue(True)
 
         sizer.Add((10, 10))
         sizer.Add(note, 0, wx.LEFT | wx.BOTTOM, 30)
 
         if os.name == "nt":
             label_im = wx.StaticText(self, label=_("ImageMagick Location"))
-            label_im.SetFont(font)
+            label_im.SetFont(create_bold_font())
             self.im_button = wx.Button(self)
             self.im_button.Bind(wx.EVT_BUTTON, self.on_im)
             self.set_im_button()
@@ -440,22 +431,8 @@ class PDF(wx.Panel):
             sizer.Add(self.im_button, 0, wx.LEFT, 30)
 
 
-        if self.config['convert_quality'] == 'highest':
-            radio1.SetValue(True)
-        if self.config['convert_quality'] == 'high':
-            radio2.SetValue(True)
-        if self.config['convert_quality'] == 'normal':
-            radio3.SetValue(True)
-
-
-
-    def on_quality(self, event, _id):
-        if _id == 0:
-            self.config['convert_quality'] = 'highest'
-        elif _id == 1:
-            self.config['convert_quality'] = 'high'
-        else:
-            self.config['convert_quality'] = 'normal'
+    def on_quality(self, event, value):
+        self.config['convert_quality'] = value
 
 
     def set_im_button(self):

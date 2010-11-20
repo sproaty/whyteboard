@@ -454,10 +454,9 @@ class GUI(wx.Frame):
         wildcard = (u"PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
                     u"BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
 
-        dlg = wx.FileDialog(self, _("Export data to..."),
-                            style=wx.SAVE | wx.OVERWRITE_PROMPT, wildcard=wildcard)
-        if dlg.ShowModal() == wx.ID_OK:
-            filename = dlg.GetPath()
+        filename = file_dialog(self, _("Export data to..."), 
+                           wx.SAVE | wx.OVERWRITE_PROMPT, wildcard)
+        if filename:
             _name = os.path.splitext(filename)[1].replace(u".", u"")
             types = {0: u"png", 1: u"jpg", 2: u"bmp", 3: u"tiff"}
 
@@ -466,11 +465,10 @@ class GUI(wx.Frame):
                 filename += u"." + _name
                 val = filename
             if not _name in meta.types[2:]:
-                wx.MessageBox(_("Invalid filetype to export as:") + u" .%s" % _name,
+                wx.MessageBox(u"%s .%s" % (_("Invalid filetype to export as:"), _name),
                               u"Whyteboard")
             else:
                 val = filename
-        dlg.Destroy()
         return val
 
 
@@ -483,7 +481,7 @@ class GUI(wx.Frame):
         if not wb:
             self.tab_total += 1
         if not name:
-            name = _("Sheet") + u" %s" % self.tab_total
+            name = u"%s %s" % (_("Sheet"), self.tab_total)
 
         self.tab_count += 1
         self.thumbs.new_thumb(name=name)
@@ -691,7 +689,8 @@ class GUI(wx.Frame):
         It uses a counter for the clipboard check as it can be too performance
         intense and cause segmentation faults
         """
-        if not self.canvas:
+        canvas = self.canvas
+        if not canvas:
             return
         _id = event.GetId()
 
@@ -709,8 +708,6 @@ class GUI(wx.Frame):
                 except wx.PyDeadObjectError:
                     pass
             return
-
-        canvas = self.canvas
 
         if _id == ID_TRANSPARENT:
             if canvas.can_swap_transparency():

@@ -268,6 +268,14 @@ def fix_std_sizer_tab_order(sizer):
         buttons[1].MoveAfterInTabOrder(buttons[0])
 
 
+def create_bold_font():
+    """
+    Returns a bold font
+    """
+    font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+    font.SetWeight(wx.FONTWEIGHT_BOLD)
+    return font
+        
 def format_bytes(total):
     """
     Turn an amount of byte into readable KB/MB format

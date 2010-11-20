@@ -121,7 +121,6 @@ class Utility(object):
         pub.subscribe(self.set_colour, 'change_colour')
         pub.subscribe(self.set_background, 'change_background')
 
-        pub.sendMessage('canvas.set_border', border_size=self.config['canvas_border'])
         if 'default_font' in self.config:
             self.font = wx.FFont(1, 1)
             self.font.SetNativeFontInfoFromString(self.config['default_font'])
@@ -169,7 +168,7 @@ class Utility(object):
         save.save_items()
         data = save.create_save_list(self.gui.current_tab, version)
 
-        with open("save.data", 'wb') as f:
+        with open(os.path.join(get_home_dir(), "save.data"), 'wb') as f:
             try:
                 pickle.dump(data, f)
             except pickle.PickleError:
