@@ -1205,7 +1205,7 @@ class Text(OverlayShape):
         self.y = y
         pub.sendMessage('text.show_dialog', text=self.text)
 
-        if not self.canvas.text:
+        if not self.canvas.text or not self.font:
             return False
 
         self.font_data = self.font.GetNativeFontInfoDesc()
