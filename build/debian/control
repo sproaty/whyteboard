@@ -13,4 +13,4 @@ Homepage: https://launchpad.net/whyteboard
 Package: whyteboard
 Architecture: all
 Depends: python (>=2.5.2), python-wxgtk2.8
-Description: A simple whiteboard and PDF annotation program. Features tabbed drawing, text input, multiple languages and is easy to use
+Description: A painting application that is suited towards creating visual presentations and for overlaying PDF images with annotations
