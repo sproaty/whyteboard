@@ -28,10 +28,10 @@ from whyteboard.misc import meta
 
 files = ["zip", "tar.gz",]
 
-output = "0.41.1"
+output = meta.version
 
 for _file in files:
-    _file = "whyteboard-%s.%s" % ("0.41.1", _file)
+    _file = "whyteboard-%s.%s" % (meta.version, _file)
     output += "\n%s\n%s" % (_file, os.path.getsize(os.path.abspath(_file)))
 
 f = file("latest", "w")
