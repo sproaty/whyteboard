@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2009, 2010 by Steven Sproat
+# Copyright (c) 2009-2011 by Steven Sproat
 #
 # GNU General Public Licence (GPL)
 #
