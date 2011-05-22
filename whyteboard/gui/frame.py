@@ -454,7 +454,7 @@ class GUI(wx.Frame):
         wildcard = (u"PNG (*.png)|*.png|JPEG (*.jpg, *.jpeg)|*.jpeg;*.jpg|" +
                     u"BMP (*.bmp)|*.bmp|TIFF (*.tiff)|*.tiff")
 
-        filename = file_dialog(self, _("Export data to..."), 
+        filename = file_dialog(self, _("Export data to..."),
                            wx.SAVE | wx.OVERWRITE_PROMPT, wildcard)
         if filename:
             _name = os.path.splitext(filename)[1].replace(u".", u"")
@@ -1185,7 +1185,7 @@ class GUI(wx.Frame):
         inf = wx.AboutDialogInfo()
         inf.Name = u"Whyteboard"
         inf.Version = meta.version
-        inf.Copyright = u"© 2009-2010 Steven Sproat"
+        inf.Copyright = u"© 2009-2011 Steven Sproat"
         inf.Description = _("A simple whiteboard and PDF annotator")
         inf.Developers = [u"Steven Sproat <sproaty@gmail.com>"]
         inf.Translators = meta.translators
