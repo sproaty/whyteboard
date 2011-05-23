@@ -9,14 +9,15 @@ start menu. If you have the stand-alone exe, please run whyteboard.exe
 
 To run Whyteboard from source, here are the requirements:
 
-* Python - 2.5, 2.6, 2.7 (untested on other major versions; should work on 2.4)
-  Whyteboard does not work with Python 3
+* Python - 2.5, 2.6 (untested on other versions)
+  Note: Whyteboard does not work with Python 3
 
 http://www.python.org/download
 
-* wxPython - the latest version is -always- recommended (currently 2.8.11.0).
+* wxPython - 2.8.9.0 at minimum
+  Getting the latest version is recommended (currently 2.8.11.0).
   You will want the unicode build.
-  wxPython 2.8.9.0 needed at minimum
+  Untested on wxPython 2.9.x
 
 http://www.wxpython.org/download.php
 
@@ -28,18 +29,17 @@ http://pages.cs.wisc.edu/~ghost/ - Windows users may need this for ImageMagick
 ***
 
 Run whyteboard.py to launch the application. If nothing happens, try executing
-the following command from the console/terminals:
+the following command from a terminal/command prompt:
 
 python whyteboard.py
 
-A bunch of errors should be printed - let me know at, <sproaty@gmail.com>, or
+A bunch of errors should be printed - paste it to me at <sproaty@gmail.com> or
 report a bug through Launchpad at https://bugs.launchpad.net/whyteboard
 
-
 If a bug occurs while the program is running, the built-in error reporter will
-appear. Use this to send me an e-mail directly, which will contain relevant
-system information and a log of the error. This is the best method to report
-errors. Please fill in as much detail about what you were doing so that I can
+appear. Please use this to send me an e-mail containong relevant system
+information and a log of the error. This is the best method to report errors.
+Please fill in as much detail about what you were doing so that I can
 reproduce the error.
 Giving your e-mail address will allow me to get back in touch with you to follow
 up on the bug, and to confirm a fix.

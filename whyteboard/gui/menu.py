@@ -254,18 +254,17 @@ class Menu(object):
         """
         Recreates the undo tab menu
         """
-        gui = self.gui
         for menu in self.closed_tabs_menu.GetMenuItems():
             self.closed_tabs_menu.Remove(menu.GetId())
-            gui.Unbind(wx.EVT_MENU, id=menu.GetId())
+            self.gui.Unbind(wx.EVT_MENU, id=menu.GetId())
 
-        for x, tab in enumerate(reversed(gui.closed_tabs)):
+        for x, tab in enumerate(reversed(self.gui.closed_tabs)):
             _id = wx.NewId()
             name = tab['name']
             self.closed_tabs_menu.Append(_id, u"&%i: %s" % (x + 1, name),
                                          _('Restore sheet "%s"') % name)
             func = lambda evt, tab=tab: self.gui.on_undo_tab(tab=tab)
-            gui.Bind(wx.EVT_MENU, func, id=_id)
+            self.gui.Bind(wx.EVT_MENU, func, id=_id)
 
 
     def toggle_fullscreen(self, value):

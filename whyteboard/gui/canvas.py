@@ -433,6 +433,7 @@ class Canvas(wx.ScrolledWindow):
         wx.Yield()
         self.resize(size)
         self.Scroll(viewport[0], viewport[1])
+        self.redraw_all()
         pub.sendMessage('thumbs.update_current')
 
 

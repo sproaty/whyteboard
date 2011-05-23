@@ -14,6 +14,8 @@ xx xxxxx 2011 - 0.41.2
 * Removed preferences "toolbox type", "number of toolbox columns", "selection
   handle size", "number of undo tabs" and "canvas border"
 
+* Bugfix: crash when creating Text/Notes with no text content.
+* Bugfix: Highlighter objects were not being re-drawn when undoing a closed tab
 
 ----------------------------------------------------------------------
 

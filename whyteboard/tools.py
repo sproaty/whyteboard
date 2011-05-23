@@ -221,13 +221,16 @@ class OverlayShape(Tool):
         self.motion(x, y)
 
     def move(self, x, y, offset):
-        """Being moved with Select. Offset is to keep the cursor centered"""
+        """
+        Shape is being moved by the Select tool.
+        Offset is to keep the cursor centered on where the user clicked.
+        """
         self.x = x - offset[0]
         self.y = y - offset[1]
 
 
     def sort_handles(self):
-        """Sets the shape's handles"""
+        """Updates the shape's handles"""
         self.handles = []
         for x, y in self.get_handles():
             self.handles.append(wx.Rect(x, y, HANDLE_SIZE, HANDLE_SIZE))
