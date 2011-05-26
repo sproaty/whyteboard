@@ -275,7 +275,7 @@ def create_bold_font():
     font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
     font.SetWeight(wx.FONTWEIGHT_BOLD)
     return font
-        
+
 def format_bytes(total):
     """
     Turn an amount of byte into readable KB/MB format
@@ -298,6 +298,8 @@ def get_version_int(version):
     Turns a version string like 0.40.2 into [0, 40, 2]
     """
     num = [int(x) for x in version.split(u".")]
+    if len(num) == 1:
+        num.append(0)
     if len(num) == 2:
         num.append(0)
     return num
@@ -310,8 +312,18 @@ def version_is_greater(version1, version2):
     a = get_version_int(version1)
     b = get_version_int(version2)
 
-    return b[1] < a[1] or (b[1] == a[1] and b[2] < a[2])
+    return a[0] > b[0] or a[1] > b[1] or a[2] > b[2]
 
+def versions_are_equal(version1, version2):
+    a = get_version_int(version1)
+    b = get_version_int(version2)
+
+    return a[0] == b[0] and a[1] == b[1] and a[2] == b[2]
+
+def is_new_version(current, new):
+    """Whether the new version is an upgrade from the current"""
+    return (not versions_are_equal(current, new)
+            and not version_is_greater(current, new))
 
 def download_help_files(path):
     """

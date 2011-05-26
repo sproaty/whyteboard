@@ -22,7 +22,8 @@ import os
 import wx
 
 from whyteboard.misc import (get_version_int, version_is_greater, get_wx_image_type,
-                       get_time, format_bytes, convert_quality, is_save_file)
+                       get_time, format_bytes, convert_quality, is_save_file,
+                       versions_are_equal, is_new_version)
 import whyteboard.misc.functions as functions
 
 #----------------------------------------------------------------------
@@ -32,19 +33,40 @@ class TestFunctions:
 
     def test_get_version_int(self):
         """A list with the correct version is returned from a string"""
+        assert get_version_int("1") == [1, 0, 0]
         assert get_version_int("0.4") == [0, 4, 0]
         assert get_version_int("0.4.0") == [0, 4, 0]
 
 
     def test_version_is_greater(self):
         """Ensuring certain versions are greater than one another"""
-        assert version_is_greater("0.4", "0.4.0") == False
+        assert version_is_greater("1.0.1", "1") == True
+        assert version_is_greater("1.0.1", "1.0") == True
+        assert version_is_greater("1.0.0", "1") == False
+        assert version_is_greater("1.0", "1") == False
+        assert version_is_greater("0.42", "0.41.1") == True
+        assert version_is_greater("0.4.1", "0.4") == True
+        assert version_is_greater("0.4.15", "0.4.1") == True
+        assert version_is_greater("0.4.0", "0.4") == False
         assert version_is_greater("0.4.0", "0.4.0") == False
-        assert version_is_greater("0.4", "0.4.1") == False
-        assert version_is_greater("0.4.1", "0.4.15") == False
-        assert version_is_greater("0.4.1", "0.3") == True
-        assert version_is_greater("0.3.1", "0.3") == True
 
+    def test_version_is_equal(self):
+        """Ensuring certain versions are greater than one another"""
+        assert versions_are_equal("0.4.0", "0.4") == True
+        assert versions_are_equal("0.4.1", "0.4") == False
+        assert versions_are_equal("1.0.0", "1") == True
+        assert versions_are_equal("1.0.1", "1") == False
+        assert versions_are_equal("1.3", "0.3") == False
+        assert versions_are_equal("0.4.0", "0.4.1") == False
+        assert versions_are_equal("0.4.1", "0.4.15") == False
+        assert versions_are_equal("0.4.1", "0.3") == False
+
+    def test_is_new_version(self):
+        """Checking versions trigger an update"""
+        assert is_new_version("0.41.0", "0.41.1") == True
+        assert is_new_version("0.41", "0.41.0") == False
+        assert is_new_version("0.41.0", "0.42") == True
+        assert is_new_version("0.41.1", "0.41.1") == False
 
     def test_get_image_path(self):
         """

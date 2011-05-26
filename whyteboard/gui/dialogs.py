@@ -40,7 +40,7 @@ import whyteboard.tools as tools
 
 from whyteboard.misc import meta
 from whyteboard.misc import (get_home_dir, bitmap_button, is_exe, extract_tar,
-                       fix_std_sizer_tab_order, format_bytes, version_is_greater,
+                       fix_std_sizer_tab_order, format_bytes, is_new_version,
                        get_image_path, create_bold_font)
 _ = wx.GetTranslation
 
@@ -312,7 +312,7 @@ class UpdateDialog(wx.Dialog):
         f.close()
         self.new_version = html[0]
 
-        if version_is_greater(meta.version, self.new_version):
+        if not is_new_version(meta.version, self.new_version):
             self.text.SetLabel(_("You are running the latest version."))
             return
 
@@ -380,7 +380,6 @@ class UpdateDialog(wx.Dialog):
 
         self.text2.SetLabel(_("Downloaded %s of %s") %
                             (format_bytes(self.downloaded), format_bytes(total)))
-
 
 #----------------------------------------------------------------------
 
@@ -1287,18 +1286,18 @@ class AboutDialog(wx.Dialog):
         name.SetFont(font)
 
         btnSizer = wx.BoxSizer(wx.HORIZONTAL)
-        buttons = {_("C&redits"): (wx.ID_ABOUT, wx.LEFT | wx.RIGHT, 
+        buttons = {_("C&redits"): (wx.ID_ABOUT, wx.LEFT | wx.RIGHT,
                                    lambda evt: CreditsDialog(self, info)),
-                  _("&License"): (wx.ID_ANY, wx.RIGHT, 
+                  _("&License"): (wx.ID_ANY, wx.RIGHT,
                                    lambda evt: LicenseDialog(self, info.License)),
-                  _("&Close"): (wx.ID_CLOSE, wx.RIGHT, 
+                  _("&Close"): (wx.ID_CLOSE, wx.RIGHT,
                                    lambda evt: self.Destroy())}
-        
+
         for label, values in buttons.items():
             button = wx.Button(self, id=values[0], label=label)
             button.Bind(wx.EVT_BUTTON, values[2] )
             btnSizer.Add(button, flag=wx.CENTER | values[1], border=5)
-            
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(image, flag=wx.CENTER | wx.TOP | wx.BOTTOM, border=5)
         sizer.Add(name, flag=wx.CENTER | wx.BOTTOM, border=10)
@@ -1329,7 +1328,7 @@ class CreditsDialog(wx.Dialog):
 
         labels = [_("Written by"), _("Translated by")]
         texts = [info.Developers, info.Translators]
-        
+
         for label, text in zip(labels, texts):
             btn = wx.TextCtrl(notebook, style=wx.TE_READONLY | wx.TE_MULTILINE)
             btn.SetValue(u"\n".join(text))
