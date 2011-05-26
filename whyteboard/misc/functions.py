@@ -305,6 +305,9 @@ def get_version_int(version):
     return num
 
 
+def versions_are_equal(version1, version2):
+    return get_version_int(version1) == get_version_int(version2)
+
 def version_is_greater(version1, version2):
     """
     Checks whether the first version is greater than the 2nd
@@ -313,12 +316,6 @@ def version_is_greater(version1, version2):
     b = get_version_int(version2)
 
     return a[0] > b[0] or a[1] > b[1] or a[2] > b[2]
-
-def versions_are_equal(version1, version2):
-    a = get_version_int(version1)
-    b = get_version_int(version2)
-
-    return a[0] == b[0] and a[1] == b[1] and a[2] == b[2]
 
 def is_new_version(current, new):
     """Whether the new version is an upgrade from the current"""
