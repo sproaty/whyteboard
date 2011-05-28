@@ -51,7 +51,7 @@ class History(wx.Dialog):
     Creates a history replaying dialog and methods for its functionality
     """
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui, title=_("History Player"))
+        wx.Dialog.__init__(self, gui, title=_("History Player"), size=(225, 120))
         self.gui = gui
         self.looping = False
         self.paused = False
@@ -72,7 +72,7 @@ class History(wx.Dialog):
         sizer.Add((10, 5))
         sizer.Add(closeButton, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 13)
         self.SetSizer(sizer)
-        self.Fit()
+        #self.Fit()
         self.SetEscapeId(closeButton.GetId())
         self.SetFocus()
         self.toggle_buttons()

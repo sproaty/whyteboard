@@ -60,24 +60,26 @@ dialog_wildcard = u'|'.join(wc_list)
 transparent = True
 version = u"0.41.2"
 backup_extension = u".blah5bl8ah123bla6h"
-languages = ( (u"English", _("English"), wx.LANGUAGE_ENGLISH),
-              (u"English (U.K.)", _("English (U.K.)"), wx.LANGUAGE_ENGLISH_UK),
-              (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
-              (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
-              (u"Occitan (post 1500)", _("Occitan (post 1500)"), wx.LANGUAGE_OCCITAN),
-              (u"Dutch", _("Dutch"), wx.LANGUAGE_DUTCH),
-              (u"German", _("German"), wx.LANGUAGE_GERMAN),
-              (u"Russian", _("Russian"), wx.LANGUAGE_RUSSIAN),
+languages = (
               (u"Arabic", _("Arabic"), wx.LANGUAGE_ARABIC),
-              (u"Hindi", _("Hindi"), wx.LANGUAGE_HINDI),
-              (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
-              (u"French", _("French"), wx.LANGUAGE_FRENCH),
-              (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
+              (u"Catalan", _("Catalan"), wx.LANGUAGE_CATALAN),
               (u"Chinese (Traditional)", _("Chinese (Traditional)"), wx.LANGUAGE_CHINESE_TRADITIONAL),
               (u"Czech", _("Czech"), wx.LANGUAGE_CZECH),
+              (u"Dutch", _("Dutch"), wx.LANGUAGE_DUTCH),
+              (u"English", _("English"), wx.LANGUAGE_ENGLISH),
+              (u"English (U.K.)", _("English (U.K.)"), wx.LANGUAGE_ENGLISH_UK),
+              (u"French", _("French"), wx.LANGUAGE_FRENCH),
+              (u"Galician", _("Galician"), wx.LANGUAGE_GALICIAN),
+              (u"German", _("German"), wx.LANGUAGE_GERMAN),
+              (u"Hindi", _("Hindi"), wx.LANGUAGE_HINDI),
               (u"Italian", _("Italian"), wx.LANGUAGE_ITALIAN),
-              (u"Galician", _("Galician"), wx.LANGUAGE_GALICIAN) )
-
+              (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
+              (u"Occitan (post 1500)", _("Occitan (post 1500)"), wx.LANGUAGE_OCCITAN),
+              (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
+              (u"Russian", _("Russian"), wx.LANGUAGE_RUSSIAN),
+              (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
+              (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
+            )
 
 _langs = "'%s'" % "', '".join(str(x[0]) for x in languages)
 
