@@ -34,6 +34,7 @@ from wx.lib.buttons import GenBitmapToggleButton
 from wx.lib.wordwrap import wordwrap as wordwrap
 
 from whyteboard.lib import pub
+from whyteboard.tools import Media
 
 from whyteboard.misc import (meta, create_colour_bitmap, get_time, file_dialog,
                              get_image_path, create_bold_font)
@@ -104,7 +105,7 @@ class ControlPanel(wx.Panel):
             self.preview.Hide()
         if not self.gui.util.config['colour_grid']:
             self.control_sizer.Hide(self.grid)
-            
+
         self.change_tool(_id=1)  # toggle pen
 
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
@@ -166,17 +167,27 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             path = get_image_path(u"tools", val)
+            item = self.gui.util.items[x]
             b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
                                       style=wx.NO_BORDER)
 
-            b.SetToolTipString(u"%s\n%s %s" % (_(self.gui.util.items[x].tooltip),
+            b.SetToolTipString(u"%s\n%s %s" % (_(item.tooltip),
                                             _("Shortcut Key:"),
-                                            self.gui.util.items[x].hotkey.upper()))
+                                            item.hotkey.upper()))
 
             b.Bind(wx.EVT_BUTTON, self.change_tool, id=x + 1)
-            self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
+            if self.media_is_supported(item):
+                self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             self.tools[x + 1] = b
 
+    def media_is_supported(self, tool):
+        if tool.hotkey == "m":
+            try:
+                mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
+                mc.Destroy()
+            except NotImplementedError:
+                return False
+        return True
 
     def make_colour_grid(self):
         """Builds a colour grid from the user's preferred colours"""
@@ -226,7 +237,7 @@ class ControlPanel(wx.Panel):
     def on_transparency(self, event):
         """Toggles transparency in the shapes' background"""
         self.gui.util.transparent = False
-        
+
         if event.Checked() and not self.gui.canvas.selected:
             self.gui.util.transparent = True
 
@@ -241,7 +252,7 @@ class ControlPanel(wx.Panel):
         self.background.SetColour(colour)
         self.colour.SetColour(background)
         self.gui.util.colour = background
-        
+
         if not self.transparent.IsChecked():
             self.gui.util.background = background
         pub.sendMessage('canvas.change_tool')
@@ -314,7 +325,7 @@ class DrawingPreview(wx.Window):
         self.gui = gui
         self.SetBackgroundColour(wx.WHITE)
         self.SetToolTipString(_("A preview of your current tool"))
-        
+
         self.Bind(wx.EVT_PAINT, self.on_paint)
         pub.subscribe(self.Refresh, 'gui.preview.refresh')
 
@@ -329,7 +340,7 @@ class DrawingPreview(wx.Window):
             dc = wx.PaintDC(self)
             dc.SetPen(wx.Pen(self.gui.canvas.shape.colour, self.gui.canvas.shape.thickness, wx.SOLID))
             dc.SetBrush(self.gui.canvas.shape.brush)
-            
+
             if self.gui.util.transparent:
                 dc.SetBrush(wx.TRANSPARENT_BRUSH)
 
@@ -339,7 +350,6 @@ class DrawingPreview(wx.Window):
             dc.DrawRectangle(0, 0, width, height)  # draw a border..
 
 #----------------------------------------------------------------------
-
 class MediaPanel(wx.Panel):
     """
     A panel that contains a MediaCtrl for playing videos/audio, and buttons for
@@ -425,14 +435,14 @@ class MediaPanel(wx.Panel):
 
     def slider_click(self, event):
         """
-        Jump the media's playing position to where the user clicked on the 
+        Jump the media's playing position to where the user clicked on the
         slider
         """
         print (event.X, event.Y), self.slider.HitTestXY(event.X, event.Y)
         self.on_seek(None)
         event.Skip()
-        
-        
+
+
     def left_motion(self, event):
         """Reposition the window with an offset"""
         if event.Dragging():
@@ -450,7 +460,7 @@ class MediaPanel(wx.Panel):
         _dir = self.directory or u""
         vids = u"*.avi; *.mkv; *.mov; *.mpg; *ogg; *.wmv"
         audio = u"*.mp3; *.oga; *.ogg; *.wav"
-        
+
         wildcard = u"%s |%s;%s|" % (_("Media Files"), vids, audio)
         wildcard += u"%s (%s)|%s|" % (_("Video Files"), vids, vids)
         wildcard += u"%s (%s)|%s" % (_("Audio Files"), audio, audio)
@@ -604,7 +614,7 @@ class Notes(wx.Panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.tree, 1, wx.EXPAND)  # fills vert space
         self.SetSizer(sizer)
-        
+
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.on_click)
         self.tree.Bind(wx.EVT_TREE_ITEM_RIGHT_CLICK, self.pop_up)
         pub.subscribe(self.add_note, 'note.add')
@@ -645,7 +655,7 @@ class Notes(wx.Panel):
         self.tree.DeleteChildren(item)
         self.tree.Delete(item)
         del self.tabs[note]
-        
+
         # now ensure all nodes are linked to the right tab
         for x in range(self.gui.current_tab, len(self.tabs)):
             self.tree.SetItemData(self.tabs[x], wx.TreeItemData(x))
