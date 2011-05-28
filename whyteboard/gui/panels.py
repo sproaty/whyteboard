@@ -176,15 +176,18 @@ class ControlPanel(wx.Panel):
                                             item.hotkey.upper()))
 
             b.Bind(wx.EVT_BUTTON, self.change_tool, id=x + 1)
+            self.tools[x + 1] = b
+            
             if self.media_is_supported(item):
                 self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
-            self.tools[x + 1] = b
+            else:
+                b.Hide()
 
     def media_is_supported(self, tool):
         if tool.hotkey == "m":
             try:
-                mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
-                mc.Destroy()
+                raise NotImplementedError#mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
+                #mc.Destroy()
             except NotImplementedError:
                 return False
         return True
