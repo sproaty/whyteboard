@@ -22,7 +22,11 @@
 Print-related classes
 """
 
+import copy
 import wx
+
+from whyteboard.tools import Highlighter
+
 
 _ = wx.GetTranslation
 
@@ -111,6 +115,7 @@ class PrintOut(wx.Printout):
         return (1, self.gui.tab_count, 1, self.gui.tab_count)
 
     def OnPrintPage(self, page):
+
         dc = self.GetDC()
         canvas = self.gui.tabs.GetPage(page - 1)
         canvas.deselect_shape()
@@ -138,14 +143,28 @@ class PrintOut(wx.Printout):
             filename = _("Untitled")
             if self.gui.util.filename:
                 filename = self.gui.util.filename
-            font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
 
-            dc2 = wx.WindowDC(self.gui)
-            x = dc2.GetMultiLineTextExtent(filename, font)
-            extent = x[0], x[1]
+            font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
             dc.SetFont(font)
             dc.DrawText(_(filename), marginX / 2, -120)
 
         dc.SetDeviceOrigin(int(posX), int(posY))
-        canvas.redraw_all(dc=dc)
+
+        self.draw(canvas, dc)
+
         return True
+
+    def draw(self, canvas, dc):
+        """
+        Due to a bug in wx 2.8, we must remove any highlighter tools
+        as they cannot be printed due to the way the tool uses GraphicsContext
+        http://trac.wxwidgets.org/ticket/11761
+        """
+        shapes = [copy.copy(x) for x in canvas.shapes]
+
+        for shape in canvas.shapes:
+            if isinstance(shape, Highlighter):
+                canvas.shapes.remove(shape)
+
+        canvas.redraw_all(dc=dc)
+        canvas.shapes = shapes
