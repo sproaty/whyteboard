@@ -1,13 +1,18 @@
-<html><title>Saving</title><body>
-<h2>Saving Annotations</h2>
+<html>
+<head>
+ <title>Saving</title>
+</head>
+<body>
+
+<h1>Saving Annotations</h1>
 
 <h4>Overview</h4>
 Whyteboard saves .wtbd files as a renamed zip file. This contains any images that were loaded into the program, and a "save.data" file.
 <hr>
 
 <h4>Zip Files</h4>
-<p>The file format .wtbd is essentially a renamed zip file. This contains any images that were saved inside the program, allowing 
-a file saved on one computer to be opened, and edited on another. Versions prior to 0.39.3 did not do this.</p> 
+<p>The file format .wtbd is essentially a renamed zip file. This contains any images that were saved inside the program, allowing
+a file saved on one computer to be opened, and edited on another. Versions prior to 0.39.3 did not do this.</p>
 
 <p>The zip also contains a "save.data" file - this contains various information about the program state. This includes:<br /><br /></p>
 
@@ -28,6 +33,6 @@ This allows a user to carry on from where they were last editing their file.</p>
 <hr>
 
 <h4>Zip Performance Implications</h4>
-There are a few issues with the zip file implementation, it will take longer to read and write larger .wtbd files containing many images/sheets/shapes.<p> 
+There are a few issues with the zip file implementation, it will take longer to read and write larger .wtbd files containing many images/sheets/shapes.<p>
 
 </body></html>

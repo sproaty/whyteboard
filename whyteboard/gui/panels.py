@@ -186,8 +186,8 @@ class ControlPanel(wx.Panel):
     def media_is_supported(self, tool):
         if tool.hotkey == "m":
             try:
-                raise NotImplementedError#mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
-                #mc.Destroy()
+                mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
+                mc.Destroy()
             except NotImplementedError:
                 return False
         return True
