@@ -390,3 +390,26 @@ def get_image_path(directory, filename):
     Fetch an image from the correct directory
     """
     return os.path.join(get_path(), u"images", directory, u"%s.png" % filename)
+
+def to_unicode(str, verbose=False):
+    '''
+    http://writeonly.wordpress.com/2008/12/10/the-hassle-of-unicode-and-getting-on-with-it-in-python/
+    
+    attempt to fix non uft-8 string into utf-8, using a limited set of encodings
+    '''
+    # fuller list of encodings at http://docs.python.org/library/codecs.html#standard-encodings
+    if not str:  return u''
+    u = None
+    # we could add more encodings here, as warranted.
+    encodings = ('ascii', 'utf8', 'latin1', 'big5')
+    for enc in encodings:
+        if u:  break
+        try:
+            u = unicode(str,enc)
+        except UnicodeDecodeError:
+            if verbose: print "error for %s into encoding %s" % (str, enc)
+            pass
+    if not u:
+        u = unicode(str, errors='replace')
+        if verbose:  print "using replacement character for %s" % str
+    return u

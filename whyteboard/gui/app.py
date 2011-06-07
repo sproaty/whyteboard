@@ -30,7 +30,7 @@ from optparse import OptionParser
 
 from whyteboard.gui import GUI
 from whyteboard.lib import ConfigObj, Validator
-from whyteboard.misc import meta, get_path, get_home_dir, is_exe
+from whyteboard.misc import meta, get_path, get_home_dir, is_exe, to_unicode
 
 
 #----------------------------------------------------------------------
@@ -63,9 +63,9 @@ class WhyteboardApp(wx.App):
 
         try:
             _file = options.file or sys.argv[1]
-            _file = os.path.abspath(_file)
+            _file = os.path.abspath(to_unicode(_file))
             if os.path.exists(_file):
-                self.frame.do_open(_file.decode("utf-8"))
+                self.frame.do_open(_file)
         except IndexError:
             pass
 
@@ -137,4 +137,6 @@ class WhyteboardApp(wx.App):
         self.locale.AddCatalog(u"whyteboard")
         self.locale.AddCatalog(u'wxstd')
 
-        reload(meta)  # fix for some translated strings not being applied
+        # nasty fix for some translated strings not being applied
+        meta.languages = meta.define_languages() 
+        meta.dialog_wildcard = meta.define_filetypes()

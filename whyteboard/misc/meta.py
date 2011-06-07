@@ -36,50 +36,56 @@ _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
 
-# Creates a wxPython wildcard filter from a list of known/supported filetypes.
-_all = [ (_('PDF/PS/SVG'), [u'ps', u'pdf', u'svg']),
-        (_('Image Files'), [u"jpeg", u"jpg", u"png", u"tiff", u"bmp", u"pcx"]),
-        (_('Whyteboard files'), [u'wtbd']) ]
+def define_languages():
+    return (
+                  (u"Arabic", _("Arabic"), wx.LANGUAGE_ARABIC),
+                  (u"Catalan", _("Catalan"), wx.LANGUAGE_CATALAN),
+                  (u"Chinese (Traditional)", _("Chinese (Traditional)"), wx.LANGUAGE_CHINESE_TRADITIONAL),
+                  (u"Czech", _("Czech"), wx.LANGUAGE_CZECH),
+                  (u"Dutch", _("Dutch"), wx.LANGUAGE_DUTCH),
+                  (u"English", _("English"), wx.LANGUAGE_ENGLISH),
+                  (u"English (U.K.)", _("English (U.K.)"), wx.LANGUAGE_ENGLISH_UK),
+                  (u"French", _("French"), wx.LANGUAGE_FRENCH),
+                  (u"Galician", _("Galician"), wx.LANGUAGE_GALICIAN),
+                  (u"German", _("German"), wx.LANGUAGE_GERMAN),
+                  (u"Hindi", _("Hindi"), wx.LANGUAGE_HINDI),
+                  (u"Italian", _("Italian"), wx.LANGUAGE_ITALIAN),
+                  (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
+                  (u"Occitan (post 1500)", _("Occitan (post 1500)"), wx.LANGUAGE_OCCITAN),
+                  (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
+                  (u"Russian", _("Russian"), wx.LANGUAGE_RUSSIAN),
+                  (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
+                  (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
+                )
+    
+def define_filetypes():
+    # Creates a wxPython wildcard filter from a list of known/supported filetypes.
+    _all = [ (_('PDF/PS/SVG'), [u'ps', u'pdf', u'svg']),
+            (_('Image Files'), [u"jpeg", u"jpg", u"png", u"tiff", u"bmp", u"pcx"]),
+            (_('Whyteboard files'), [u'wtbd']) ]
+    
+    wc_list, types, tmp = [], [], []
+    
+    for label, exts in _all:
+        [types.append(x) for x in exts]
+        exts = [u'*.%s' % a for a in exts]
+        visexts = u', '.join(exts)
+    
+        exts.extend([e.upper() for e in exts])
+        tmp.extend(exts)
+        [types.append(x.replace(u"*.", u"")) for x in exts]
+        wc_list.append(u'%s (%s)|%s' % (label, visexts, u';'.join(exts)))
+    
+    wc_list.insert(0, u'%s|%s' % (_('All files') + u' (*.*)', u'*.*'))
+    wc_list.insert(0, u'%s|%s' % (_("All suppported files"), u';'.join(tmp)))
+    
+    return u'|'.join(wc_list)
 
-wc_list, types, tmp = [], [], []
-
-for label, exts in _all:
-    [types.append(x) for x in exts]
-    exts = [u'*.%s' % a for a in exts]
-    visexts = u', '.join(exts)
-
-    exts.extend([e.upper() for e in exts])
-    tmp.extend(exts)
-    [types.append(x.replace(u"*.", u"")) for x in exts]
-    wc_list.append(u'%s (%s)|%s' % (label, visexts, u';'.join(exts)))
-
-wc_list.insert(0, u'%s|%s' % (_('All files') + u' (*.*)', u'*.*'))
-wc_list.insert(0, u'%s|%s' % (_("All suppported files"), u';'.join(tmp)))
-
-dialog_wildcard = u'|'.join(wc_list)
 transparent = True
 version = u"0.41.2"
 backup_extension = u".blah5bl8ah123bla6h"
-languages = (
-              (u"Arabic", _("Arabic"), wx.LANGUAGE_ARABIC),
-              (u"Catalan", _("Catalan"), wx.LANGUAGE_CATALAN),
-              (u"Chinese (Traditional)", _("Chinese (Traditional)"), wx.LANGUAGE_CHINESE_TRADITIONAL),
-              (u"Czech", _("Czech"), wx.LANGUAGE_CZECH),
-              (u"Dutch", _("Dutch"), wx.LANGUAGE_DUTCH),
-              (u"English", _("English"), wx.LANGUAGE_ENGLISH),
-              (u"English (U.K.)", _("English (U.K.)"), wx.LANGUAGE_ENGLISH_UK),
-              (u"French", _("French"), wx.LANGUAGE_FRENCH),
-              (u"Galician", _("Galician"), wx.LANGUAGE_GALICIAN),
-              (u"German", _("German"), wx.LANGUAGE_GERMAN),
-              (u"Hindi", _("Hindi"), wx.LANGUAGE_HINDI),
-              (u"Italian", _("Italian"), wx.LANGUAGE_ITALIAN),
-              (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
-              (u"Occitan (post 1500)", _("Occitan (post 1500)"), wx.LANGUAGE_OCCITAN),
-              (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
-              (u"Russian", _("Russian"), wx.LANGUAGE_RUSSIAN),
-              (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
-              (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
-            )
+languages = define_languages()
+dialog_wildcard = define_filetypes()
 
 _langs = "'%s'" % "', '".join(str(x[0]) for x in languages)
 
@@ -173,3 +179,4 @@ def find_transparent():
     """Has to be called by the GUI"""
     global transparent
     transparent = transparent_supported()
+
