@@ -79,13 +79,13 @@ def define_filetypes():
     wc_list.insert(0, u'%s|%s' % (_('All files') + u' (*.*)', u'*.*'))
     wc_list.insert(0, u'%s|%s' % (_("All suppported files"), u';'.join(tmp)))
     
-    return u'|'.join(wc_list)
+    return (types, u'|'.join(wc_list))
 
 transparent = True
 version = u"0.41.2"
 backup_extension = u".blah5bl8ah123bla6h"
 languages = define_languages()
-dialog_wildcard = define_filetypes()
+types, dialog_wildcard = define_filetypes()
 
 _langs = "'%s'" % "', '".join(str(x[0]) for x in languages)
 

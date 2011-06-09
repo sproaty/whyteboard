@@ -25,6 +25,8 @@ line arguments/parsing and setting the program's locale/language.
 
 import os
 import sys
+import logging
+import time
 import wx
 from optparse import OptionParser
 
@@ -32,6 +34,7 @@ from whyteboard.gui import GUI
 from whyteboard.lib import ConfigObj, Validator
 from whyteboard.misc import meta, get_path, get_home_dir, is_exe, to_unicode
 
+logger = logging.getLogger('whyteboard')
 
 #----------------------------------------------------------------------
 
@@ -41,6 +44,7 @@ class WhyteboardApp(wx.App):
         Load config file, apply translation, parse arguments and delete any
         temporary filse left over from an update
         """
+        startup_time = time.time()
         wx.SetDefaultPyEncoding("utf-8")
         self.SetAppName(u"whyteboard")  # used to identify app in $HOME/
 
@@ -51,12 +55,17 @@ class WhyteboardApp(wx.App):
         parser.add_option("--height", type="int", help="set canvas to HEIGHT")
         parser.add_option("-u", "--update", action="store_true", help="check for a newer version of whyteboard")
         parser.add_option("-l", "--lang", help="set language. can be a country code or language (e.g. fr, french; nl, dutch)")
+        parser.add_option("-d", "--debug", action="store_true", help="debug mode. more information about the program is logged")
 
         (options, args) = parser.parse_args()
-        path = options.conf or os.path.join(get_home_dir(), u"user.pref")
+        preferences_file = options.conf or os.path.join(get_home_dir(), u"user.pref")
 
-        config = ConfigObj(path, configspec=meta.config_scheme, encoding=u"utf-8")
+        self.setup_logging(options.debug)
+        logger.debug("Loading preferences file [%s]" % preferences_file)
+
+        config = ConfigObj(preferences_file, configspec=meta.config_scheme, encoding=u"utf-8")
         config.validate(Validator())
+        
         self.set_language(config, options.lang)
         self.frame = GUI(config)
         self.frame.Show(True)
@@ -77,8 +86,20 @@ class WhyteboardApp(wx.App):
         if options.update:
             self.frame.on_update()
 
+        logger.info("Startup complete, time taken: %sms" % (time.time() - startup_time))
         return True
 
+    def setup_logging(self, debug):
+        fh = logging.FileHandler('whyteboard.log')
+        ch = logging.StreamHandler()
+        if debug:
+            logger.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(levelname)s %(asctime)s %(message)s')
+        fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
+        logger.addHandler(fh)
+        logger.addHandler(ch)
+        
 
     def delete_temp_files(self):
         """

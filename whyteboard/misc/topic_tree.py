@@ -34,6 +34,20 @@ _ = wx.GetTranslation
 #----------------------------------------------------------------------
 
 class WhyteboardTopicTree(TopicTreeDefnSimple):
+    class change_background:
+        '''Changes the background colour panel'''
+        colour = 'the wx.Colour object'
+        _required = 'colour'
+
+    class change_colour:
+        '''Changes the colour panel'''
+        colour = 'the wx.Colour object'
+        _required = 'colour'        
+        
+    class update_shape_viewer:
+        '''Forces the shape viewer to update itself'''
+        pass
+        
     class sheet:
         '''Operations performed on the sheets (tabs)'''
         class move:
@@ -42,29 +56,81 @@ class WhyteboardTopicTree(TopicTreeDefnSimple):
             tab_count = 'total number of tabs to iterate over for updating'
             _required = ('event', 'tab_count')
 
-#        class rename:
-#            '''sheet being renamed'''
-#            _id = 'ID (tab number) of the sheet being renamed'
-#            text = 'new sheet name'
-#            _required = ('_id', 'text')
+        class rename:
+            '''sheet being renamed'''
+            _id = 'ID (tab number) of the sheet being renamed'
+            text = 'new sheet name'
+            _required = ('_id', 'text')
 
 
     class canvas:
         '''Operations performed on the canvas'''
+        class change_tool:
+            '''Changes the currently drawing tool to a new one'''
+            new = 'optional new tool to change to'
+
+        class paste_image:
+            '''Pastes a bitmap onto the canvas'''
+            bitmap = 'wx.Bitmap to use'
+            x = 'x position on canvas'
+            y = 'y position on canvas'
+            ignore = 'whether to resize canvas or not'
+            _required = ('bitmap', 'x', 'y')
+            
+        class paste_text:
+            '''Pastes a string as a text object'''
+            text = 'string to use'
+            x = 'x position on canvas'
+            y = 'y position on canvas'
+            _required = ('text', 'x', 'y')
+                                          
         class set_border:
             '''Updates the "grabbable" border size the canvas has'''
             border_size = 'size in pixels to set the border to'
             _required = 'border_size'
 
         class capture_mouse:
+            '''Captures mouse focus'''
             pass
 
         class release_mouse:
+            '''Releases mouse focus'''
             pass
 
 
+    class gui:
+        '''Operations performed on the gui'''
+        class mark_unsaved:
+            '''Notifies that the canvas has unsaved changes'''
+            pass
+        
+        class open_file:
+            '''Opens a file'''
+            filename = 'file to open'
+            _required = 'filename'
+                
+        class preview:
+            class refresh:
+                '''Refreshes the drawing preview.'''
+                pass
+        
+            
+    class media:
+        '''For the media tool'''
+        class create_panel:
+            '''creates the media panel''' 
+            size = "size to make the media panel"
+            media = 'the media tool instance'
+            _required = ('size', 'media')
+            
+
+        
     class note:
-        '''The Note Tool'''
+        '''The Note Panel, containing a GUI tree of all notes'''
+        class delete_sheet_items:
+            '''removes all note tools from the current sheet''' 
+            pass
+            
         class add:
             '''when a note is added'''
             note = 'the Note instance'
@@ -80,9 +146,12 @@ class WhyteboardTopicTree(TopicTreeDefnSimple):
 
     class thumbs:
         '''Thumbnails'''
+        class update_current:
+            '''redraws the current thumbnail'''
+            pass
+        
         class text:
             '''static text labels'''
-
             class highlight:
                 '''to turn a thumbnail label bold or not'''
                 tab = 'which label to update'
@@ -101,7 +170,12 @@ class WhyteboardTopicTree(TopicTreeDefnSimple):
             '''shape has been drawn'''
             shape = 'drawn shape'
             _required = 'shape'
-
+            
+        class popup:
+            '''shows a pop-up menu for a given shape'''
+            shape = 'shape to use for pop up menu'
+            _required = 'shape'
+         
 
     class shape_viewer:
         '''actions for the Shape Viewer dialog'''
@@ -117,5 +191,11 @@ class WhyteboardTopicTree(TopicTreeDefnSimple):
             handle_size = 'size in pixels'
             _required = 'handle_size'
 
+    class text:
+        '''update a Tool'''
+        class show_dialog:
+            '''popup the text edit/create dialog'''
+            text = 'text/note object'
+            _required = 'text'
 
 pub.addTopicDefnProvider(WhyteboardTopicTree())

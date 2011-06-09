@@ -30,8 +30,9 @@ from __future__ import with_statement
 
 import os
 import sys
-import time
 import shutil
+import time
+import logging
 
 import wx
 import wx.lib.newevent
@@ -62,6 +63,7 @@ from whyteboard.misc import (get_home_dir, is_save_file, get_clipboard,
 
 
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.frame")
 PASTE_CHECK_COUNT = 7  # only check clipboard every x value of EVT_UPDATE_MENU
 SCROLL_AMOUNT = 3
 UNDO_SHEET_COUNT = 10
@@ -88,6 +90,7 @@ class GUI(wx.Frame):
         sys.excepthook = ExceptionHook
 
         meta.find_transparent()  # important
+        logger.debug("Transparency supported: %s" % meta.transparent)
         if meta.transparent:
             try:
                 x = self.util.items.index(Highlighter)
@@ -167,6 +170,7 @@ class GUI(wx.Frame):
         """
         Performs event binding.
         """
+        logger.debug("Beginning frame event bindings")
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.on_change_tab)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CONTEXT_MENU, self.tab_popup)
         self.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_DROPPED, self.on_drop_tab)
@@ -190,6 +194,7 @@ class GUI(wx.Frame):
                   'text.show_dialog': self.show_text_dialog}
         [pub.subscribe(value, key) for key, value in topics.items()]
 
+        logger.debug("Setting up tool hotkeys")
         self.hotkeys = [x.hotkey for x in self.util.items]
         ac = []
         if os.name == "nt":

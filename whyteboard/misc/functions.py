@@ -391,6 +391,7 @@ def get_image_path(directory, filename):
     """
     return os.path.join(get_path(), u"images", directory, u"%s.png" % filename)
 
+
 def to_unicode(str, verbose=False):
     '''
     http://writeonly.wordpress.com/2008/12/10/the-hassle-of-unicode-and-getting-on-with-it-in-python/

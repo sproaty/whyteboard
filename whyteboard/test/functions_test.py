@@ -20,6 +20,7 @@
 
 import os
 import wx
+import unittest
 
 from whyteboard.misc import (get_version_int, version_is_greater, get_wx_image_type,
                        get_time, format_bytes, convert_quality, is_save_file,
@@ -28,7 +29,7 @@ import whyteboard.misc.functions as functions
 
 #----------------------------------------------------------------------
 
-class TestFunctions:
+class TestFunctions(unittest.TestCase):
     """Test the stand-alone application functions."""
 
     def test_get_version_int(self):

@@ -62,11 +62,11 @@ from __future__ import with_statement
 
 import os
 import sys
-#import poppler
+import logging
+import shutil
 import time
 import zipfile
 import wx
-import shutil
 
 try:
     import cPickle as pickle
@@ -81,6 +81,7 @@ from whyteboard.misc import (meta, get_home_dir, load_image, convert_quality, ma
 import whyteboard.tools as tools
 
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.utility")
 
 #----------------------------------------------------------------------
 
@@ -133,6 +134,7 @@ class Utility(object):
         added any images into a zip archive along with the .data file.
         """
         if not self.filename:
+            logger.debug("No filename set.")
             return
 
         version = meta.version
@@ -147,7 +149,10 @@ class Utility(object):
         canvases = self.gui.get_canvases()
         save = Save(self, canvases, self.gui.get_tab_names())
 
-        self.write_save_file(save, version)
+        if not self.write_save_file(save, version):
+            save.restore_items(canvases)
+            self.gui.dialog.Destroy()
+            return
 
         self.zip = zipfile.ZipFile(self.filename, "r")
         save.restore_items(canvases)
@@ -162,24 +167,38 @@ class Utility(object):
         An existing .wtbd zip must be re-created by copying all files except
         the pickled file, otherwise it gets added twice
         """
-        tmp_file = os.path.join(os.path.dirname(self.filename), u'whyteboard_temp_new.wtbd')
+        path = os.path.join(os.path.dirname(self.filename), u'whyteboard_temp_new.wtbd')
+        tmp_file = os.path.abspath(path)
+        errored = False
+        logger.debug("Creating temporary zip file [%s]." % tmp_file)
+        
         _zip = zipfile.ZipFile(tmp_file, 'w')
         self.save_bitmap_data(_zip)
         save.save_items()
         data = save.create_save_list(self.gui.current_tab, version)
-
-        with open(os.path.join(get_home_dir(), "save.data"), 'wb') as f:
+        data_file = os.path.join(get_home_dir(), "save.data")
+        logger.debug("Writing save data to [%s]" % data_file)
+        
+        with open(data_file, 'wb') as f:
             try:
                 pickle.dump(data, f)
             except pickle.PickleError:
                 wx.MessageBox(_("Error saving file data"), u"Whyteboard")
+                logger.exception("Error pickling file data")
                 self.saved = False
                 self.filename = None
-
-        _zip.write("save.data")
+                errored = True
+        
+        if not errored:
+            logger.debug("Writing data file to zip and cleaning up")
+            _zip.write(data_file, "save.data")
         _zip.close()
-        os.remove("save.data")
-
+        os.remove(data_file)
+        if errored:
+            os.remove(tmp_file)
+            return False
+        
+        logger.debug("Removing old file and renaming temporary file")
         if os.path.exists(self.filename):
             os.remove(self.filename)
         shutil.move(tmp_file, self.filename)
@@ -239,6 +258,7 @@ class Utility(object):
         """
         if filename is None:
             filename = self.temp_file
+        logger.debug("Attempting to load file [%s]" % filename)
 
         _file, _type = os.path.splitext(filename)  # convert to lowercase to
         _type = _type.replace(u".", u"").lower()  # save typing filename[1:] :)
@@ -250,6 +270,7 @@ class Utility(object):
             load_image(self.temp_file, self.gui.canvas, tools.Image)
             self.gui.canvas.redraw_all()
         else:
+            logger.warning("Filetype %s is not supported" % _type)
             wx.MessageBox(_("Whyteboard doesn't support the filetype") + u" .%s" % _type,
                           u"Whyteboard")
 
@@ -500,6 +521,7 @@ class Utility(object):
         if os.name == "posix":
             value = os.system(u"which convert")
             if value == 256:
+                logger.warning("Could not find ImageMagick")
                 wx.MessageBox(_("ImageMagick was not found. You will be unable to load PDF and PS files until it is installed."),
                               u"Whyteboard")
             else:
@@ -521,6 +543,7 @@ class Utility(object):
         """
         _file = os.path.join(path, u"convert.exe")
         if not os.path.exists(_file):
+            logger.warning("Could not find ImageMagick's convert.exe in [%s]" % path)
             wx.MessageBox(_('Folder "%s" does not contain convert.exe') % path, u"Whyteboard")
             return False
 

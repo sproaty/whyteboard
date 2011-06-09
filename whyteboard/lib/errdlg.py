@@ -45,9 +45,7 @@ __svnid__ = "$Id: errdlg.py 61808 2009-09-02 15:57:55Z CJP $"
 __revision__ = "$Revision: 61808 $"
 
 __all__ = [# Classes
-           'ErrorDialog', 'ErrorReporter',
-           # Functions
-           'TimeStamp']
+           'ErrorDialog', 'ErrorReporter']
 
 #----------------------------------------------------------------------------#
 # Dependancies
@@ -144,11 +142,8 @@ class ErrorDialog(wx.Dialog):
         ErrorReporter().AddMessage(message)
 
         # Attributes
-        self.err_msg = os.linesep.join((self.GetEnvironmentInfo(),
-                                        u"#---- Traceback Info ----#\n",
-                                        unicode(ErrorReporter().GetErrorStack(), "utf-8"),
-                                        u"#---- End Traceback Info ----#\n"))
-
+        self.err_msg = os.linesep.join((self.GetEnvironmentInfo(), 
+                                        unicode(ErrorReporter().GetErrorStack(), "utf-8")))
         # Layout
         self._panel = ErrorPanel(self, self.err_msg)
         self._DoLayout()
@@ -186,12 +181,14 @@ class ErrorDialog(wx.Dialog):
         @return: string
 
         """
+        language = wx.Locale.GetLanguageName(wx.Locale.GetSystemLanguage())
         res = wx.Display().GetGeometry()
         info = list()
         info.append(self.GetProgramName())
         info.append(u"Operating System: %s" % wx.GetOsDescription())
         if sys.platform == 'darwin':
             info.append(u"Mac OSX: %s" % platform.mac_ver()[0])
+        info.append(u"System Lanauge: %s" % language)
         info.append(u"Screen Resolution: %ix%i" % (res[2], res[3]))
         info.append(u"Python Version: %s" % sys.version)
         info.append(u"wxPython Version: %s" % wx.version())
@@ -201,9 +198,7 @@ class ErrorDialog(wx.Dialog):
         info.append(u"wxPython Encoding: %s" % wx.GetDefaultPyEncoding())
         info.append(u"System Architecture: %s %s" % (platform.architecture()[0], \
                                                     platform.machine()))
-        info.append(u"Byte order: %s" % sys.byteorder)
         info.append(u"Frozen: %s" % str(getattr(sys, 'frozen', 'False')))
-        info.append(u"#---- End System Information ----#")
         info.append(u"")
         info.append(u"")
 
@@ -232,7 +227,6 @@ class ErrorDialog(wx.Dialog):
 
         """
         exc = traceback.format_exception(exctype, value, trace)
-        exc.insert(0, "*** %s ***%s" % (TimeStamp(), os.linesep))
         ftrace = "".join(exc)
         return ftrace
 
@@ -384,15 +378,3 @@ class ErrorPanel(wx.Panel):
         """
         self.desc.SetLabel(text)
         self.Layout()
-
-#-----------------------------------------------------------------------------#
-
-def TimeStamp():
-    """Create a formatted time stamp of current time
-    @return: Time stamp of the current time (Day Month Date HH:MM:SS Year)
-    @rtype: string
-
-    """
-    now = time.localtime(time.time())
-    now = time.asctime(now)
-    return now

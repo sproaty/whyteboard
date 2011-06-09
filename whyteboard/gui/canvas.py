@@ -46,8 +46,8 @@ from whyteboard.tools import (Highlighter, Image, Line, Media, Note, OverlayShap
                    CENTER_LEFT, HANDLE_ROTATE, EDGE_TOP, EDGE_RIGHT, EDGE_LEFT,
                    EDGE_BOTTOM)
 
-EDGE = 15    # distance from canvas edge before shape will scroll canvas
-TO_MOVE = 5  # pixels shape will cause canvas to scroll
+EDGE = 15    # distance in pixels from canvas edge before shape scroll canvas
+TO_MOVE = 5  # how many pixels to scroll when manipulating shape with Select tool
 
 # area user clicked on canvas to resize
 RIGHT = 1
@@ -219,9 +219,11 @@ class Canvas(wx.ScrolledWindow):
 
 
     def select_tool_cursor_change(self, shape, x, y):
-        res = shape.handle_hit_test(x, y)
-        ret = True
-        if res and isinstance(shape, (Line, Polygon)):
+        """
+        Sets the appropriate cursor the select tool "mouses-over" a shape
+        """
+        handle = shape.handle_hit_test(x, y)
+        if handle and isinstance(shape, (Line, Polygon)):
             if wx.GetKeyState(wx.WXK_SHIFT):
                 self.set_cursor(wx.CURSOR_SIZENWSE)
             elif wx.GetKeyState(wx.WXK_CONTROL):
@@ -229,21 +231,21 @@ class Canvas(wx.ScrolledWindow):
             else:
                 self.set_cursor(wx.CURSOR_SIZING)
 
-        elif res == HANDLE_ROTATE:
+        elif handle == HANDLE_ROTATE:
             self.SetCursor(self.rotate_cursor)
-        elif res in [TOP_LEFT, BOTTOM_RIGHT]:
+        elif handle in [TOP_LEFT, BOTTOM_RIGHT]:
             self.set_cursor(wx.CURSOR_SIZENWSE)
-        elif res in [TOP_RIGHT, BOTTOM_LEFT]:
+        elif handle in [TOP_RIGHT, BOTTOM_LEFT]:
             self.set_cursor(wx.CURSOR_SIZENESW)
-        elif res in [CENTER_TOP, CENTER_BOTTOM]:
+        elif handle in [CENTER_TOP, CENTER_BOTTOM]:
             self.set_cursor(wx.CURSOR_SIZENS)
-        elif res in [CENTER_LEFT, CENTER_RIGHT]:
+        elif handle in [CENTER_LEFT, CENTER_RIGHT]:
             self.set_cursor(wx.CURSOR_SIZEWE)
         elif shape.hit_test(x, y):
             self.set_cursor(wx.CURSOR_HAND)
         else:
-            ret = False
-        return ret
+            return False
+        return True
 
     def set_cursor(self, cursor):
         self.SetCursor(wx.StockCursor(cursor))
@@ -361,7 +363,7 @@ class Canvas(wx.ScrolledWindow):
 
 
     def add_shape(self, shape):
-        """ Adds a shape to the "to-draw" list. """
+        """ Adds a shape to the shape list managed by the canvas. """
         self.add_undo()
         self.shapes.append(shape)
 
@@ -376,9 +378,13 @@ class Canvas(wx.ScrolledWindow):
         pub.sendMessage('update_shape_viewer')
 
 
+
+    def clone_shapes(self):
+        return [copy.copy(x) for x in self.shapes]
+
     def add_undo(self):
         """Creates an undo point. NEED to change this for memory improvements"""
-        l = [copy.copy(x) for x in self.shapes]
+        l = self.clone_shapes()
         self.undo_list.append(l)
 
         if self.redo_list:
@@ -396,7 +402,7 @@ class Canvas(wx.ScrolledWindow):
 
 
     def perform(self, list_a, list_b):
-        """ perform undo/redo. list_a: to remove from / list b: append to """
+        """ Perform undo/redo. list_a: to remove from / list b: append to """
         if not list_a:
             return
         list_b.append(list(self.shapes))
@@ -470,7 +476,7 @@ class Canvas(wx.ScrolledWindow):
 
 
     def clear(self, keep_images=False):
-        """ Removes all shapes from the 'to-draw' list. """
+        """Removes all shapes. Images can be specified to not be removed."""
         if not self.medias and not self.shapes:
             return
 
@@ -527,12 +533,10 @@ class Canvas(wx.ScrolledWindow):
         end_y = self.GetClientSize()[1] + start[1]
 
         rect = wx.Rect(start[0] + EDGE, start[1] + EDGE, end_x - EDGE, end_y - EDGE)
+        scroll = (-1, -1)
 
         if rect.ContainsXY(x, y):
             return
-
-        scroll = (-1, -1)
-
         if moving:
             if self.selected.edges[EDGE_RIGHT] > start[0] + size[0] - EDGE and DRAG_RIGHT in direction:
                 scroll = (start[0] + TO_MOVE, -1)
@@ -645,6 +649,9 @@ class Canvas(wx.ScrolledWindow):
 
 
     def paste_image(self, bitmap, x, y, ignore=False):
+        """
+        Creates an Image shape from a bitmap and resizes the canvas if needed
+        """
         shape = Image(self, bitmap, None)
         shape.left_down(x, y)
         wx.Yield()
@@ -654,6 +661,7 @@ class Canvas(wx.ScrolledWindow):
 
 
     def paste_text(self, text, x, y, colour):
+        """Pastes a string onto the canvas, as a Text object"""
         self.shape = Text(self, colour, 1)
         self.shape.text = text
         self.shape.left_down(x, y)
@@ -682,12 +690,11 @@ class Canvas(wx.ScrolledWindow):
 
         self.copy = None
         self.redraw_all()
-
         return self.buffer.GetSubBitmap(bmp.rect)
 
 
     def deselect_shape(self):
-        """Deselects the currently selected shape"""
+        """De-selects the currently selected shape"""
         for x in self.shapes:
             if isinstance(x, OverlayShape):
                 x.selected = False
@@ -771,6 +778,7 @@ class Canvas(wx.ScrolledWindow):
         return self.selected.background == wx.TRANSPARENT
 
     def swap_colours(self):
+        """Swaps the selected shape's foreground and background"""
         self.selected.colour, self.selected.background = self.selected.background, self.selected.colour
         self.redraw_all()
 
@@ -817,7 +825,7 @@ class CanvasDropTarget(wx.PyDropTarget):
 
     def OnData(self, x, y, d):
         """
-        Handles drag/dropping files/text or a bitmap
+        Handles drag/dropping files, text or bitmap items
         """
         if self.GetData():
             df = self.do.GetReceivedFormat().GetType()

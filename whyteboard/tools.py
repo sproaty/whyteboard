@@ -1781,7 +1781,6 @@ class BitmapSelect(Rectangle):
         self.canvas.copy = self
 
 
-
     def draw(self, dc, replay=False):
         if not replay:
             overlay = wx.DCOverlay(self.canvas.overlay, dc)

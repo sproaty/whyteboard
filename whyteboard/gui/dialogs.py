@@ -27,6 +27,7 @@ from __future__ import with_statement
 
 import os
 import sys
+import logging
 import zipfile
 import time
 import wx
@@ -43,6 +44,7 @@ from whyteboard.misc import (get_home_dir, bitmap_button, is_exe, extract_tar,
                        fix_std_sizer_tab_order, format_bytes, is_new_version,
                        get_image_path, create_bold_font)
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.dialogs")
 
 #----------------------------------------------------------------------
 
@@ -311,6 +313,7 @@ class UpdateDialog(wx.Dialog):
         html = f.read().split(u"\n")
         f.close()
         self.new_version = html[0]
+        logger.debug("Latest program version is %s" % self.new_version)
 
         if not is_new_version(meta.version, self.new_version):
             self.text.SetLabel(_("You are running the latest version."))

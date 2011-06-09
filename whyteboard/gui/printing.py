@@ -160,7 +160,7 @@ class PrintOut(wx.Printout):
         as they cannot be printed due to the way the tool uses GraphicsContext
         http://trac.wxwidgets.org/ticket/11761
         """
-        shapes = [copy.copy(x) for x in canvas.shapes]
+        shapes = canvas.clone_shapes()
 
         for shape in canvas.shapes:
             if isinstance(shape, Highlighter):

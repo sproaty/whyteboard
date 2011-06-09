@@ -24,6 +24,7 @@ This module contains classes for the GUI side panels and pop-up menus.
 
 from __future__ import division
 import os
+import logging
 
 import wx
 import wx.media
@@ -41,6 +42,7 @@ from whyteboard.misc import (meta, create_colour_bitmap, get_time, file_dialog,
 from whyteboard.gui import NotesPopup, ThumbsPopup
 
 _ = wx.GetTranslation
+logger = logging.getLogger('whyteboard.panels')
 
 #----------------------------------------------------------------------
 
@@ -167,6 +169,7 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             path = get_image_path(u"tools", val)
+            logger.debug("Loading toolbox image [%s]" % path)
             item = self.gui.util.items[x]
             b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
                                       style=wx.NO_BORDER)
@@ -189,6 +192,7 @@ class ControlPanel(wx.Panel):
                 mc = wx.media.MediaCtrl(self, style=wx.SIMPLE_BORDER)
                 mc.Destroy()
             except NotImplementedError:
+                logger.warning("wx.MediaCtrl is not implemented.")
                 return False
         return True
 
@@ -441,7 +445,6 @@ class MediaPanel(wx.Panel):
         Jump the media's playing position to where the user clicked on the
         slider
         """
-        print (event.X, event.Y), self.slider.HitTestXY(event.X, event.Y)
         self.on_seek(None)
         event.Skip()
 
@@ -478,7 +481,9 @@ class MediaPanel(wx.Panel):
         Loads a file from a given path, sets up instance variables and enables
         and disables buttons
         """
+        logger.debug("MediaCtrl: loading [%s]" % path)
         if not self.mc.Load(path):
+            logger.warning("MediaCtrl could not load file")
             wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,
                           u"Whyteboard", wx.ICON_ERROR | wx.OK)
             self.play.Disable()
@@ -1001,7 +1006,7 @@ class ThumbButton(wx.BitmapButton):
         dc.SelectObject(self.buffer)
 
         gcdc = wx.GCDC(dc)
-        gcdc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 50)))  # light blue
+        gcdc.SetBrush(wx.Brush(wx.Colour(0, 0, 255, 50)))  # light blue
         gcdc.SetPen(wx.Pen((0, 0, 0), 1, wx.TRANSPARENT))
         gcdc.DrawRectangle(0, 0, 150, 150)
 
