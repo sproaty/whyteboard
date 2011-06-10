@@ -11,11 +11,18 @@ xx xxxxx 2011 - 0.41.2
 * Removed an ugly black line being drawn across the collapsible control panel's
   toggle button
 * Made escape key close all dialogs; added close button to dialogs where needed
-* Removed preferences "toolbox type", "number of toolbox columns", "selection
-  handle size", "number of undo tabs" and "canvas border"
+
+* Removed the following preferences:
+  - "toolbox type" - the toolbox is now icon-only, this takes up less space
+  - "number of toolbox columns" - 2 is fine
+  - "selection handle size"
+  - "number of undo tabs"
+  - "canvas border"
+  The preferences were hard to describe and didn't add much value - it was best
+  to remove them. 
 
 * Added program logging which writes error logs to disk
-* Added a debug mode with verbose output
+* Added a debug mode with verbose output to console
 * New translation language: Catalan.
 * Add the user's system language to error report to help diagnose unicode bugs
 

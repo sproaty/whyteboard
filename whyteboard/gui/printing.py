@@ -23,12 +23,14 @@ Print-related classes
 """
 
 import copy
+import logging
 import wx
 
 from whyteboard.tools import Highlighter
 
 
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.print")
 
 #----------------------------------------------------------------------
 

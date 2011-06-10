@@ -33,6 +33,7 @@ larger than the client size, then scrollbars are displayed, and a slight
 
 import os
 import copy
+import logging
 
 import wx
 #import wx.lib.wxcairo as wxcairo
@@ -60,6 +61,7 @@ DRAG_UP = 3
 DRAG_DOWN = 4
 
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.canvas")
 
 #----------------------------------------------------------------------
 
@@ -127,13 +129,17 @@ class Canvas(wx.ScrolledWindow):
     def left_down(self, event):
         """Starts drawing"""
         x, y = self.convert_coords(event)
+        logger.debug("Left down at (%s, %s) for %s", x, y, type(self.shape))
+        
         if os.name == "nt" and not isinstance(self.shape, Media) and not self.shape.drawing:
             self.CaptureMouse()
         if not self.shape.drawing and self.check_resize_direction(x, y):  # don't draw outside canvas
+            logger.debug("Canvas is being resized")
             self.resizing = True
             return
 
         if not isinstance(self.shape, Select) and self.selected:
+            logger.debug("Deselecting shape")
             self.deselect_shape()
 
         self.shape.left_down(x, y)
@@ -170,11 +176,13 @@ class Canvas(wx.ScrolledWindow):
         """
         Called when the left mouse button is released.
         """
+        logger.debug("Left up event for %s", type(self.shape))
         if os.name == "nt" and not self.shape.drawing:
             if self.HasCapture():
                 self.ReleaseMouse()
 
         if self.resizing:
+            logger.debug("End resizing.")
             self.resizing = False
             self.redraw_all(True)  # update thumb for new canvas size
             self.Layout()
@@ -776,6 +784,9 @@ class Canvas(wx.ScrolledWindow):
 
     def is_transparent(self):
         return self.selected.background == wx.TRANSPARENT
+
+    def is_not_drawing(self):
+        return not self.drawing and not self.shape.drawing 
 
     def swap_colours(self):
         """Swaps the selected shape's foreground and background"""

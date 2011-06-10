@@ -24,9 +24,10 @@ classes, only Python and wx functionality.
 """
 
 import os
+import logging
+import random
 import subprocess
 import sys
-import random
 import tarfile
 import urllib
 import webbrowser
@@ -39,6 +40,7 @@ from distutils.dir_util import copy_tree, remove_tree
 from whyteboard.lib import pub
 
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.functions")
 path = os.path.split(os.path.abspath(sys.argv[0]))
 
 #----------------------------------------------------------------------
@@ -88,6 +90,7 @@ def load_image(path, canvas, image_class):
     image file to create a bitmap from.
     image_class = tools.Image *CLASS ITSELF*
     """
+    logger.debug("Loading [%s] and creating an Image object", path)
     image = wx.Bitmap(path)
     shape = image_class(canvas, image, path)
     shape.left_down(0, 0)  # renders, updates scrollbars
@@ -151,6 +154,8 @@ def convert_quality(quality, im_location, _file, path):
         resample = 100
     cmd = (u'"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"'
            % (im_location, density, _file, resample, path))
+    
+    logger.debug("ImageMagick convert command: [%s]", cmd)
     return cmd
 
 
@@ -252,6 +257,7 @@ def new_instance():
     if is_exe():
         program = os.path.abspath(sys.argv[0])
 
+    logger.debug("Loading new application instance: [%s]", program)
     subprocess.Popen(program)
 
 
@@ -392,6 +398,7 @@ def get_image_path(directory, filename):
     return os.path.join(get_path(), u"images", directory, u"%s.png" % filename)
 
 
+        
 def to_unicode(str, verbose=False):
     '''
     http://writeonly.wordpress.com/2008/12/10/the-hassle-of-unicode-and-getting-on-with-it-in-python/

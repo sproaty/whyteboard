@@ -27,8 +27,8 @@ from __future__ import with_statement
 
 import os
 import sys
-import logging
 import zipfile
+import logging
 import time
 import wx
 import wx.lib.mixins.listctrl as listmix
@@ -313,7 +313,7 @@ class UpdateDialog(wx.Dialog):
         html = f.read().split(u"\n")
         f.close()
         self.new_version = html[0]
-        logger.debug("Latest program version is %s" % self.new_version)
+        logger.debug("Latest program version is %s", self.new_version)
 
         if not is_new_version(meta.version, self.new_version):
             self.text.SetLabel(_("You are running the latest version."))
@@ -422,7 +422,7 @@ class TextInput(wx.Dialog):
             self.note = note
             self.colour = note.colour
             text = note.text
-            font = wx.FFont(1, 1)
+            font = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
             font.SetNativeFontInfoFromString(note.font_data)
 
         self.set_text_colour(text)
@@ -646,6 +646,7 @@ class PromptForSave(wx.Dialog):
         self.gui = gui
         self.method = method
         self.args = args
+        logger.debug("Prompting for save, with method %s and arguments %s", method, args)
 
         warning = wx.ArtProvider.GetBitmap(wx.ART_WARNING, wx.ART_CMN_DIALOG)
         bmp = wx.StaticBitmap(self, bitmap=warning)
@@ -730,6 +731,7 @@ class PromptForSave(wx.Dialog):
         if self.gui.util.saved:
             self.Close()
         if self.gui.util.saved or self.method == os.execvp:
+            logger.debug("Focing restart with params %s", self.args)
             self.method(*self.args)  # force restart, otherwise 'cancel'
                                      # returns to application
 
@@ -737,9 +739,11 @@ class PromptForSave(wx.Dialog):
         self.method(*self.args)
         self.Close()
         if self.method == self.gui.Destroy:
+            logger.info("Program exiting.")
             sys.exit()
 
     def cancel(self, event):
+        logger.info("User cancelled out of save prompt")
         self.Close()
 
 
@@ -1004,6 +1008,7 @@ class ShapeViewer(wx.Dialog):
         self.populate()
 
     def update(self):
+        logger.debug("Updating shape viewer.")
         self.shapes = list(self.gui.canvas.shapes)
         self.populate()
 

@@ -31,6 +31,7 @@ file.
 """
 
 import os
+import logging
 import wx
 from copy import copy
 from wx.lib.wordwrap import wordwrap as wordwrap
@@ -40,6 +41,7 @@ from whyteboard.lib import pub
 from whyteboard.misc import meta, create_colour_bitmap, create_bold_font
 
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.preferences")
 
 #----------------------------------------------------------------------
 
@@ -94,7 +96,7 @@ class Preferences(wx.Dialog):
 
         if 'default_font' in self.config:
             if self.config['default_font'] and not self.gui.util.font:
-                self.gui.util.font = wx.FFont(1, 1)
+                self.gui.util.font = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
                 self.gui.util.font.SetNativeFontInfoFromString(self.config['default_font'])
 
         # Toggles the items under "View" menu. Ignore the colour grid for now
@@ -186,7 +188,7 @@ class General(wx.Panel):
         self.size = font.GetPointSize()  # size to use regardless of font
 
         if 'default_font' in self.config:
-            f = wx.FFont(1, 1)
+            f = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
             f.SetNativeFontInfoFromString(self.config['default_font'])
             self.font = f
             self.fontBtn.SetFont(f)
@@ -194,7 +196,7 @@ class General(wx.Panel):
             if os.name == "nt":
                 self.font_label(f)
 
-            f = wx.FFont(1, 1)
+            f = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
             f.SetNativeFontInfoFromString(self.config['default_font'])
             f.SetPointSize(self.size)
             self.fontBtn.SetFont(f)

@@ -90,7 +90,8 @@ class GUI(wx.Frame):
         sys.excepthook = ExceptionHook
 
         meta.find_transparent()  # important
-        logger.debug("Transparency supported: %s" % meta.transparent)
+        logger.info("Transparency supported: %s", meta.transparent)
+        
         if meta.transparent:
             try:
                 x = self.util.items.index(Highlighter)
@@ -199,10 +200,10 @@ class GUI(wx.Frame):
         ac = []
         if os.name == "nt":
             for x, item in enumerate(self.util.items):
-                blah = lambda evt, y = x + 1: self.on_change_tool(evt, y)
+                hotkey_event = lambda evt, y = x + 1, k = item.hotkey: self.on_change_tool(evt, y, key=k)
                 _id = wx.NewId()
                 ac.append((wx.ACCEL_NORMAL, ord(item.hotkey.upper()), _id))
-                self.Bind(wx.EVT_MENU, blah, id=_id)
+                self.Bind(wx.EVT_MENU, hotkey_event, id=_id)
         else:
             ac = [(wx.ACCEL_CTRL, ord(u'\t'), ID_NEXT),
                   (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord(u'\t'), ID_PREV) ]
@@ -240,6 +241,7 @@ class GUI(wx.Frame):
         self.canvas.release_mouse()
 
     def shape_popup(self, shape):
+        logger.debug("Showing pop up for %s", shape)
         self.PopupMenu(ShapePopup(self.canvas, self, shape))
 
     def capture_mouse(self):
@@ -252,7 +254,9 @@ class GUI(wx.Frame):
         """
         Saves file if filename is set, otherwise calls 'save as'.
         """
+        logger.debug("Saving file.")
         if not self.util.filename:  # no wtbd file active, prompt for location
+            logger.info("Prompting for filename")
             self.on_save_as()
         else:
             self.util.save_file()
@@ -297,31 +301,34 @@ class GUI(wx.Frame):
         _dir = self.util.config.get('last_opened_dir') or u""
 
         filename = file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir)
-        self.open_file(filename)
+        if filename:
+            self.open_file(filename)
 
 
     def open_file(self, filename):
         if filename:
             if is_save_file(filename):
+                logger.debug("File open with unsaved changes, prompting for save")
                 self.prompt_for_save(self.do_open, args=[filename])
             else:
                 self.do_open(filename)
 
 
-    def do_open(self, path):
+    def do_open(self, filename):
         """
-        Updates the appropriate variables in the utility file class and loads
+        Updates the appropriate variables in the utility class and loads
         the selected file.
         """
-        self.filehistory.AddFileToHistory(path)
+        logger.info("Opening file [%s]", filename)
+        self.filehistory.AddFileToHistory(filename)
         self.filehistory.Save(self.config)
         self.config.Flush()
-        self.util.save_last_path(path)
+        self.util.save_last_path(filename)
 
-        if is_save_file(path):
-            self.util.load_wtbd(path)
+        if is_save_file(filename):
+            self.util.load_wtbd(filename)
         else:
-            self.util.temp_file = path
+            self.util.temp_file = filename
             self.util.load_file()
 
 
@@ -440,14 +447,15 @@ class GUI(wx.Frame):
 
 
     def on_reload_preferences(self, event):
-        home = os.path.join(get_home_dir(), u"user.pref")
-        if os.path.exists(home):
-            config = ConfigObj(home, configspec=meta.config_scheme)
+        preferences_file = os.path.join(get_home_dir(), u"user.pref")
+        logger.debug("Reloading preference file [%s]", preferences_file)
+        if os.path.exists(preferences_file):
+            config = ConfigObj(preferences_file, configspec=meta.config_scheme)
             validator = Validator()
             config.validate(validator)
             pref = Preferences(self)
             pref.config = config
-            pref.config.filename = home
+            pref.config.filename = preferences_file
             pref.on_okay()
 
 
@@ -487,6 +495,7 @@ class GUI(wx.Frame):
             self.tab_total += 1
         if not name:
             name = u"%s %s" % (_("Sheet"), self.tab_total)
+        logger.debug("Opening new sheet [%s]", name)
 
         self.tab_count += 1
         self.thumbs.new_thumb(name=name)
@@ -542,6 +551,7 @@ class GUI(wx.Frame):
         else:
             method(*args)
             if method == self.Destroy:
+                logger.info("Program exiting.")
                 sys.exit()
 
 
@@ -800,9 +810,10 @@ class GUI(wx.Frame):
             self.paste_image(data.GetBitmap(), x, y, ignore)
 
 
-    def on_change_tool(self, event, _id):
+    def on_change_tool(self, event, _id, key):
         """ Change tool -- used when being used as a hotkey """
-        if not self.canvas.shape.drawing and not self.canvas.drawing:
+        if self.canvas.is_not_drawing():
+            logger.debug("Hotkey [%s] pressed, changing tools", key)
             self.control.change_tool(_id=_id)
 
     def pubsub_change_tool(self, new=None):
@@ -838,8 +849,8 @@ class GUI(wx.Frame):
         if os.name == "posix":
             for x, key in enumerate(self.hotkeys):
 
-                if code in [ord(key), ord(key.upper())]:
-                    self.on_change_tool(None, _id=x + 1)
+                if code in [ord(key), ord(key.upper())]:                    
+                    self.on_change_tool(None, _id=x + 1, key=key)
                     return
 
         if code == wx.WXK_ESCAPE:  # close fullscreen/deselect shape
@@ -1027,6 +1038,7 @@ class GUI(wx.Frame):
 
 
     def on_exit(self, event=None):
+        logger.info("User requested application to exit.")
         self.prompt_for_save(self.Destroy)
 
     def tab_popup(self, event):

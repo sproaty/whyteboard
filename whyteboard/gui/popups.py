@@ -23,12 +23,14 @@ Popup menu items.
 """
 
 import wx
+import logging
 
 from whyteboard.gui import (ID_BACKGROUND, ID_CLOSE_ALL, ID_FOREGROUND, ID_MOVE_DOWN,
                        ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP, ID_MOVE_UP, ID_SWAP_COLOURS,
                        ID_TRANSPARENT)
 
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.popups")
 
 #----------------------------------------------------------------------
 
@@ -158,8 +160,8 @@ class ShapePopup(Popup):
         text, _help = _("&Select"), _("Selects this shape")
         if self.item.selected:
             text, _help = _("De&select"), _("Deselects this shape")
-        self.Append(SELECT, text, _help)
 
+        self.Append(SELECT, text, _help)
         self.Append(EDIT, _("&Edit..."), _("Edit the text"))
         self.Append(POINT, _("&Add New Point"), _("Adds a new point to the Polygon"))
         self.Append(wx.ID_DELETE, _("&Delete"))

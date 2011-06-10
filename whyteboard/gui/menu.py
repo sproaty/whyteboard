@@ -23,6 +23,7 @@ Creates the menu bar for the GUI
 """
 
 import os
+import logging
 import wx
 
 from whyteboard.misc import get_image_path
@@ -38,6 +39,7 @@ from whyteboard.gui import (ID_CLEAR_ALL, ID_CLEAR_ALL_SHEETS, ID_CLEAR_SHEETS,
        ID_TRANSLATE, ID_UNDO_SHEET, ID_UPDATE, ID_BACKGROUND, ID_FOREGROUND)
 
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.menu")
 
 #----------------------------------------------------------------------
 
@@ -46,6 +48,7 @@ class Menu(object):
     Menu bar and its bindings.
     """
     def __init__(self, gui):
+        logger.debug("Initialising Menu")
         self.gui = gui
         self.menu = wx.MenuBar()
         self.closed_tabs_menu = wx.Menu()
@@ -171,6 +174,7 @@ class Menu(object):
         """
         Binds the menu items to the GUI
         """
+        logger.debug("Binding menu items' events")
         self.gui.Bind(wx.EVT_MENU_RANGE, self.gui.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
         self.gui.Bind(wx.EVT_MENU_OPEN, self.gui.load_recent_files)
 
@@ -254,6 +258,7 @@ class Menu(object):
         """
         Recreates the undo tab menu
         """
+        logger.debug("Recreating the closed tabs menu")
         for menu in self.closed_tabs_menu.GetMenuItems():
             self.closed_tabs_menu.Remove(menu.GetId())
             self.gui.Unbind(wx.EVT_MENU, id=menu.GetId())
@@ -297,6 +302,7 @@ class Toolbar(object):
         Creates a toolbar, Pythonically :D
         Move to top/up/down/bottom must be created with a custom bitmap.
         """
+        logger.debug("Creating the tool bar")
         toolbar = gui.CreateToolBar()
         _move = [ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP]
 

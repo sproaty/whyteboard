@@ -38,26 +38,26 @@ _ = wx.GetTranslation
 
 def define_languages():
     return (
-                  (u"Arabic", _("Arabic"), wx.LANGUAGE_ARABIC),
-                  (u"Catalan", _("Catalan"), wx.LANGUAGE_CATALAN),
-                  (u"Chinese (Traditional)", _("Chinese (Traditional)"), wx.LANGUAGE_CHINESE_TRADITIONAL),
-                  (u"Czech", _("Czech"), wx.LANGUAGE_CZECH),
-                  (u"Dutch", _("Dutch"), wx.LANGUAGE_DUTCH),
-                  (u"English", _("English"), wx.LANGUAGE_ENGLISH),
-                  (u"English (U.K.)", _("English (U.K.)"), wx.LANGUAGE_ENGLISH_UK),
-                  (u"French", _("French"), wx.LANGUAGE_FRENCH),
-                  (u"Galician", _("Galician"), wx.LANGUAGE_GALICIAN),
-                  (u"German", _("German"), wx.LANGUAGE_GERMAN),
-                  (u"Hindi", _("Hindi"), wx.LANGUAGE_HINDI),
-                  (u"Italian", _("Italian"), wx.LANGUAGE_ITALIAN),
-                  (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
-                  (u"Occitan (post 1500)", _("Occitan (post 1500)"), wx.LANGUAGE_OCCITAN),
-                  (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
-                  (u"Russian", _("Russian"), wx.LANGUAGE_RUSSIAN),
-                  (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
-                  (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
-                )
-    
+            (u"Arabic", _("Arabic"), wx.LANGUAGE_ARABIC),
+            (u"Catalan", _("Catalan"), wx.LANGUAGE_CATALAN),
+            (u"Chinese (Traditional)", _("Chinese (Traditional)"), wx.LANGUAGE_CHINESE_TRADITIONAL),
+            (u"Czech", _("Czech"), wx.LANGUAGE_CZECH),
+            (u"Dutch", _("Dutch"), wx.LANGUAGE_DUTCH),
+            (u"English", _("English"), wx.LANGUAGE_ENGLISH),
+            (u"English (U.K.)", _("English (U.K.)"), wx.LANGUAGE_ENGLISH_UK),
+            (u"French", _("French"), wx.LANGUAGE_FRENCH),
+            (u"Galician", _("Galician"), wx.LANGUAGE_GALICIAN),
+            (u"German", _("German"), wx.LANGUAGE_GERMAN),
+            (u"Hindi", _("Hindi"), wx.LANGUAGE_HINDI),
+            (u"Italian", _("Italian"), wx.LANGUAGE_ITALIAN),
+            (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
+            (u"Occitan (post 1500)", _("Occitan (post 1500)"), wx.LANGUAGE_OCCITAN),
+            (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
+            (u"Russian", _("Russian"), wx.LANGUAGE_RUSSIAN),
+            (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
+            (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
+           )
+
 def define_filetypes():
     # Creates a wxPython wildcard filter from a list of known/supported filetypes.
     _all = [ (_('PDF/PS/SVG'), [u'ps', u'pdf', u'svg']),

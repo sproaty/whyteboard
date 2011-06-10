@@ -123,7 +123,7 @@ class Utility(object):
         pub.subscribe(self.set_background, 'change_background')
 
         if 'default_font' in self.config:
-            self.font = wx.FFont(1, 1)
+            self.font = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
             self.font.SetNativeFontInfoFromString(self.config['default_font'])
 
 
@@ -134,7 +134,7 @@ class Utility(object):
         added any images into a zip archive along with the .data file.
         """
         if not self.filename:
-            logger.debug("No filename set.")
+            logger.debug("No filename set; cannot save")
             return
 
         version = meta.version
@@ -170,14 +170,14 @@ class Utility(object):
         path = os.path.join(os.path.dirname(self.filename), u'whyteboard_temp_new.wtbd')
         tmp_file = os.path.abspath(path)
         errored = False
-        logger.debug("Creating temporary zip file [%s]." % tmp_file)
+        logger.debug("Creating temporary zip file [%s].", tmp_file)
         
         _zip = zipfile.ZipFile(tmp_file, 'w')
         self.save_bitmap_data(_zip)
         save.save_items()
         data = save.create_save_list(self.gui.current_tab, version)
         data_file = os.path.join(get_home_dir(), "save.data")
-        logger.debug("Writing save data to [%s]" % data_file)
+        logger.debug("Writing save data to [%s]", data_file)
         
         with open(data_file, 'wb') as f:
             try:
@@ -258,11 +258,11 @@ class Utility(object):
         """
         if filename is None:
             filename = self.temp_file
-        logger.debug("Attempting to load file [%s]" % filename)
+        logger.debug("Attempting to load file [%s]", filename)
 
         _file, _type = os.path.splitext(filename)  # convert to lowercase to
         _type = _type.replace(u".", u"").lower()  # save typing filename[1:] :)
-
+        
         if _type in meta.types[:3]:
             self.convert()
 
@@ -270,7 +270,7 @@ class Utility(object):
             load_image(self.temp_file, self.gui.canvas, tools.Image)
             self.gui.canvas.redraw_all()
         else:
-            logger.warning("Filetype %s is not supported" % _type)
+            logger.warning("Filetype [%s] is not supported", _type)
             wx.MessageBox(_("Whyteboard doesn't support the filetype") + u" .%s" % _type,
                           u"Whyteboard")
 
@@ -280,6 +280,7 @@ class Utility(object):
         Closes all tabs, loads in a Whyteboard save, which can be a zipped file
         or a single pickled file.
         """
+        logger.debug("Loading .wtbd file")
         f = None
         try:
             f = zipfile.ZipFile(filename)
@@ -294,6 +295,7 @@ class Utility(object):
         try:
             data = f.read("save.data")
         except KeyError:
+            logger.exception("File save.data is missing")
             wx.MessageBox(_('"%s" is missing the file save.data')
                         % os.path.basename(filename))
             f.close()
@@ -311,29 +313,32 @@ class Utility(object):
         """
         sys.modules['tools'] = tools  # monkey patch for new src layout (0.4)
 
-        temp = {}
-        method = pickle.load
+        save_data = {}
         if not pickle_data:
+            logger.warning("Loading in older .wtbd save format.")
+            method = pickle.load
             f = open(filename, 'rb')
         else:
-            f = pickle_data
             method = pickle.loads
+            f = pickle_data
 
         try:
-            temp = method(f)
+            save_data = method(f)
         except (pickle.UnpicklingError, AttributeError, ValueError, TypeError, EOFError):
+            logger.exception("Save file has corrupt data")
             wx.MessageBox(_('"%s" has corrupt data.\nThis file cannot be loaded.') % os.path.basename(filename),
                             u"Whyteboard")
             return
-        except ImportError:  # older windows/linux incompatible type
-
+        except ImportError:  
+            logger.warning("Even older, incompatible save format being used.")
             if not pickle_data:
                 f.close()
                 f = open(filename, 'r')
 
             try:
-                temp = method(f)
+                save_data = method(f)
             except (pickle.UnpicklingError, AttributeError, ImportError, ValueError, TypeError, EOFError):
+                logger.exception("Save file has corrupt data")
                 wx.MessageBox(_('"%s" has corrupt data.\nThis file cannot be loaded.') % os.path.basename(filename),
                               u"Whyteboard")
                 return
@@ -344,33 +349,35 @@ class Utility(object):
             if not pickle_data:
                 f.close()
 
+        logger.debug("Removing tools namespace")
         del sys.modules['tools']
-        self.recreate_save(filename, temp)
+        self.recreate_save(filename, save_data)
 
 
-    def recreate_save(self, filename, temp):
+    def recreate_save(self, filename, save_data):
         """
         Recreates the saved .wtbd file's state
         """
+        logger.debug("Recreating save file")
         self.filename = filename
         self.gui.show_progress_dialog(_("Loading..."))
         self.gui.remove_all_sheets()
 
         # change program settings and update the Preview window
-        self.colour = temp[0][0]
-        self.thickness = temp[0][1]
-        self.tool = temp[0][2]
+        self.colour = save_data[0][0]
+        self.thickness = save_data[0][1]
+        self.tool = save_data[0][2]
         self.gui.control.change_tool(_id=self.tool)  # toggle button
         self.gui.control.colour.SetColour(self.colour)
         self.gui.control.thickness.SetSelection(self.thickness - 1)
 
         # re-create tabs and its saved drawings
-        for x in temp[1]:
-            self.gui.on_new_tab(name=temp[3][x])
-            self.gui.canvas.resize(temp[4][x])
+        for x in save_data[1]:
+            self.gui.on_new_tab(name=save_data[3][x])
+            self.gui.canvas.resize(save_data[4][x])
 
             try:
-                media = temp[5][x]
+                media = save_data[5][x]
                 for m in media:
                     m.canvas = self.gui.canvas
                     m.load()
@@ -378,7 +385,7 @@ class Utility(object):
             except KeyError:
                 break
 
-            for shape in temp[1][x]:
+            for shape in save_data[1][x]:
                 try:
                     shape.canvas = self.gui.canvas  # restore canvas
                     shape.load()  # restore unpickleable settings
@@ -390,17 +397,18 @@ class Utility(object):
         # close progress bar, handle older file versions gracefully
         wx.PostEvent(self.gui, self.gui.LoadEvent())
         self.mark_saved()
-        self.saved_version = temp[0][4]
+        self.saved_version = save_data[0][4]
         pub.sendMessage('canvas.change_tool')
-        self.gui.tabs.SetSelection(temp[0][3])
+        self.gui.tabs.SetSelection(save_data[0][3])
         self.gui.on_change_tab()
         self.gui.SetTitle(u"%s - %s" % (os.path.basename(filename), self.gui.title))
         self.gui.closed_tabs = list()
 
         try:
-            if temp[0][5]:
-                font = wx.FFont(1, 1)
-                font.SetNativeFontInfoFromString(temp[0][5])
+            if save_data[0][5]:
+                logger.debug("Setting default font from save file: [%s]", save_data[0][5])
+                font = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
+                font.SetNativeFontInfoFromString(save_data[0][5])
                 self.font = font
         except IndexError:
             pass
@@ -411,6 +419,7 @@ class Utility(object):
 
 
     def save_last_path(self, path):
+        logger.debug("Setting last opened directory to [%s]", path)
         self.config['last_opened_dir'] = os.path.dirname(path)
         self.config.write()
 
@@ -418,7 +427,7 @@ class Utility(object):
         self.saved = True
         self.save_time = time.time()
 
-    def convert(self, _file=None):
+    def convert(self):
         """
         If the filetype is PDF/PS, convert to a (temporary) series of images and
         loads them. Find out the directory length before/after the conversion to
@@ -436,30 +445,36 @@ class Utility(object):
         if not self.im_location:  # above will have changed this if IM exists
             return
 
-        if _file is None:
-            _file = self.temp_file
+        _file = self.temp_file
+        logger.info("Converting [%s]", os.path.basename(_file))
 
         quality = self.config['convert_quality']
         cached = self.library.lookup(_file, quality)
         if cached:
+            logger.debug("PDF is cached")
             self.display_converted(_file, cached)
         else:
             path = get_home_dir(u"wtbd-tmp")  # directory to store the images
             tmp_file = make_filename()
             before = os.walk(path).next()[2]  # file count before convert
             full_path = path + tmp_file + u".png"
+            logger.debug("Writing PDF images as [%s]", full_path)
 
             cmd = convert_quality(quality, self.im_location, _file, full_path)
+            logger.info("Starting to convert PDF")
             self.gui.convert_dialog(cmd)  # show progress bar, kick off convert
 
             if self.gui.convert_cancelled:
+                logger.info("Convert process cancelled by user")
                 return
             after = os.walk(path).next()[2]
             count = len(after) - len(before)
             images = []
             ignore = False
+            logger.info("Convert process complete. %i images were created", count)
 
             if not count:
+                logger.warning("Failed to convert.")
                 wx.MessageBox(_("Failed to convert file. Ensure GhostScript is installed\nhttp://pages.cs.wisc.edu/~ghost/"), _("Conversion Failed"))
                 open_url(u"http://pages.cs.wisc.edu/~ghost/")
                 return
@@ -543,7 +558,7 @@ class Utility(object):
         """
         _file = os.path.join(path, u"convert.exe")
         if not os.path.exists(_file):
-            logger.warning("Could not find ImageMagick's convert.exe in [%s]" % path)
+            logger.warning("Could not find ImageMagick's convert.exe in [%s]", path)
             wx.MessageBox(_('Folder "%s" does not contain convert.exe') % path, u"Whyteboard")
             return False
 
@@ -583,7 +598,6 @@ class PDFCache(object):
     """
     def __init__(self, filename):
         self.path = os.path.join(get_home_dir(), filename)
-
         if not os.path.exists(self.path):
             self.write_dict(dict())
 
@@ -600,6 +614,7 @@ class PDFCache(object):
 
     def write(self, location, images, quality):
         """Adds a newly converted file to the library"""
+        logger.debug("Adding [%s] at [%s] quality to cache", os.path.basename(location), quality)
         files = self.entries()
         files[len(files)] = {'file': location, 'images': images,
                              'quality': quality, 'date': time.asctime()}
@@ -607,6 +622,7 @@ class PDFCache(object):
 
 
     def write_dict(self, files):
+        logger.debug("Writing to PDF cache")
         with open(self.path, "w") as f:
             pickle.dump(files, f)
 

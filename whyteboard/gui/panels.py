@@ -169,7 +169,7 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             path = get_image_path(u"tools", val)
-            logger.debug("Loading toolbox image [%s]" % path)
+            logger.debug("Creating toolbox item, with icon [%s]", path)
             item = self.gui.util.items[x]
             b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
                                       style=wx.NO_BORDER)
@@ -481,7 +481,7 @@ class MediaPanel(wx.Panel):
         Loads a file from a given path, sets up instance variables and enables
         and disables buttons
         """
-        logger.debug("MediaCtrl: loading [%s]" % path)
+        logger.debug("MediaCtrl: loading [%s]", path)
         if not self.mc.Load(path):
             logger.warning("MediaCtrl could not load file")
             wx.MessageBox(_("Unable to load %s: Unsupported format?") % path,

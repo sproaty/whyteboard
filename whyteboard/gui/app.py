@@ -58,10 +58,12 @@ class WhyteboardApp(wx.App):
         parser.add_option("-d", "--debug", action="store_true", help="debug mode. more information about the program is logged")
 
         (options, args) = parser.parse_args()
-        preferences_file = options.conf or os.path.join(get_home_dir(), u"user.pref")
-
         self.setup_logging(options.debug)
-        logger.debug("Loading preferences file [%s]" % preferences_file)
+        logger.info("Program starting")
+        logger.debug("Received command line options [%s] and args [%s]", options, args)
+
+        preferences_file = options.conf or os.path.join(get_home_dir(), u"user.pref")      
+        logger.debug("Setting up configuration from preferences file [%s]", preferences_file)
 
         config = ConfigObj(preferences_file, configspec=meta.config_scheme, encoding=u"utf-8")
         config.validate(Validator())
@@ -86,11 +88,12 @@ class WhyteboardApp(wx.App):
         if options.update:
             self.frame.on_update()
 
-        logger.info("Startup complete, time taken: %sms" % (time.time() - startup_time))
+        logger.info("Startup complete, time taken: %.3fms", (time.time() - startup_time))
         return True
 
     def setup_logging(self, debug):
-        fh = logging.FileHandler('whyteboard.log')
+        logfile = os.path.join(get_home_dir(), u"whyteboard.log")
+        fh = logging.FileHandler(logfile)
         ch = logging.StreamHandler()
         if debug:
             logger.setLevel(logging.DEBUG)
@@ -108,6 +111,7 @@ class WhyteboardApp(wx.App):
         remove any that matches the random file extension
         """
         if is_exe() and os.path.exists(u"wtbd-bckup.exe"):
+            logger.debug("Removing backup EXE after performing an update")
             os.remove(u"wtbd-bckup.exe")
         else:
             path = get_path()
@@ -122,14 +126,19 @@ class WhyteboardApp(wx.App):
         """
         set_lang = False
         lang_name = config.get('language', '')
-
+        logger.debug("Found language [%s] in config", lang_name)
+        
         if option_lang:
+            logger.debug("Attempting to set language from command line: [%s]", option_lang)
             country = wx.Locale.FindLanguageInfo(option_lang)
             if country:
                 set_lang = True
                 lang_name = country.Description
                 self.locale = wx.Locale(country.Language)
-
+                logger.debug("Using command-line set language [%s]", lang_name)
+            else:
+                logger.warning("Could not parse [%s] into a known locale/language", option_lang)
+                
         if not set_lang:
             for x in meta.languages:
                 if lang_name.capitalize() == 'Welsh':
@@ -137,15 +146,18 @@ class WhyteboardApp(wx.App):
                     self.locale.Init(u"Cymraeg", u"cy", u"cy_GB.utf8")
                     break
                 elif lang_name == x[0]:
+                    logger.debug("Attempting to set language to [%s] from config", lang_name)
                     nolog = wx.LogNull()
                     self.locale = wx.Locale(x[2])
 
-        if not hasattr(self, "locale"):  # now try sytem language
+        if not hasattr(self, "locale"):
+            logger.debug("No locale set, reverting to system language")
             self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
             config['language'] = wx.Locale.GetLanguageName(wx.LANGUAGE_DEFAULT)
             config.write()
 
         if not wx.Locale.IsOk(self.locale):
+            logger.warning("Could not set language to [%s]", lang_name)
             wx.MessageBox(u"Error setting language to %s - reverting to English"
                           % lang_name, u"Whyteboard")
             if not set_lang:
@@ -153,11 +165,13 @@ class WhyteboardApp(wx.App):
                 config.write()
             self.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
 
+        logger.info("Whyteboard is running in [%s]", wx.Locale.GetLanguageName(self.locale.GetLanguage()))
         langdir = os.path.join(get_path(), u'locale')
+        logger.debug("Adding locale catalogue [%s]", langdir)
         self.locale.AddCatalogLookupPathPrefix(langdir)
         self.locale.AddCatalog(u"whyteboard")
         self.locale.AddCatalog(u'wxstd')
 
         # nasty fix for some translated strings not being applied
         meta.languages = meta.define_languages() 
-        meta.dialog_wildcard = meta.define_filetypes()
+        meta.types, meta.dialog_wildcard = meta.define_filetypes()
