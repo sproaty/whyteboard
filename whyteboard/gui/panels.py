@@ -35,10 +35,9 @@ from wx.lib.buttons import GenBitmapToggleButton
 from wx.lib.wordwrap import wordwrap as wordwrap
 
 from whyteboard.lib import pub
-from whyteboard.tools import Media
 
 from whyteboard.misc import (meta, create_colour_bitmap, get_time, file_dialog,
-                             get_image_path, create_bold_font)
+                             get_image_path)
 from whyteboard.gui import NotesPopup, ThumbsPopup
 
 _ = wx.GetTranslation
@@ -95,7 +94,7 @@ class ControlPanel(wx.Panel):
                      (self.thickness, 0, wx.EXPAND | wx.ALL, 4),
                      ((5, 5)), (self.preview, 0, wx.EXPAND | wx.ALL, 4)])
         sizer.Add(collapsible, 1, wx.EXPAND)
-        
+
         self.SetSizer(sizer)
         self.pane.SetSizer(self.control_sizer)
         collapsible.Expand()
@@ -178,7 +177,7 @@ class ControlPanel(wx.Panel):
 
             b.Bind(wx.EVT_BUTTON, self.change_tool, id=x + 1)
             self.tools[x + 1] = b
-            
+
             if self.media_is_supported(item):
                 self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             else:

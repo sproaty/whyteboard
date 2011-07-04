@@ -175,8 +175,8 @@ class WhyteboardApp(wx.App):
         # nasty fix for some translated strings not being applied
         meta.languages = meta.define_languages()
         meta.types, meta.dialog_wildcard = meta.define_filetypes()
-    
-        
+
+
     def update(self):
         """
         Prompts the user for confirmation whether to update (without launching the GUI)
@@ -185,11 +185,11 @@ class WhyteboardApp(wx.App):
         download = self.updater.get_latest_version_info()
 
         if not download:
-            print _("Could not connect to server.")
+            print "Could not connect to server."
             return
 
         if not self.updater.can_update():
-            print _("You are running the latest version.")
+            print "You are running the latest version."
             return
 
         confirm = raw_input("There is a new version available, %(version)s\nFile: %(filename)s\nSize: %(filesize)s)\n\nDo you want to update? (y/n)\n"
@@ -204,8 +204,8 @@ class WhyteboardApp(wx.App):
             self.updater.extract()
             args = self.updater.restart_args()
             os.execvp(*args)
-        
-               
+
+
     def update_progress_reporter(self, count, block, total):
         self.progress.increment_amount(count)
         print self.progress, '\r',

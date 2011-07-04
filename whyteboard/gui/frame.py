@@ -88,7 +88,7 @@ class GUI(wx.Frame):
 
         meta.find_transparent()  # important
         logger.info("Transparency supported: %s", meta.transparent)
-        
+
         if meta.transparent:
             try:
                 x = self.util.items.index(Highlighter)
@@ -843,7 +843,7 @@ class GUI(wx.Frame):
         if os.name == "posix":
             for x, key in enumerate(self.hotkeys):
 
-                if code in [ord(key), ord(key.upper())]:                    
+                if code in [ord(key), ord(key.upper())]:
                     self.on_change_tool(None, _id=x + 1, key=key)
                     return
 
