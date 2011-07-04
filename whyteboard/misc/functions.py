@@ -284,19 +284,13 @@ def create_bold_font():
 
 def format_bytes(total):
     """
-    Turn an amount of byte into readable KB/MB format
+    Turn an amount of bytes into readable KB/MB format
     http://www.5dollarwhitebox.org/drupal/node/84
     """
     _bytes = float(total)
     if _bytes >= 1048576:
-        megabytes = _bytes / 1048576
-        size = u'%.2fMB' % megabytes
-    elif _bytes >= 1024:
-        kilobytes = _bytes / 1024
-        size = u'%.2fKB' % kilobytes
-    else:
-        size = u'%.2fb' % _bytes
-    return size
+        return u'%.2fMB' % (_bytes / 1048576)
+    return u'%.2fKB' % (_bytes / 1024)
 
 
 def get_version_int(version):
@@ -324,9 +318,12 @@ def version_is_greater(version1, version2):
     return a[0] > b[0] or a[1] > b[1] or a[2] > b[2]
 
 def is_new_version(current, new):
-    """Whether the new version is an upgrade from the current"""
+    """
+    Whether the new version is an upgrade from the current
+    """
     return (not versions_are_equal(current, new)
             and not version_is_greater(current, new))
+
 
 def download_help_files(path):
     """
@@ -350,32 +347,6 @@ def download_help_files(path):
     os.remove(tmp[0])
 
 
-def extract_tar(path, _file, version, backup_extension):
-    """
-    Extract a .tar.gz source file on Windows, without needing to use the
-    'tar' command, and with no other downloads!
-    """
-    tar = tarfile.open(_file)
-    tar.extractall(path)
-    tar.close()
-    # remove 2 folders that will be updated, may not exist
-    src = os.path.join(path, u"whyteboard-" + version)
-
-    # rename all relevant files - ignore any dirs
-    for f in os.listdir(path):
-        location = os.path.join(path, f)
-        if not os.path.isdir(location):
-            _type = os.path.splitext(f)
-
-            if _type[1] in [u".py", u".txt"]:
-                new_file = os.path.join(path, _type[0]) + backup_extension
-                os.rename(location, new_file)
-
-    # move extracted file to current dir, remove tar, remove extracted dir
-    copy_tree(src, path)
-    remove_tree(src)
-
-
 def help_file_path():
     return os.path.join(get_path(), u'whyteboard-help', u'whyteboard.hhp')
 
@@ -393,7 +364,7 @@ def get_path():
 
 def get_image_path(directory, filename):
     """
-    Fetch an image from the correct directory
+    Fetch an image's path from the correct directory
     """
     return os.path.join(get_path(), u"images", directory, u"%s.png" % filename)
 

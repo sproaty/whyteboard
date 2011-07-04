@@ -258,7 +258,6 @@ class Menu(object):
         """
         Recreates the undo tab menu
         """
-        logger.debug("Recreating the closed tabs menu")
         for menu in self.closed_tabs_menu.GetMenuItems():
             self.closed_tabs_menu.Remove(menu.GetId())
             self.gui.Unbind(wx.EVT_MENU, id=menu.GetId())

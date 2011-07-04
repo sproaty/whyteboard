@@ -74,7 +74,6 @@ except ImportError:
     import pickle
 
 from whyteboard.lib import pub
-from whyteboard.gui import printing
 from whyteboard.misc import (meta, get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type, version_is_greater, open_url)
 
@@ -211,6 +210,7 @@ class Utility(object):
         them. This function is lengthy because it will not save two idential
         images twice.
         """
+        logger.debug("Writing bitmap files to zip")
         data = {}  # list of bitmap data, check if image has been pasted
         to_remove = []
         for canvas in self.gui.get_canvases():
@@ -598,7 +598,9 @@ class PDFCache(object):
     """
     def __init__(self, filename):
         self.path = os.path.join(get_home_dir(), filename)
+        logger.debug("Using PDF cache at [%s]", self.path)
         if not os.path.exists(self.path):
+            logger.debug("Cache file does not exist - creating it")
             self.write_dict(dict())
 
 

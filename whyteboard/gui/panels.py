@@ -22,7 +22,7 @@
 This module contains classes for the GUI side panels and pop-up menus.
 """
 
-from __future__ import division
+from __future__ import division, with_statement
 import os
 import logging
 
@@ -62,15 +62,14 @@ class ControlPanel(wx.Panel):
         """
         wx.Panel.__init__(self, gui, style=0 | wx.RAISED_BORDER)
 
-        pane = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE | wx.CP_NO_TLW_RESIZE)
-        self.pane = pane.GetPane()  # every widget's parent
+        collapsible = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE | wx.CP_NO_TLW_RESIZE)
+        self.pane = collapsible.GetPane()  # every widget's parent
         self.gui = gui
         self.tools = {}
         self.thickness_timer = None
         self.thickness_scrolling = False
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        collapsible_sizer = wx.BoxSizer(wx.VERTICAL)
         self.control_sizer = wx.BoxSizer(wx.VERTICAL)
         self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
         self.toolsizer = wx.GridSizer(cols=2, hgap=5, vgap=5)
@@ -95,12 +94,11 @@ class ControlPanel(wx.Panel):
                      ((5, 10)), (thickness, 0, wx.ALL | wx.ALIGN_CENTER, 4),
                      (self.thickness, 0, wx.EXPAND | wx.ALL, 4),
                      ((5, 5)), (self.preview, 0, wx.EXPAND | wx.ALL, 4)])
-        collapsible_sizer.Add(self.control_sizer, 1, wx.EXPAND)
-        sizer.Add(pane, 1, wx.EXPAND)
-
+        sizer.Add(collapsible, 1, wx.EXPAND)
+        
         self.SetSizer(sizer)
-        self.pane.SetSizer(collapsible_sizer)
-        pane.Expand()
+        self.pane.SetSizer(self.control_sizer)
+        collapsible.Expand()
         self.background.Raise()
 
         if not self.gui.util.config['tool_preview']:
@@ -169,7 +167,7 @@ class ControlPanel(wx.Panel):
 
         for x, val in enumerate(items):
             path = get_image_path(u"tools", val)
-            logger.debug("Creating toolbox item, with icon [%s]", path)
+            logger.debug("Creating toolbox item from [%s]", path)
             item = self.gui.util.items[x]
             b = GenBitmapToggleButton(self.pane, x + 1, wx.Bitmap(path),
                                       style=wx.NO_BORDER)
@@ -305,16 +303,19 @@ class ControlPanel(wx.Panel):
         changes the thickness and after mouse wheel scrolling has timed out
         """
         if not self.thickness_scrolling:
+            logger.debug("Starting thickness timer - adding undo point")
             self.thickness_scrolling = True
             self.thickness_timer = wx.CallLater(250, self.reset_hotkey)
             self.update(self.thickness.GetSelection(), u"thickness")
         else:
+            logger.debug("Restarting thickness timer")
             self.thickness_timer.Restart(250)
             self.update(self.thickness.GetSelection(), u"thickness", False)
 
 
     def reset_hotkey(self):
         self.thickness_scrolling = False
+        logger.debug("Ended thickness timer")
 
 #----------------------------------------------------------------------
 
@@ -347,9 +348,6 @@ class DrawingPreview(wx.Window):
             dc = wx.PaintDC(self)
             dc.SetPen(wx.Pen(self.gui.canvas.shape.colour, self.gui.canvas.shape.thickness, wx.SOLID))
             dc.SetBrush(self.gui.canvas.shape.brush)
-
-            if self.gui.util.transparent:
-                dc.SetBrush(wx.TRANSPARENT_BRUSH)
 
             self.gui.canvas.shape.preview(dc, width, height)
             dc.SetPen(wx.Pen((0, 0, 0), 1, wx.SOLID))

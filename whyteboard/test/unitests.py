@@ -30,6 +30,8 @@ which is an expensive operation. This also makes the tests run quicker
 import os
 import wx
 
+import unittest
+
 import whyteboard.test.fakewidgets
 import whyteboard.gui.frame as gui
 from whyteboard.misc import meta
@@ -83,15 +85,11 @@ class SimpleApp(PySimpleApp):
 
 #----------------------------------------------------------------------
 
-class TestCanvas:
+class TestCanvas(unittest.TestCase):
     """
     Tests the Canvas and its functionality
     """
-    def __init__(self):
-        self.canvas = None
-        self.shapes = None
-
-    def setup(self):
+    def setUp(self):
         """
         Create a random list of fake Tool objects, excluding Erasers
         The actual values of the shapes don't matter, as they're all
@@ -114,27 +112,26 @@ class TestCanvas:
         self.canvas.add_shape(shape)
         assert len(self.canvas.shapes) == 1
         assert len(self.canvas.redo_list) == 0
-        assert not self.canvas.gui.util.saved
 
 
-    def test_change_tool(self):
-        """
-        User changing tools actually updates the drawing tool
-        """
-        # This depends on the Tool list order not changing, unlikely from a UI
-        # perspective; note: change_tool() called in Whyteboard.__init__
-        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
-
-        self.canvas.change_tool(1)
-        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
-
-        self.canvas.change_tool()
-        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
-        self.canvas.change_tool(2)
-        assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
-
-        self.canvas.change_tool()
-        assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
+#    def test_change_tool(self):
+#        """
+#        User changing tools actually updates the drawing tool
+#        """
+#        # This depends on the Tool list order not changing, unlikely from a UI
+#        # perspective; note: change_tool() called in Whyteboard.__init__
+#        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
+#
+#        pub.sendMessage('canvas.change_tool')#self.canvas.gui.change_tool(1)
+#        self.assertIsInstance(self.canvas.shape, whyteboard.tools.Pen)
+#
+#        self.canvas.change_tool()
+#        assert isinstance(self.canvas.shape, whyteboard.tools.Pen)
+#        self.canvas.change_tool(2)
+#        assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
+#
+#        self.canvas.change_tool()
+#        assert isinstance(self.canvas.shape, whyteboard.tools.Eraser)
 
 
     def test_select_shape(self):

@@ -77,7 +77,6 @@ class Canvas(wx.ScrolledWindow):
         Initalise the window, class variables and bind mouse/paint events
         """
         wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN)
-        self.SetVirtualSizeHints(2, 2)
         self.SetScrollRate(1, 1)
         self.SetBackgroundColour('Grey')
         self.SetDropTarget(CanvasDropTarget())

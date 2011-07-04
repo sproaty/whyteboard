@@ -28,6 +28,7 @@ with by the user (e.g. they can't draw an image directly)
 from __future__ import division
 
 import os
+import logging
 import time
 import math
 import cStringIO
@@ -39,6 +40,7 @@ from whyteboard.lib import pub
 from whyteboard.misc import meta, get_image_path
 
 _ = wx.GetTranslation
+logger = logging.getLogger("whyteboard.tools")
 
 # constants for selection handles
 HANDLE_SIZE   = 6  # square pixels
@@ -463,13 +465,14 @@ class Polygon(OverlayShape):
 
     def do_rotate(self, angle):
         """ Rotate the points. Can be called by Image as a rotate preview """
+        sin_value = math.sin(angle)
+        cos_value = math.cos(angle)
         for x, p in enumerate(self.original_points):
-            a = (math.cos(angle) * (p[0] - self.center[0]) - math.sin(angle) *
+            a = (cos_value * (p[0] - self.center[0]) - sin_value *
                                     (p[1] - self.center[1]) + self.center[0])
-            b = (math.sin(angle) * (p[0] - self.center[0]) + math.cos(angle) *
+            b = (sin_value * (p[0] - self.center[0]) + cos_value *
                                     (p[1] - self.center[1]) + self.center[1])
             self.points[x] = (a, b)
-
 
 
     def move(self, x, y, offset):

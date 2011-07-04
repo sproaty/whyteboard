@@ -1,4 +1,4 @@
-Whyteboard 0.41.2 - A simple image, PDF and postscript file annotator
+Whyteboard 0.42 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 xx xx 2011
 
@@ -12,18 +12,18 @@ start menu. If you have the stand-alone exe, please run whyteboard.exe
 
 *** Package-based Linux distributions 
 
-Whyteboard comes available in a number of packages, such a .deb and .rpm
+Whyteboard comes available in .deb and .rpm package formats.
 There are also OpenSuse and Gentoo builds available on the web, though they
-may not be up to date.
+may not be up to date (and are not maintained by the program developer).
 
 
-*** From source (Mac/Windows/Linux)
+*** From source (Windows/Linux/Mac)
 
 Whyteboard has a few requirements to be run from source:
 
 * Python - http://www.python.org/download
-  Version: 2.6 or 2.7  (2.7 is recommended)
-  Whyteboard will not work with Python 3, as wxPython is unavilable for it
+  Version 2.6 or 2.7  (2.7 is recommended)
+  Whyteboard will not work with Python 3, 2.4 or 2.5 (wxPython is unavilable)
 
 
 * wxPython 2.8 - http://www.wxpython.org/download.php#stable

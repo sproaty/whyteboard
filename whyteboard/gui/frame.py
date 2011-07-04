@@ -46,7 +46,7 @@ from whyteboard.gui import (Canvas, CanvasDropTarget, ControlPanel, MediaPanel,
                             Menu, Preferences, Print, SidePanel, ShapePopup,
                             SheetsPopup, Toolbar)
 
-from whyteboard.gui import (ExceptionHook, AboutDialog, Feedback, FindIM, History,
+from whyteboard.gui import  (AboutDialog, Feedback, FindIM, History,
                             PDFCacheDialog, ProgressDialog, PromptForSave,
                             Resize, ShapeViewer, TextInput, UpdateDialog)
 
@@ -85,9 +85,6 @@ class GUI(wx.Frame):
         """
         wx.Frame.__init__(self, None, title=_("Untitled") + u" - %s" % self.title)
         self.util = Utility(self, config)
-
-        self._oldhook = sys.excepthook
-        sys.excepthook = ExceptionHook
 
         meta.find_transparent()  # important
         logger.info("Transparency supported: %s", meta.transparent)
@@ -163,9 +160,6 @@ class GUI(wx.Frame):
         self.update_panels(True)
         wx.CallAfter(self.UpdateWindowUI)
 
-
-    def __del__(self):
-        sys.excepthook = self._oldhook
 
     def do_bindings(self):
         """

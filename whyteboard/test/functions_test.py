@@ -34,9 +34,9 @@ class TestFunctions(unittest.TestCase):
 
     def test_get_version_int(self):
         """A list with the correct version is returned from a string"""
-        assert get_version_int("1") == [1, 0, 0]
-        assert get_version_int("0.4") == [0, 4, 0]
-        assert get_version_int("0.4.0") == [0, 4, 0]
+        self.assertEqual([1, 0, 0], get_version_int("1"))
+        self.assertEqual([1, 4, 0], get_version_int("1.4"))
+        self.assertEqual([1, 4, 4], get_version_int("1.4.4"))
 
 
     def test_version_is_greater(self):
@@ -75,18 +75,18 @@ class TestFunctions(unittest.TestCase):
         """
         if os.name == "nt":
             functions.get_path = lambda: u"C:\ssss"
-            assert functions.get_image_path(u"icons", u"test") == u'C:\ssss\images\icons\\test.png'
+            self.assertEquals(functions.get_image_path(u"icons", u"test"), u'C:\ssss\images\icons\\test.png')
         else:
             functions.get_path = lambda: u'/blah'
-            assert functions.get_image_path(u"icons", u"test") == u'/blah/images/icons/test.png', functions.get_image_path(u"icons", u"test")
+            self.assertEquals(functions.get_image_path(u"icons", u"test"), u'/blah/images/icons/test.png')
 
 
     def test_format_bytes(self):
         """Byte values are correctly formatted to human-readable strings"""
-        assert format_bytes(1024) == u"1.00KB"
-        assert format_bytes(1030) == u"1.01KB"
-        assert format_bytes(1048576) == u"1.00MB"
-        assert format_bytes(1059061) == u"1.01MB"
+        self.assertEquals(u"1.00KB", format_bytes(1024))
+        self.assertEquals(u"1.01KB", format_bytes(1030))
+        self.assertEquals(u"1.00MB", format_bytes(1048576))
+        self.assertEquals(u"1.01MB", format_bytes(1059061))
 
 
     def test_convert_quality(self):

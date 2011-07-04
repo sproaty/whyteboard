@@ -30,8 +30,9 @@ import time
 import wx
 from optparse import OptionParser
 
-from whyteboard.gui import GUI
-from whyteboard.lib import ConfigObj, Validator
+from whyteboard.download import Updater
+from whyteboard.gui import ExceptionHook, GUI
+from whyteboard.lib import ConfigObj, Validator, ProgressBar
 from whyteboard.misc import meta, get_path, get_home_dir, is_exe, to_unicode
 
 logger = logging.getLogger('whyteboard')
@@ -59,16 +60,22 @@ class WhyteboardApp(wx.App):
 
         (options, args) = parser.parse_args()
         self.setup_logging(options.debug)
+        self._oldhook = sys.excepthook
+        sys.excepthook = ExceptionHook
+
+
         logger.info("Program starting")
         logger.debug("Received command line options [%s] and args [%s]", options, args)
-
-        preferences_file = options.conf or os.path.join(get_home_dir(), u"user.pref")      
+        preferences_file = options.conf or os.path.join(get_home_dir(), u"user.pref")
         logger.debug("Setting up configuration from preferences file [%s]", preferences_file)
 
         config = ConfigObj(preferences_file, configspec=meta.config_scheme, encoding=u"utf-8")
         config.validate(Validator())
-        
         self.set_language(config, options.lang)
+
+        if options.update:
+            self.update()
+
         self.frame = GUI(config)
         self.frame.Show(True)
 
@@ -84,12 +91,15 @@ class WhyteboardApp(wx.App):
         y = options.height or self.frame.canvas.area[1]
         self.frame.canvas.resize((x, y))
 
-        self.delete_temp_files()
-        if options.update:
-            self.frame.on_update()
+        # If everything goes well..
+        wx.CallAfter(self.delete_temp_update_files)
 
         logger.info("Startup complete, time taken: %.3fms", (time.time() - startup_time))
         return True
+
+    def __del__(self):
+        sys.excepthook = self._oldhook
+
 
     def setup_logging(self, debug):
         logfile = os.path.join(get_home_dir(), u"whyteboard.log")
@@ -102,23 +112,13 @@ class WhyteboardApp(wx.App):
         ch.setFormatter(formatter)
         logger.addHandler(fh)
         logger.addHandler(ch)
-        
 
-    def delete_temp_files(self):
-        """
-        Delete temporary files from an update. Remove a backup exe, otherwise
-        iterate over the current directory (where the backup files will be) and
-        remove any that matches the random file extension
-        """
-        if is_exe() and os.path.exists(u"wtbd-bckup.exe"):
-            logger.debug("Removing backup EXE after performing an update")
-            os.remove(u"wtbd-bckup.exe")
-        else:
-            path = get_path()
-            for f in os.listdir(path):
-                if f.find(meta.backup_extension) is not - 1:
-                    os.remove(os.path.join(path, f))
 
+    def delete_temp_update_files(self):
+        tmp_file = os.path.join(get_path(), u"whyteboard-tmp.exe")
+        if is_exe() and os.path.exists(tmp_file):
+            logger.debug("Removing backup windows EXE [%s] after performing an update", tmp_file)
+            os.remove(tmp_file)
 
     def set_language(self, config, option_lang=None):
         """
@@ -127,7 +127,7 @@ class WhyteboardApp(wx.App):
         set_lang = False
         lang_name = config.get('language', '')
         logger.debug("Found language [%s] in config", lang_name)
-        
+
         if option_lang:
             logger.debug("Attempting to set language from command line: [%s]", option_lang)
             country = wx.Locale.FindLanguageInfo(option_lang)
@@ -138,7 +138,7 @@ class WhyteboardApp(wx.App):
                 logger.debug("Using command-line set language [%s]", lang_name)
             else:
                 logger.warning("Could not parse [%s] into a known locale/language", option_lang)
-                
+
         if not set_lang:
             for x in meta.languages:
                 if lang_name.capitalize() == 'Welsh':
@@ -173,5 +173,42 @@ class WhyteboardApp(wx.App):
         self.locale.AddCatalog(u'wxstd')
 
         # nasty fix for some translated strings not being applied
-        meta.languages = meta.define_languages() 
+        meta.languages = meta.define_languages()
         meta.types, meta.dialog_wildcard = meta.define_filetypes()
+    
+        
+    def update(self):
+        """
+        Prompts the user for confirmation whether to update (without launching the GUI)
+        """
+        self.updater = Updater()
+        download = self.updater.get_latest_version_info()
+
+        if not download:
+            print _("Could not connect to server.")
+            return
+
+        if not self.updater.can_update():
+            print _("You are running the latest version.")
+            return
+
+        confirm = raw_input("There is a new version available, %(version)s\nFile: %(filename)s\nSize: %(filesize)s)\n\nDo you want to update? (y/n)\n"
+                            % {u'version': download.version,
+                               u'filename': download.filename(),
+                               u'filesize': download.filesize()})
+
+        print ""
+        if confirm.lower() == "y" or confirm.lower() == "yes":
+            self.progress = ProgressBar(total=download.raw_filesize())
+            downloaded = self.updater.download_file(self.update_progress_reporter)
+            self.updater.extract()
+            args = self.updater.restart_args()
+            os.execvp(*args)
+        
+               
+    def update_progress_reporter(self, count, block, total):
+        self.progress.increment_amount(count)
+        print self.progress, '\r',
+        sys.stdout.flush()
+        if count * block >= total:
+            print "\n"

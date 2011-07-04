@@ -63,27 +63,26 @@ def define_filetypes():
     _all = [ (_('PDF/PS/SVG'), [u'ps', u'pdf', u'svg']),
             (_('Image Files'), [u"jpeg", u"jpg", u"png", u"tiff", u"bmp", u"pcx"]),
             (_('Whyteboard files'), [u'wtbd']) ]
-    
+
     wc_list, types, tmp = [], [], []
-    
+
     for label, exts in _all:
         [types.append(x) for x in exts]
         exts = [u'*.%s' % a for a in exts]
         visexts = u', '.join(exts)
-    
+
         exts.extend([e.upper() for e in exts])
         tmp.extend(exts)
         [types.append(x.replace(u"*.", u"")) for x in exts]
         wc_list.append(u'%s (%s)|%s' % (label, visexts, u';'.join(exts)))
-    
+
     wc_list.insert(0, u'%s|%s' % (_('All files') + u' (*.*)', u'*.*'))
     wc_list.insert(0, u'%s|%s' % (_("All suppported files"), u';'.join(tmp)))
-    
+
     return (types, u'|'.join(wc_list))
 
 transparent = True
-version = u"0.41.2"
-backup_extension = u".blah5bl8ah123bla6h"
+version = u"0.42"
 languages = define_languages()
 types, dialog_wildcard = define_filetypes()
 

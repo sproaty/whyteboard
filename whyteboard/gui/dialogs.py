@@ -27,7 +27,6 @@ from __future__ import with_statement
 
 import os
 import sys
-import zipfile
 import logging
 import time
 import wx
@@ -39,10 +38,10 @@ from urllib import urlopen, urlretrieve, urlencode
 from whyteboard.lib import BaseErrorDialog, icon, pub
 import whyteboard.tools as tools
 
+from whyteboard.download import Updater
 from whyteboard.misc import meta
-from whyteboard.misc import (get_home_dir, bitmap_button, is_exe, extract_tar,
-                       fix_std_sizer_tab_order, format_bytes, is_new_version,
-                       get_image_path, create_bold_font)
+from whyteboard.misc import (get_home_dir, bitmap_button, fix_std_sizer_tab_order, 
+							 format_bytes, get_image_path, create_bold_font)
 _ = wx.GetTranslation
 logger = logging.getLogger("whyteboard.dialogs")
 
@@ -53,7 +52,7 @@ class History(wx.Dialog):
     Creates a history replaying dialog and methods for its functionality
     """
     def __init__(self, gui):
-        wx.Dialog.__init__(self, gui, title=_("History Player"), size=(225, 120))
+        wx.Dialog.__init__(self, gui, title=_("History Player"), size=(225, 140))
         self.gui = gui
         self.looping = False
         self.paused = False
@@ -66,9 +65,9 @@ class History(wx.Dialog):
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         historySizer = wx.BoxSizer(wx.HORIZONTAL)
-        historySizer.Add(self.playButton, 0,  wx.ALL, 2)
-        historySizer.Add(self.pauseButton, 0,  wx.ALL, 2)
-        historySizer.Add(self.stopButton, 0,  wx.ALL, 2)
+        historySizer.Add(self.playButton, 0, wx.ALL, 2)
+        historySizer.Add(self.pauseButton, 0, wx.ALL, 2)
+        historySizer.Add(self.stopButton, 0, wx.ALL, 2)
 
         sizer.Add(historySizer, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 13)
         sizer.Add((10, 5))
@@ -258,130 +257,76 @@ class ProgressDialog(wx.Dialog):
 
 
 class UpdateDialog(wx.Dialog):
-    """
-    Updates Whyteboard. First, connect to server, parse HTML to check for new
-    version. Then, when the user clicks update, fetch the file and show the
-    download progress. Then, depending on exe/python source, we update the
-    program accordingly
-    """
     def __init__(self, gui):
-        """
-        Builds the UI - then wx.CallAfter()s the update check to the server
-        """
-        wx.Dialog.__init__(self, gui, title=_("Updates"), size=(350, 200))
+        wx.Dialog.__init__(self, gui, title=_("Updates"), size=(250, 150))
         self.gui = gui
-        self.downloaded = 0
-        self.new_version = None
-        self._file = None
-        self._type = None
+        self.updater = Updater()
+        self.downloaded_byte_count = 0
+        wx.CallAfter(self.check)  # show the dialog *then* check server
 
-        self.text = wx.StaticText(self, label=_("Connecting to server..."),
-                                  size=(300, 80))
-        self.text2 = wx.StaticText(self, label="")  # for download progress
-        self.btn = wx.Button(self, wx.ID_OK, _("Update"))
+        self.text = wx.StaticText(self, label=_("Connecting to server..."), size=(-1, 80))
         cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        self.btn = wx.Button(self, wx.ID_OK, _("Update"))
         self.btn.Enable(False)
-        self.btn.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(cancel)
         btnSizer.AddButton(self.btn)
-        btnSizer.SetCancelButton(cancel)
         btnSizer.Realize()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.text, 0, wx.LEFT | wx.TOP | wx.RIGHT, 10)
-        sizer.Add(self.text2, 0, wx.LEFT | wx.RIGHT, 10)
-        sizer.Add((10, 20))
         sizer.Add(btnSizer, 0, wx.ALIGN_CENTRE)
+        sizer.Add((1, 5))        
         self.SetSizer(sizer)
+        
         self.SetFocus()
-
         self.btn.Bind(wx.EVT_BUTTON, self.update)
-        wx.CallAfter(self.check)  # we want to show the dialog *then* fetch URL
 
 
     def check(self):
         """
-        Parses the "control" file giving information about the latest release
+        Checks whether an update can be performed
         """
-        try:
-            f = urlopen("http://whyteboard.org/latest")
-        except IOError:
+        download = self.updater.get_latest_version_info()
+
+        if not download:
             self.text.SetLabel(_("Could not connect to server."))
             return
-        html = f.read().split(u"\n")
-        f.close()
-        self.new_version = html[0]
-        logger.debug("Latest program version is %s", self.new_version)
 
-        if not is_new_version(meta.version, self.new_version):
+        if not self.updater.can_update():
             self.text.SetLabel(_("You are running the latest version."))
             return
 
-        self._file, size = html[3], html[4]
-        self._type = ".tar.gz"
-
-        if os.name == "nt" and is_exe():
-            self._file, size = html[1], html[2]
-            self._type = ".zip"
-
-        s = (_("There is a new version available, %(version)s\nFile: %(filename)s\nSize: %(filesize)s")
-             % {'version': html[0], 'filename': self._file, 'filesize': format_bytes(size)} )
+        s = _("There is a new version available, %(version)s\nFile: %(filename)s\nSize: %(filesize)s"
+             % {'version': download.version,
+                'filename': download.filename(),
+                'filesize': download.filesize()})
         self.text.SetLabel(s)
         self.btn.Enable(True)
-        self._file = u"http://whyteboard.googlecode.com/files/%s" % self._file
-
-
 
     def update(self, event=None):
         """
-        Updates the program by downloading the correct file and extracting it.
-        On Linux, the Tar file is extracted into the current directory, and on
-        Windows the .exe is renamed, the new one renamed to replace it and on
-        both platforms the program is then restarted (after asking the user to
-        save or not)
+        Downloads the latest file, extracts it and restarts the program
         """
-        path = self.gui.util.path
-        args = []  # args to reload running program, may include filename
-        tmp = None
-        tmp_file = os.path.join(path[0], 'tmp-wb-' + self._type)
+        downloaded = self.updater.download_file(self.progress_reporter)
 
-        try:
-            tmp = urlretrieve(self._file, tmp_file, self.reporter)
-        except IOError:
+        if not downloaded:
             self.text.SetLabel(_("Could not connect to server."))
             self.btn.SetLabel(_("Retry"))
             return
 
-        if os.name == "nt" and is_exe():
-            os.rename(path[1], u"wtbd-bckup.exe")
-            _zip = zipfile.ZipFile(tmp_file)
-            _zip.extractall()
-            _zip.close()
-            os.remove(tmp_file)
-            wb = os.path.abspath(sys.argv[0])
-            args = [wb, [wb]]
-        else:
-            if os.name == "posix":
-                os.system("tar -xf \"%s\" --strip-components=1" % tmp[0])
-            else:
-                extract_tar(self.gui.util.path[0], os.path.abspath(tmp[0]),
-                            self.new_version, meta.backup_extension)
-            os.remove(tmp[0])
-            args = [u'python', [u'python', sys.argv[0]]]  # for os.execvp
+        self.updater.extract()
+        args = self.updater.restart_args(self.gui.util.filename)
 
-        if self.gui.util.filename:
-            name = u'"%s"' % self.gui.util.filename  # gotta escape for Windows
-            args[1].append(u"-f")
-            args[1].append(name)  # restart, load .wtbd
         self.gui.prompt_for_save(os.execvp, wx.YES_NO, args)
 
 
-    def reporter(self, count, block, total):
-        self.downloaded += block
+    def progress_reporter(self, count, block, total):
+        self.downloaded_byte_count += block
 
-        self.text2.SetLabel(_("Downloaded %s of %s") %
-                            (format_bytes(self.downloaded), format_bytes(total)))
+        self.text.SetLabel(_("Downloaded %s of %s") %
+                            (format_bytes(self.downloaded_byte_count),
+                             format_bytes(total)))
 
 #----------------------------------------------------------------------
 
@@ -831,6 +776,9 @@ class ErrorDialog(BaseErrorDialog):
         self.gui = wx.GetTopLevelWindows()[0]
 
     def Abort(self):
+        if isinstance(self.gui, ErrorDialog):
+            self.Destroy()
+            sys.exit()
         self.gui.prompt_for_save(self.gui.Destroy)
 
     def GetEnvironmentInfo(self):
@@ -873,6 +821,8 @@ def ExceptionHook(exctype, value, trace):
     """
     ftrace = ErrorDialog.FormatTrace(exctype, value, trace)
     print ftrace  # show in console
+
+    logger.critical(ftrace)
 
     if ErrorDialog.ABORT:
         os._exit(1)
@@ -961,7 +911,7 @@ class ShapeViewer(wx.Dialog):
         sizer.Add((10, 5))
         sizer.Add(bsizer, 0, wx.LEFT | wx.EXPAND, 10)
         sizer.Add((10, 15))
-        sizer.Add(self.list, 1, wx.LEFT | wx.RIGHT |wx.EXPAND, 10)
+        sizer.Add(self.list, 1, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         sizer.Add((10, 5))
         sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
         self.SetSizer(sizer)
@@ -1026,7 +976,7 @@ class ShapeViewer(wx.Dialog):
         else:
             for x, shape in enumerate(reversed(self.shapes)):
                 index = self.list.InsertStringItem(sys.maxint, str(x + 1))
-                self.list.SetStringItem(index, 0,  str(x + 1))
+                self.list.SetStringItem(index, 0, str(x + 1))
                 self.list.SetStringItem(index, 1, _(shape.name))
                 self.list.SetStringItem(index, 2, str(shape.thickness))
                 self.list.SetStringItem(index, 3, str(shape.colour))
@@ -1156,7 +1106,7 @@ class PDFCacheDialog(wx.Dialog):
     """
     def __init__(self, gui, cache):
         wx.Dialog.__init__(self, gui, title=_("PDF Cache Viewer"), size=(650, 300),
-                           style=wx.DEFAULT_DIALOG_STYLE |  wx.RESIZE_BORDER)
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.cache = cache
         self.files = cache.entries()
         self.original_files = dict(cache.entries())
@@ -1184,7 +1134,7 @@ class PDFCacheDialog(wx.Dialog):
         sizer.Add((10, 5))
         sizer.Add(bsizer, 0, wx.LEFT | wx.EXPAND, 10)
         sizer.Add((10, 5))
-        sizer.Add(self.list, 1, wx.LEFT | wx.RIGHT |wx.EXPAND, 10)
+        sizer.Add(self.list, 1, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         sizer.Add((10, 5))
         sizer.Add(btnSizer, 0, wx.TOP | wx.BOTTOM | wx.ALIGN_CENTRE, 15)
         self.SetSizer(sizer)
@@ -1297,12 +1247,12 @@ class AboutDialog(wx.Dialog):
                                    lambda evt: CreditsDialog(self, info)),
                   _("&License"): (wx.ID_ANY, wx.RIGHT,
                                    lambda evt: LicenseDialog(self, info.License)),
-                  _("&Close"): (wx.ID_CLOSE, wx.RIGHT,
+                  _("&Close"): (wx.ID_CANCEL, wx.RIGHT,
                                    lambda evt: self.Destroy())}
 
         for label, values in buttons.items():
             button = wx.Button(self, id=values[0], label=label)
-            button.Bind(wx.EVT_BUTTON, values[2] )
+            button.Bind(wx.EVT_BUTTON, values[2])
             btnSizer.Add(button, flag=wx.CENTER | values[1], border=5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1318,7 +1268,6 @@ class AboutDialog(wx.Dialog):
         self.SetSizerAndFit(container)
         self.Centre()
         self.Show(True)
-        self.SetEscapeId(wx.ID_CLOSE)
 
 
 #----------------------------------------------------------------------
@@ -1330,7 +1279,7 @@ class CreditsDialog(wx.Dialog):
         self.SetIcon(icon.GetIcon())
         self.SetMinSize((300, 200))
         notebook = wx.Notebook(self)
-        close = wx.Button(self, id=wx.ID_CLOSE, label=_("&Close"))
+        close = wx.Button(self, id=wx.ID_CANCEL, label=_("&Close"))
         close.SetDefault()
 
         labels = [_("Written by"), _("Translated by")]
@@ -1347,7 +1296,6 @@ class CreditsDialog(wx.Dialog):
         self.SetSizer(sizer)
         self.Layout()
         self.Show()
-        self.SetEscapeId(close.GetId())
 
         close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
 
@@ -1360,7 +1308,7 @@ class LicenseDialog(wx.Dialog):
                            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.SetMinSize((400, 300))
         self.SetIcon(icon.GetIcon())
-        close = wx.Button(self, id=wx.ID_CLOSE, label=_("&Close"))
+        close = wx.Button(self, id=wx.ID_CANCEL, label=_("&Close"))
 
         ctrl = wx.TextCtrl(self, style=wx.TE_READONLY | wx.TE_MULTILINE)
         ctrl.SetValue(license)
@@ -1371,7 +1319,6 @@ class LicenseDialog(wx.Dialog):
         self.SetSizer(sizer)
         self.Layout()
         self.Show()
-        self.SetEscapeId(close.GetId())
 
         close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
 
