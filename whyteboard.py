@@ -46,4 +46,4 @@ if not hasattr(sys, 'frozen'):
 import wx
 from whyteboard import WhyteboardApp
 
-WhyteboardApp().MainLoop()
+WhyteboardApp(redirect=False).MainLoop()
