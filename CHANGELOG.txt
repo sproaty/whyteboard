@@ -1,4 +1,4 @@
-Whyteboard 0.41.2 - A simple image, PDF and postscript file annotator
+Whyteboard 0.42 - A simple image, PDF and postscript file annotator
 https://launchpad.net/whyteboard -- http://code.google.com/p/whyteboard/
 xx xx xxxx 2011
 
@@ -6,7 +6,7 @@ xx xx xxxx 2011
 
 ----------------------------------------------------------------------
 
-xx xxxxx 2011 - 0.41.2
+xx xxxxx 2011 - 0.42
 
 * Removed an ugly black line being drawn across the collapsible control panel's
   toggle button
@@ -19,7 +19,11 @@ xx xxxxx 2011 - 0.41.2
   - "number of undo tabs"
   - "canvas border"
   The preferences were hard to describe and didn't add much value - it was best
-  to remove them. 
+  to remove them.
+
+* Updating the program from the command line with the --update switch can now
+  update the program without launching the GUI, showing a text progress bar
+* Few scripts in place to make building the project simpler
 
 * Added program logging which writes error logs to disk
 * Added a debug mode with verbose output to console
@@ -33,11 +37,13 @@ xx xxxxx 2011 - 0.41.2
 * Bugfix: Highlighter objects were not being re-drawn when undoing a closed tab
 * Bugfix: program thinking there was a new version to update to, when they were
   the same version
-  
+
+* Bugfix: re-wrote the program updater (was quite broken before)
+
 * Bugfix: stop progress indicator when saving files still displaying if there's
   a crash
-* Bugfix: crash when opening .wtbd files from Windows Explorer where the 
-  filename contained unicode characters 
+* Bugfix: crash when opening .wtbd files from Windows Explorer where the
+  filename contained unicode characters
 * Bugfix: Crash when printing highlighter objects. Unfortunately this means that
   highlighter items cannot be printed.
 * Bugfix: crashes with the media player on certain Linux configurations. Now,

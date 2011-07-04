@@ -74,7 +74,6 @@ class History(wx.Dialog):
         sizer.Add((10, 5))
         sizer.Add(closeButton, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 13)
         self.SetSizer(sizer)
-        #self.Fit()
         self.SetEscapeId(closeButton.GetId())
         self.SetFocus()
         self.toggle_buttons()
