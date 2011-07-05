@@ -44,6 +44,6 @@ if not hasattr(sys, 'frozen'):
 
 
 import wx
-from whyteboard import WhyteboardApp
+from whyteboard.gui import WhyteboardApp
 
 WhyteboardApp(redirect=False).MainLoop()
