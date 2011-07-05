@@ -1,0 +1,25 @@
+what,kind,bundleId,bundleVersion,description,time
+executed,command,org.eclipse.ui,3.7.0.I20110602-0100,"org.eclipse.ui.newWizard",1309439724368
+activated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309439724376
+deactivated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309439725880
+executed,command,org.eclipse.ui,3.7.0.I20110602-0100,"org.eclipse.ui.file.import",1309439985055
+executed,command,org.eclipse.ui,3.7.0.I20110602-0100,"org.eclipse.ui.file.import",1309439985055
+activated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309439985061
+deactivated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309439986655
+activated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309440007268
+deactivated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309440007819
+activated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309440184037
+deactivated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309440187382
+activated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309440210693
+deactivated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309440216821
+activated,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309440248180
+closed,workbench,org.eclipse.ui.workbench,3.7.0.I20110519-0100,"",1309440251339
+error,log,,,"Problems saving workspace",1309440254089
+error,log,,,"Problems occurred while trying to save the state of the workbench.",1309440254090
+started,bundle,org.eclipse.compare.core,3.5.200.I20110208-0800,"org.eclipse.compare.core",1309440254225
+started,bundle,org.eclipse.compare,3.5.200.I20110525-0800,"org.eclipse.compare",1309440254234
+stopped,bundle,org.eclipse.m2e.logback.configuration,1.0.0.20110607-2117,"org.eclipse.m2e.logback.configuration",1309440254391
+stopped,bundle,org.eclipse.m2e.discovery,1.0.0.20110607-2117,"org.eclipse.m2e.discovery",1309440254444
+stopped,bundle,org.eclipse.m2e.refactoring,1.0.0.20110607-2117,"org.eclipse.m2e.refactoring",1309440254506
+stopped,bundle,org.eclipse.m2e.editor,1.0.0.20110607-2117,"org.eclipse.m2e.editor",1309440254516
+stopped,bundle,org.eclipse.m2e.editor.xml,1.0.0.20110607-2117,"org.eclipse.m2e.editor.xml",1309440254539
