@@ -82,7 +82,7 @@ def define_filetypes():
     return (types, u'|'.join(wc_list))
 
 transparent = True
-version = u"0.42"
+version = u"0.40"
 languages = define_languages()
 types, dialog_wildcard = define_filetypes()
 
@@ -112,70 +112,87 @@ statusbar = boolean(default=True)
 tool_preview = boolean(default=True)
 toolbar = boolean(default=True)
 """
-
 config_scheme = config_scheme.split("\n")
 
 translators = [
      u'A. Emmanuel Mendoza https://launchpad.net/~a.emmanuelmendoza (Spanish)',
+     u'Alexander \'FONTER\' Zinin https://launchpad.net/~spore-09 (Russian)',
      u'Alexey Reztsov https://launchpad.net/~ariafan (Russian)',
      u'Aljosha Papsch https://launchpad.net/~joschi-papsch (German)',
-     u'"Amy" https://launchpad.net/~anthropofobe (German)',
+     u'Almufadado https://launchpad.net/~almufadado (Portuguese)',
+     u'Amy https://launchpad.net/~anthropofobe (German)',
      u'Antoine Jouve https://launchpad.net/~aj94tj (French)',
-     u'"Auduf" https://launchpad.net/~5097-mail (Russian)',
+     u'Ash https://launchpad.net/~barzogh (French)',
+     u'Auduf https://launchpad.net/~5097-mail (Russian)',
      u'Billy Robshaw https://launchpad.net/~billyrobshaw (Spanish)',
-     u'"Cheesewheel" https://launchpad.net/~wparker05 (Arabic)',
-     u'"cmdrhenner" https://launchpad.net/~cmdrhenner (German)',
+     u'Cédric VALMARY (Tot en òc) https://launchpad.net/~cvalmary (Occitan)',
+     u'Cheesewheel https://launchpad.net/~wparker05 (Arabic)',
+     u'cmdrhenner https://launchpad.net/~cmdrhenner (German)',
      u'Cristian Asenjo https://launchpad.net/~apu2009 (Spanish)',
-     u"David https://launchpad.net/~3-admin-dav1d-de (German)",
+     u'David https://launchpad.net/~3-admin-dav1d-de (German)',
      u'David Aller https://launchpad.net/~niclamus (Italian)',
-     u'"Dennis" https://launchpad.net/~dlinn83 (German)',
+     u'Dennis https://launchpad.net/~dlinn83 (German)',
      u'Diejo Lopez https://launchpad.net/~diegojromerolopez (Spanish)',
-     u'"Donkade" https://launchpad.net/~donkade (Dutch)',
+     u'Donkade https://launchpad.net/~donkade (Dutch)',
      u'Fabian Riechsteiner https://launchpad.net/~ruffy91-gmail (German)',
      u'Federico Vera https://launchpad.net/~fedevera (Spanish)',
      u'Fernando Muñoz https://launchpad.net/~munozferna (Spanish)',
-     u'"fgp" https://launchpad.net/~komakino (Spanish)',
+     u'Fido https://launchpad.net/~fedevera (Spanish)',
+     u'Fitoschido https://launchpad.net/~fitoschido (Spanish)',
+     u'fgp https://launchpad.net/~komakino (Spanish)',
      u'Gonzalo Testa https://launchpad.net/~gonzalogtesta (Spanish)',
+     u'Hugh Man https://launchpad.net/~marsalien (Dutch)',
      u'Hiroshi Tagawa https://launchpad.net/~kuponuga (Japanese)',
      u'Javier Acuña Ditzel https://launchpad.net/~santoposmoderno (Spanish)',
      u'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
+     u'Jean-Philippe Fleury https://launchpad.net/~jpfle (French)',
      u'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
-     u'"kentxchang" https://launchpad.net/~kentxchang (Traditional Chinese)',
-     u'"Kuvaly" https://launchpad.net/~kuvaly (Czech)',
-     u'"Lauren" https://launchpad.net/~lewakefi (French)',
+     u'kentxchang https://launchpad.net/~kentxchang (Traditional Chinese)',
+     u'Kuvaly https://launchpad.net/~kuvaly (Czech)',
+     u'Lauren https://launchpad.net/~lewakefi (French)',
+     u'LoReNicolò https://launchpad.net/~god121-p-l (Italian)',
      u'Lorenzo Baracchi https://launchpad.net/~baracchi-lorenzo (Italian)',
      u'Lukáš Machyán https://launchpad.net/~phobulos (Czech)',
      u'Marcel Schmücker https://launchpad.net/~versus666 (German)',
-     u'"melvinor" https://launchpad.net/~aka-melv (Russian)',
+     u'Martino Barbon https://launchpad.net/~martins999 (Italian)',
+     u'melvinor https://launchpad.net/~aka-melv (Russian)',
      u'Medina https://launchpad.net/~medina-colpaca (Spanish)',
      u'Miguel Anxo Bouzada https://launchpad.net/~mbouzada/ (Galician)',
+     u'Miquel Escarrà https://launchpad.net/~quelet (Catalan)',
      u'Milan Jensen https://launchpad.net/~milanjansen (Dutch)',
-     u'"MixCool" https://launchpad.net/~mixcool (German)',
-     u'"nafergo" https://launchpad.net/~nafergo (Portuguese)',
+     u'MixCool https://launchpad.net/~mixcool (German)',
+     u'nafergo https://launchpad.net/~nafergo (Portuguese)',
+     u'Nicolas Delvaux https://launchpad.net/~malaria (French)',
      u'Nkolay Parukhin https://launchpad.net/~parukhin (Russian)',
-     u'"Pallas" https://launchpad.net/~v-launchpad-geekin-de (German)',
-     u"Papazu https://launchpad.net/~pavel-z (Russian)",
-     u'"pmkvodka" https://launchpad.net/~jazon23 (French)',
-     u'"pygmee" https://launchpad.net/~pygmee (French)',
-     u'"Rarulis" https://launchpad.net/~rarulis (French)',
+     u'Pallas https://launchpad.net/~v-launchpad-geekin-de (German)',
+     u'Papazu https://launchpad.net/~pavel-z (Russian)',
+     u'pmkvodka https://launchpad.net/~jazon23 (French)',
+     u'pygmee https://launchpad.net/~pygmee (French)',
+     u'Rarulis https://launchpad.net/~rarulis (French)',
+     u'Quentin Pagès https://launchpad.net/~kwentin (Spanish)',
      u'Roberto Bondi https://launchpad.net/~bondi (Italian)',
-     u'"RodriT" https://launchpad.net/~rodri316 (Spanish)',
+     u'RodriT https://launchpad.net/~rodri316 (Spanish)',
      u'Sergey Sedov https://launchpad.net/~serg-sedov (Russian)',
      u'Sérgio Marques https://launchpad.net/~sergio+marques (Portuguese)',
+     u'simone.sandri https://launchpad.net/~lexluxsox (Italian)',
      u'Simon Junga https://launchpad.net/~simonthechipmunk (German)',
-     u'"SimonimNetz" https://launchpad.net/~s-marquardt (German)',
+     u'SimonimNetz https://launchpad.net/~s-marquardt (German)',
+     u'SpaceCafé https://launchpad.net/~spacecafe (German)',
+     u'Stanislas Michalak https://launchpad.net/~stanislas-michalak-live (French)',
      u'Steven Sproat https://launchpad.net/~sproaty (Welsh, misc.)',
-     u'"Tobberoth" https://launchpad.net/~tobberoth (Japanese)',
+     u'Thibault Févry https://launchpad.net/~thibaultfevry (French)',
+     u'tjalling https://launchpad.net/~tjalling-taikie (Dutch)',
+     u'Tobberoth https://launchpad.net/~tobberoth (Japanese)',
      u'Tobias Baldauf https://launchpad.net/~technopagan (German)',
-     u'"tjalling" https://launchpad.net/~tjalling-taikie (Dutch)',
-     u'"ucnj" https://launchpad.net/~ucn (German)',
-     u'"VonlisT" https://launchpad.net/~hengartt (Spanish)',
+     u'Tubuntu https://launchpad.net/~t-ubuntu (French)',
+     u'ucnj https://launchpad.net/~ucn (German)',
+     u'VonlisT https://launchpad.net/~hengartt (Spanish)',
      u'Will https://launchpad.net/~willbickerstaff (UK English)',
-     u'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)']
+     u'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)',
+     u'xemard.nicolas https://launchpad.net/~xemard.nicolas (French)']
 
 
 def find_transparent():
     """Has to be called by the GUI"""
     global transparent
     transparent = transparent_supported()
-
