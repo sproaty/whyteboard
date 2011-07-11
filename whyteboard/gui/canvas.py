@@ -128,7 +128,6 @@ class Canvas(wx.ScrolledWindow):
     def left_down(self, event):
         """Starts drawing"""
         x, y = self.convert_coords(event)
-        logger.debug("Left down at (%s, %s) for %s", x, y, type(self.shape))
         
         if os.name == "nt" and not isinstance(self.shape, Media) and not self.shape.drawing:
             self.CaptureMouse()
@@ -175,7 +174,6 @@ class Canvas(wx.ScrolledWindow):
         """
         Called when the left mouse button is released.
         """
-        logger.debug("Left up event for %s", type(self.shape))
         if os.name == "nt" and not self.shape.drawing:
             if self.HasCapture():
                 self.ReleaseMouse()
@@ -691,12 +689,16 @@ class Canvas(wx.ScrolledWindow):
 
         if bmp.x + bmp.width > area[0]:
             bmp.rect.SetWidth(area[0] - bmp.x)
-
         if bmp.y + bmp.height > area[1]:
             bmp.rect.SetHeight(area[1] - bmp.y)
+        if bmp.rect.x <= 0:
+            bmp.rect.SetX(1)
+        if bmp.rect.y <= 0:
+            bmp.rect.SetY(1)
 
         self.copy = None
         self.redraw_all()
+        logger.debug("Getting sub-bitmap for rectangle: [%s]", bmp.rect)
         return self.buffer.GetSubBitmap(bmp.rect)
 
 
