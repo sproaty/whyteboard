@@ -41,7 +41,8 @@ import whyteboard.tools as tools
 from whyteboard.download import Updater
 from whyteboard.misc import meta
 from whyteboard.misc import (get_home_dir, bitmap_button, fix_std_sizer_tab_order, 
-							 format_bytes, get_image_path, create_bold_font)
+                             format_bytes, get_image_path, create_bold_font)
+
 _ = wx.GetTranslation
 logger = logging.getLogger("whyteboard.dialogs")
 
@@ -810,7 +811,7 @@ class ErrorDialog(BaseErrorDialog):
                             'email': self._panel.email.GetValue()})
         f = urlopen(u"http://www.whyteboard.org/bug_submit.php", params)
 
-        self.gui.prompt_for_save(self.gui.Destroy)
+        self.gui.prompt_for_save(self.Close)
 
 
  #----------------------------------------------------------------------
@@ -834,7 +835,7 @@ def ExceptionHook(exctype, value, trace):
 #----------------------------------------------------------------------
 
 
-class WhyteboardList(wx.ListCtrl, listmix.ListRowHighlighter, listmix.ListCtrlAutoWidthMixin):
+class WhyteboardList(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin, listmix.ListRowHighlighter):
 
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, style=wx.DEFAULT_CONTROL_BORDER |

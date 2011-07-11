@@ -42,7 +42,6 @@ if not hasattr(sys, 'frozen'):
         webbrowser.open(u"http://www.wxpython.org/download.php")
         sys.exit()
 
-
 import wx
 from whyteboard.gui import WhyteboardApp
 

@@ -82,7 +82,7 @@ def define_filetypes():
     return (types, u'|'.join(wc_list))
 
 transparent = True
-version = u"0.40"
+version = u"0.42"
 languages = define_languages()
 types, dialog_wildcard = define_filetypes()
 

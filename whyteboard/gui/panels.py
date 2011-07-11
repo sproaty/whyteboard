@@ -94,7 +94,7 @@ class ControlPanel(wx.Panel):
                      (self.thickness, 0, wx.EXPAND | wx.ALL, 4),
                      ((5, 5)), (self.preview, 0, wx.EXPAND | wx.ALL, 4)])
         sizer.Add(collapsible, 1, wx.EXPAND)
-
+        
         self.SetSizer(sizer)
         self.pane.SetSizer(self.control_sizer)
         collapsible.Expand()
@@ -177,7 +177,7 @@ class ControlPanel(wx.Panel):
 
             b.Bind(wx.EVT_BUTTON, self.change_tool, id=x + 1)
             self.tools[x + 1] = b
-
+            
             if self.media_is_supported(item):
                 self.toolsizer.Add(b, 0, wx.EXPAND | wx.RIGHT, 2)
             else:
@@ -302,19 +302,16 @@ class ControlPanel(wx.Panel):
         changes the thickness and after mouse wheel scrolling has timed out
         """
         if not self.thickness_scrolling:
-            logger.debug("Starting thickness timer - adding undo point")
             self.thickness_scrolling = True
             self.thickness_timer = wx.CallLater(250, self.reset_hotkey)
             self.update(self.thickness.GetSelection(), u"thickness")
         else:
-            logger.debug("Restarting thickness timer")
             self.thickness_timer.Restart(250)
             self.update(self.thickness.GetSelection(), u"thickness", False)
 
 
     def reset_hotkey(self):
         self.thickness_scrolling = False
-        logger.debug("Ended thickness timer")
 
 #----------------------------------------------------------------------
 
@@ -631,13 +628,13 @@ class Notes(wx.Panel):
 
     def add_tab(self, name=None):
         """Adds a new tab as a child to the root element"""
-        _id = len(self.tabs) or 0
+        tree_id = len(self.tabs) or 0
         if not name:
-            name = u"%s %s" % (_("Sheet"), _id + 1)
+            name = u"%s %s" % (_("Sheet"), tree_id + 1)
 
-        data = wx.TreeItemData(_id)
+        data = wx.TreeItemData(tree_id)
         tab = self.tree.AppendItem(self.root, name, data=data)
-        self.tabs.insert(_id, tab)
+        self.tabs.insert(tree_id, tab)
 
 
     def add_note(self, note, _id=None):
@@ -647,11 +644,11 @@ class Notes(wx.Panel):
         formatting becoming too wide.
         """
         text = note.text.replace(u"\n", u" ")[:15]
-        _id = self.tabs[self.gui.tabs.GetSelection()]
+        tree_id = self.tabs[self.gui.tabs.GetSelection()]
 
         data = wx.TreeItemData(note)
-        note.tree_id = self.tree.AppendItem(_id, text, data=data)
-        self.tree.Expand(_id)
+        note.tree_id = self.tree.AppendItem(tree_id, text, data=data)
+        self.tree.Expand(tree_id)
 
 
     def remove_tab(self, note):
@@ -706,12 +703,12 @@ class Notes(wx.Panel):
         Selects a Note if unselected, otherwise it de-selects the note.
         draw forces a canvas redraw
         """
-        item = self.tree.GetPyData(event.GetItem())
+        note_shape = self.tree.GetPyData(event.GetItem())
 
-        if not item.selected:
+        if not note_shape.selected:
             self.gui.canvas.deselect_shape()
-            item.selected = True
-            self.gui.canvas.selected = item
+            note_shape.selected = True
+            self.gui.canvas.selected = note_shape
         else:
             self.gui.canvas.deselect_shape()
 

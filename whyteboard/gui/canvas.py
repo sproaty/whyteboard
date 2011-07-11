@@ -698,7 +698,7 @@ class Canvas(wx.ScrolledWindow):
 
         self.copy = None
         self.redraw_all()
-        logger.debug("Getting sub-bitmap for rectangle: [%s]", bmp.rect)
+        logger.debug("Getting sub-bitmap rectangle to copy: [%s]", bmp.rect)
         return self.buffer.GetSubBitmap(bmp.rect)
 
 
