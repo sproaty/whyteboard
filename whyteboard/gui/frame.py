@@ -68,6 +68,8 @@ PASTE_CHECK_COUNT = 7  # only check clipboard every x value of EVT_UPDATE_MENU
 SCROLL_AMOUNT = 3
 UNDO_SHEET_COUNT = 10
 
+
+
 #----------------------------------------------------------------------
 
 class GUI(wx.Frame):
@@ -88,7 +90,7 @@ class GUI(wx.Frame):
 
         meta.find_transparent()  # important
         logger.info("Transparency supported: %s", meta.transparent)
-
+        
         if meta.transparent:
             try:
                 x = self.util.items.index(Highlighter)
@@ -155,11 +157,10 @@ class GUI(wx.Frame):
         self.set_menu_from_config()
         self.do_bindings()
         self.find_help()
-
+        
         pub.sendMessage('thumbs.update_current')
         self.update_panels(True)
         wx.CallAfter(self.UpdateWindowUI)
-
 
     def do_bindings(self):
         """
@@ -264,9 +265,8 @@ class GUI(wx.Frame):
         _dir = self.util.config.get('last_opened_dir') or u""
         _file = self.util.filename
         if not _file:
-            _file = time.strftime(u"%x %X")
-            _file = _file.replace(u":", u"-").replace(u"/", u"-")
-
+            _file = u""
+            
         name = file_dialog(self, _("Save Whyteboard As..."),
                            wx.SAVE | wx.OVERWRITE_PROMPT, wildcard, _dir, _file)
         if name:
@@ -430,7 +430,7 @@ class GUI(wx.Frame):
 
             home = os.path.join(get_home_dir(), u"user.pref")
             if os.path.exists(home):
-                stamp = time.strftime(u"%d-%b-%Y_%Hh-%Mm_%Ss", time.gmtime())
+                stamp = time.strftime(u"%d-%b-%Y_%Hh-%Mm_%Ss")
 
                 os.rename(home, os.path.join(_dir, stamp + u".user.pref"))
             pref = Preferences(self)
@@ -440,6 +440,7 @@ class GUI(wx.Frame):
 
 
 
+        
     def on_reload_preferences(self, event):
         preferences_file = os.path.join(get_home_dir(), u"user.pref")
         logger.debug("Reloading preference file [%s]", preferences_file)
@@ -626,7 +627,8 @@ class GUI(wx.Frame):
         """
         Closes every sheet, creating undo points for each one.
         """
-        if not self.tab_count - 1:  # must have at least one sheet open
+        if not self.tab_count - 1:
+            logger.debug("Cannot close sheet -- only one sheet open")
             return
 
         for x in reversed(range(self.tab_count)):
@@ -669,14 +671,16 @@ class GUI(wx.Frame):
     def on_rename(self, event=None, sheet=None):
         if sheet is None:
             sheet = self.current_tab
+        current_name = self.tabs.GetPageText(sheet)
         dlg = wx.TextEntryDialog(self, _("Rename this sheet to:"), _("Rename sheet"))
-        dlg.SetValue(self.tabs.GetPageText(sheet))
+        dlg.SetValue(current_name)
 
         if dlg.ShowModal() == wx.ID_CANCEL:
             dlg.Destroy()
         else:
             val = dlg.GetValue()
             if val:
+                logger.debug("Renaming sheet [%s] to [%s]", current_name, val)
                 self.tabs.SetPageText(sheet, val)
                 pub.sendMessage('sheet.rename', _id=sheet, text=val)
 
@@ -799,16 +803,19 @@ class GUI(wx.Frame):
             x, y = self.canvas.get_mouse_position()
 
         if isinstance(data, wx.TextDataObject):
+            logger.debug("Pasting text data at coords %s", (x, y))
             self.paste_text(data.GetText(), x, y)
         else:
+            logger.debug("Pasting bitmap data at coords %s", (x, y))
             self.paste_image(data.GetBitmap(), x, y, ignore)
 
 
     def on_change_tool(self, event, _id, key):
         """ Change tool -- used when being used as a hotkey """
         if self.canvas.is_not_drawing():
-            logger.debug("Hotkey [%s] pressed, changing tools", key)
             self.control.change_tool(_id=_id)
+            tool_name = self.canvas.shape.__class__.__name__
+            logger.debug("Hotkey [%s] pressed, changing tools to [%s]", key, tool_name)
 
     def pubsub_change_tool(self, new=None):
         if self.canvas:
@@ -843,7 +850,7 @@ class GUI(wx.Frame):
         if os.name == "posix":
             for x, key in enumerate(self.hotkeys):
 
-                if code in [ord(key), ord(key.upper())]:
+                if code in [ord(key), ord(key.upper())]:                    
                     self.on_change_tool(None, _id=x + 1, key=key)
                     return
 
@@ -1039,9 +1046,11 @@ class GUI(wx.Frame):
         self.PopupMenu(SheetsPopup(self, self, event.GetSelection()))
 
     def on_undo(self, event=None):
+        logging.debug("Undoing last action")
         self.canvas.undo()
 
     def on_redo(self, event=None):
+        logging.debug("Redoing last action")
         self.canvas.redo()
 
     def on_move_top(self, event=None):
