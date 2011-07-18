@@ -36,6 +36,7 @@ import wx
 from copy import copy
 from wx.lib.wordwrap import wordwrap as wordwrap
 
+from whyteboard.core import Config
 from whyteboard.gui import FindIM
 from whyteboard.lib import pub
 from whyteboard.misc import meta, create_colour_bitmap, create_bold_font
@@ -52,8 +53,8 @@ class Preferences(wx.Dialog):
     def __init__(self, gui):
         wx.Dialog.__init__(self, gui, title=_("Preferences"), size=(450, 500))
         self.gui = gui
-        self.config = copy(gui.util.config)
-
+        self.config = copy(Config().config)
+        
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.tabs = wx.Notebook(self)
         params = [self.tabs, gui, self.config]
@@ -89,11 +90,11 @@ class Preferences(wx.Dialog):
         Just updates all the GUI instead of figuring out which parts actually
         need updating -- laziness!
         """
-        old = self.gui.util.config
+        old = Config().config
         if self.config['language'] != old['language']:
             wx.MessageBox(_("Whyteboard will be translated into %s when restarted")
                           % _(self.config['language']), u"Whyteboard")
-
+            
         if 'default_font' in self.config:
             if self.config['default_font'] and not self.gui.util.font:
                 self.gui.util.font = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
@@ -107,9 +108,8 @@ class Preferences(wx.Dialog):
             else:
                 method(None, False)
 
-
         self.config.write()
-        self.gui.util.config = self.config
+        Config().config = self.config
 
         if self.config['bmp_select_transparent'] != old['bmp_select_transparent']:
             self.gui.canvas.copy = None
@@ -159,7 +159,7 @@ class General(wx.Panel):
         translated.sort()
         self.lang = wx.ComboBox(self, choices=translated, style=wx.CB_READONLY, size=(240, 30))
         self.lang.Layout()
-        self.lang.SetValue(_(self.config['language']))
+        self.lang.SetValue(_(self.config["language"]))
 
         langText = wx.StaticText(self, label=_("Choose Your Language:"))
         labCol = wx.StaticText(self, label=_("Choose Your Custom Colors:"))
@@ -179,7 +179,6 @@ class General(wx.Panel):
             self.buttons.append(b)
             self.grid.Add(b, 0)
             b.Bind(wx.EVT_BUTTON, method)
-            self.grid.Layout()
 
         self.fontBtn = wx.Button(self, label=_("Select Font"))
         self.fontBtn.Bind(wx.EVT_BUTTON, self.on_font)
@@ -353,7 +352,7 @@ class View(wx.Panel):
         title.Bind(wx.EVT_CHECKBOX, self.on_title)
         preview.Bind(wx.EVT_CHECKBOX, self.on_preview)
         colour.Bind(wx.EVT_CHECKBOX, self.on_colour)
-
+        transparency.Bind(wx.EVT_CHECKBOX, self.on_transparency)
         self.width.Bind(wx.EVT_SPINCTRL, self.on_width)
         self.height.Bind(wx.EVT_SPINCTRL, self.on_height)
 

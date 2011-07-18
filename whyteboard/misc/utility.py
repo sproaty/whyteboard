@@ -73,6 +73,7 @@ try:
 except ImportError:
     import pickle
 
+from whyteboard.core import Config
 from whyteboard.lib import pub
 from whyteboard.misc import (meta, get_home_dir, load_image, convert_quality, make_filename,
                        get_wx_image_type, version_is_greater, open_url)
@@ -92,7 +93,7 @@ class Utility(object):
 
     Trying to achieve a data-driven system, focusing on "don't repeat yourself"
     """
-    def __init__(self, gui, config):
+    def __init__(self, gui):
         """
         Initialise "shared" variables, and set up a wxPython wildcard from the
         supported filetypes.
@@ -115,15 +116,14 @@ class Utility(object):
         self.update_version = True
         self.saved_version = u""
         self.im_location = None  # location of ImageMagick on windows
-        self.path = os.path.split(os.path.abspath(sys.argv[0]))
+        self.path = None
         self.library = PDFCache(u"library.known")
-        self.config = config
         pub.subscribe(self.set_colour, 'change_colour')
         pub.subscribe(self.set_background, 'change_background')
 
-        if 'default_font' in self.config:
+        if Config().default_font():
             self.font = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
-            self.font.SetNativeFontInfoFromString(self.config['default_font'])
+            self.font.SetNativeFontInfoFromString(Config().default_font())
 
 
 
@@ -201,7 +201,6 @@ class Utility(object):
         if os.path.exists(self.filename):
             os.remove(self.filename)
         shutil.move(tmp_file, self.filename)
-
 
 
     def save_bitmap_data(self, _zip):
@@ -420,8 +419,8 @@ class Utility(object):
 
     def save_last_path(self, path):
         logger.debug("Setting last opened directory to [%s]", path)
-        self.config['last_opened_dir'] = os.path.dirname(path)
-        self.config.write()
+        Config().last_opened_dir(os.path.dirname(path))
+        Config().write()
 
     def mark_saved(self):
         self.saved = True
@@ -448,7 +447,7 @@ class Utility(object):
         _file = self.temp_file
         logger.info("Converting [%s]", os.path.basename(_file))
 
-        quality = self.config['convert_quality']
+        quality = Config().convert_quality()
         cached = self.library.lookup(_file, quality)
         if cached:
             logger.debug("PDF is cached")
@@ -542,13 +541,13 @@ class Utility(object):
             else:
                 self.im_location = u"convert"
         elif os.name == "nt":
-            if not 'imagemagick_path' in self.config:
+            if not Config().imagemagick_path():
                 self.gui.prompt_for_im()
                 if self.im_location:
-                    self.config['imagemagick_path'] = os.path.dirname(self.im_location)
-                    self.config.write()
+                    Config().imagemagick_path(os.path.dirname(self.im_location))
+                    Config().write()
             else:
-                self.check_im_path(self.config['imagemagick_path'])
+                self.check_im_path(Config().imagemagick_path())
 
 
     def check_im_path(self, path):

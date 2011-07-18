@@ -34,6 +34,7 @@ from wx.lib import scrolledpanel as scrolled
 from wx.lib.buttons import GenBitmapToggleButton
 from wx.lib.wordwrap import wordwrap as wordwrap
 
+from whyteboard.core import Config
 from whyteboard.lib import pub
 
 from whyteboard.misc import (meta, create_colour_bitmap, get_time, file_dialog,
@@ -100,9 +101,9 @@ class ControlPanel(wx.Panel):
         collapsible.Expand()
         self.background.Raise()
 
-        if not self.gui.util.config['tool_preview']:
+        if not Config().tool_preview():
             self.preview.Hide()
-        if not self.gui.util.config['colour_grid']:
+        if not Config().colour_grid():
             self.control_sizer.Hide(self.grid)
 
         self.change_tool(_id=1)  # toggle pen
@@ -197,7 +198,7 @@ class ControlPanel(wx.Panel):
         """Builds a colour grid from the user's preferred colours"""
         colours = []
         for x in range(1, 10):
-            col = self.gui.util.config["colour%s" % x]
+            col = Config().colour(x)
             colours.append([int(c) for c in col])
 
         for colour in colours:

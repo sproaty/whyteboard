@@ -30,13 +30,27 @@ class Config(object):
     '''
     An interface for Whyteboard's configuration instead of accessing the config
     dictionary directly.
+    This is implemented as a singleton.
     '''
-    def __init__(self, preferences_file):
+    _instance = None
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(Config, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+    
+    def init(self, preferences_file):                       
+        logger.debug("Setting up configuration from preferences file [%s]", preferences_file)        
         self.config = ConfigObj(preferences_file, configspec=meta.config_scheme, encoding=u"utf-8")
         self.config.validate(Validator())
-
+    
+    def filename(self):
+        return self.config.filename
+    
     def write(self):
         self.config.write()
+        
+    def get(self, attr):
+        return self.config.get(attr, '')
         
     def colours(self):
         return [x for x in self.config["colour%s" % x]]
@@ -45,12 +59,12 @@ class Config(object):
         return self.config["colour%s" % position]
 
     def bmp_select_transparent(self, value=None):
-        if not value:
+        if value is None:
             return self.config["bmp_select_transparent"]
         self.config["bmp_select_transparent"] = value
 
     def colour_grid(self, value=None):
-        if not value:
+        if value is None:
             return self.config["colour_grid"]
         self.config["colour_grid"] = value
 
@@ -61,7 +75,9 @@ class Config(object):
 
     def default_font(self, value=None):
         if not value:
-            return self.config["default_font"]
+            if 'default_font' in self.config:
+                return self.config["default_font"]
+            return None
         self.config["default_font"] = value
 
     def default_width(self, value=None):
@@ -76,7 +92,9 @@ class Config(object):
 
     def imagemagick_path(self, value=None):
         if not value:
-            return self.config["imagemagick_path"]
+            if 'imagemagick_path' in self.config:
+                return self.config["imagemagick_path"]
+            return None        
         self.config["imagemagick_path"] = value
 
     def language(self, value=None):
@@ -90,21 +108,21 @@ class Config(object):
         self.config["last_opened_dir"] = value
 
     def print_title(self, value=None):
-        if not value:
+        if value is None:
             return self.config["print_title"]
         self.config["print_title"] = value
 
     def statusbar(self, value=None):
-        if not value:
+        if value is None:
             return self.config["statusbar"]
         self.config["statusbar"] = value
 
     def tool_preview(self, value=None):
-        if not value:
+        if value is None:
             return self.config["tool_preview"]
         self.config["tool_preview"] = value
 
     def toolbar(self, value=None):
-        if not value:
+        if value is None:
             return self.config["toolbar"]
         self.config["toolbar"] = value

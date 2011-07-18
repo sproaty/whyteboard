@@ -56,12 +56,10 @@ import time
 import traceback
 import wx
 
-
 #----------------------------------------------------------------------------#
 # Globals
 
 _ = wx.GetTranslation
-
 #----------------------------------------------------------------------------#
 
 class ErrorReporter(object):

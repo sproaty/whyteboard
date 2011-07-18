@@ -35,6 +35,8 @@ import webbrowser
 import wx
 from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 
+from distutils.dir_util import copy_tree, remove_tree
+
 from whyteboard.lib import pub
 
 _ = wx.GetTranslation
@@ -152,7 +154,7 @@ def convert_quality(quality, im_location, _file, path):
         resample = 100
     cmd = (u'"%s" -density %i "%s" -resample %i -unsharp 0x.5 -trim +repage -bordercolor white -border 20 "%s"'
            % (im_location, density, _file, resample, path))
-
+    
     logger.debug("ImageMagick convert command: [%s]", cmd)
     return cmd
 
@@ -367,29 +369,26 @@ def get_image_path(directory, filename):
     return os.path.join(get_path(), u"images", directory, u"%s.png" % filename)
 
 
-
+        
 def to_unicode(str, verbose=False):
     '''
     http://writeonly.wordpress.com/2008/12/10/the-hassle-of-unicode-and-getting-on-with-it-in-python/
-
+    
     attempt to fix non uft-8 string into utf-8, using a limited set of encodings
     '''
     # fuller list of encodings at http://docs.python.org/library/codecs.html#standard-encodings
-    if not str:
-        return u''
+    if not str:  return u''
     u = None
     # we could add more encodings here, as warranted.
     encodings = ('ascii', 'utf8', 'latin1', 'big5')
     for enc in encodings:
-        if u:
-            break
+        if u:  break
         try:
-            u = unicode(str, enc)
+            u = unicode(str,enc)
         except UnicodeDecodeError:
-            if verbose:
-                print "error for %s into encoding %s" % (str, enc)
+            if verbose: print "error for %s into encoding %s" % (str, enc)
+            pass
     if not u:
         u = unicode(str, errors='replace')
-        if verbose:
-            print "using replacement character for %s" % str
+        if verbose:  print "using replacement character for %s" % str
     return u

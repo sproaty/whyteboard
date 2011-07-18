@@ -51,10 +51,12 @@ def define_languages():
             (u"Hindi", _("Hindi"), wx.LANGUAGE_HINDI),
             (u"Italian", _("Italian"), wx.LANGUAGE_ITALIAN),
             (u"Japanese", _("Japanese"), wx.LANGUAGE_JAPANESE),
+            (u"Korean", _("Korean"), wx.LANGUAGE_KOREAN),
             (u"Occitan (post 1500)", _("Occitan (post 1500)"), wx.LANGUAGE_OCCITAN),
             (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
             (u"Russian", _("Russian"), wx.LANGUAGE_RUSSIAN),
             (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
+            (u"Swedish", _("Swedish"), wx.LANGUAGE_SWEDISH),
             (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
            )
 
@@ -125,6 +127,7 @@ translators = [
      u'Ash https://launchpad.net/~barzogh (French)',
      u'Auduf https://launchpad.net/~5097-mail (Russian)',
      u'Billy Robshaw https://launchpad.net/~billyrobshaw (Spanish)',
+     u'Brian Hahn https://launchpad.net/~thetriggerer (Korean)',
      u'Cédric VALMARY (Tot en òc) https://launchpad.net/~cvalmary (Occitan)',
      u'Cheesewheel https://launchpad.net/~wparker05 (Arabic)',
      u'cmdrhenner https://launchpad.net/~cmdrhenner (German)',
@@ -146,6 +149,7 @@ translators = [
      u'Javier Acuña Ditzel https://launchpad.net/~santoposmoderno (Spanish)',
      u'James Maloy https://launchpad.net/~jamesmaloy (Spanish)',
      u'Jean-Philippe Fleury https://launchpad.net/~jpfle (French)',
+     u'John https://launchpad.net/~gobbler85 (Swedish)',
      u'John Y. Wu https://launchpad.net/~johnwuy (Traditional Chinese, Spanish)',
      u'kentxchang https://launchpad.net/~kentxchang (Traditional Chinese)',
      u'Kuvaly https://launchpad.net/~kuvaly (Czech)',

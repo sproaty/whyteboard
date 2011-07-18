@@ -37,6 +37,7 @@ import wx
 
 from whyteboard.lib import pub
 
+from whyteboard.core import Config
 from whyteboard.misc import meta, get_image_path
 
 _ = wx.GetTranslation
@@ -474,7 +475,7 @@ class Polygon(OverlayShape):
                                     (p[1] - self.center[1]) + self.center[1])
             self.points[x] = (a, b)
 
-
+        
     def move(self, x, y, offset):
         """Gotta update every point relative to how much the first has moved"""
         super(Polygon, self).move(x, y, offset)
@@ -1789,7 +1790,7 @@ class BitmapSelect(Rectangle):
             overlay = wx.DCOverlay(self.canvas.overlay, dc)
             overlay.Clear()
 
-        if (not replay and self.canvas.gui.util.config['bmp_select_transparent']
+        if (not replay and Config().bmp_select_transparent()
             and meta.transparent):
             dc = wx.GCDC(dc)
             dc.SetBrush(wx.Brush(wx.Color(0, 0, 255, 50)))  # light blue

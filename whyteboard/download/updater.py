@@ -51,7 +51,7 @@ class Updater(object):
         return self.download
 
     def can_update(self):
-        logger.debug("Checking for updates...")
+        logger.debug("Checking for updates")
         new_version = is_new_version(meta.version, self.download.version)
         if not new_version:
             logger.info("Nothing to update.")

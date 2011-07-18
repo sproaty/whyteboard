@@ -30,20 +30,22 @@ import time
 import wx
 from optparse import OptionParser
 
+from whyteboard.core import Config
 from whyteboard.download import Updater
 from whyteboard.gui import ExceptionHook, GUI
-from whyteboard.lib import ConfigObj, Validator, ProgressBar
+from whyteboard.lib import ProgressBar
 from whyteboard.misc import meta, get_path, get_home_dir, is_exe, to_unicode
 
 logger = logging.getLogger('whyteboard')
+_ = wx.GetTranslation
 
 #----------------------------------------------------------------------
 
 class WhyteboardApp(wx.App):
     def OnInit(self):
         """
-        Load config file, apply translation, parse arguments and delete any
-        temporary filse left over from an update
+        Initialises the application, parses command line arguments, sets the 
+        correct locale and sets up logging.
         """
         startup_time = time.time()
         wx.SetDefaultPyEncoding("utf-8")
@@ -63,20 +65,17 @@ class WhyteboardApp(wx.App):
         self._oldhook = sys.excepthook
         sys.excepthook = ExceptionHook
 
-
         logger.info("Program starting")
         logger.debug("Received command line options [%s] and args [%s]", options, args)
         preferences_file = options.conf or os.path.join(get_home_dir(), u"user.pref")
-        logger.debug("Setting up configuration from preferences file [%s]", preferences_file)
 
-        config = ConfigObj(preferences_file, configspec=meta.config_scheme, encoding=u"utf-8")
-        config.validate(Validator())
-        self.set_language(config, options.lang)
+        Config().init(preferences_file)
+        self.set_language(options.lang)
 
         if options.update:
             self.update()
 
-        self.frame = GUI(config)
+        self.frame = GUI()
         self.frame.Show(True)
 
         try:
@@ -117,15 +116,15 @@ class WhyteboardApp(wx.App):
     def delete_temp_update_files(self):
         tmp_file = os.path.join(get_path(), u"whyteboard-tmp.exe")
         if is_exe() and os.path.exists(tmp_file):
-            logger.debug("Removing backup windows EXE [%s] after performing an update", tmp_file)
+            logger.info("Removing backup EXE [%s] after performing an update", tmp_file)
             os.remove(tmp_file)
 
-    def set_language(self, config, option_lang=None):
+    def set_language(self, option_lang=None):
         """
         Sets the user's language.
         """
         set_lang = False
-        lang_name = config.get('language', '')
+        lang_name = Config().get('language')
         logger.debug("Found language [%s] in config", lang_name)
 
         if option_lang:
@@ -137,7 +136,7 @@ class WhyteboardApp(wx.App):
                 self.locale = wx.Locale(country.Language)
                 logger.debug("Using command-line set language [%s]", lang_name)
             else:
-                logger.warning("Could not parse [%s] into a known locale/language", option_lang)
+                logger.warning("Could not parse command-line argument [%s] into a known locale/language", option_lang)
 
         if not set_lang:
             for x in meta.languages:
@@ -153,16 +152,16 @@ class WhyteboardApp(wx.App):
         if not hasattr(self, "locale"):
             logger.debug("No locale set, reverting to system language")
             self.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
-            config['language'] = wx.Locale.GetLanguageName(wx.LANGUAGE_DEFAULT)
-            config.write()
+            Config().language(wx.Locale.GetLanguageName(wx.LANGUAGE_DEFAULT))
+            Config().write()
 
         if not wx.Locale.IsOk(self.locale):
             logger.warning("Could not set language to [%s]", lang_name)
             wx.MessageBox(u"Error setting language to %s - reverting to English"
                           % lang_name, u"Whyteboard")
             if not set_lang:
-                config['language'] = 'English'
-                config.write()
+                Config().language('English')
+                Config().write()
             self.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
 
         logger.info("Whyteboard is running in [%s]", wx.Locale.GetLanguageName(self.locale.GetLanguage()))
@@ -175,8 +174,8 @@ class WhyteboardApp(wx.App):
         # nasty fix for some translated strings not being applied
         meta.languages = meta.define_languages()
         meta.types, meta.dialog_wildcard = meta.define_filetypes()
-
-
+    
+        
     def update(self):
         """
         Prompts the user for confirmation whether to update (without launching the GUI)
@@ -185,11 +184,10 @@ class WhyteboardApp(wx.App):
         download = self.updater.get_latest_version_info()
 
         if not download:
-            print "Could not connect to server."
+            print _("Could not connect to server.")
             return
-
         if not self.updater.can_update():
-            print "You are running the latest version."
+            print _("You are running the latest version.")
             return
 
         confirm = raw_input("There is a new version available, %(version)s\nFile: %(filename)s\nSize: %(filesize)s)\n\nDo you want to update? (y/n)\n"
@@ -204,8 +202,8 @@ class WhyteboardApp(wx.App):
             self.updater.extract()
             args = self.updater.restart_args()
             os.execvp(*args)
-
-
+        
+               
     def update_progress_reporter(self, count, block, total):
         self.progress.increment_amount(count)
         print self.progress, '\r',

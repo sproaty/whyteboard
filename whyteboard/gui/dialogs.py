@@ -685,7 +685,7 @@ class PromptForSave(wx.Dialog):
         self.Close()
         if self.method == self.gui.Destroy:
             logger.info("Program exiting.")
-            sys.exit()
+            #sys.exit()
 
     def cancel(self, event):
         logger.info("User cancelled out of save prompt")
@@ -822,7 +822,6 @@ def ExceptionHook(exctype, value, trace):
     """
     ftrace = ErrorDialog.FormatTrace(exctype, value, trace)
     print ftrace  # show in console
-
     logger.critical(ftrace)
 
     if ErrorDialog.ABORT:

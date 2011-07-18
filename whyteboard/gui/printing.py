@@ -26,6 +26,7 @@ import copy
 import logging
 import wx
 
+from whyteboard.core import Config
 from whyteboard.tools import Highlighter
 
 
@@ -141,7 +142,7 @@ class PrintOut(wx.Printout):
         dc.SetDeviceOrigin(int(posX), int(posY))
         dc.DrawText(_("Page:") + u" %d" % page, marginX / 2, maxY - marginY + 100)
 
-        if self.gui.util.config['print_title']:
+        if Config().print_title():
             filename = _("Untitled")
             if self.gui.util.filename:
                 filename = self.gui.util.filename

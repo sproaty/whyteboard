@@ -38,7 +38,8 @@ import wx
 import wx.lib.newevent
 from wx.html import HtmlHelpController
 
-from whyteboard.lib import ConfigObj, Validator, icon, fnb, pub
+from whyteboard.core import Config
+from whyteboard.lib import icon, fnb, pub
 from whyteboard.misc import Utility, meta
 from whyteboard.tools import Highlighter, EDGE_LEFT, EDGE_TOP
 
@@ -81,12 +82,12 @@ class GUI(wx.Frame):
     title = u"Whyteboard"
     LoadEvent, LOAD_DONE_EVENT = wx.lib.newevent.NewEvent()
 
-    def __init__(self, config):
+    def __init__(self):
         """
         Initialise utility, status/menu/tool bar, tabs, ctrl panel + bindings.
         """
         wx.Frame.__init__(self, None, title=_("Untitled") + u" - %s" % self.title)
-        self.util = Utility(self, config)
+        self.util = Utility(self)
 
         meta.find_transparent()  # important
         logger.info("Transparency supported: %s", meta.transparent)
@@ -118,7 +119,7 @@ class GUI(wx.Frame):
 
         self.control = ControlPanel(self)
         self.tabs = fnb.FlatNotebook(self, agwStyle=style)
-        self.canvas = Canvas(self.tabs, self, (config['default_width'], config['default_height']))
+        self.canvas = Canvas(self.tabs, self, (Config().default_width(), Config().default_height()))
         self.panel = SidePanel(self)
 
         self.thumbs = self.panel.thumbs
@@ -148,6 +149,7 @@ class GUI(wx.Frame):
         self._print = Print(self)
 
         self.filehistory = wx.FileHistory(8)
+        self.config = wx.Config()
         self.load_history_file()
         self.filehistory.Load(self.config)
 
@@ -214,7 +216,7 @@ class GUI(wx.Frame):
         values = {ID_TOOLBAR: u'toolbar', ID_STATUSBAR: u'statusbar',
                 ID_TOOL_PREVIEW: u'tool_preview', ID_COLOUR_GRID: u'colour_grid'}
         for _id, config_key in values.items():
-            if self.util.config[config_key]:
+            if getattr(Config(), config_key)():
                 self.menu.check(_id, True)
             else:
                 getattr(self, u"on_" + config_key)(None, False)
@@ -262,7 +264,7 @@ class GUI(wx.Frame):
         Prompts for the filename and location to save to.
         """
         wildcard = _("Whyteboard file ") + u"(*.wtbd)|*.wtbd"
-        _dir = self.util.config.get('last_opened_dir') or u""
+        _dir = Config().get('last_opened_dir') or u""
         _file = self.util.filename
         if not _file:
             _file = u""
@@ -292,7 +294,7 @@ class GUI(wx.Frame):
             wildcard = wildcard[wildcard.find(u"PDF/PS/SVG") :
                                 wildcard.find(u"*.SVG|")]  # page descriptions
 
-        _dir = self.util.config.get('last_opened_dir') or u""
+        _dir = Config().get('last_opened_dir') or u""
 
         filename = file_dialog(self, _("Open file..."), wx.OPEN, wildcard, _dir)
         if filename:
@@ -396,7 +398,7 @@ class GUI(wx.Frame):
         """
         Copies the user's preferences file to another file.
         """
-        if not os.path.exists(self.util.config.filename):
+        if not os.path.exists(Config().filename()):
             wx.MessageBox(_("You have not set any preferences"), _("Export Error"))
             return
         wildcard = _("Whyteboard Preference Files") + u" (*.pref)|*.pref"
@@ -414,15 +416,14 @@ class GUI(wx.Frame):
         Imports the preference file. Backsup the user's current prefernce file
         into a directory, with a timestamp on the filename
         """
+        logger.debug("Prompting to import preferences")
         wildcard = _("Whyteboard Preference Files") + u" (*.pref)|*.pref"
 
         filename = file_dialog(self, _("Import Preferences From..."), wx.OPEN,
                                wildcard, get_home_dir())
 
         if filename:
-            config = ConfigObj(filename, configspec=meta.config_scheme)
-            validator = Validator()
-            config.validate(validator)
+            Config().init(filename)
             _dir = os.path.join(get_home_dir(), u"pref-bkup")
 
             if not os.path.isdir(_dir):
@@ -430,26 +431,21 @@ class GUI(wx.Frame):
 
             home = os.path.join(get_home_dir(), u"user.pref")
             if os.path.exists(home):
-                stamp = time.strftime(u"%d-%b-%Y_%Hh-%Mm_%Ss")
-
+                stamp = time.strftime(u"%d-%m-%Y_%H-%M_%S")
+                logger.debug("Renaming old preferences file to [%s]", stamp)
                 os.rename(home, os.path.join(_dir, stamp + u".user.pref"))
+                
             pref = Preferences(self)
-            pref.config = config
             pref.config.filename = home
             pref.on_okay()
-
-
 
         
     def on_reload_preferences(self, event):
         preferences_file = os.path.join(get_home_dir(), u"user.pref")
         logger.debug("Reloading preference file [%s]", preferences_file)
         if os.path.exists(preferences_file):
-            config = ConfigObj(preferences_file, configspec=meta.config_scheme)
-            validator = Validator()
-            config.validate(validator)
+            Config().init(preferences_file)
             pref = Preferences(self)
-            pref.config = config
             pref.config.filename = preferences_file
             pref.on_okay()
 
@@ -495,8 +491,8 @@ class GUI(wx.Frame):
         self.tab_count += 1
         self.thumbs.new_thumb(name=name)
         self.notes.add_tab(name)
-        self.tabs.AddPage(Canvas(self.tabs, self, (self.util.config['default_width'],
-                                                   self.util.config['default_height'])), name)
+        self.tabs.AddPage(Canvas(self.tabs, self, (Config().default_width(),
+                                                   Config().default_height())), name)
 
         self.update_panels(False)  # unhighlight current
         self.thumbs.thumbs[self.current_tab].current = True
