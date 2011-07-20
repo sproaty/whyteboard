@@ -67,7 +67,7 @@ class WhyteboardApp(wx.App):
 
         logger.info("Program starting")
         logger.debug("Received command line options [%s] and args [%s]", options, args)
-        preferences_file = options.conf or os.path.join(get_home_dir(), u"user.pref")
+        preferences_file = options.conf
 
         Config().init(preferences_file)
         self.set_language(options.lang)

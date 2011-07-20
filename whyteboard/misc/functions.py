@@ -41,7 +41,6 @@ from whyteboard.lib import pub
 
 _ = wx.GetTranslation
 logger = logging.getLogger("whyteboard.functions")
-path = os.path.split(os.path.abspath(sys.argv[0]))
 
 #----------------------------------------------------------------------
 
@@ -73,17 +72,6 @@ def get_time(seconds):
     return h + u"%02d:%02d" % (m, s)
 
 
-def file_dialog(gui, title, style, wildcard, defaultDir="", defaultFile=""):
-    """
-    Returns the result of a file dialog
-    """
-    dlg = wx.FileDialog(gui, title, style=style, wildcard=wildcard,
-                        defaultDir=defaultDir, defaultFile=defaultFile)
-    if dlg.ShowModal() == wx.ID_OK:
-        return dlg.GetPath()
-    return False
-
-
 def load_image(path, canvas, image_class):
     """
     Loads an image into the given Whyteboard tab. bitmap is the path to an
@@ -96,38 +84,8 @@ def load_image(path, canvas, image_class):
     shape.left_down(0, 0)  # renders, updates scrollbars
     pub.sendMessage('thumbs.update_current')
 
-
-def create_colour_bitmap(colour):
-    """
-    Draws a small coloured bitmap for a colour grid button. Can take a name,
-    RGB tupple or RGB-packed int.
-    """
-    bmp = wx.EmptyBitmap(20, 20)
-    dc = wx.MemoryDC()
-    dc.SelectObject(bmp)
-    dc.SetBackground(wx.Brush(colour))
-    dc.Clear()
-    dc.SelectObject(wx.NullBitmap)
-    return bmp
-
-
-def bitmap_button(parent, path, border=True, toggle=False):
-    """
-    Creates a platform-dependent bitmap button that's toggleable or not.
-    """
-    _type = GenBitmapToggleButton
-    if not toggle:
-        _type = GenBitmapButton
-        if os.name == "posix":
-            _type = wx.BitmapButton
-
-    style = 0
-    if not border:
-        style = wx.NO_BORDER
-
-    return _type(parent, bitmap=wx.Bitmap(path), style=style)
-
-
+     
+        
 def get_wx_image_type(filename):
     """
     Returns the wx.BITMAP_TYPE_X for a given filename
@@ -239,18 +197,6 @@ def is_exe():
 def is_save_file(name):
     return name.lower().endswith(u".wtbd")
 
-def show_dialog(_class, modal=True):
-    if modal:
-        _class.ShowModal()
-    else:
-        _class.Show()
-
-
-def open_url(url):
-    wx.BeginBusyCursor()
-    webbrowser.open_new_tab(url)
-    wx.CallAfter(wx.EndBusyCursor)
-
 
 def new_instance():
     program = (u'python', os.path.abspath(sys.argv[0]))
@@ -260,27 +206,6 @@ def new_instance():
     logger.debug("Loading new application instance: [%s]", program)
     subprocess.Popen(program)
 
-
-def fix_std_sizer_tab_order(sizer):
-    """
-    Fixes wx.StdDialogButtonSizer's tab ordering
-    """
-    buttons = []
-    for child in sizer.GetChildren():
-        win = child.GetWindow()
-        if win is not None:
-            buttons.append(win)
-    if len(buttons) >= 1:
-        buttons[1].MoveAfterInTabOrder(buttons[0])
-
-
-def create_bold_font():
-    """
-    Returns a bold font
-    """
-    font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
-    font.SetWeight(wx.FONTWEIGHT_BOLD)
-    return font
 
 def format_bytes(total):
     """
@@ -350,6 +275,7 @@ def download_help_files(path):
 def help_file_path():
     return os.path.join(get_path(), u'whyteboard-help', u'whyteboard.hhp')
 
+
 def get_path():
     """
     Root directory from wherever the application is installed to. We must follow
@@ -392,3 +318,104 @@ def to_unicode(str, verbose=False):
         u = unicode(str, errors='replace')
         if verbose:  print "using replacement character for %s" % str
     return u
+
+
+"""
+GUI functions, e.g. creating widgets
+"""
+
+
+def bitmap_button(parent, path, border=True, toggle=False):
+    """
+    Creates a platform-dependent bitmap button that's toggleable or not.
+    """
+    _type = GenBitmapToggleButton
+    if not toggle:
+        _type = GenBitmapButton
+        if os.name == "posix":
+            _type = wx.BitmapButton
+
+    style = 0
+    if not border:
+        style = wx.NO_BORDER
+
+    return _type(parent, bitmap=wx.Bitmap(path), style=style)
+
+
+def checkbox(self, text, checked, event_handler):
+    """
+    Checkbox that's auto-set to a value and binds an event
+    """
+    checkbox = wx.CheckBox(self, label=text)
+    checkbox.SetValue(checked)
+    checkbox.Bind(wx.EVT_CHECKBOX, event_handler)
+    return checkbox
+
+
+def create_bold_font():
+    """
+    Returns a bold font
+    """
+    font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+    font.SetWeight(wx.FONTWEIGHT_BOLD)
+    return font
+
+
+def create_colour_bitmap(colour):
+    """
+    Draws a small coloured bitmap for a colour grid button. Can take a name,
+    RGB tupple or RGB-packed int.
+    """
+    bmp = wx.EmptyBitmap(20, 20)
+    dc = wx.MemoryDC()
+    dc.SelectObject(bmp)
+    dc.SetBackground(wx.Brush(colour))
+    dc.Clear()
+    dc.SelectObject(wx.NullBitmap)
+    return bmp
+
+
+def file_dialog(gui, title, style, wildcard, defaultDir="", defaultFile=""):
+    """
+    Returns the result of a file dialog
+    """
+    dlg = wx.FileDialog(gui, title, style=style, wildcard=wildcard,
+                        defaultDir=defaultDir, defaultFile=defaultFile)
+    if dlg.ShowModal() == wx.ID_OK:
+        return dlg.GetPath()
+    return False
+
+
+def fix_std_sizer_tab_order(sizer):
+    """
+    Fixes wx.StdDialogButtonSizer's tab ordering
+    """
+    buttons = []
+    for child in sizer.GetChildren():
+        win = child.GetWindow()
+        if win is not None:
+            buttons.append(win)
+    if len(buttons) >= 1:
+        buttons[1].MoveAfterInTabOrder(buttons[0])
+        
+        
+def label(parent, text):
+    """
+    A simple, bold label
+    """
+    label = wx.StaticText(parent, label=text)
+    label.SetFont(create_bold_font())
+    return label
+
+
+def open_url(url):
+    wx.BeginBusyCursor()
+    webbrowser.open_new_tab(url)
+    wx.CallAfter(wx.EndBusyCursor)
+
+
+def show_dialog(_class, modal=True):
+    if modal:
+        _class.ShowModal()
+    else:
+        _class.Show()

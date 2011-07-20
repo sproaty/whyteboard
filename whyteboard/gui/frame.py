@@ -411,6 +411,46 @@ class GUI(wx.Frame):
             shutil.copy(os.path.join(get_home_dir(), u"user.pref"), filename)
 
 
+    def update_config(self, new_config):
+        old_config = Config().config
+        if new_config['language'] != old_config['language']:
+            wx.MessageBox(_("Whyteboard will be translated into %s when restarted")
+                          % _(new_config['language']), u"Whyteboard")
+            
+        if 'default_font' in new_config:
+            if new_config['default_font'] and not self.util.font:
+                self.util.font = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
+                self.util.font.SetNativeFontInfoFromString(new_config['default_font'])
+
+        # Toggles the items under "View" menu. Ignore the colour grid for now
+        for menu_item in ['statusbar', 'toolbar', 'tool_preview']:
+            method = getattr(self, "on_" + menu_item)
+            if new_config[menu_item]:
+                method(None, True)
+            else:
+                method(None, False)
+
+        new_config.write()
+        Config().config = new_config
+
+        if new_config['bmp_select_transparent'] != old_config['bmp_select_transparent']:
+            self.canvas.copy = None
+
+        if not new_config['tool_preview']:
+            self.control.preview.Hide()
+        else:
+            self.control.preview.Show()
+            pub.sendMessage('gui.preview.refresh')
+
+        wx.CallAfter(self.on_colour_grid, None, new_config['colour_grid'])
+
+        #  too lazy to check if each colour has changed - just remake it
+        self.canvas.redraw_all()
+        self.control.grid.Clear(True)
+        self.control.make_colour_grid()
+        self.control.grid.Layout()
+
+
     def on_import_pref(self, event=None):
         """
         Imports the preference file. Backsup the user's current prefernce file
@@ -435,19 +475,14 @@ class GUI(wx.Frame):
                 logger.debug("Renaming old preferences file to [%s]", stamp)
                 os.rename(home, os.path.join(_dir, stamp + u".user.pref"))
                 
-            pref = Preferences(self)
-            pref.config.filename = home
-            pref.on_okay()
-
+            config = Config().clone()
+            config.init(filename)
+            self.update_config(config.config)
+        
         
     def on_reload_preferences(self, event):
-        preferences_file = os.path.join(get_home_dir(), u"user.pref")
         logger.debug("Reloading preference file [%s]", preferences_file)
-        if os.path.exists(preferences_file):
-            Config().init(preferences_file)
-            pref = Preferences(self)
-            pref.config.filename = preferences_file
-            pref.on_okay()
+        Config().init()
 
 
     def export_prompt(self):
@@ -582,7 +617,8 @@ class GUI(wx.Frame):
         """
         if not self.tab_count - 1:
             return
-
+        logger.debug("Closing sheet [%s]", self.tabs.GetPageText(self.current_tab))
+        
         self.tab_count -= 1
         self.notes.remove_tab(self.current_tab)
         self.thumbs.remove(self.current_tab)

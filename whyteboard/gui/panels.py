@@ -61,14 +61,24 @@ class ControlPanel(wx.Panel):
         Stores a reference to the drawing preview and the toggled drawing tool.
         """
         wx.Panel.__init__(self, gui, style=0 | wx.RAISED_BORDER)
-
         collapsible = wx.CollapsiblePane(self, style=wx.CP_DEFAULT_STYLE | wx.CP_NO_TLW_RESIZE)
+        
         self.pane = collapsible.GetPane()  # every widget's parent
         self.gui = gui
         self.tools = {}
         self.thickness_timer = None
         self.thickness_scrolling = False
 
+        self.setup_gui()
+        self.change_tool(_id=1)  # toggle pen
+
+        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
+        self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
+        pub.subscribe(self.set_colour, 'change_colour')
+        pub.subscribe(self.set_background, 'change_background')
+
+
+    def setup_gui(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.control_sizer = wx.BoxSizer(wx.VERTICAL)
         self.grid = wx.GridSizer(cols=3, hgap=4, vgap=4)
@@ -94,24 +104,17 @@ class ControlPanel(wx.Panel):
                      ((5, 10)), (thickness, 0, wx.ALL | wx.ALIGN_CENTER, 4),
                      (self.thickness, 0, wx.EXPAND | wx.ALL, 4),
                      ((5, 5)), (self.preview, 0, wx.EXPAND | wx.ALL, 4)])
-        sizer.Add(collapsible, 1, wx.EXPAND)
+        sizer.Add(self.pane.Parent, 1, wx.EXPAND)
         
         self.SetSizer(sizer)
         self.pane.SetSizer(self.control_sizer)
-        collapsible.Expand()
+        self.pane.Parent.Expand()
         self.background.Raise()
 
         if not Config().tool_preview():
             self.preview.Hide()
         if not Config().colour_grid():
-            self.control_sizer.Hide(self.grid)
-
-        self.change_tool(_id=1)  # toggle pen
-
-        self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.toggle)
-        self.thickness.Bind(wx.EVT_COMBOBOX, self.change_thickness)
-        pub.subscribe(self.set_colour, 'change_colour')
-        pub.subscribe(self.set_background, 'change_background')
+            self.control_sizer.Hide(self.grid)        
 
 
     def colour_buttons(self):
@@ -440,7 +443,17 @@ class MediaPanel(wx.Panel):
         Jump the media's playing position to where the user clicked on the
         slider
         """
-        self.on_seek(None)
+        min = self.slider.GetMin()
+        max = self.slider.GetMax()
+        
+        pos = event.GetPosition().x
+        dim = self.slider.GetClientSize().x
+        
+        if pos >= 0 and pos < dim:
+            val = (pos * (max - min + 1) + dim) / dim
+            self.slider.SetValue(val) 
+        
+            self.on_seek(val)
         event.Skip()
 
 

@@ -107,7 +107,7 @@ default_font = string
 default_width = integer(min=1, max=12000, default=640)
 default_height = integer(min=1, max=12000, default=480)
 imagemagick_path = string
-language = option(""" + _langs + """)
+language = option(""" + _langs + """, default='English')
 last_opened_dir = string
 print_title = boolean(default=True)
 statusbar = boolean(default=True)

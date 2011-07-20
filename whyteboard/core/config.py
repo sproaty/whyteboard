@@ -17,9 +17,10 @@
 # Whyteboard; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
+import os
 import logging
 
-from whyteboard.misc import meta
+from whyteboard.misc import meta, get_home_dir
 from whyteboard.lib import ConfigObj, Validator
 
 logger = logging.getLogger("whyteboard.core.config")
@@ -38,10 +39,18 @@ class Config(object):
             cls._instance = super(Config, cls).__new__(cls, *args, **kwargs)
         return cls._instance
     
-    def init(self, preferences_file):                       
-        logger.debug("Setting up configuration from preferences file [%s]", preferences_file)        
+    def init(self, preferences_file=None):                       
+        if not preferences_file:
+            preferences_file = os.path.join(get_home_dir(), u"user.pref")
+
+        logger.debug("Setting up configuration from preferences file [%s]", preferences_file)              
         self.config = ConfigObj(preferences_file, configspec=meta.config_scheme, encoding=u"utf-8")
         self.config.validate(Validator())
+    
+    def clone(self):
+        config = super(Config, Config).__new__(Config)
+        config.init()
+        return config
     
     def filename(self):
         return self.config.filename
@@ -55,8 +64,10 @@ class Config(object):
     def colours(self):
         return [x for x in self.config["colour%s" % x]]
 
-    def colour(self, position):
-        return self.config["colour%s" % position]
+    def colour(self, position, new_colour=None):
+        if not new_colour:
+            return self.config["colour%s" % position]
+        self.config["colour%s" % position] = new_colour
 
     def bmp_select_transparent(self, value=None):
         if value is None:

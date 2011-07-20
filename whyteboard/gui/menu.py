@@ -174,8 +174,8 @@ class Menu(object):
         """
         Binds the menu items to the GUI
         """
-        #logger.debug("Binding menu items' events")
         self.gui.Bind(wx.EVT_MENU_RANGE, self.gui.on_file_history, id=wx.ID_FILE1, id2=wx.ID_FILE9)
+        # print -- ..test this on linux
         #self.gui.Bind(wx.EVT_MENU_OPEN, self.gui.load_recent_files)
 
         # "Import" sub-menu
@@ -258,7 +258,6 @@ class Menu(object):
         """
         Recreates the undo tab menu
         """
-        #logger.debug("Recreating the closed tabs menu")
         for menu in self.closed_tabs_menu.GetMenuItems():
             self.closed_tabs_menu.Remove(menu.GetId())
             self.gui.Unbind(wx.EVT_MENU, id=menu.GetId())

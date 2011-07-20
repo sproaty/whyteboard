@@ -77,20 +77,9 @@ class Canvas(wx.ScrolledWindow):
         Initalise the window, class variables and bind mouse/paint events
         """
         wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN)
-        self.SetScrollRate(1, 1)
-        self.SetBackgroundColour('Grey')
-        self.SetDropTarget(CanvasDropTarget())
-
-        if os.name == "nt":
-            self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
-        else:
-            self.ClearBackground()
-
+        self.setup_gui()
+        
         self.area = area
-        self.scroller = DragScroller(self)
-        self.overlay = wx.Overlay()
-        self.buffer = wx.EmptyBitmap(*self.area)
-
         self.gui = gui
         self.scale = (1.0, 1.0)
         self.shapes = []  # list of shapes for re-drawing/saving
@@ -106,12 +95,25 @@ class Canvas(wx.ScrolledWindow):
         self.redo_list = []
         self.drawing = False
         self.prev_drag = (0, 0)
-        self.SetScrollRate(3, 3)
 
+        self.scroller = DragScroller(self)
+        self.overlay = wx.Overlay()
+        self.buffer = wx.EmptyBitmap(*self.area)
         img = wx.Image(get_image_path(u"cursors", u"rotate"))
         self.rotate_cursor = wx.CursorFromImage(img)
         self.gui.change_tool(canvas=self)
         self.redraw_all()
+
+
+    def setup_gui(self):    
+        self.SetScrollRate(3, 3)
+        self.SetBackgroundColour('Grey')
+        self.SetDropTarget(CanvasDropTarget())
+
+        if os.name == "nt":
+            self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)  # no flicking on Win!
+        else:
+            self.ClearBackground()
 
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.Bind(wx.EVT_LEFT_DOWN, self.left_down)
@@ -122,9 +124,8 @@ class Canvas(wx.ScrolledWindow):
         self.Bind(wx.EVT_MIDDLE_UP, self.middle_up)
         self.Bind(wx.EVT_MOTION, self.motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
-
-
-
+        
+        
     def left_down(self, event):
         """Starts drawing"""
         x, y = self.convert_coords(event)

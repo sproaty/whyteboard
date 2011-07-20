@@ -1064,6 +1064,7 @@ class Media(Tool):
         self.y = y
         self.canvas.medias.append(self)
         self.make_panel()
+        pub.sendMessage('gui.mark_unsaved')
         pub.sendMessage('canvas.change_tool')
 
     def make_panel(self):
