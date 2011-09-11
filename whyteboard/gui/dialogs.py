@@ -38,7 +38,7 @@ from urllib import urlopen, urlretrieve, urlencode
 from whyteboard.lib import BaseErrorDialog, icon, pub
 import whyteboard.tools as tools
 
-from whyteboard.download import Updater
+from whyteboard.updater import Updater
 from whyteboard.misc import meta
 from whyteboard.misc import (get_home_dir, bitmap_button, fix_std_sizer_tab_order, 
                              format_bytes, get_image_path, create_bold_font)
@@ -343,24 +343,13 @@ class TextInput(wx.Dialog):
         """
         wx.Dialog.__init__(self, gui, title=_("Enter text"),
               style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.WANTS_CHARS, size=(350, 280))
-
-        self.ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(300, 120))
-        fontBtn = wx.Button(self, label=_("Select Font"))
-        self.colourBtn = wx.ColourPickerCtrl(self)
-        self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
-        self.okButton.SetDefault()
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-
-        extent = self.ctrl.GetFullTextExtent(u"Hy")
-        lineHeight = extent[1] + extent[3]
-        self.ctrl.SetSize(wx.Size(-1, lineHeight * 4))
-
-        if not gui.util.font:
-            gui.util.font = self.ctrl.GetFont()
         self.gui = gui
         self.note = None
+        self.ctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE, size=(300, 120))
+        
+        if not gui.util.font:
+            gui.util.font = self.ctrl.GetFont()
         self.colour = gui.util.colour
-        gap = wx.LEFT | wx.TOP | wx.RIGHT
         font = gui.util.font
 
         if note:
@@ -369,28 +358,41 @@ class TextInput(wx.Dialog):
             text = note.text
             font = wx.FFont(1, wx.FONTFAMILY_DEFAULT)
             font.SetNativeFontInfoFromString(note.font_data)
-
-        self.set_text_colour(text)
+            
         self.ctrl.SetFont(font)
+        self.set_text_colour(text)        
+        self.setup_gui()
+        
+        if text:
+            self.update_canvas()
+            self.gui.canvas.redraw_all(True)
+
+
+    def setup_gui(self):        
+        fontBtn = wx.Button(self, label=_("Select Font"))
+        self.colourBtn = wx.ColourPickerCtrl(self)
+        self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
+        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         self.colourBtn.SetColour(self.colour)
 
-        _sizer = wx.BoxSizer(wx.HORIZONTAL)
-        _sizer.Add(fontBtn, 0, wx.RIGHT, 5)
-        _sizer.Add(self.colourBtn, 0)
+        font_colour_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        font_colour_sizer.Add(fontBtn, 0, wx.RIGHT, 5)
+        font_colour_sizer.Add(self.colourBtn, 0)
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(self.okButton)
         btnSizer.AddButton(self.cancelButton)
         btnSizer.Realize()
-
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.ctrl, 1, gap | wx.EXPAND, 10)
-        sizer.Add(_sizer, 0, wx.ALIGN_RIGHT | wx.RIGHT | wx.LEFT | wx.TOP, 10)
+        sizer.Add(self.ctrl, 1, wx.LEFT | wx.TOP | wx.RIGHT | wx.EXPAND, 10)
+        sizer.Add(font_colour_sizer, 0, wx.ALIGN_RIGHT | wx.RIGHT | wx.LEFT | wx.TOP, 10)
         sizer.Add((10, 10))  # Spacer.
         sizer.Add(btnSizer, 0, wx.BOTTOM | wx.ALIGN_CENTRE, 10)
         self.SetSizer(sizer)
+        
+        self.okButton.SetDefault()        
         fix_std_sizer_tab_order(btnSizer)
-
         self.set_focus()
+        
         self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
         self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
@@ -398,11 +400,7 @@ class TextInput(wx.Dialog):
         ac = [(wx.ACCEL_CTRL, wx.WXK_RETURN, self.okButton.GetId())]
         tbl = wx.AcceleratorTable(ac)
         self.SetAcceleratorTable(tbl)
-
-        if text:
-            self.update_canvas()
-            self.gui.canvas.redraw_all(True)
-
+        
 
     def on_font(self, evt):
         """

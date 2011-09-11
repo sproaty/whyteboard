@@ -192,66 +192,63 @@ class Menu(object):
         [self.gui.Bind(wx.EVT_UPDATE_UI, self.gui.update_menus, id=x) for x in ids]
 
         # menu items
-        bindings = { ID_BACKGROUND: "background",
-                     ID_CLEAR_ALL: "clear_all",
-                     ID_CLEAR_ALL_SHEETS: "clear_all_sheets",
-                     ID_CLEAR_SHEETS: "clear_sheets",
-                     ID_CLOSE_ALL: "close_all_sheets",
-                     ID_COLOUR_GRID: "colour_grid",
-                     ID_DESELECT: "deselect_shape",
-                     ID_EXPORT: "export",
-                     ID_EXPORT_ALL: "export_all",
-                     ID_EXPORT_PDF: "export_pdf",
-                     ID_EXPORT_PREF: "export_pref",
-                     ID_FEEDBACK: "feedback",
-                     ID_FOREGROUND: "foreground",
-                     ID_FULLSCREEN: "fullscreen",
-                     ID_HISTORY: "history",
-                     ID_IMPORT_PREF: "import_pref",
-                     ID_MOVE_DOWN: "move_down",
-                     ID_MOVE_TO_BOTTOM: "move_bottom",
-                     ID_MOVE_TO_TOP: "move_top",
-                     ID_MOVE_UP: "move_up",
-                     ID_NEW: "new_win",
-                     ID_NEXT: "next_sheet",
-                     ID_PASTE_NEW: "paste_new",
-                     ID_PDF_CACHE: "pdf_cache",
-                     ID_PREV: "previous_sheet",
-                     ID_RELOAD_PREF: "reload_preferences",
-                     ID_RENAME: "rename",
-                     ID_REPORT_BUG: "report_bug",
-                     ID_RESIZE: "resize",
-                     ID_SHAPE_VIEWER: "shape_viewer",
-                     ID_STATUSBAR: "statusbar",
-                     ID_SWAP_COLOURS: "swap_colours",
-                     ID_TOOL_PREVIEW: "tool_preview",
-                     ID_TOOLBAR: "toolbar",
-                     ID_TRANSLATE: "translate",
-                     ID_TRANSPARENT: "transparent",
-                     ID_UNDO_SHEET: "undo_tab",
-                     ID_UPDATE: "update",
-                     wx.ID_ABOUT: "about",
-                     wx.ID_CLEAR: "clear",
-                     wx.ID_CLOSE: "close_tab",
-                     wx.ID_COPY: "copy",
-                     wx.ID_DELETE: "delete_shape",
-                     wx.ID_EXIT: "exit",
-                     wx.ID_HELP: "help",
-                     wx.ID_NEW : "new_tab",
-                     wx.ID_OPEN: "open",
-                     wx.ID_PASTE: "paste",
-                     wx.ID_PREFERENCES: "preferences",
-                     wx.ID_PREVIEW_PRINT: "print_preview",
-                     wx.ID_PRINT: "print",
-                     wx.ID_PRINT_SETUP: "page_setup",
-                     wx.ID_REDO: "redo",
-                     wx.ID_SAVE: "save",
-                     wx.ID_SAVEAS: "save_as",
-                     wx.ID_UNDO: "undo" }
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_background, id=ID_BACKGROUND)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_clear_all, id=ID_CLEAR_ALL)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_clear_all_sheets, id=ID_CLEAR_ALL_SHEETS)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_clear_sheets, id=ID_CLEAR_SHEETS)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_close_all_sheets, id=ID_CLOSE_ALL)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_colour_grid, id=ID_COLOUR_GRID)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_deselect_shape, id=ID_DESELECT)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_export, id=ID_EXPORT)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_export_all, id=ID_EXPORT_ALL)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_export_pdf, id=ID_EXPORT_PDF)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_export_preferences, id=ID_EXPORT_PREF)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_feedback, id=ID_FEEDBACK)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_foreground, id=ID_FOREGROUND)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_fullscreen, id=ID_FULLSCREEN)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_history, id=ID_HISTORY)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_import_preferences, id=ID_IMPORT_PREF)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_move_down, id=ID_MOVE_DOWN)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_move_bottom, id=ID_MOVE_TO_BOTTOM)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_move_top, id=ID_MOVE_TO_TOP)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_move_up, id=ID_MOVE_UP)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_new_win, id=ID_NEW)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_next_sheet, id=ID_NEXT)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_paste_new, id=ID_PASTE_NEW)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_pdf_cache, id=ID_PDF_CACHE)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_previous_sheet, id=ID_PREV)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_reload_preferences, id=ID_RELOAD_PREF)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_rename, id=ID_RENAME)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_report_bug, id=ID_REPORT_BUG)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_resize, id=ID_RESIZE)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_shape_viewer, id=ID_SHAPE_VIEWER)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_statusbar, id=ID_STATUSBAR)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_swap_colours, id=ID_SWAP_COLOURS)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_tool_preview, id=ID_TOOL_PREVIEW)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_toolbar, id=ID_TOOLBAR)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_translate, id=ID_TRANSLATE)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_transparent, id=ID_TRANSPARENT)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_undo_tab, id=ID_UNDO_SHEET)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_update, id=ID_UPDATE)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_about, id=wx.ID_ABOUT)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_clear, id=wx.ID_CLEAR)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_close_tab, id=wx.ID_CLOSE)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_copy, id=wx.ID_COPY)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_delete_shape, id=wx.ID_DELETE)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_exit, id=wx.ID_EXIT)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_help, id=wx.ID_HELP)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_new_tab, id=wx.ID_NEW )
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_open, id=wx.ID_OPEN)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_paste, id=wx.ID_PASTE)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_preferences, id=wx.ID_PREFERENCES)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_print_preview, id=wx.ID_PREVIEW_PRINT)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_print, id=wx.ID_PRINT)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_page_setup, id=wx.ID_PRINT_SETUP)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_redo, id=wx.ID_REDO)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_save, id=wx.ID_SAVE)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_save_as, id=wx.ID_SAVEAS)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_undo, id=wx.ID_UNDO)
 
-        for _id, name in bindings.items():
-            method = getattr(self.gui, u"on_" + name)
-            self.gui.Bind(wx.EVT_MENU, method, id=_id)
 
 
     def make_closed_tabs_menu(self):
@@ -296,13 +293,12 @@ class Menu(object):
 
 class Toolbar(object):
     @staticmethod
-    def create(gui):
+    def configure(toolbar, can_paste):
         """
-        Creates a toolbar, Pythonically :D
-        Move to top/up/down/bottom must be created with a custom bitmap.
+        Configures the GUI's toolbar.
+        Move to top/up/down/bottom are created with a custom bitmap.
         """
-        logger.debug("Creating the tool bar")
-        toolbar = gui.CreateToolBar()
+        logger.debug("Creating the tool bar")        
         _move = [ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP]
 
         ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_COPY, wx.ID_PASTE,
@@ -320,8 +316,8 @@ class Toolbar(object):
         icons = [u"up", u"down", u"top", u"bottom"]
 
         bmps = {}
-        for icon, _id in zip(icons, _move):
-            bmps[_id] = wx.Bitmap(get_image_path(u"icons", u"move-%s-small" % icon))
+        for icon, event_id in zip(icons, _move):
+            bmps[event_id] = wx.Bitmap(get_image_path(u"icons", u"move-%s-small" % icon))
 
         # add tools, add a separator and bind paste/undo/redo for UI updating
         for x, (_id, art_id, tip) in enumerate(zip(ids, arts, tips)):
@@ -331,9 +327,9 @@ class Toolbar(object):
                 art = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR)
 
             toolbar.AddSimpleTool(_id, art, tip)
+            # after save and redo
             if x in [2, 6]:
                 toolbar.AddSeparator()
 
-        toolbar.EnableTool(wx.ID_PASTE, gui.can_paste)
+        toolbar.EnableTool(wx.ID_PASTE, can_paste)
         toolbar.Realize()
-        return toolbar

@@ -54,10 +54,7 @@ class Preferences(wx.Dialog):
     def __init__(self, gui):
         wx.Dialog.__init__(self, gui, title=_("Preferences"), size=(450, 500))
         self.gui = gui
-        #self.config = copy(Config().config)
         self.config = Config().clone()
-        
-        print self.config.config
         self.setup_gui()
         
     def setup_gui(self):
@@ -236,7 +233,7 @@ class General(BasePanel):
         if style == wx.ITALIC:
             s = _("Italic")
 
-        self.fontBtn.SetLabel(u"%s %s %s %s" % (font.GetFaceName() , w, s, size))
+        self.fontBtn.SetLabel(u"%s %s %s %s" % (font.GetFaceName(), w, s, size))
 
 
     def on_colour(self, event, _id):

@@ -31,7 +31,7 @@ import wx
 from optparse import OptionParser
 
 from whyteboard.core import Config
-from whyteboard.download import Updater
+from whyteboard.updater import Updater
 from whyteboard.gui import ExceptionHook, GUI
 from whyteboard.lib import ProgressBar
 from whyteboard.misc import meta, get_path, get_home_dir, is_exe, to_unicode
@@ -81,6 +81,7 @@ class WhyteboardApp(wx.App):
         try:
             _file = options.file or sys.argv[1]
             _file = os.path.abspath(to_unicode(_file))
+            logger.debug("Loading file [%s]", _file)
             if os.path.exists(_file):
                 self.frame.do_open(_file)
         except IndexError:

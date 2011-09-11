@@ -33,6 +33,7 @@ import sys
 import shutil
 import time
 import logging
+import subprocess
 
 import wx
 import wx.lib.newevent
@@ -60,7 +61,7 @@ from whyteboard.gui import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESE
 from whyteboard.misc import (get_home_dir, is_save_file, get_clipboard,
                              check_clipboard, download_help_files, file_dialog,
                              get_path, set_clipboard, show_dialog, open_url,
-                             new_instance, help_file_path)
+                             help_file_path, is_exe)
 
 
 _ = wx.GetTranslation
@@ -154,7 +155,8 @@ class GUI(wx.Frame):
         self.filehistory.Load(self.config)
 
         self.menu = Menu(self)
-        self.toolbar = Toolbar.create(self)
+        self.toolbar = self.CreateToolBar() 
+        Toolbar.configure(self.toolbar, self.can_paste)
         self.SetMenuBar(self.menu.menu)
         self.set_menu_from_config()
         self.do_bindings()
@@ -394,7 +396,7 @@ class GUI(wx.Frame):
             self.canvas = canvas
 
 
-    def on_export_pref(self, event=None):
+    def on_export_preferences(self, event=None):
         """
         Copies the user's preferences file to another file.
         """
@@ -409,6 +411,7 @@ class GUI(wx.Frame):
             if not os.path.splitext(filename)[1]:
                 filename += u".pref"
             shutil.copy(os.path.join(get_home_dir(), u"user.pref"), filename)
+
 
 
     def update_config(self, new_config):
@@ -451,9 +454,10 @@ class GUI(wx.Frame):
         self.control.grid.Layout()
 
 
-    def on_import_pref(self, event=None):
+
+    def on_import_preferences(self, event=None):
         """
-        Imports the preference file. Backsup the user's current prefernce file
+        Imports a preference file. Backs up the user's current preference file
         into a directory, with a timestamp on the filename
         """
         logger.debug("Prompting to import preferences")
@@ -1078,11 +1082,11 @@ class GUI(wx.Frame):
         self.PopupMenu(SheetsPopup(self, self, event.GetSelection()))
 
     def on_undo(self, event=None):
-        logging.debug("Undoing last action")
+        logger.debug("Undoing last action")
         self.canvas.undo()
 
     def on_redo(self, event=None):
-        logging.debug("Redoing last action")
+        logger.debug("Redoing last action")
         self.canvas.redo()
 
     def on_move_top(self, event=None):
@@ -1154,7 +1158,13 @@ class GUI(wx.Frame):
         self._print.do_print()
 
     def on_new_win(self, event=None):
-        new_instance()
+        program = (u'python', os.path.abspath(sys.argv[0]))
+        if is_exe():
+            program = os.path.abspath(sys.argv[0])
+
+        logger.debug("Loading new application instance: [%s]", program)
+        subprocess.Popen(program)
+        
 
     def on_translate(self, event):
         open_url(u"https://translations.launchpad.net/whyteboard")

@@ -418,7 +418,7 @@ class Utility(object):
 
 
     def save_last_path(self, path):
-        logger.debug("Setting last opened directory to [%s]", path)
+        logger.debug("Writing last opened directory [%s] to config", path)
         Config().last_opened_dir(os.path.dirname(path))
         Config().write()
 
@@ -498,14 +498,17 @@ class Utility(object):
         """
         Display converted items. _file: PDF/PS name. Images: list of files
         """
+        logger.debug("Displaying PDF images")
         if not ignore_close and self.gui.tab_count == 1 and not self.gui.canvas.shapes:
+            logger.info("Closing all sheets")
             self.gui.remove_all_sheets()
 
         for x in range(len(images)):
             name = u"%s - %s" % (os.path.basename(_file)[:15], x + 1)
             self.gui.on_new_tab(name=name)
             load_image(images[x], self.gui.canvas, tools.Image)
-
+        
+        logger.debug("Files loaded - redrawing canvas")
         self.gui.canvas.redraw_all()
 
 

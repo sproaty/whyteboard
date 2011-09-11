@@ -57,4 +57,3 @@ whyteboard = PyEmbeddedImage(
 getwhyteboardData = whyteboard.GetData
 getwhyteboardImage = whyteboard.GetImage
 getwhyteboardBitmap = whyteboard.GetBitmap
-

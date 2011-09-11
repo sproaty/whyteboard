@@ -44,7 +44,8 @@ class Config(object):
             preferences_file = os.path.join(get_home_dir(), u"user.pref")
 
         logger.debug("Setting up configuration from preferences file [%s]", preferences_file)              
-        self.config = ConfigObj(preferences_file, configspec=meta.config_scheme, encoding=u"utf-8")
+        self.config = ConfigObj(preferences_file, configspec=meta.config_scheme, encoding=u"utf-8",
+                                default_encoding=u'utf-8')
         self.config.validate(Validator())
     
     def clone(self):

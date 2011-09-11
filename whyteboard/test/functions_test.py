@@ -19,7 +19,7 @@
 
 
 import os
-import wx
+from wx import BITMAP_TYPE_PNG, BITMAP_TYPE_JPEG, BITMAP_TYPE_TIF
 import unittest
 
 from whyteboard.misc import (get_version_int, version_is_greater, get_wx_image_type,
@@ -33,41 +33,50 @@ class TestFunctions(unittest.TestCase):
     """Test the stand-alone application functions."""
 
     def test_get_version_int(self):
-        """A list with the correct version is returned from a string"""
+        """
+        A list with the correct version is returned from a string
+        """
         self.assertEqual([1, 0, 0], get_version_int("1"))
         self.assertEqual([1, 4, 0], get_version_int("1.4"))
         self.assertEqual([1, 4, 4], get_version_int("1.4.4"))
 
 
     def test_version_is_greater(self):
-        """Ensuring certain versions are greater than one another"""
-        assert version_is_greater("1.0.1", "1") == True
-        assert version_is_greater("1.0.1", "1.0") == True
-        assert version_is_greater("1.0.0", "1") == False
-        assert version_is_greater("1.0", "1") == False
-        assert version_is_greater("0.42", "0.41.1") == True
-        assert version_is_greater("0.4.1", "0.4") == True
-        assert version_is_greater("0.4.15", "0.4.1") == True
-        assert version_is_greater("0.4.0", "0.4") == False
-        assert version_is_greater("0.4.0", "0.4.0") == False
+        """
+        Ensuring certain versions are greater than one another
+        """
+        self.assertTrue(version_is_greater("1.0.1", "1"))
+        self.assertTrue(version_is_greater("1.0.1", "1.0"))
+        self.assertTrue(version_is_greater("0.42", "0.41.1"))
+        self.assertTrue(version_is_greater("0.4.1", "0.4"))
+        self.assertTrue(version_is_greater("0.4.15", "0.4.1"))
+        self.assertFalse(version_is_greater("1.0.0", "1"))
+        self.assertFalse(version_is_greater("1.0", "1"))
+        self.assertFalse(version_is_greater("0.4.0", "0.4"))
+        self.assertFalse(version_is_greater("0.4.0", "0.4.0"))
 
     def test_version_is_equal(self):
-        """Ensuring certain versions are greater than one another"""
-        assert versions_are_equal("0.4.0", "0.4") == True
-        assert versions_are_equal("0.4.1", "0.4") == False
-        assert versions_are_equal("1.0.0", "1") == True
-        assert versions_are_equal("1.0.1", "1") == False
-        assert versions_are_equal("1.3", "0.3") == False
-        assert versions_are_equal("0.4.0", "0.4.1") == False
-        assert versions_are_equal("0.4.1", "0.4.15") == False
-        assert versions_are_equal("0.4.1", "0.3") == False
+        """
+        Ensuring certain versions are greater than one another
+        """
+        self.assertTrue(versions_are_equal("0.4.0", "0.4"))
+        self.assertTrue(versions_are_equal("1.0.0", "1"))
+        self.assertTrue(versions_are_equal("1.0", "1"))
+        self.assertFalse(versions_are_equal("0.4.1", "0.4"))
+        self.assertFalse(versions_are_equal("1.0.1", "1"))
+        self.assertFalse(versions_are_equal("1.3", "0.3"))
+        self.assertFalse(versions_are_equal("0.4.0", "0.4.1"))
+        self.assertFalse(versions_are_equal("0.4.1", "0.4.15"))
+        self.assertFalse(versions_are_equal("0.4.1", "0.3"))
 
     def test_is_new_version(self):
-        """Checking versions trigger an update"""
-        assert is_new_version("0.41.0", "0.41.1") == True
-        assert is_new_version("0.41", "0.41.0") == False
-        assert is_new_version("0.41.0", "0.42") == True
-        assert is_new_version("0.41.1", "0.41.1") == False
+        """
+        Checking versions trigger an update
+        """
+        self.assertTrue(is_new_version("0.41.0", "0.41.1"))
+        self.assertTrue(is_new_version("0.41.0", "0.42"))
+        self.assertFalse(is_new_version("0.41", "0.41.0"))
+        self.assertFalse(is_new_version("0.41.1", "0.41.1"))
 
     def test_get_image_path(self):
         """
@@ -82,7 +91,9 @@ class TestFunctions(unittest.TestCase):
 
 
     def test_format_bytes(self):
-        """Byte values are correctly formatted to human-readable strings"""
+        """
+        Byte values are correctly formatted to human-readable strings
+        """
         self.assertEquals(u"1.00KB", format_bytes(1024))
         self.assertEquals(u"1.01KB", format_bytes(1030))
         self.assertEquals(u"1.00MB", format_bytes(1048576))
@@ -90,7 +101,9 @@ class TestFunctions(unittest.TestCase):
 
 
     def test_convert_quality(self):
-        """Correct ImageMagick convert strings are created (using Unicode data)"""
+        """
+        Correct ImageMagick convert strings are created (using Unicode data)
+        """
         im = u"/usr/bin/convert"
         f = u"/øøø/test.pdf"
         path = u"/øøø/"
@@ -100,31 +113,36 @@ class TestFunctions(unittest.TestCase):
 
 
     def test_get_time(self):
-        """The correct time for the media player is returned"""
-        assert get_time(0) == "00:00"
-        assert get_time(1) == "00:01"
-        assert get_time(10) == "00:10"
-        assert get_time(45) == "00:45"
-        assert get_time(60) == "01:00"
-        assert get_time(119) == "01:59"
-        assert get_time(3590) == "59:50"
-        assert get_time(3600) == "1:00:00"
-        assert get_time(7199) == "1:59:59"
-        assert get_time(7200) == "2:00:00"
+        """
+        The correct time for the media player is returned
+        """
+        self.assertEqual("00:00", get_time(0)) 
+        self.assertEqual("00:01", get_time(1))
+        self.assertEqual("00:10", get_time(10))
+        self.assertEqual("01:00", get_time(60))
+        self.assertEqual("01:59", get_time(119))
+        self.assertEqual("59:50", get_time(3590))
+        self.assertEqual("1:00:00", get_time(3600))
+        self.assertEqual("1:59:59", get_time(7199))
+        self.assertEqual("2:00:00", get_time(7200))
 
 
     def test_get_wx_image_type(self):
-        """Correct wx.BITMAP_TYPE is returned"""
-        assert get_wx_image_type("/blah.png") == wx.BITMAP_TYPE_PNG
-        assert get_wx_image_type("blah.TifF") == wx.BITMAP_TYPE_TIF
-        assert get_wx_image_type("/blah.JPG") == wx.BITMAP_TYPE_JPEG
-        assert get_wx_image_type("/blah.jpeg") == wx.BITMAP_TYPE_JPEG
+        """
+        Correct wx.BITMAP_TYPE is returned
+        """
+        self.assertEqual(BITMAP_TYPE_PNG, get_wx_image_type("/blah.png"))
+        self.assertEqual(BITMAP_TYPE_TIF, get_wx_image_type("blah.TifF"))
+        self.assertEqual(BITMAP_TYPE_JPEG, get_wx_image_type("/blah.JPG"))
+        self.assertEqual(BITMAP_TYPE_JPEG, get_wx_image_type("/blah.jpeg"))
 
 
     def test_is_save_file(self):
-        """Filename indicates Whyteboard save type"""
-        assert is_save_file("blahwtbd") == False
-        assert is_save_file("blah.WTbd") == True
-        assert is_save_file("blah.wtbd") == True
-        assert is_save_file("/blah.png") == False
-        assert is_save_file("wtbd") == False
+        """
+        Filename indicates Whyteboard save type
+        """
+        self.assertTrue(is_save_file("blah.WTbd"))
+        self.assertTrue(is_save_file("blah.wtbd"))
+        self.assertFalse(is_save_file("blahwtbd"))
+        self.assertFalse(is_save_file("/blah.png"))
+        self.assertFalse(is_save_file("wtbd"))

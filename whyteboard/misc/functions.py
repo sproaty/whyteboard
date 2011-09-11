@@ -26,7 +26,6 @@ classes, only Python and wx functionality.
 import os
 import logging
 import random
-import subprocess
 import sys
 import tarfile
 import urllib
@@ -196,15 +195,6 @@ def is_exe():
 
 def is_save_file(name):
     return name.lower().endswith(u".wtbd")
-
-
-def new_instance():
-    program = (u'python', os.path.abspath(sys.argv[0]))
-    if is_exe():
-        program = os.path.abspath(sys.argv[0])
-
-    logger.debug("Loading new application instance: [%s]", program)
-    subprocess.Popen(program)
 
 
 def format_bytes(total):

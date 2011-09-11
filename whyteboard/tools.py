@@ -111,6 +111,10 @@ class Tool(object):
     def draw(self, dc, replay=True):
         """ Draws itself. """
         pass
+    
+    def equals(self, other):
+        """Compares itself for equality"""
+        pass
 
     def hit_test(self, x, y):
         """ Returns True/False if a mouseclick in "inside" the shape """
@@ -188,7 +192,6 @@ class OverlayShape(Tool):
         Draws a shape polymorphically, using Python's introspection; is called
         by any sub-class that needs to be overlayed.
         When called with replay=True it doesn't draw a temp outline
-        Avoids excess calls to make_pen - better performance
         """
         if not replay:
             overlay = wx.DCOverlay(self.canvas.overlay, dc)
@@ -201,11 +204,11 @@ class OverlayShape(Tool):
         dc.SetBrush(self.brush)
         getattr(dc, u"Draw" + _type)(*self.get_args())
 
-
         if self.selected:
             self.draw_selected(dc)
         if not replay:
             del overlay
+            
 
     def get_args(self):
         """The drawing arguments that this class uses to draw itself"""
@@ -1620,6 +1623,8 @@ class Image(OverlayShape):
 
 
     def hit_test(self, x, y):
+        if not self.image:
+            return False
         width, height = self.image.GetSize()
         rect = wx.Rect(self.x, self.y, width, height)
         if rect.ContainsXY(x, y):

@@ -36,6 +36,16 @@ _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
 
+version = u"0.42"
+transparent = True
+
+
+def find_transparent():
+    """Has to be called by the GUI"""
+    global transparent
+    transparent = transparent_supported()
+    
+    
 def define_languages():
     return (
             (u"Arabic", _("Arabic"), wx.LANGUAGE_ARABIC),
@@ -55,8 +65,10 @@ def define_languages():
             (u"Occitan (post 1500)", _("Occitan (post 1500)"), wx.LANGUAGE_OCCITAN),
             (u"Portuguese", _("Portuguese"), wx.LANGUAGE_PORTUGUESE),
             (u"Russian", _("Russian"), wx.LANGUAGE_RUSSIAN),
+            (u"Slovak", _("Slovak"), wx.LANGUAGE_SLOVAK),
             (u"Spanish", _("Spanish"), wx.LANGUAGE_SPANISH),
             (u"Swedish", _("Swedish"), wx.LANGUAGE_SWEDISH),
+            (u"Turkish", _("Turkish"), wx.LANGUAGE_TURKISH),
             (u"Welsh", _("Welsh"), wx.LANGUAGE_WELSH),
            )
 
@@ -83,8 +95,7 @@ def define_filetypes():
 
     return (types, u'|'.join(wc_list))
 
-transparent = True
-version = u"0.42"
+
 languages = define_languages()
 types, dialog_wildcard = define_filetypes()
 
@@ -194,9 +205,3 @@ translators = [
      u'Will https://launchpad.net/~willbickerstaff (UK English)',
      u'Wouter van Dijke https://launchpad.net/~woutervandijke (Dutch)',
      u'xemard.nicolas https://launchpad.net/~xemard.nicolas (French)']
-
-
-def find_transparent():
-    """Has to be called by the GUI"""
-    global transparent
-    transparent = transparent_supported()
