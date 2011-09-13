@@ -299,7 +299,7 @@ class Toolbar(object):
         Move to top/up/down/bottom are created with a custom bitmap.
         """
         logger.debug("Creating the tool bar")        
-        _move = [ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP]
+        _move = [ID_MOVE_TO_TOP, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM]
 
         ids = [wx.ID_NEW, wx.ID_OPEN, wx.ID_SAVE, wx.ID_COPY, wx.ID_PASTE,
                wx.ID_UNDO, wx.ID_REDO, wx.ID_DELETE]
@@ -308,12 +308,12 @@ class Toolbar(object):
                 wx.ART_PASTE, wx.ART_UNDO, wx.ART_REDO, wx.ART_DELETE]
         tips = [_("New Sheet"), _("Open a File"), _("Save Drawing"), _("Copy a Bitmap Selection"),
                 _("Paste an Image/Text"), _("Undo the Last Action"), _("Redo the Last Undone Action"),
-                _("Delete the currently selected shape"), ("Move Shape Up"), ("Move Shape Down"),
-                _("Move Shape To Top"), ("Move Shape To Bottom")]
+                _("Delete the currently selected shape"), _("Move Shape To Top"), ("Move Shape Up"), 
+                ("Move Shape Down"), ("Move Shape To Bottom")]
 
         ids.extend(_move)
         arts.extend(_move)
-        icons = [u"up", u"down", u"top", u"bottom"]
+        icons = [u"top", u"up", u"down", u"top"]
 
         bmps = {}
         for icon, event_id in zip(icons, _move):

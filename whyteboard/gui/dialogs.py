@@ -869,8 +869,8 @@ class ShapeViewer(wx.Dialog):
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.moveUp = self.make_button(u"move-up", _("Move Shape Up"))
-        self.moveDown = self.make_button(u"move-down", _("Move Shape Down"))
         self.moveTop = self.make_button(u"move-top", _("Move Shape To Top"))
+        self.moveDown = self.make_button(u"move-down", _("Move Shape Down"))
         self.moveBottom = self.make_button(u"move-bottom", _("Move Shape To Bottom"))
         self.deleteBtn = self.make_button(u"delete", _("Delete Shape"))
         self.prev = self.make_button(u"prev_sheet", _("Previous Sheet"))
@@ -884,8 +884,8 @@ class ShapeViewer(wx.Dialog):
         self.list.InsertColumn(3, _("Color"))
         self.list.InsertColumn(4, _("Properties"))
 
-        bsizer.AddMany([(self.moveUp, 0, wx.RIGHT, 5), (self.moveDown, 0, wx.RIGHT, 5),
-                        (self.moveTop, 0, wx.RIGHT, 5), (self.moveBottom, 0, wx.RIGHT, 5),
+        bsizer.AddMany([(self.moveTop, 0, wx.RIGHT, 5), (self.moveUp, 0, wx.RIGHT, 5), 
+                        (self.moveDown, 0, wx.RIGHT, 5), (self.moveBottom, 0, wx.RIGHT, 5),
                         (self.deleteBtn, 0, wx.RIGHT, 5)])
         nextprevsizer.Add(self.prev, 0, wx.RIGHT, 5)
         nextprevsizer.Add(self.next)
