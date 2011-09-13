@@ -56,16 +56,16 @@ class Preferences(wx.Dialog):
         self.gui = gui
         self.config = Config().clone()
         self.setup_gui()
-        
+
     def setup_gui(self):
-        sizer = wx.BoxSizer(wx.VERTICAL)        
+        sizer = wx.BoxSizer(wx.VERTICAL)
         self.tabs = wx.Notebook(self)
-        
+
         params = [self.tabs, self.gui, self.config]
         self.tabs.AddPage(General(*params), _("General"))
         self.tabs.AddPage(View(*params), _("View"))
         self.tabs.AddPage(PDF(*params), _("PDF Conversion"))
-        
+
         okay = wx.Button(self, wx.ID_OK, _("&OK"))
         cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
         _help = wx.Button(self, wx.ID_HELP, _("&Help"))
@@ -115,14 +115,14 @@ class BasePanel(wx.Panel):
             self.SetBackgroundColour("White")
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
-        self.setup_gui()       
-        
+        self.setup_gui()
+
     def setup_gui(self):
         pass
-            
+
 #----------------------------------------------------------------------
 
-        
+
 class General(BasePanel):
     """
     Select language, font and toolbar/status bar visiblity
@@ -182,7 +182,7 @@ class General(BasePanel):
         self.sizer.Add(label(self, _("Default Font:")), 0, wx.LEFT, 15)
         self.sizer.Add((10, 15))
         self.sizer.Add(self.fontBtn, 0, wx.LEFT, 30)
-        
+
         self.lang.Bind(wx.EVT_COMBOBOX, self.on_lang)
 
 
@@ -262,7 +262,7 @@ class General(BasePanel):
 class View(BasePanel):
     """
     Select language and toolbar/status bar visiblity
-    """       
+    """
     def setup_gui(self):
         self.width = wx.SpinCtrl(self, min=1, max=12000)
         self.height = wx.SpinCtrl(self, min=1, max=12000)
@@ -329,8 +329,9 @@ class PDF(BasePanel):
     PDF conversion quality
     """
     def setup_gui(self):
+        self.im_result = None
         self.sizer.Add(label(self, _("Conversion Quality:")), 0, wx.ALL, 15)
-        
+
         buttons = {'highest': _("Highest"),
                    'high': _("High"),
                    'normal': _("Normal")}
@@ -341,7 +342,7 @@ class PDF(BasePanel):
             self.sizer.Add((10, 5))
             method = lambda evt, x=key: self.on_quality(evt, x)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
-            
+
             if self.config.convert_quality() == key:
                 btn.SetValue(True)
 
@@ -365,7 +366,6 @@ class PDF(BasePanel):
 
     def set_im_button(self):
         """Sets the label to IM's path"""
-        self.im_result = None
         label = _("Find...")
         if self.config.imagemagick_path():
             label = self.config.imagemagick_path()
