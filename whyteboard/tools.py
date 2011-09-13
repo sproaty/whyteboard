@@ -547,11 +547,13 @@ class Pen(Polygon):
 
 
     def left_up(self, x, y):
-        if self.points:
-            pub.sendMessage('shape.add', shape=self)
-            self.sort_handles()
-            if len(self.points) == 1:  # a single click
-                self.canvas.redraw_all()
+        if not self.points:
+            self.motion(x, y)
+            
+        pub.sendMessage('shape.add', shape=self)
+        self.sort_handles()
+        if len(self.points) == 1:  # a single click, need to redraw
+            self.canvas.redraw_all()
 
 
     def motion(self, x, y):

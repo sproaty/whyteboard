@@ -365,10 +365,11 @@ class PDF(BasePanel):
 
     def set_im_button(self):
         """Sets the label to IM's path"""
-        s = _("Find...")
+        self.im_result = None
+        label = _("Find...")
         if self.config.imagemagick_path():
-            s = self.config.imagemagick_path()
-        self.im_button.SetLabel(s)
+            label = self.config.imagemagick_path()
+        self.im_button.SetLabel(label)
         self.GetSizer().Layout()
 
 
