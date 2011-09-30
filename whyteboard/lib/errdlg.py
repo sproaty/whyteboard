@@ -179,14 +179,16 @@ class ErrorDialog(wx.Dialog):
         @return: string
 
         """
-        language = wx.Locale.GetLanguageName(wx.Locale.GetSystemLanguage())
+        system_language = wx.Locale.GetLanguageName(wx.Locale.GetSystemLanguage())
+        running_language = wx.Locale.GetLanguageName(wx.GetLocale().GetLanguage())
         res = wx.Display().GetGeometry()
         info = list()
         info.append(self.GetProgramName())
         info.append(u"Operating System: %s" % wx.GetOsDescription())
         if sys.platform == 'darwin':
             info.append(u"Mac OSX: %s" % platform.mac_ver()[0])
-        info.append(u"System Lanauge: %s" % language)
+        info.append(u"System Lanauge: %s" % system_language)
+        info.append(u"Running Lanauge: %s" % running_language)
         info.append(u"Screen Resolution: %ix%i" % (res[2], res[3]))
         info.append(u"Python Version: %s" % sys.version)
         info.append(u"wxPython Version: %s" % wx.version())
