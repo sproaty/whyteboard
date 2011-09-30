@@ -485,7 +485,7 @@ class GUI(wx.Frame):
         
         
     def on_reload_preferences(self, event):
-        logger.debug("Reloading preference file [%s]", preferences_file)
+        logger.debug("Reloading preference file")
         Config().init()
 
 

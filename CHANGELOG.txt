@@ -8,9 +8,11 @@ xx xx xxxx 2011
 
 xx xxxxx 2011 - 0.42
 
-* Removed an ugly black line being drawn across the collapsible control panel's
-  toggle button
+* Removed an ugly black line that was being drawn across the collapsible 
+  control panel's toggle button
 * Made escape key close all dialogs; added close button to dialogs where needed
+* Can click on the Media panel's slider seek directly to that position
+* Single click with Pen to create a small point
 
 * Removed the following preferences:
   - "toolbox type" - the toolbox is now icon-only, this takes up less space
@@ -19,19 +21,20 @@ xx xxxxx 2011 - 0.42
   - "number of undo tabs"
   - "canvas border"
   The preferences were hard to describe and didn't add much value - it was best
-  to remove them. 
+  to remove them and to set reasonable defaults.
 
-* Updating the program from the command line with the --update switch can now
-  update the program without launching the GUI, showing a text progress bar
-* Few scripts in place to make building the project simpler
-
-* Added program logging which writes error logs to disk
+* Whyteboard can be updated from the command line with the --update switch.
+  This updates without launching the GUI, instead showing a text progress bar
 * Added a debug mode with verbose output to console
-* New translation language: Catalan.
+* Added program logging which writes error logs to disk
+
+* New translation languages: Catalan, Swedish. Now fully translated in:
+    + Spanish, Italian, German, Galician, French, Portuguese, Chinese
 * Add the user's system language to error report to help diagnose unicode bugs
+* Few .bat and .sh scripts in place to make building the project simpler
 
 * Bugfix: the open/save dialog's file type drop-down and preferences' language
-  drop-down not being translated in the Windows EXE
+  drop-down were not being translated in the Windows EXE
 * Bugfix: crash when creating Text/Notes with no text content.
 * Bugfix: history dialog was not wide enough for its title's Dutch translation
 * Bugfix: Highlighter objects were not being re-drawn when undoing a closed tab
@@ -39,6 +42,8 @@ xx xxxxx 2011 - 0.42
   the same version
   
 * Bugfix: re-wrote the program updater (was quite broken before)  
+* Bugfix: stop a crash with certain locales on displaying the 'save as' dialog
+* Bugfix: stop crash after pressing 'apply' then 'cancel' in the resize dialog  
   
 * Bugfix: stop progress indicator when saving files still displaying if there's
   a crash

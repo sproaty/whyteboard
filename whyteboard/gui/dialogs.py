@@ -41,7 +41,8 @@ import whyteboard.tools as tools
 from whyteboard.updater import Updater
 from whyteboard.misc import meta
 from whyteboard.misc import (get_home_dir, bitmap_button, fix_std_sizer_tab_order, 
-                             format_bytes, get_image_path, create_bold_font)
+                             format_bytes, get_image_path, create_bold_font, button,
+                             spinctrl)
 
 _ = wx.GetTranslation
 logger = logging.getLogger("whyteboard.dialogs")
@@ -58,10 +59,10 @@ class History(wx.Dialog):
         self.looping = False
         self.paused = False
 
-        self.playButton = bitmap_button(self, get_image_path(u"icons", u"play"), True, toggle=True)
-        self.pauseButton = bitmap_button(self, get_image_path(u"icons", u"pause"), True, toggle=True)
-        self.stopButton = bitmap_button(self, get_image_path(u"icons", u"stop"), True, toggle=True)
-        closeButton = wx.Button(self, wx.ID_CANCEL, _("&Close"))
+        self.playButton = bitmap_button(self, get_image_path(u"icons", u"play"), self.play, True, True)
+        self.pauseButton = bitmap_button(self, get_image_path(u"icons", u"pause"), self.pause, True, True)
+        self.stopButton = bitmap_button(self, get_image_path(u"icons", u"stop"), self.stop, True, True)
+        closeButton = button(self, wx.ID_CANCEL, _("&Close"), self.on_close)
         closeButton.SetDefault()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -78,11 +79,7 @@ class History(wx.Dialog):
         self.SetFocus()
         self.toggle_buttons()
 
-        self.playButton.Bind(wx.EVT_BUTTON, self.play)
-        self.pauseButton.Bind(wx.EVT_BUTTON, self.pause)
-        self.stopButton.Bind(wx.EVT_BUTTON, self.stop)
         self.Bind(wx.EVT_CLOSE, self.on_close)
-        closeButton.Bind(wx.EVT_BUTTON, self.on_close)
 
 
     def play(self, event):
@@ -221,9 +218,8 @@ class ProgressDialog(wx.Dialog):
         sizer.Add(self.gauge, 0, wx.ALL, 10)
 
         if cancellable:
-            cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+            cancel = button(self, wx.ID_CANCEL, _("&Cancel"), self.on_cancel)
             cancel.SetDefault()
-            cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
             btnSizer = wx.StdDialogButtonSizer()
             btnSizer.AddButton(cancel)
             btnSizer.Realize()
@@ -267,7 +263,7 @@ class UpdateDialog(wx.Dialog):
 
         self.text = wx.StaticText(self, label=_("Connecting to server..."), size=(-1, 80))
         cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        self.btn = wx.Button(self, wx.ID_OK, _("Update"))
+        self.btn = button(self, wx.ID_OK, _("Update"), self.update)
         self.btn.Enable(False)
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(cancel)
@@ -281,7 +277,6 @@ class UpdateDialog(wx.Dialog):
         self.SetSizer(sizer)
         
         self.SetFocus()
-        self.btn.Bind(wx.EVT_BUTTON, self.update)
 
 
     def check(self):
@@ -369,7 +364,7 @@ class TextInput(wx.Dialog):
 
 
     def setup_gui(self):        
-        fontBtn = wx.Button(self, label=_("Select Font"))
+        fontBtn = button(self, wx.NewId(), _("Select Font"), self.on_font)
         self.colourBtn = wx.ColourPickerCtrl(self)
         self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
         self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
@@ -393,7 +388,6 @@ class TextInput(wx.Dialog):
         fix_std_sizer_tab_order(btnSizer)
         self.set_focus()
         
-        self.Bind(wx.EVT_BUTTON, self.on_font, fontBtn)
         self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_colour, self.colourBtn)
         self.Bind(wx.EVT_TEXT, self.update_canvas, self.ctrl)
 
@@ -478,12 +472,12 @@ class FindIM(wx.Dialog):
 
         t = (_("Whyteboard uses ImageMagick to load PDF, SVG and PS files. \nPlease select its installed location."))
         text = wx.StaticText(self, label=t)
-        btn = wx.Button(self, label=_("Find location..."))
+        btn = button(self, wx.NewId(), _("Find location..."), self.browse)
         gap = wx.LEFT | wx.TOP | wx.RIGHT
 
-        self.okButton = wx.Button(self, wx.ID_OK, _("&OK"))
+        self.okButton = button(self, wx.ID_OK, _("&OK"), self.ok)
         self.okButton.SetDefault()
-        self.cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        self.cancelButton = button(self, wx.ID_CANCEL, _("&Cancel"), self.cancel)
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(self.okButton)
         btnSizer.AddButton(self.cancelButton)
@@ -497,10 +491,6 @@ class FindIM(wx.Dialog):
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.SetFocus()
-
-        btn.Bind(wx.EVT_BUTTON, self.browse)
-        self.okButton.Bind(wx.EVT_BUTTON, self.ok)
-        self.cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
 
 
     def browse(self, event=None):
@@ -533,7 +523,7 @@ class Feedback(wx.Dialog):
         self.email = wx.TextCtrl(self)
 
         cancel_b = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        send_b = wx.Button(self, wx.ID_OK, _("Send &Feedback"))
+        send_b = button(self, wx.ID_OK, _("Send &Feedback"), self.submit)
         send_b.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(send_b)
@@ -557,7 +547,6 @@ class Feedback(wx.Dialog):
         self.SetSizerAndFit(vsizer)
         self.SetFocus()
         self.SetAutoLayout(True)
-        self.Bind(wx.EVT_BUTTON, self.submit, send_b)
 
 
     def submit(self, event):
@@ -607,15 +596,15 @@ class PromptForSave(wx.Dialog):
         top_message.SetFont(font)
 
         if not self.gui.util.filename:
-            saveButton = wx.Button(self, wx.ID_SAVE, _("Save &As..."))
+            saveButton = button(self, wx.ID_SAVE, _("Save &As..."), self.okay)
         else:
-            saveButton = wx.Button(self, wx.ID_SAVE, _("&Save"))
+            saveButton = button(self, wx.ID_SAVE, _("&Save"), self.okay)
 
         if style == wx.YES_NO | wx.CANCEL:
             cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
             btnSizer.AddButton(cancelButton)
 
-        noButton = wx.Button(self, wx.ID_NO, _("&Don't Save"))
+        noButton = button(self, wx.ID_NO, _("&Don't Save"), self.no)
         saveButton.SetDefault()
 
         btnSizer.AddButton(noButton)
@@ -641,8 +630,6 @@ class PromptForSave(wx.Dialog):
         self.SetFocus()
         self.SetAutoLayout(True)
         fix_std_sizer_tab_order(btnSizer)
-        self.Bind(wx.EVT_BUTTON, self.okay, saveButton)
-        self.Bind(wx.EVT_BUTTON, self.no, noButton)
 
 
     def get_time(self):
@@ -708,8 +695,8 @@ class Resize(wx.Dialog):
         width, height = self.gui.canvas.buffer.GetSize()
         self.size = (width, height)
 
-        self.wctrl = wx.SpinCtrl(self, min=1, max=12000)
-        self.hctrl = wx.SpinCtrl(self, min=1, max=12000)
+        self.wctrl = spinctrl(self, 12000, width, self.resize)
+        self.hctrl = spinctrl(self, 12000, height, self.resize)
 
         csizer = wx.GridSizer(cols=2, hgap=1, vgap=2)
         csizer.Add(wx.StaticText(self, label=_("Width:")), 0, wx.TOP |
@@ -719,13 +706,10 @@ class Resize(wx.Dialog):
                                                              wx.ALIGN_RIGHT, 7)
         csizer.Add(self.hctrl, 1, gap, 7)
 
-        self.wctrl.SetValue(width)
-        self.hctrl.SetValue(height)
-
-        okButton = wx.Button(self, wx.ID_OK, _("&OK"))
+        okButton = button(self, wx.ID_OK, _("&OK"), self.ok)
         okButton.SetDefault()
-        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        applyButton = wx.Button(self, wx.ID_APPLY, _("&Apply"))
+        cancelButton = button(self, wx.ID_CANCEL, _("&Cancel"), self.cancel)
+        applyButton = button(self, wx.ID_APPLY, _("&Apply"), self.apply)
 
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okButton)
@@ -742,16 +726,12 @@ class Resize(wx.Dialog):
         self.SetEscapeId(cancelButton.GetId())
         self.Fit()
 
-        cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
-        okButton.Bind(wx.EVT_BUTTON, self.ok)
-        applyButton.Bind(wx.EVT_BUTTON, self.apply)
-        self.hctrl.Bind(wx.EVT_SPINCTRL, self.resize)
-        self.wctrl.Bind(wx.EVT_SPINCTRL, self.resize)
         fix_std_sizer_tab_order(sizer)
 
 
     def apply(self, event):
-        self.size = self.gui.canvas.buffer.GetSize()
+        x, y, = self.gui.canvas.buffer.GetSize()
+        self.size = (x, y) 
 
     def ok(self, event):
         self.resize()
@@ -868,13 +848,13 @@ class ShapeViewer(wx.Dialog):
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
         nextprevsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.moveUp = self.make_button(u"move-up", _("Move Shape Up"))
-        self.moveTop = self.make_button(u"move-top", _("Move Shape To Top"))
-        self.moveDown = self.make_button(u"move-down", _("Move Shape Down"))
-        self.moveBottom = self.make_button(u"move-bottom", _("Move Shape To Bottom"))
-        self.deleteBtn = self.make_button(u"delete", _("Delete Shape"))
-        self.prev = self.make_button(u"prev_sheet", _("Previous Sheet"))
-        self.next = self.make_button(u"next_sheet", _("Next Sheet"))
+        self.moveUp = self.make_button(u"move-up", _("Move Shape Up"), self.on_up)
+        self.moveTop = self.make_button(u"move-top", _("Move Shape To Top"), self.on_top)
+        self.moveDown = self.make_button(u"move-down", _("Move Shape Down"), self.on_down)
+        self.moveBottom = self.make_button(u"move-bottom", _("Move Shape To Bottom"), self.on_bottom)
+        self.deleteBtn = self.make_button(u"delete", _("Delete Shape"), self.on_delete)
+        self.prev = self.make_button(u"prev_sheet", _("Previous Sheet"), self.on_prev)
+        self.next = self.make_button(u"next_sheet", _("Next Sheet"), self.on_next)
 
         self.pages = wx.ComboBox(self, size=(125, 25), style=wx.CB_READONLY)
         self.list = WhyteboardList(self)
@@ -894,10 +874,10 @@ class ShapeViewer(wx.Dialog):
         bsizer.Add(nextprevsizer, 0, wx.RIGHT, 10)
         bsizer.Add(self.pages, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 10)
 
-        okButton = wx.Button(self, wx.ID_OK, _("&OK"))
+        okButton = button(self, wx.ID_OK, _("&OK"), self.ok)
         okButton.SetDefault()
-        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        applyButton = wx.Button(self, wx.ID_APPLY, _("&Apply"))
+        cancelButton = button(self, wx.ID_CANCEL, _("&Cancel"), self.cancel)
+        applyButton = button(self, wx.ID_APPLY, _("&Apply"), self.apply)
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okButton)
         btnSizer.AddButton(cancelButton)
@@ -918,16 +898,6 @@ class ShapeViewer(wx.Dialog):
         self.SetFocus()
         self.SetEscapeId(cancelButton.GetId())
 
-        cancelButton.Bind(wx.EVT_BUTTON, self.cancel)
-        okButton.Bind(wx.EVT_BUTTON, self.ok)
-        applyButton.Bind(wx.EVT_BUTTON, self.apply)
-        self.moveUp.Bind(wx.EVT_BUTTON, self.on_up)
-        self.moveDown.Bind(wx.EVT_BUTTON, self.on_down)
-        self.moveTop.Bind(wx.EVT_BUTTON, self.on_top)
-        self.moveBottom.Bind(wx.EVT_BUTTON, self.on_bottom)
-        self.prev.Bind(wx.EVT_BUTTON, self.on_prev)
-        self.next.Bind(wx.EVT_BUTTON, self.on_next)
-        self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_delete)
         self.pages.Bind(wx.EVT_COMBOBOX, self.on_change_sheet)
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
@@ -945,8 +915,8 @@ class ShapeViewer(wx.Dialog):
         [self.Bind(wx.EVT_UPDATE_UI, self.update_buttons, id=x) for x in ids]
 
 
-    def make_button(self, filename, tooltip):
-        btn = bitmap_button(self, get_image_path(u"icons", filename), False)
+    def make_button(self, filename, tooltip, event_handler):
+        btn = bitmap_button(self, get_image_path(u"icons", filename), event_handler, False)
         btn.SetToolTipString(tooltip)
         return btn
 
@@ -1115,12 +1085,12 @@ class PDFCacheDialog(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         bsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.deleteBtn = bitmap_button(self, get_image_path(u"icons", u"delete"), False)
+        self.deleteBtn = bitmap_button(self, get_image_path(u"icons", u"delete"), self.on_remove, False)
         self.deleteBtn.SetToolTipString(_("Remove cached item"))
         bsizer.Add(self.deleteBtn, 0, wx.RIGHT, 5)
 
-        okButton = wx.Button(self, wx.ID_OK, _("&OK"))
-        cancelButton = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
+        okButton = button(self, wx.ID_OK, _("&OK"), self.ok)
+        cancelButton = button(self, wx.ID_CANCEL, _("&Cancel"), lambda x: self.Close())
         cancelButton.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okButton)
@@ -1141,9 +1111,6 @@ class PDFCacheDialog(wx.Dialog):
         self.SetEscapeId(cancelButton.GetId())
         self.SetFocus()
 
-        okButton.Bind(wx.EVT_BUTTON, self.ok)
-        self.deleteBtn.Bind(wx.EVT_BUTTON, self.on_remove)
-        cancelButton.Bind(wx.EVT_BUTTON, lambda x: self.Close())
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda x: self.check_buttons())
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda x: self.check_buttons())
 
@@ -1249,9 +1216,8 @@ class AboutDialog(wx.Dialog):
                                    lambda evt: self.Destroy())}
 
         for label, values in buttons.items():
-            button = wx.Button(self, id=values[0], label=label)
-            button.Bind(wx.EVT_BUTTON, values[2])
-            btnSizer.Add(button, flag=wx.CENTER | values[1], border=5)
+            btn = button(self, values[0], label, values[2])
+            btnSizer.Add(btn, flag=wx.CENTER | values[1], border=5)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(image, flag=wx.CENTER | wx.TOP | wx.BOTTOM, border=5)
@@ -1277,7 +1243,7 @@ class CreditsDialog(wx.Dialog):
         self.SetIcon(icon.GetIcon())
         self.SetMinSize((300, 200))
         notebook = wx.Notebook(self)
-        close = wx.Button(self, id=wx.ID_CANCEL, label=_("&Close"))
+        close = button(self, wx.ID_CANCEL, _("&Close"), lambda evt: self.Destroy())
         close.SetDefault()
 
         labels = [_("Written by"), _("Translated by")]
@@ -1295,8 +1261,6 @@ class CreditsDialog(wx.Dialog):
         self.Layout()
         self.Show()
 
-        close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
-
 
 #----------------------------------------------------------------------
 
@@ -1306,7 +1270,7 @@ class LicenseDialog(wx.Dialog):
                            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.SetMinSize((400, 300))
         self.SetIcon(icon.GetIcon())
-        close = wx.Button(self, id=wx.ID_CANCEL, label=_("&Close"))
+        close = button(self, wx.ID_CANCEL, _("&Close"), lambda evt: self.Destroy())
 
         ctrl = wx.TextCtrl(self, style=wx.TE_READONLY | wx.TE_MULTILINE)
         ctrl.SetValue(license)
@@ -1317,7 +1281,5 @@ class LicenseDialog(wx.Dialog):
         self.SetSizer(sizer)
         self.Layout()
         self.Show()
-
-        close.Bind(wx.EVT_BUTTON, lambda evt: self.Destroy())
 
 #----------------------------------------------------------------------

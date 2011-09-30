@@ -40,7 +40,7 @@ from whyteboard.core import Config
 from whyteboard.gui import FindIM
 from whyteboard.lib import pub
 from whyteboard.misc import (meta, create_colour_bitmap, create_bold_font, label,
-                             checkbox)
+                             checkbox, button, spinctrl)
 
 _ = wx.GetTranslation
 logger = logging.getLogger("whyteboard.preferences")
@@ -56,19 +56,19 @@ class Preferences(wx.Dialog):
         self.gui = gui
         self.config = Config().clone()
         self.setup_gui()
-
+        
     def setup_gui(self):
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.VERTICAL)        
         self.tabs = wx.Notebook(self)
-
+        
         params = [self.tabs, self.gui, self.config]
         self.tabs.AddPage(General(*params), _("General"))
         self.tabs.AddPage(View(*params), _("View"))
         self.tabs.AddPage(PDF(*params), _("PDF Conversion"))
-
-        okay = wx.Button(self, wx.ID_OK, _("&OK"))
-        cancel = wx.Button(self, wx.ID_CANCEL, _("&Cancel"))
-        _help = wx.Button(self, wx.ID_HELP, _("&Help"))
+        
+        okay = button(self, wx.ID_OK, _("&OK"), self.on_okay)
+        cancel = button(self, wx.ID_CANCEL, _("&Cancel"), self.on_cancel)
+        _help = button(self, wx.ID_HELP, _("&Help"), self.on_help)
         okay.SetDefault()
         btnSizer = wx.StdDialogButtonSizer()
         btnSizer.AddButton(okay)
@@ -82,10 +82,6 @@ class Preferences(wx.Dialog):
         self.SetSizer(sizer)
         sizer.Layout()
         self.SetFocus()
-
-        cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
-        okay.Bind(wx.EVT_BUTTON, self.on_okay)
-        _help.Bind(wx.EVT_BUTTON, self.on_help)
 
 
     def on_okay(self, event=None):
@@ -115,14 +111,14 @@ class BasePanel(wx.Panel):
             self.SetBackgroundColour("White")
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
-        self.setup_gui()
-
+        self.setup_gui()       
+        
     def setup_gui(self):
         pass
-
+            
 #----------------------------------------------------------------------
 
-
+        
 class General(BasePanel):
     """
     Select language, font and toolbar/status bar visiblity
@@ -149,8 +145,7 @@ class General(BasePanel):
             self.grid.Add(b, 0)
             b.Bind(wx.EVT_BUTTON, method)
 
-        self.fontBtn = wx.Button(self, label=_("Select Font"))
-        self.fontBtn.Bind(wx.EVT_BUTTON, self.on_font)
+        self.fontBtn = button(self, wx.NewId(), _("Select Font"), self.on_font)
         font = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
         self.font = font  # the correct font, w/ right size
         self.size = font.GetPointSize()  # size to use regardless of font
@@ -182,7 +177,7 @@ class General(BasePanel):
         self.sizer.Add(label(self, _("Default Font:")), 0, wx.LEFT, 15)
         self.sizer.Add((10, 15))
         self.sizer.Add(self.fontBtn, 0, wx.LEFT, 30)
-
+        
         self.lang.Bind(wx.EVT_COMBOBOX, self.on_lang)
 
 
@@ -262,12 +257,10 @@ class General(BasePanel):
 class View(BasePanel):
     """
     Select language and toolbar/status bar visiblity
-    """
+    """       
     def setup_gui(self):
-        self.width = wx.SpinCtrl(self, min=1, max=12000)
-        self.height = wx.SpinCtrl(self, min=1, max=12000)
-        self.width.SetValue(self.config.default_width())
-        self.height.SetValue(self.config.default_height())
+        self.width = spinctrl(self, 12000, self.config.default_width(), self.on_width)
+        self.height = spinctrl(self, 12000, self.config.default_height(), self.on_height)
 
         statusbar = checkbox(self, _("View the status bar"), self.config.statusbar(), self.on_statusbar)
         toolbar = checkbox(self, _("View the toolbar"), self.config.toolbar(), self.on_toolbar)
@@ -293,8 +286,6 @@ class View(BasePanel):
         self.sizer.Add(transparency, 0, wx.LEFT, 10)
 
         transparency.Bind(wx.EVT_CHECKBOX, self.on_transparency)
-        self.width.Bind(wx.EVT_SPINCTRL, self.on_width)
-        self.height.Bind(wx.EVT_SPINCTRL, self.on_height)
 
 
     def on_statusbar(self, event):
@@ -331,7 +322,7 @@ class PDF(BasePanel):
     def setup_gui(self):
         self.im_result = None
         self.sizer.Add(label(self, _("Conversion Quality:")), 0, wx.ALL, 15)
-
+        
         buttons = {'highest': _("Highest"),
                    'high': _("High"),
                    'normal': _("Normal")}
@@ -342,7 +333,7 @@ class PDF(BasePanel):
             self.sizer.Add((10, 5))
             method = lambda evt, x=key: self.on_quality(evt, x)
             btn.Bind(wx.EVT_RADIOBUTTON, method)
-
+            
             if self.config.convert_quality() == key:
                 btn.SetValue(True)
 
@@ -351,8 +342,7 @@ class PDF(BasePanel):
         self.sizer.Add(note, 0, wx.LEFT | wx.BOTTOM, 30)
 
         if os.name == "nt":
-            self.im_button = wx.Button(self)
-            self.im_button.Bind(wx.EVT_BUTTON, self.on_im)
+            self.im_button = button(self, wx.NewId(), "", self.on_im)
             self.set_im_button()
 
             self.sizer.Add(label(self, _("ImageMagick Location")), 0, wx.LEFT, 15)
@@ -365,7 +355,7 @@ class PDF(BasePanel):
 
 
     def set_im_button(self):
-        """Sets the label to IM's path"""
+        """Sets the label to IM's path"""        
         label = _("Find...")
         if self.config.imagemagick_path():
             label = self.config.imagemagick_path()

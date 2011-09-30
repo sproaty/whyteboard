@@ -315,7 +315,7 @@ GUI functions, e.g. creating widgets
 """
 
 
-def bitmap_button(parent, path, border=True, toggle=False):
+def bitmap_button(parent, path, event_handler, border=True, toggle=False):
     """
     Creates a platform-dependent bitmap button that's toggleable or not.
     """
@@ -329,14 +329,25 @@ def bitmap_button(parent, path, border=True, toggle=False):
     if not border:
         style = wx.NO_BORDER
 
-    return _type(parent, bitmap=wx.Bitmap(path), style=style)
+    button = _type(parent, bitmap=wx.Bitmap(path), style=style)
+    button.Bind(wx.EVT_BUTTON, event_handler)
+    return button
 
 
-def checkbox(self, text, checked, event_handler):
+def button(parent, _id, label, event_handler):
+    """
+    Button that's auto-bound to an event
+    """
+    button = wx.Button(parent, _id, label)
+    button.Bind(wx.EVT_BUTTON, event_handler)
+    return button
+
+
+def checkbox(parent, text, checked, event_handler):
     """
     Checkbox that's auto-set to a value and binds an event
     """
-    checkbox = wx.CheckBox(self, label=text)
+    checkbox = wx.CheckBox(parent, label=text)
     checkbox.SetValue(checked)
     checkbox.Bind(wx.EVT_CHECKBOX, event_handler)
     return checkbox
@@ -409,3 +420,12 @@ def show_dialog(_class, modal=True):
         _class.ShowModal()
     else:
         _class.Show()
+        
+def spinctrl(parent, max_value, default_value, event_handler):
+    """
+    Creates a spin control with a bound event and a default value
+    """
+    spinctrl = wx.SpinCtrl(parent, min=1, max=max_value)
+    spinctrl.SetValue(default_value)
+    spinctrl.Bind(wx.EVT_SPINCTRL, event_handler)
+    return spinctrl    
