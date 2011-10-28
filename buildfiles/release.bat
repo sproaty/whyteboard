@@ -2,7 +2,9 @@
 
 set /p version=Enter version number: %=%
 
-"C:\Python27\python.exe" setup.py py2exe
+"C:\Python27\python.exe" edit-meta.py %version%
+
+call build.bat
 
 cd dist
 
