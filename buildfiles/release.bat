@@ -2,7 +2,7 @@
 
 set /p version=Enter version number: %=%
 
-"C:\Python27\python.exe" edit-meta.py %version%
+"C:\Python27\python.exe" update-version.py %version%
 
 call build.bat
 
@@ -30,3 +30,5 @@ move Output\whyteboard-installer-%version%.exe .
 rmdir build /S /Q
 rmdir dist /S /Q
 rmdir Output /S /Q
+
+"C:\Python27\python.exe" write-latest-update-file.py %version% windows

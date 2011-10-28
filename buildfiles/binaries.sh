@@ -1,12 +1,16 @@
 if test -z "$1"
 then
-  echo "Please provide a version number."
+  echo "USAGE: binaries.sh [version number]"
   exit
 fi
 
-
 PROGRAM=whyteboard-$1
-SRC_DIRECTORY=$(cd `dirname $0` && pwd)
+SRC_DIR=$(cd `dirname $0` && pwd)
+BUILDFILES=BUILDFILESfiles
+python update-version.py $1
+
+# run pylint and save output
+# python pylint.py --
 
 # create tar from all needed program code; exclude unneeded stuff
 tar czf $PROGRAM.tar.gz whyteboard/ images/ locale/ whyteboard-help/ whyteboard.py CHANGELOG.txt DEVELOPING.txt LICENSE.txt README.txt TODO.txt --exclude=*.pyc --exclude=.bzr*
@@ -17,17 +21,13 @@ cd ../sb/$PROGRAM
 mkdir debian
 
 # extract the source tar into the directory and copy over needed files from source 'build' directory
-tar xf $SRC_DIRECTORY/$PROGRAM.tar.gz
-cp $SRC_DIRECTORY/$PROGRAM.tar.gz .
+tar xf $SRC_DIR/$PROGRAM.tar.gz
+cp $SRC_DIR/$PROGRAM.tar.gz .
 
-cp $SRC_DIRECTORY/build/debian/* debian
-cp $SRC_DIRECTORY/build/whyteboard.png .
-cp $SRC_DIRECTORY/build/whyteboard.xml .
-cp $SRC_DIRECTORY/build/whyteboard.desktop .
+cp $BUILDFILES/debian/* debian
+cp $BUILDFILES/whyteboard.png .
+cp $BUILDFILES/whyteboard.xml .
+cp $BUILDFILES/whyteboard.desktop .
 
 # now build the debian package
 debuild -S
-
-# upload file to launchpad
-cd ..
-#dput whyteboard whyteboard\_$1\_source.changes
