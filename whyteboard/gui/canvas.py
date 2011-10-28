@@ -78,7 +78,7 @@ class Canvas(wx.ScrolledWindow):
         """
         wx.ScrolledWindow.__init__(self, tab, style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.CLIP_CHILDREN)
         self.setup_gui()
-        
+
         self.area = area
         self.gui = gui
         self.scale = (1.0, 1.0)
@@ -105,7 +105,7 @@ class Canvas(wx.ScrolledWindow):
         self.redraw_all()
 
 
-    def setup_gui(self):    
+    def setup_gui(self):
         self.SetScrollRate(3, 3)
         self.SetBackgroundColour('Grey')
         self.SetDropTarget(CanvasDropTarget())
@@ -124,12 +124,12 @@ class Canvas(wx.ScrolledWindow):
         self.Bind(wx.EVT_MIDDLE_UP, self.middle_up)
         self.Bind(wx.EVT_MOTION, self.motion)
         self.Bind(wx.EVT_PAINT, self.on_paint)
-        
-        
+
+
     def left_down(self, event):
         """Starts drawing"""
         x, y = self.convert_coords(event)
-        
+
         if os.name == "nt" and not isinstance(self.shape, Media) and not self.shape.drawing:
             self.CaptureMouse()
         if not self.shape.drawing and self.check_resize_direction(x, y):  # don't draw outside canvas
@@ -788,7 +788,7 @@ class Canvas(wx.ScrolledWindow):
         return self.selected.background == wx.TRANSPARENT
 
     def is_not_drawing(self):
-        return not self.drawing and not self.shape.drawing 
+        return not self.drawing and not self.shape.drawing
 
     def swap_colours(self):
         """Swaps the selected shape's foreground and background"""
