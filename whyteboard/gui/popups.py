@@ -25,9 +25,9 @@ Popup menu items.
 import wx
 import logging
 
-from whyteboard.gui import (ID_BACKGROUND, ID_CLOSE_ALL, ID_FOREGROUND, ID_MOVE_DOWN,
-                       ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP, ID_MOVE_UP, ID_SWAP_COLOURS,
-                       ID_TRANSPARENT)
+from whyteboard.gui import (ID_BACKGROUND, ID_CLOSE_ALL, ID_CLOSE_OTHERS, ID_FOREGROUND, 
+                            ID_MOVE_DOWN, ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP, ID_MOVE_UP, 
+                            ID_SWAP_COLOURS, ID_TRANSPARENT)
 
 _ = wx.GetTranslation
 logger = logging.getLogger("whyteboard.popups")
@@ -57,6 +57,7 @@ class Popup(wx.Menu):
         self.Append(wx.ID_NEW, _("&New Sheet"))
         self.Append(wx.ID_CLOSE, _("Re&move Sheet"))
         self.Append(ID_CLOSE_ALL, _("Close All Sheets"))
+        self.Append(ID_CLOSE_OTHERS, _("Close Other Sheets"))
         self.AppendSeparator()
         self.Append(RENAME, _("&Rename..."))
         self.Append(EXPORT, _("&Export..."))
@@ -66,6 +67,7 @@ class Popup(wx.Menu):
         self.Bind(wx.EVT_MENU, self.export, id=EXPORT)
         self.Bind(wx.EVT_MENU, self.close, id=wx.ID_CLOSE)
         self.Bind(wx.EVT_MENU, self.close_all, id=ID_CLOSE_ALL)
+        self.Bind(wx.EVT_MENU, self.close_others, id=ID_CLOSE_OTHERS)
 
 
     def select_tab_method(self, extra):
@@ -83,6 +85,9 @@ class Popup(wx.Menu):
     def close_all(self, event):
         self.gui.on_close_all_sheets()
 
+    def close_others(self, event):
+        self.gui.on_close_other_sheets()
+        
     def rename(self, event):
         self.gui.on_rename(sheet=self.item)
         

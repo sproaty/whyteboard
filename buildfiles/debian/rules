@@ -36,28 +36,23 @@ install: build
 	dh_testroot
 	dh_clean ­k
 	dh_installdirs
-	# Add here commands to install the package into debian/whyteboard.
-	#$(MAKE) install DESTDIR=$(CURDIR)/debian/whyteboard
 
-	cp whyteboard.py $(CURDIR)/debian/whyteboard/usr/lib/whyteboard/whyteboard.py
-	cp whyteboard.png $(CURDIR)/debian/whyteboard/usr/lib/whyteboard/whyteboard.png
-	cp LICENSE.txt $(CURDIR)/debian/whyteboard/usr/lib/whyteboard/LICENSE.txt
+    USR_DIR=$(CURDIR)/debian/whyteboard/usr
+    TARGET_DIR=$USR_DIR/lib/whyteboard
+    DOCS_DIR=$USR_DIR/share/doc/whyteboard
+    
+	cp whyteboard.py $TARGET_DIR/whyteboard.py
+	cp whyteboard.png $TARGET_DIR/whyteboard.png
+	cp LICENSE.txt $TARGET_DIR/LICENSE.txt
 
-	cp -ap images $(CURDIR)/debian/whyteboard/usr/lib/whyteboard
-	cp -ap locale $(CURDIR)/debian/whyteboard/usr/lib/whyteboard
-	cp -ap whyteboard $(CURDIR)/debian/whyteboard/usr/lib/whyteboard
-	cp -ap whyteboard-help $(CURDIR)/debian/whyteboard/usr/lib/whyteboard
+	cp -ap images locale whyteboard whyteboard-help $TARGET_DIR
 
 	ln -s /usr/lib/whyteboard/whyteboard.py $(CURDIR)/debian/whyteboard/usr/bin/whyteboard
 
 	### Installing menufile, mimes and docs
 	cp whyteboard.desktop $(CURDIR)/debian/whyteboard/usr/share/applications/
 
-	cp CHANGELOG.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/changelog.txt
-	cp DEVELOPING.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/developing.txt
-	cp LICENSE.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/LICENSE.txt
-	cp README.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/README.txt
-	cp TODO.txt $(CURDIR)/debian/whyteboard/usr/share/doc/whyteboard/TODO.txt
+	cp CHANGELOG.txt DEVELOPING.txt LICENSE.txt README.txt TODO.txt $DOCS_DIR
 
 	xdg-icon-resource install --novendor --context mimetypes --size 64 ./whyteboard.png application-x-whyteboard
 	xdg-mime install --novendor ./whyteboard.xml
@@ -66,9 +61,6 @@ install: build
 
 # Build architecture-independent files here.
 binary-indep: build install
-# We have nothing to do by default.
-
-
 
 # Build architecture-dependent files here.
 binary-arch: build install
@@ -77,24 +69,11 @@ binary-arch: build install
 	dh_installchangelogs
 	dh_installdocs
 	dh_installexamples
-#	dh_install
-#	dh_installmenu
-#	dh_installdebconf
-#	dh_installlogrotate
-#	dh_installemacsen
-#	dh_installpam
-#	dh_installmime
-#	dh_python
-#	dh_installinit
-#	dh_installcron
-#	dh_installinfo
 	dh_installman
 	dh_link
 	dh_strip
 	dh_compress
 	dh_fixperms
-#	dh_perl
-#	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol

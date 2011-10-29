@@ -663,8 +663,7 @@ class GUI(wx.Frame):
         """
         Closes every sheet, creating undo points for each one.
         """
-        if not self.tab_count - 1:
-            logger.debug("Cannot close sheet -- only one sheet open")
+        if self.is_only_one_tab_open():
             return
 
         for x in reversed(range(self.tab_count)):
@@ -675,6 +674,31 @@ class GUI(wx.Frame):
         self.on_new_tab()
 
 
+    def on_close_other_sheets(self):
+        """
+        Closes all sheets except the current open sheet
+        """
+        if self.is_only_one_tab_open():
+            return
+
+        current_tab = self.current_tab
+        canvases = self.get_canvases()
+        
+        for index, canvas in enumerate(canvases):
+            if index != current_tab:
+                self.current_tab = 0
+                self.canvas = canvas
+                self.on_close_tab()
+
+        self.menu.make_closed_tabs_menu()
+        
+        
+    def is_only_one_tab_open(self):    
+        if not self.tab_count - 1:
+            logger.debug("Cannot close sheet -- only one sheet open")
+            return True
+        return False
+                
     def remove_all_sheets(self):
         self.canvas.shapes = []
         self.canvas.redraw_all()

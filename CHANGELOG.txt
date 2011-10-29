@@ -15,7 +15,7 @@ xx xxxxx 2011 - 0.42
 * Single click with Pen to create a small point
 
 * Removed the following preferences:
-  - "toolbox type" - the toolbox is now icon-only, this takes up less space
+  - "toolbox type" - the toolbox is now icon-only, this takes up less UI space
   - "number of toolbox columns" - 2 is fine
   - "selection handle size"
   - "number of undo tabs"
@@ -24,12 +24,12 @@ xx xxxxx 2011 - 0.42
   to remove them and to set reasonable defaults.
 
 * Whyteboard can be updated from the command line with the --update switch.
-  This updates without launching the GUI, instead showing a text progress bar
+  This updates without launching the GUI, showing a text progress bar
 * Added a debug mode with verbose output to console
 * Added program logging which writes error logs to disk
 
 * New translation languages: Catalan, Swedish. Now fully translated in:
-    + Spanish, Italian, German, Galician, French, Portuguese, Chinese
+    Spanish, Italian, German, Galician, French, Portuguese, Chinese
 * Add the user's system language to error report to help diagnose unicode bugs
 * Few .bat and .sh scripts in place to make building the project simpler
 

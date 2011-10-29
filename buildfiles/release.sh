@@ -4,8 +4,7 @@ then
   exit
 fi
 
-PROGRAM=whyteboard-$1
-SRC_DIRECTORY=$(cd `dirname $0` && pwd)
+BUILDFILES=$(cd `dirname $0` && pwd)/buildfiles
 
 pushd $BUILDFILES
 

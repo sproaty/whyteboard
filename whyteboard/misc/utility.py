@@ -373,7 +373,12 @@ class Utility(object):
         # re-create tabs and its saved drawings
         for x in save_data[1]:
             self.gui.on_new_tab(name=save_data[3][x])
-            self.gui.canvas.resize(save_data[4][x])
+            size = (Config().default_width(), Config().default_height())
+            try:
+                size = save_data[4][x]
+            except KeyError:
+                pass
+            self.gui.canvas.resize(size)
 
             try:
                 media = save_data[5][x]

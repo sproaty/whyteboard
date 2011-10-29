@@ -1,2 +1,3 @@
-?package(whyteboard):needs="X11" section="Applications/Graphics"\
-  title="whyteboard" command="/usr/bin/whyteboard"
+?package(whyteboard): needs=X11 \
+        section=Applications/Graphics \
+        title=Whyteboard command=whyteboard

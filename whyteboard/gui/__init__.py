@@ -11,7 +11,7 @@ from event_ids import (ID_HISTORY, ID_REPORT_BUG, ID_FEEDBACK, ID_CLEAR_SHEETS,
                        ID_TRANSLATE, ID_MOVE_UP, ID_TOOL_PREVIEW, ID_IMPORT_PDF,
                        ID_MOVE_DOWN, ID_TOOLBAR, ID_CLEAR_ALL_SHEETS, ID_IMPORT_PREF,
                        ID_TRANSPARENT, ID_IMPORT_PS, ID_FOREGROUND, ID_EXPORT_ALL,
-                       ID_NEXT, ID_SHAPE_VIEWER)
+                       ID_NEXT, ID_SHAPE_VIEWER, ID_CLOSE_OTHERS)
 
 from menu import Menu, Toolbar
 from sheets import UndoSheetManager
