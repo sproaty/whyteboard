@@ -63,7 +63,7 @@ def update_version(current_file, filetype, output, index1, index2):
 
 if len(sys.argv) <= 2:
     usage()
-if not sys.argv[2] in ['linux', 'windows', 'all']:
+if not sys.argv[2].lower() in ['linux', 'windows', 'all']:
     usage()
     
 
@@ -71,9 +71,11 @@ current_file = "resources/latest"
 output = [sys.argv[1]]
     
 if sys.argv[2] == "windows":    
+    print 'Editing updates file for Windows'
     update_version(current_file, "zip", output, 1, 2)
     
 if sys.argv[2] == "linux":
+    print 'Editing updates file for Linux'
     update_version(current_file, "tar.gz", output, 3, 4)
     
 if sys.argv[2] == "all":

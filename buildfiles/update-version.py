@@ -30,6 +30,8 @@ if len(sys.argv) > 2:
     sys.exit()
     
 
+print 'Updating meta version'
+
 lines = []
 meta = os.path.abspath("../whyteboard/misc/meta.py")
 
