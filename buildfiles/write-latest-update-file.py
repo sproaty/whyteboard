@@ -19,15 +19,23 @@
 
 
 """
-Generates the whyteboard.org/latest file for linux or windows, 
-updating the filesizes of the exe or source
+Generates the whyteboard.org/latest file that's used by the program to check
+for new versions.
+
+It has the format:
+
+version
+windows exe zip filename
+zip size
+source archive filename
+source size
 """
 
 import os
 import sys
 
 def usage():
-    print "USAGE: python generate-version-update VERSION [linux/windows/all]"
+    print "USAGE: python write-latest-update-file VERSION [linux/windows/all]"
     sys.exit()
     
 def check_file_exists(filename):

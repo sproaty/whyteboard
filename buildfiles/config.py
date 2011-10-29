@@ -18,28 +18,5 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-"""
-Replaces the version variable definition in meta.py when creating a release!
-"""    
-
-import os
-import sys
-
-if len(sys.argv) >= 1:
-    print "USAGE: python update-version VERSION [linux/windows/all]"
-    sys.exit()
-    
-
-lines = []
-meta = os.path.abspath("../whyteboard/misc/meta.py")
-
-for line in open(meta):
-    if "version =" in line:
-        current = line[line.find(" = u") : -1]
-        line = line.replace("version" + current, "version = u\"" + sys.argv[1] + "\"")
-    lines.append(line)
-
-
-_file = open(meta, "w")
-for item in lines:
-  _file.write(item)
+ftp_username= "username"
+ftp_password = "password"
