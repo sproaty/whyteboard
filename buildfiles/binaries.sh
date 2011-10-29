@@ -9,12 +9,14 @@ SRC=$(cd `dirname $0` && pwd)
 BUILDFILES=$SRC/buildfiles
 
 pushd $BUILDFILES
+pushd scripts
 
 python update-version.py $1
 
 # run pylint and save output
-# python pylint.py --
+python run-pylint.py
 
+popd
 popd
 pushd ..
 

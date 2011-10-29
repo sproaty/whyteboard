@@ -4,10 +4,12 @@ set _=%CD%\
 
 IF "%1"=="" (set /p version=Enter version number: %=%) ELSE ( set version=%1)
 
+pushd %_%\
+pushd scripts
+
 "C:\Python27\python.exe" update-version.py %version%
 
-pushd %_%\
-
+popd
 call build.bat
 
 pushd ..\dist
@@ -25,16 +27,23 @@ ren dist "whyteboard-%version%"
 
 ren "whyteboard-%version%" dist
 
-"C:\Program Files\Inno Setup 5\Compil32.exe"  /cc innosetup.iss
+"C:\Program Files\Inno Setup 5\Compil32.exe"  /cc buildfiles\resources\innosetup.iss
 
-ren Output\setup.exe whyteboard-installer-%version%.exe
+echo. 
+echo renaming files
+echo.
 
-move Output\whyteboard-installer-%version%.exe buildfiles
+ren buildfiles\resources\Output\setup.exe whyteboard-installer-%version%.exe
+
+echo moving files to build files folder
+
+move buildfiles\resources\Output\whyteboard-installer-%version%.exe buildfiles
 move whyteboard-%version%.zip buildfiles
 
+echo cleaning temp. files
 rmdir build /S /Q
 rmdir dist /S /Q
-rmdir Output /S /Q
+rmdir buildfiles\resources\Output /S /Q
 
 popd
 popd

@@ -1,0 +1,10 @@
+.externalToolBuilders
+.settings
+build
+dist
+poppler
+wtbds
+.project
+.pydevproject
+eclipse-preferences.epf
+pylint

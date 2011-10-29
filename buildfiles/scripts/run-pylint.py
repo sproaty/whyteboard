@@ -18,5 +18,25 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-ftp_username= "m01whyt"
-ftp_password = "c5fe291"
+"""
+Outputs pylint report to a text file.
+"""
+
+import glob
+import os
+
+baseDir = os.path.abspath("../../whyteboard/")
+
+dirsToCheck = ["core", "gui", "misc", "test", "updater"]
+directories = [glob.glob(baseDir + "/" + directory) for directory in dirsToCheck]
+
+disableMessages = ["C0103", "C0111", "C0301", "R0902", 
+                   "R0904", "W0104", "W0141", "W0221",  
+                   "W0232", "W0613", "W0704"]
+
+for directory in directories[0]:
+    for _file in glob.glob(directory + "/*.py"):           
+        print 'Running pylint on: ' + _file
+        flags = " --disable=".join(disableMessages)
+        args = "pylint --disable=%s %s >> pylint-report.txt" % (flags, _file)
+        os.system(args) 

@@ -67,7 +67,7 @@ if not sys.argv[2].lower() in ['linux', 'windows', 'all']:
     usage()
     
 
-current_file = "resources/latest"            
+current_file = "../resources/latest"            
 output = [sys.argv[1]]
     
 if sys.argv[2] == "windows":    

@@ -14,5 +14,9 @@ pushd $BUILDFILES
 # upload to launchpad
 dput whyteboard whyteboard\_$1\_source.changes
 
-python write-latest-update-file.py $1 linux
-python upload-latest-update-file.py
+pushd scripts
+
+python scripts/write-latest-update-file.py $1 linux
+python scripts/upload-latest-update-file.py
+
+popd

@@ -18,19 +18,5 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-"""
-Generates the whyteboard.org/latest file for linux or windows, 
-updating the filesizes of the exe or source
-"""
-
-import config
-from ftplib import FTP
-
-print "Uploading latest update file via FTP"
-
-ftp = FTP('ftp.whyteboard.org', config.ftp_username, config.ftp_password)
-ftp.login()               # user anonymous, passwd anonymous@
-ftp.storbinary('STOR /public_html/latest', open('resources/latest'))
-ftp.close()
-
-print "File stored."
+ftp_username= "username"
+ftp_password = "password"
