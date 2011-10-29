@@ -25,8 +25,8 @@ Replaces the version variable definition in meta.py when creating a release!
 import os
 import sys
 
-if len(sys.argv) >= 1:
-    print "USAGE: python update-version VERSION [linux/windows/all]"
+if len(sys.argv) > 2:
+    print "USAGE: python update-version.py VERSION"
     sys.exit()
     
 

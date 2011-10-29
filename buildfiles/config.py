@@ -18,5 +18,5 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-ftp_username= "username"
-ftp_password = "password"
+ftp_username= "m01whyt"
+ftp_password = "c5fe291"
