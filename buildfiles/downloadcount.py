@@ -20,9 +20,10 @@
 
 from lib.BeautifulSoup import BeautifulSoup
 from lib.soupselect import select
-import urllib
+
+import json
 import re
-from pprint import pprint
+import urllib
 
 
 print ''
@@ -55,12 +56,14 @@ def get_soup(site, cssSelector=None):
     return select(soup, cssSelector)
 
 
+
 #---------------------------------------------------------------
 
 
+val = 0
+
 soup = get_soup("http://code.google.com/p/whyteboard/downloads/list?can=1&q=&colspec=Filename+Summary+Uploaded+Size+DownloadCount")
 
-val = 0
 for i, td in enumerate(soup.findAll("td", {"class": "vt col_4"})):
     val += int(td.findNext('a').renderContents().strip().replace(",", ""))
 
@@ -84,12 +87,9 @@ add_download('Launchpad', launchpad)
 #----------------------------------------------------------------------
 
 
-soup = get_soup("http://sourceforge.net/project/stats/detail.php?group_id=259193&ugn=whyteboard&type=prdownload&mode=alltime",
-                'div#doc4 div table td')
+sourceforge = json.loads(urllib.urlopen("http://sourceforge.net/projects/whyteboard/files/stats/json?start_date=2008-01-01&end_date=2015-01-01").read())
 
-sourceforge = soup[len(soup) - 2].renderContents().strip()
-
-add_download('SourceForge', sourceforge)
+add_download('SourceForge', sourceforge['total'])
 
 
 #----------------------------------------------------------------------
@@ -135,15 +135,13 @@ softpedia_portable = soup[1].renderContents()
 
 add_download('Softpedia Portable', softpedia_portable)
 
-
 #----------------------------------------------------------------------
 
 
 soup = get_soup("http://www.computerbild.de/download/Whyteboard-6107832.html",
                 'div.contentPage div.user div.content div.clearfix table tbody tr td')
 
-m = re.search('(\d{3})', soup[6].renderContents().strip())
-
+m = re.search('(\d{3})', soup[5].renderContents().strip())
 computerbild = m.group(0)
 
 
@@ -233,6 +231,26 @@ soup = get_soup("http://download.html.it/software/vedi/11171/whyteboard/",
 italian = soup[2].renderContents()
 
 add_download('download.html.it', italian)
+
+
+#----------------------------------------------------------------------
+
+
+soup = get_soup("http://www.top4download.com/portable-whyteboard/jqfewpvk.html",
+                "#centering01 div#main01 div#main div#dualmenu div#dualmenu_left div.rightside p span")
+
+m = re.search('(\d{3})', soup[9].renderContents().strip())
+top4download = m.group(0)
+
+
+add_download('top4download', top4download)
+
+
+#----------------------------------------------------------------------
+
+
+soup = get_soup("http://www.onlinedown.com/count/count_down.php?id=93082")
+add_download('Onlinedown', str(soup))
 
 
 #----------------------------------------------------------------------
