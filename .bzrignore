@@ -1,6 +1,7 @@
 .externalToolBuilders
 .settings
 build
+_project
 dist
 poppler
 wtbds
