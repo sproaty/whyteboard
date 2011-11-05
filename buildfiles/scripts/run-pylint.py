@@ -25,16 +25,18 @@ Outputs pylint report to a text file.
 import glob
 import os
 
-baseDir = os.path.abspath("../../whyteboard/")
+baseDir = os.path.abspath("../whyteboard")
 
 dirsToCheck = ["core", "gui", "misc", "test", "updater"]
-directories = [glob.glob(baseDir + "/" + directory) for directory in dirsToCheck]
+for dir in dirsToCheck:
+    print os.path.join(baseDir, dir)
+directories = [glob.glob(os.path.join(baseDir, directory))[0] for directory in dirsToCheck]
 
 disableMessages = ["C0103", "C0111", "C0301", "R0902", 
                    "R0904", "W0104", "W0141", "W0221",  
                    "W0232", "W0613", "W0704"]
 
-for directory in directories[0]:
+for directory in directories:
     for _file in glob.glob(directory + "/*.py"):           
         print 'Running pylint on: ' + _file
         flags = " --disable=".join(disableMessages)

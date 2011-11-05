@@ -33,7 +33,7 @@ if len(sys.argv) > 2:
 print 'Updating meta version'
 
 lines = []
-meta = os.path.abspath("../../whyteboard/misc/meta.py")
+meta = os.path.abspath(os.path.join(__file__, "../../whyteboard/misc/meta.py"))
 
 for line in open(meta):
     if "version =" in line:

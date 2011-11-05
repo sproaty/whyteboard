@@ -60,33 +60,35 @@ def update_version(current_file, filetype, output, index1, index2):
             line = lines_to_write(filetype)[1]
         output.append(line.strip())
 
-os_to_use = sys.argv[2].lower()
 
 
 if len(sys.argv) <= 2:
     usage()
-if not to_to_use in ['linux', 'windows', 'all']:
+    
+os_to_use = sys.argv[2].lower()
+if not os_to_use in ['linux', 'windows', 'all']:
     usage()
     
 
-current_file = "../resources/latest"            
+current_file = os.path.join(os.path.abspath(__file__), "..", "resources", "latest")            
 output = [sys.argv[1]]
-    
+print current_file    
 if os_to_use == "windows":    
     print 'Editing updates file for Windows'
     update_version(current_file, "zip", output, 1, 2)
     
-if os_to_use == "linux":
-    print 'Editing updates file for Linux'
-    update_version(current_file, "tar.gz", output, 3, 4)
-    
+#if os_to_use == "linux":
+#    print 'Editing updates file for Linux'
+#    update_version(current_file, "tar.gz", output, 3, 4)
+#    
 if os_to_use == "all":
     for filetype in ["zip", "tar.gz"]:
         lines = lines_to_write(filetype)
         output.append(lines[0])
         output.append(lines[1])
-    
-output = "\n".join(output)     
-f = file(current_file, "w")
-f.write(output)
-f.close()
+#    
+output = "\n".join(output)
+print output     
+#f = file(current_file, "w")
+#f.write(output)
+#f.close()

@@ -1,3 +1,5 @@
+@charset "UTF-8";
+
 h1, h2, h3, p, ul, ol {
     margin: 1em 0;
     padding: 0;
@@ -23,9 +25,17 @@ img {
     border: 0;
 }
 
-#resources,
-#translation-guide {
+#features {
+    margin-top: -1em;
+}
+
+#resources {
     list-style-type: none;
+}
+
+#translation-guide img {
+    margin: 1em 0 1em 4em;
+    border: 1px solid #000;
 }
 
 #browse-files {
