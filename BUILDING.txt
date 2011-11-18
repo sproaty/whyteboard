@@ -12,6 +12,12 @@ How to build Whyteboard.
   - release.bat is mainly for me, as the coder to automate away as much
     work for releasing a new version as possible.
 
+  - the scripts assume you have:
+      Python 2.7 installed into C:\Python27
+      py2exe avaialble
+      UPX on your PATH
+      7zip in C:\Program Files\7-Zip
+      Inno Setup in C:\Program Files\Inno Setup 5 and the preprocessor installed
 
  Linux
  ------

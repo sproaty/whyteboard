@@ -7,7 +7,8 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{518C11F9-3A78-455B-B8A1-C1148E949DA6}
 AppName=Whyteboard
-AppVerName=Whyteboard 0.42
+SourceDir={#BASEDIR}
+AppVerName=Whyteboard {#VERSION}
 AppPublisher=Steven Sproat
 AppPublisherURL=https://whyteboard.org
 AppSupportURL=https://launchpad.net/whyteboard
@@ -15,7 +16,7 @@ AppUpdatesURL=https://launchpad.net/whyteboard
 DefaultDirName={pf}\Whyteboard
 DefaultGroupName=Whyteboard
 AllowNoIcons=yes
-LicenseFile=E:\Downloads\whyteboard\LICENSE.txt
+LicenseFile=LICENSE.txt
 InfoBeforeFile=
 OutputBaseFilename=setup
 Compression=lzma
@@ -30,17 +31,12 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ;------ Copy Survey Extension (IssSurvey.dll) in your app install folder to use it on unistall
-Source: IssSurvey.dll; DestDir: {app}
+Source: buildfiles\resources\IssSurvey.dll; DestDir: {app}
 ;------ Copy Survey Extension Language File (IssSurvey.ini) in your app install folder
-Source: IssSurvey.ini; DestDir: {app}
+Source: buildfiles\resources\IssSurvey.ini; DestDir: {app}
 ;------
 
-Source: "E:\Downloads\whyteboard\dist\*.*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
-
-; they can grab the source themselves.
-;Source: "E:\Downloads\whyteboard\whyteboard\*.py"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs
-;Source: "E:\Downloads\whyteboard\whyteboard.py"; DestDir: "{app}"; Flags: ignoreversion
-
+Source: "dist\*.*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
@@ -55,8 +51,8 @@ Filename: "{app}\Whyteboard.exe"; Description: "{cm:LaunchProgram,Whyteboard}"; 
 [Registry]
 Root: HKCR; Subkey: ".wtbd"; ValueType: string; ValueName: ""; ValueData: "Whyteboard"; Flags: uninsdeletevalue
 Root: HKCR; Subkey: "Whyteboard"; ValueType: string; ValueName: ""; ValueData: "Whyteboard Data File"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "Whyteboard\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "E:\Downloads\whyteboard\whyteboard.ico"
-Root: HKCR; Subkey: "Whyteboard\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Whyteboard.exe"" ""%1"""
+Root: HKCR; Subkey: "Whyteboard\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Whyteboard.exe,0"
+Root: HKCR; Subkey: "Whyteboard\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Whyteboard.exe"" --file ""%1"""
 
 
 [Code]
@@ -95,7 +91,7 @@ var
 
 begin
      Result   := false;
-     sReasons := 'I do not understand how to use it;I did not like the program;I use a better application;Other reason (see below):';
+     sReasons := 'Other reason (see below):;I do not understand how to use it;I did not like the program;I use a better application';
      nCode    := IssSurvey('en',sReasons,'http://whyteboard.org/IssSurvey_mail.php','demo','demo');
 
      if (nCode=0) or (nCode=2) then begin                    { submited or ignored }

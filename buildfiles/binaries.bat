@@ -1,5 +1,4 @@
 @echo off
-
 set _=%CD%\
 
 IF "%1"=="" (set /p version=Enter version number: %=%) ELSE ( set version=%1)
@@ -27,23 +26,23 @@ ren dist "whyteboard-%version%"
 
 ren "whyteboard-%version%" dist
 
-"C:\Program Files\Inno Setup 5\Compil32.exe"  /cc buildfiles\resources\innosetup.iss
+"C:\Program Files\Inno Setup 5\ISCC.exe" /dVERSION=%version% "/dBASEDIR=%cd%" buildfiles\resources\innosetup.iss 
 
 echo. 
 echo renaming files
 echo.
 
-ren buildfiles\resources\Output\setup.exe whyteboard-installer-%version%.exe
+ren Output\setup.exe whyteboard-installer-%version%.exe
 
 echo moving files to build files folder
 
-move buildfiles\resources\Output\whyteboard-installer-%version%.exe buildfiles
+move Output\whyteboard-installer-%version%.exe buildfiles
 move whyteboard-%version%.zip buildfiles
 
 echo cleaning temp. files
 rmdir build /S /Q
 rmdir dist /S /Q
-rmdir buildfiles\resources\Output /S /Q
+rmdir Output /S /Q
 
 popd
 popd

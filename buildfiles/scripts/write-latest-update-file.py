@@ -46,6 +46,7 @@ def check_file_exists(filename):
 
 def lines_to_write(filetype):
     filename = "whyteboard-%s.%s" % (sys.argv[1], filetype)
+    filename = os.path.join("..", filename)
     check_file_exists(filename)    
     return [filename, str(os.path.getsize(os.path.abspath(filename)))]
 
@@ -70,25 +71,24 @@ if not os_to_use in ['linux', 'windows', 'all']:
     usage()
     
 
-current_file = os.path.join(os.path.abspath(__file__), "..", "resources", "latest")            
+current_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "resources", "latest"))          
 output = [sys.argv[1]]
-print current_file    
+
 if os_to_use == "windows":    
-    print 'Editing updates file for Windows'
+    print 'Editing updates file %s for Windows' % current_file
     update_version(current_file, "zip", output, 1, 2)
     
-#if os_to_use == "linux":
-#    print 'Editing updates file for Linux'
-#    update_version(current_file, "tar.gz", output, 3, 4)
-#    
+if os_to_use == "linux":
+    print 'Editing updates file %s for Linux' % current_file
+    update_version(current_file, "tar.gz", output, 3, 4)
+    
 if os_to_use == "all":
     for filetype in ["zip", "tar.gz"]:
         lines = lines_to_write(filetype)
         output.append(lines[0])
         output.append(lines[1])
-#    
+    
 output = "\n".join(output)
-print output     
-#f = file(current_file, "w")
-#f.write(output)
-#f.close()
+f = file(current_file, "w")
+f.write(output)
+f.close()

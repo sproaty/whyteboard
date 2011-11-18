@@ -8,15 +8,11 @@ PROGRAM=whyteboard-$1
 SRC=$(cd `dirname $0` && pwd)
 BUILDFILES=$SRC/buildfiles
 
-pushd $BUILDFILES
-pushd scripts
+pushd $BUILDFILES/scripts
 
 python update-version.py $1
-
-# run pylint and save output
 python run-pylint.py
 
-popd
 popd
 pushd ..
 
@@ -24,9 +20,8 @@ pushd ..
 tar czf $PROGRAM.tar.gz whyteboard/ images/ locale/ whyteboard-help/ whyteboard.py CHANGELOG.txt DEVELOPING.txt LICENSE.txt README.txt TODO.txt --exclude=*.pyc --exclude=.bzr*
 
 # create the debian 'package' directory for this build
-mkdir ../sb/$PROGRAM
+mkdir -p ../sb/$PROGRAM/debian
 pushd ../sb/$PROGRAM
-mkdir debian
 
 # extract the source tar into the directory and copy over needed files from source 'build' directory
 tar xf $SRC/$PROGRAM.tar.gz

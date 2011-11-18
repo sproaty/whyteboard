@@ -26,11 +26,14 @@ updating the filesizes of the exe or source
 import config
 from ftplib import FTP
 
-print "Uploading latest update file via FTP"
+
+latest = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "resources", "latest"))
+
+print "Uploading update file %s via FTP" % latest
 
 ftp = FTP('ftp.whyteboard.org', config.ftp_username, config.ftp_password)
 ftp.login()               # user anonymous, passwd anonymous@
-ftp.storbinary('STOR /public_html/latest', open('../resources/latest'))
+ftp.storbinary('STOR /public_html/latest', open(latest))
 ftp.close()
 
 print "File stored."

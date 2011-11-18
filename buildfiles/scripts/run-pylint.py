@@ -25,7 +25,9 @@ Outputs pylint report to a text file.
 import glob
 import os
 
-baseDir = os.path.abspath("../whyteboard")
+baseDir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "whyteboard"))
+
+print 'running pylint on %s' % baseDir
 
 dirsToCheck = ["core", "gui", "misc", "test", "updater"]
 for dir in dirsToCheck:

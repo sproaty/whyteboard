@@ -106,7 +106,7 @@ excludes = ['_ctypes', '_gtkagg', '_ssl', '_tkagg', 'bsddb', 'bz2',
 packages = []
 dll_excludes = ['libgdk-win32-2.0-0.dll', 'libgobject-2.0-0.dll', 'pyexpat',
                 'pywintypes32.dll', 'tcl84.dll', 'tk84.dll']
-icon_resources = [(1, os.path.join(os.path.dirname(os.path.abspath(__file__)), "whyteboard.ico"))]
+icon_resources = [(1, os.path.join(os.path.dirname(os.path.abspath(__file__)), "buildfiles/resources/whyteboard.ico"))]
 #other_resources = [(24, 1, manifest_template)]
 
 
@@ -145,7 +145,7 @@ setup(
     zipfile = None,
     windows = [GUI2Exe_Target_1],
 
-    description = 'A simple drawing program that can be used to annotate PDF files',
+    description = 'A simple drawing program',
     long_description = text,
     classifiers = [
           'Development Status :: 4 - Beta',

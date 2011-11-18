@@ -16,7 +16,7 @@ dput whyteboard whyteboard\_$1\_source.changes
 
 pushd scripts
 
-python scripts/write-latest-update-file.py $1 linux
-python scripts/upload-latest-update-file.py
+python write-latest-update-file.py $1 linux
+python upload-latest-update-file.py
 
 popd
