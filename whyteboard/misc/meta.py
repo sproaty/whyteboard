@@ -36,7 +36,7 @@ _ = wx.GetTranslation
 
 #----------------------------------------------------------------------
 
-version = u"0.43"
+version = u"0.42"
 transparent = True
 
 
