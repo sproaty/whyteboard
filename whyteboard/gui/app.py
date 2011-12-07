@@ -199,7 +199,11 @@ class WhyteboardApp(wx.App):
         print ""
         if confirm.lower() == "y" or confirm.lower() == "yes":
             self.progress = ProgressBar(total=download.raw_filesize())
-            downloaded = self.updater.download_file(self.update_progress_reporter)
+            
+            if not self.updater.download_file(self.update_progress_reporter):
+                print _("Could not connect to server.")
+                wx.Exit()
+                
             self.updater.extract()
             args = self.updater.restart_args()
             os.execvp(*args)

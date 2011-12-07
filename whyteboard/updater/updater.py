@@ -33,9 +33,10 @@ logger = logging.getLogger("whyteboard.updater.updater")
 
 class Updater(object):
     '''
-    Can query the server for information on the latest release, check whether
-    the program can be downloaded, downloads and extracts the latest files and
-    update Whyteboard 
+    Can:
+    - query the server for information on the latest release, 
+    - check whether the program can be downloaded,
+    - download, extracts the latest files and updates Whyteboard 
     '''
     def __init__(self):
         self.download = None
@@ -44,7 +45,7 @@ class Updater(object):
         return Downloader.download(self.download, callback)
 
     def extract(self):
-        return UpdateFileExtractor.extract(self.download)
+        UpdateFileExtractor.extract(self.download)
 
     def get_latest_version_info(self):
         self.download = Downloader.get_latest_version()

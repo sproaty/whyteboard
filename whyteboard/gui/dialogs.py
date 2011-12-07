@@ -304,9 +304,7 @@ class UpdateDialog(wx.Dialog):
         """
         Downloads the latest file, extracts it and restarts the program
         """
-        downloaded = self.updater.download_file(self.progress_reporter)
-
-        if not downloaded:
+        if not self.updater.download_file(self.progress_reporter):
             self.text.SetLabel(_("Could not connect to server."))
             self.btn.SetLabel(_("Retry"))
             return

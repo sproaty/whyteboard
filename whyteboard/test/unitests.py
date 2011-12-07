@@ -272,14 +272,15 @@ class TestCanvas(unittest.TestCase):
 
     def test_move_top(self):
         """shape moves to top"""
+        print self.canvas.shapes
         shape = self.canvas.shapes[0]
-        top_shape = self.canvas.shapes[3]
+        top_shape = self.canvas.shapes[-1]
         self.canvas.move_top(shape)
-        assert self.canvas.shapes[3] == shape, (self.canvas.shapes[3], shape)
-        assert self.canvas.shapes[2] == top_shape
+        assert self.canvas.shapes[-1] == shape
+        assert self.canvas.shapes[-2] == top_shape
         assert not self.canvas.shapes[0] == shape
         self.canvas.move_top(shape)
-        assert self.canvas.shapes[3] == shape, (self.canvas.shapes[3], shape)
+        assert self.canvas.shapes[-1] == shape
 
 
     def test_move_up(self):

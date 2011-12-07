@@ -61,7 +61,7 @@ class Downloader(object):
     def download(download, callback):
         """
         Downloads the file to the hard drive, and fires off the urlretrieve
-        callback function
+        callback function. Returns true/false to indicate download success
         """
         url = u"%s/%s" % (BASE_DOWNLOAD_URL, download.filename())
         

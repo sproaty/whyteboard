@@ -56,7 +56,6 @@ def get_soup(site, cssSelector=None):
     return select(soup, cssSelector)
 
 
-
 #---------------------------------------------------------------
 
 
@@ -109,7 +108,8 @@ add_download('Softpedia Linux', softpedia_linux)
 soup = get_soup("http://www.softpedia.com/get/Multimedia/Graphic/Graphic-Editors/Whyteboard.shtml",
                 'table#dhead td table.margin_left25px td strong')
 
-softpedia_windows = soup[1].renderContents()
+m = re.search('UserDownloads:(\d.*)"', soup[1].renderContents().strip())
+softpedia_windows = m.group(1)
 
 add_download('Softpedia Windows', softpedia_windows)
 
@@ -131,7 +131,8 @@ add_download('Softpedia Mac', softpedia_mac)
 soup = get_soup("http://www.softpedia.com/get/PORTABLE-SOFTWARE/Multimedia/Graphics/Portable-Whyteboard.shtml",
                 'table#dhead td table.margin_left25px td strong')
 
-softpedia_portable = soup[1].renderContents()
+m = re.search('UserDownloads:(\d.*)"', soup[1].renderContents().strip())
+softpedia_portable = m.group(1)
 
 add_download('Softpedia Portable', softpedia_portable)
 
@@ -262,5 +263,3 @@ for download in results:
 
 print '%25s ------' % " "
 print '{0:<25} {1:,}'.format(" Total", total)
-
-raw_input() # so window doesn't close when run from file explorer
