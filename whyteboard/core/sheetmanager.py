@@ -57,6 +57,11 @@ class SheetManager(object):
     def all_sheets(self):
         return self.sheets
     
+    def sheet_name(self, index):
+        pass
+    
+    def current_sheet_name(self):
+        pass
     
 #----------------------------------------------------------------------
 

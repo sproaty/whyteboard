@@ -13,6 +13,7 @@ xx xxxxx 2011 - 0.42
 * Made escape key close all dialogs; added close button to dialogs where needed
 * Can click on the Media panel's slider seek directly to that position
 * Single click with Pen to create a small point
+* "Close other sheets" functionality - close other sheets besides the current 
 
 * Removed the following preferences:
   - "toolbox type" - the toolbox is now icon-only, this takes up less UI space

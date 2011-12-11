@@ -56,7 +56,8 @@ from whyteboard.gui import (ID_BACKGROUND, ID_CLOSE_ALL, ID_COLOUR_GRID, ID_DESE
                        ID_FOREGROUND, ID_MOVE_UP, ID_MOVE_DOWN, ID_MOVE_TO_TOP,
                        ID_MOVE_TO_BOTTOM, ID_NEXT, ID_PASTE_NEW, ID_PREV,
                        ID_RECENTLY_CLOSED, ID_STATUSBAR, ID_SWAP_COLOURS,
-                       ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT, ID_UNDO_SHEET)
+                       ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT, ID_UNDO_SHEET,
+                       ID_CLOSE_OTHERS)
 
 from whyteboard.misc import (get_home_dir, is_save_file, get_clipboard,
                              check_clipboard, download_help_files, file_dialog,
@@ -619,7 +620,7 @@ class GUI(wx.Frame):
         """
         Closes the current tab (if there are any to close).
         """
-        if not self.tab_count - 1:
+        if self.is_only_one_tab_open():
             return
         logger.debug("Closing sheet [%s]", self.tabs.GetPageText(self.current_tab))
         
@@ -674,22 +675,30 @@ class GUI(wx.Frame):
         self.on_new_tab()
 
 
-    def on_close_other_sheets(self):
+    def on_close_other_sheets(self, event=None):
         """
         Closes all sheets except the current open sheet
         """
         if self.is_only_one_tab_open():
             return
-
-        current_tab = self.current_tab
-        canvases = self.get_canvases()
         
-        for index, canvas in enumerate(canvases):
-            if index != current_tab:
-                self.current_tab = 0
-                self.canvas = canvas
-                self.on_close_tab()
-
+        current_tab = self.current_tab
+        logger.debug("Closing other sheets besides [%s]", self.tabs.GetPageText(self.current_tab))
+        
+        canvases = self.get_canvases()
+        next_to_last_sheets = canvases[current_tab + 1 : len(canvases)]
+        
+        for canvas in next_to_last_sheets:
+            self.current_tab += 1
+            self.canvas = canvas
+            self.on_close_tab()
+        
+        first_to_prev_sheets = self.get_canvases()[0 : -1] 
+        for canvas in first_to_prev_sheets:
+            self.current_tab = 0
+            self.canvas = canvas
+            self.on_close_tab()
+        
         self.menu.make_closed_tabs_menu()
         
         
@@ -802,7 +811,7 @@ class GUI(wx.Frame):
             do = True
         elif (_id == ID_NEXT and self.can_change_next_sheet()):
             do = True
-        elif _id in [wx.ID_CLOSE, ID_CLOSE_ALL] and self.tab_count > 1:
+        elif _id in [wx.ID_CLOSE, ID_CLOSE_ALL, ID_CLOSE_OTHERS] and self.tab_count > 1:
             do = True
         elif _id in [ID_UNDO_SHEET, ID_RECENTLY_CLOSED] and self.closed_tabs:
             do = True

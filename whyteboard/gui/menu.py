@@ -36,7 +36,8 @@ from whyteboard.gui import (ID_CLEAR_ALL, ID_CLEAR_ALL_SHEETS, ID_CLEAR_SHEETS,
        ID_PASTE_NEW, ID_PDF_CACHE, ID_PREV, ID_RECENTLY_CLOSED, ID_RELOAD_PREF,
        ID_RENAME, ID_REPORT_BUG, ID_RESIZE, ID_SHAPE_VIEWER, ID_STATUSBAR,
        ID_SWAP_COLOURS, ID_TOOL_PREVIEW, ID_TOOLBAR, ID_TRANSPARENT,
-       ID_TRANSLATE, ID_UNDO_SHEET, ID_UPDATE, ID_BACKGROUND, ID_FOREGROUND)
+       ID_TRANSLATE, ID_UNDO_SHEET, ID_UPDATE, ID_BACKGROUND, ID_FOREGROUND,
+       ID_CLOSE_OTHERS)
 
 _ = wx.GetTranslation
 logger = logging.getLogger("whyteboard.menu")
@@ -137,6 +138,7 @@ class Menu(object):
 
         sheets.Append(wx.ID_CLOSE, _("Re&move Sheet") + "\tCtrl+W", _("Close the current sheet"))
         sheets.Append(ID_CLOSE_ALL, _("&Close All Sheets") + "\tCtrl+Shift+W", _("Close every sheet"))
+        sheets.Append(ID_CLOSE_OTHERS, _("&Close Other Sheets"), _("Close every sheet except the current one"))
         sheets.Append(ID_RENAME, _("&Rename Sheet...") + "\tF2", _("Rename the current sheet"))
         sheets.Append(ID_RESIZE, _("Resi&ze Canvas...") + "\tCtrl+R", _("Change the canvas' size"))
         sheets.AppendSeparator()
@@ -185,7 +187,7 @@ class Menu(object):
 
 
         # idle event handlers
-        ids = [ID_BACKGROUND, ID_CLOSE_ALL, ID_DESELECT, ID_FOREGROUND, ID_MOVE_DOWN,
+        ids = [ID_BACKGROUND, ID_CLOSE_ALL, ID_CLOSE_OTHERS, ID_DESELECT, ID_FOREGROUND, ID_MOVE_DOWN,
                ID_MOVE_TO_BOTTOM, ID_MOVE_TO_TOP, ID_MOVE_UP, ID_NEXT, ID_PASTE_NEW, ID_PREV,
                ID_RECENTLY_CLOSED, ID_SWAP_COLOURS, ID_TRANSPARENT, ID_UNDO_SHEET,
                wx.ID_CLOSE, wx.ID_COPY, wx.ID_DELETE, wx.ID_PASTE, wx.ID_REDO, wx.ID_UNDO]
@@ -197,6 +199,7 @@ class Menu(object):
         self.gui.Bind(wx.EVT_MENU, self.gui.on_clear_all_sheets, id=ID_CLEAR_ALL_SHEETS)
         self.gui.Bind(wx.EVT_MENU, self.gui.on_clear_sheets, id=ID_CLEAR_SHEETS)
         self.gui.Bind(wx.EVT_MENU, self.gui.on_close_all_sheets, id=ID_CLOSE_ALL)
+        self.gui.Bind(wx.EVT_MENU, self.gui.on_close_other_sheets, id=ID_CLOSE_OTHERS)
         self.gui.Bind(wx.EVT_MENU, self.gui.on_colour_grid, id=ID_COLOUR_GRID)
         self.gui.Bind(wx.EVT_MENU, self.gui.on_deselect_shape, id=ID_DESELECT)
         self.gui.Bind(wx.EVT_MENU, self.gui.on_export, id=ID_EXPORT)

@@ -91,7 +91,7 @@ class SimpleApp(PySimpleApp):
     """
     def __init__(self):
         PySimpleApp.__init__(self)
-        g = gui.GUI(make_config())  # mock the GUI with fake wxPython classes
+        g = gui.GUI()  # mock the GUI with fake wxPython classes
         self.canvas = g.canvas
 
 #----------------------------------------------------------------------
@@ -272,7 +272,6 @@ class TestCanvas(unittest.TestCase):
 
     def test_move_top(self):
         """shape moves to top"""
-        print self.canvas.shapes
         shape = self.canvas.shapes[0]
         top_shape = self.canvas.shapes[-1]
         self.canvas.move_top(shape)
@@ -309,24 +308,33 @@ class TestCanvas(unittest.TestCase):
         assert self.canvas.shapes[0] == shape
         assert self.canvas.shapes[1] == bottom_shape
 
+    def test_move_bottom(self):
+        """shape moves to the bottom"""
+        shape = self.canvas.shapes[3]
+        bottom_shape = self.canvas.shapes[0]
+        self.canvas.move_bottom(shape)
+        assert self.canvas.shapes[0] == shape
+        assert self.canvas.shapes[1] == bottom_shape
+
 #----------------------------------------------------------------------
 
 
-class TestGuiFunctionality:
+class TestGuiFunctionality(unittest.TestCase):
     """
     Bit tricky to do due to some GUI functions firing events and depending upon
     that function call at that time in -that- function call.
     """
-    def __init__(self):
+    def __init__(self, args, **kwargs):
+        unittest.TestCase.__init__(self, args, **kwargs)
         self.canvas = None
         self.gui = None
 
-    def setup(self):
+    def setUp(self):
         """
         Add a few mock tabs, each with random shapes
         Currently lacking a faked system that's good enough
         """
-        self.canvas = SimpleApp().canvas
+        self.canvas = make_canvas()
         self.gui = self.canvas.gui
         make_shapes(self.canvas)
 
@@ -352,6 +360,32 @@ class TestGuiFunctionality:
         self.gui.on_close_tab()
         assert len(self.gui.tabs.pages) == x - 2
 
+
+    def test_close_other_sheets_when_first_selected(self):
+        self.make_sheets()
+        print self.gui.get_tab_names()
+        #self.gui.on_close_tab()
+        #assert len(self.gui.tabs.pages) == x - 1
+        #self.gui.on_close_tab()
+        #assert len(self.gui.tabs.pages) == x - 2
+
+    def test_close_other_sheets_when_middle_selected(self):
+        self.make_sheets()
+        #x = len(self.gui.tabs.pages)
+        #self.gui.on_close_tab()
+        #assert len(self.gui.tabs.pages) == x - 1
+        #self.gui.on_close_tab()
+        #assert len(self.gui.tabs.pages) == x - 2
+        
+    def test_close_other_sheets_when_last_selected(self):
+        self.make_sheets()
+        #x = len(self.gui.tabs.pages)
+        #self.gui.on_close_tab()
+        #assert len(self.gui.tabs.pages) == x - 1
+        #self.gui.on_close_tab()
+        #assert len(self.gui.tabs.pages) == x - 2
+                
+                
     def test_new_sheet(self):
         """Adding new sheet"""
         canvas = self.gui.canvas
@@ -498,15 +532,12 @@ class TestDialogs():
 #----------------------------------------------------------------------
 
 
-class TestShapes:
+class TestShapes(unittest.TestCase):
     """
     We want to test shape's functionality, if they respond to their hit tests
     correctly and boundaries.
     """
-    def __init__(self):
-        self.canvas = None
-
-    def setup(self):
+    def setUp(self):
         self.canvas = Mock()
         self.rect, self.circle, self.text = None, None, None
 
@@ -667,12 +698,11 @@ class TestShapes:
 
     def test_select_tool_click_selects(self):
         """Select Tool left click selects a shape"""
-        self.create_canvas()
+        self.canvas = SimpleApp().canvas
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
         self.make_tools()
-        assert len(self.canvas.shapes) == 3
-
         select.left_down(250, 250)
+        assert len(self.canvas.shapes) == 3
         assert self.circle.selected
 
 
@@ -682,7 +712,8 @@ class TestShapes:
         select = whyteboard.tools.Select(self.canvas, (0, 0, 0), 1)
         self.make_tools()
         select.left_down(250, 250)
-
+        assert self.circle.selected
+        
         # a 'miss' selection should deselect the circle
         select.left_down(550, 550)
         assert not self.circle.selected
