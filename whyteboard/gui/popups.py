@@ -86,7 +86,6 @@ class Popup(wx.Menu):
         self.gui.on_close_all_sheets()
 
     def close_others(self, event):
-        print self.item
         self.gui.current_tab = self.item
         self.gui.canvas = self.gui.tabs.GetPage(self.item)
         self.gui.tabs.SetSelection(self.item)
