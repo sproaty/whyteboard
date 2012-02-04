@@ -1,0 +1,15 @@
+*.pyc
+.externalToolBuilders
+.settings
+build
+_project
+dist
+poppler
+wtbds
+.project
+.pydevproject
+eclipse-preferences.epf
+pylint
+buildfiles/pylint-report.txt
+buildfiles/whyteboard-*.zip
+buildfiles/whyteboard-*.exe

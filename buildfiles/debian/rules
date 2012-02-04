@@ -1,0 +1,84 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	touch configure-stamp
+
+
+build: build-stamp
+
+build-stamp: configure-stamp
+	dh_testdir
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	dh_clean
+
+
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean ­k
+	dh_installdirs
+
+    USR_DIR=$(CURDIR)/debian/whyteboard/usr
+    TARGET_DIR=$USR_DIR/lib/whyteboard
+    DOCS_DIR=$USR_DIR/share/doc/whyteboard
+    
+	cp whyteboard.py $TARGET_DIR/whyteboard.py
+	cp whyteboard.png $TARGET_DIR/whyteboard.png
+	cp LICENSE.txt $TARGET_DIR/LICENSE.txt
+
+	cp -ap images locale whyteboard whyteboard-help $TARGET_DIR
+
+	ln -s /usr/lib/whyteboard/whyteboard.py $(CURDIR)/debian/whyteboard/usr/bin/whyteboard
+
+	### Installing menufile, mimes and docs
+	cp whyteboard.desktop $(CURDIR)/debian/whyteboard/usr/share/applications/
+
+	cp CHANGELOG.txt DEVELOPING.txt LICENSE.txt README.txt TODO.txt $DOCS_DIR
+
+	xdg-icon-resource install --novendor --context mimetypes --size 64 ./whyteboard.png application-x-whyteboard
+	xdg-mime install --novendor ./whyteboard.xml
+	xdg-mime default ./whyteboard.desktop application/x-whyteboard
+
+
+# Build architecture-independent files here.
+binary-indep: build install
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
