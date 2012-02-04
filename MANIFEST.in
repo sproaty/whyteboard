@@ -1,0 +1,4 @@
+include *.txt
+include whyteboard-help/*.*
+recursive-include locale *.mo
+recursive-include images *.png
